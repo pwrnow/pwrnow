@@ -66,10 +66,12 @@ const eventItems = [
 
 export default function EventFeed() {
   return (
-    <div className='w-full max-w-3xl mx-auto'>
-      {eventItems.map((item) => (
-        <EventCard key={item.id} event={item} />
-      ))}
+    <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
+      <div className='flex flex-col'>
+        {eventItems.map((item) => (
+          <EventCard key={item.id} event={item} />
+        ))}
+      </div>
     </div>
   );
 }

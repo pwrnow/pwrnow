@@ -42,13 +42,13 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Space Grotesk", sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
   }
   h1,
   h2,
   h3,
   .display-font {
-    font-family: "Righteous", cursive;
+    font-family: 'Righteous', cursive;
   }
 }
 
@@ -59,4 +59,3 @@
 .category-active {
   @apply bg-gradient-to-r from-accent to-secondary text-primary-foreground;
 }
-

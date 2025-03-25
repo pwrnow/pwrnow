@@ -16,15 +16,15 @@ export default function CategorySelector() {
   const [activeCategory, setActiveCategory] = useState('Wszystkie');
 
   return (
-    <ScrollArea className='w-full pb-2'>
-      <div className='flex gap-2 px-4 py-2 overflow-x-auto'>
+    <ScrollArea className='w-full'>
+      <div className='flex gap-2 px-3 py-2 overflow-x-auto justify-center'>
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setActiveCategory(category)}
-            className={`px-3 py-1.5 sm:px-5 sm:py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
               activeCategory === category
-                ? 'category-active shadow-lg'
+                ? 'category-active shadow-md'
                 : 'bg-muted hover:bg-muted/80'
             }`}
           >
