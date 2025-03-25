@@ -69,15 +69,21 @@ export default function EventCard({ event }: EventCardProps) {
 
           <div className='grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 mb-3 sm:mb-4 text-xs sm:text-sm'>
             <div className='flex items-center'>
-              <Calendar className='h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 text-muted-foreground flex-shrink-0' />
+              <div className='p-1.5 rounded-md bg-blue-100 dark:bg-blue-950 mr-2 flex-shrink-0'>
+                <Calendar className='h-4 w-4 sm:h-5 sm:w-5 text-blue-500 dark:text-blue-400' />
+              </div>
               <span className='font-medium'>{event.date}</span>
             </div>
             <div className='flex items-center'>
-              <Clock className='h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 text-muted-foreground flex-shrink-0' />
+              <div className='p-1.5 rounded-md bg-purple-100 dark:bg-purple-950 mr-2 flex-shrink-0'>
+                <Clock className='h-4 w-4 sm:h-5 sm:w-5 text-purple-500 dark:text-purple-400' />
+              </div>
               <span className='font-medium'>{event.time}</span>
             </div>
             <div className='flex items-center'>
-              <MapPin className='h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 text-muted-foreground flex-shrink-0' />
+              <div className='p-1.5 rounded-md bg-red-100 dark:bg-red-950 mr-2 flex-shrink-0'>
+                <MapPin className='h-4 w-4 sm:h-5 sm:w-5 text-red-500 dark:text-red-400' />
+              </div>
               <span className='font-medium truncate'>{event.location}</span>
             </div>
           </div>
