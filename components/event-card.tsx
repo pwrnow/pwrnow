@@ -67,7 +67,7 @@ export default function EventCard({ event }: EventCardProps) {
             {event.title}
           </h2>
 
-          <div className='grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 mb-3 sm:mb-4 text-xs sm:text-sm'>
+          <div className='flex flex-col space-y-2 mb-3 sm:mb-4 text-xs sm:text-sm'>
             <div className='flex items-center'>
               <div className='p-1.5 rounded-md bg-blue-100 dark:bg-blue-950 mr-2 flex-shrink-0'>
                 <Calendar className='h-4 w-4 sm:h-5 sm:w-5 text-blue-500 dark:text-blue-400' />
@@ -84,7 +84,7 @@ export default function EventCard({ event }: EventCardProps) {
               <div className='p-1.5 rounded-md bg-red-100 dark:bg-red-950 mr-2 flex-shrink-0'>
                 <MapPin className='h-4 w-4 sm:h-5 sm:w-5 text-red-500 dark:text-red-400' />
               </div>
-              <span className='font-medium truncate'>{event.location}</span>
+              <span className='font-medium'>{event.location}</span>
             </div>
           </div>
 
