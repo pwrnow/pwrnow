@@ -25,72 +25,56 @@ export default function CategorySelector({
   const scrollThreshold = 15;
   const [headerHeight, setHeaderHeight] = useState(initialHeaderHeight);
   const containerRef = useRef<HTMLDivElement>(null);
+  const ticking = useRef(false);
 
-  // Dynamically calculate header height based on screen size
+  // Use fixed header height instead of dynamic calculation
   useEffect(() => {
-    const updateHeaderHeight = () => {
-      const isMobile = window.innerWidth < 640; // sm breakpoint in tailwind
-      setHeaderHeight(isMobile ? initialHeaderHeight : 64); // Use taller header on desktop
-    };
-
-    updateHeaderHeight();
-    window.addEventListener('resize', updateHeaderHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateHeaderHeight);
-    };
+    setHeaderHeight(initialHeaderHeight);
   }, [initialHeaderHeight]);
 
   useEffect(() => {
-    let didScroll = false;
-    let lastScrollTop = 0;
-
     const handleScroll = () => {
-      didScroll = true;
-    };
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
 
-    const hasScrolled = () => {
-      const currentScrollY = window.scrollY;
+          // Always show when at the top of the page
+          if (currentScrollY < 10) {
+            setIsVisible(true);
+            lastScrollY.current = currentScrollY;
+            ticking.current = false;
+            return;
+          }
 
-      // Immediately show when at the top of the page
-      if (currentScrollY < 10) {
-        setIsVisible(true);
-        lastScrollTop = currentScrollY;
-        return;
+          // Check if we've scrolled enough to trigger a change
+          if (
+            Math.abs(lastScrollY.current - currentScrollY) > scrollThreshold
+          ) {
+            // Scrolling down - hide the element
+            if (currentScrollY > lastScrollY.current) {
+              setIsVisible(false);
+            } else {
+              // Scrolling up - show the element
+              setIsVisible(true);
+            }
+
+            // Update the last scroll position
+            lastScrollY.current = currentScrollY;
+          }
+
+          ticking.current = false;
+        });
+
+        ticking.current = true;
       }
-
-      // Make sure scroll amount is enough to trigger change
-      if (Math.abs(lastScrollTop - currentScrollY) <= scrollThreshold) {
-        return;
-      }
-
-      // If scrolling down AND past the threshold, hide the element
-      if (currentScrollY > lastScrollTop) {
-        setIsVisible(false);
-      } else {
-        // If scrolling up, show the element
-        setIsVisible(true);
-      }
-
-      // Save the current position
-      lastScrollTop = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Check for scroll at a regular interval instead of on every scroll event
-    const interval = setInterval(() => {
-      if (didScroll) {
-        hasScrolled();
-        didScroll = false;
-      }
-    }, 250); // Check every 250ms
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearInterval(interval);
     };
-  }, []);
+  }, [scrollThreshold]);
 
   return (
     <div
