@@ -18,7 +18,7 @@ export default function Home() {
           </div>
           <CategorySelector />
         </header>
-        <div className='w-full'>
+        <div className='w-full mt-4 sm:mt-6'>
           <EventFeed />
         </div>
         <Footer />
