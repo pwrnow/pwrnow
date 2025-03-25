@@ -22,7 +22,7 @@ export default function CategorySelector({
   const [activeCategory, setActiveCategory] = useState('Wszystkie');
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const scrollThreshold = 5;
+  const scrollThreshold = 15;
   const [headerHeight, setHeaderHeight] = useState(initialHeaderHeight);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +42,12 @@ export default function CategorySelector({
   }, [initialHeaderHeight]);
 
   useEffect(() => {
+    let isHandlingScrollChange = false;
+    let animationFrameId: number;
+
     const handleScroll = () => {
+      if (isHandlingScrollChange) return;
+
       const currentScrollY = window.scrollY;
 
       // Immediately show when at the top of the page
@@ -54,15 +59,26 @@ export default function CategorySelector({
 
       // Regular scroll behavior with threshold
       if (Math.abs(currentScrollY - lastScrollY.current) > scrollThreshold) {
-        if (currentScrollY > lastScrollY.current) {
-          // Scrolling down
-          setIsVisible(false);
-        } else {
-          // Scrolling up
-          setIsVisible(true);
-        }
+        isHandlingScrollChange = true;
 
-        lastScrollY.current = currentScrollY;
+        // Use requestAnimationFrame to prevent multiple rapid changes
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(() => {
+          if (currentScrollY > lastScrollY.current) {
+            // Scrolling down
+            setIsVisible(false);
+          } else {
+            // Scrolling up
+            setIsVisible(true);
+          }
+
+          lastScrollY.current = currentScrollY;
+
+          // Allow handling scroll events again after a short delay
+          setTimeout(() => {
+            isHandlingScrollChange = false;
+          }, 100);
+        });
       }
     };
 
@@ -70,6 +86,7 @@ export default function CategorySelector({
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
