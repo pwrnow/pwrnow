@@ -9,7 +9,7 @@ export default function Home() {
     <main className='flex min-h-screen flex-col items-center bg-background'>
       <div className='w-full mx-auto'>
         <header className='sticky top-0 z-10 w-full bg-background/95 backdrop-blur-md border-b border-muted'>
-          <div className='flex justify-between items-center p-3 sm:p-4'>
+          <div className='flex justify-between items-center p-3 sm:p-4 pb-2 sm:pb-3'>
             <div className='w-10'></div> {/* Empty div for balance */}
             <Logo />
             <div className='w-10 flex justify-end'>
