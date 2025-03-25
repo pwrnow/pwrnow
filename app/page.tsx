@@ -16,8 +16,9 @@ export default function Home() {
               <ThemeToggle />
             </div>
           </div>
+          <CategorySelector />
         </header>
-        <CategorySelector />
+
         <div className='w-full mt-4 sm:mt-6 transition-all duration-300'>
           <EventFeed />
         </div>
