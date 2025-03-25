@@ -42,51 +42,53 @@ export default function CategorySelector({
   }, [initialHeaderHeight]);
 
   useEffect(() => {
-    let isHandlingScrollChange = false;
-    let animationFrameId: number;
+    let didScroll = false;
+    let lastScrollTop = 0;
 
     const handleScroll = () => {
-      if (isHandlingScrollChange) return;
+      didScroll = true;
+    };
 
+    const hasScrolled = () => {
       const currentScrollY = window.scrollY;
 
       // Immediately show when at the top of the page
       if (currentScrollY < 10) {
         setIsVisible(true);
-        lastScrollY.current = currentScrollY;
+        lastScrollTop = currentScrollY;
         return;
       }
 
-      // Regular scroll behavior with threshold
-      if (Math.abs(currentScrollY - lastScrollY.current) > scrollThreshold) {
-        isHandlingScrollChange = true;
-
-        // Use requestAnimationFrame to prevent multiple rapid changes
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = requestAnimationFrame(() => {
-          if (currentScrollY > lastScrollY.current) {
-            // Scrolling down
-            setIsVisible(false);
-          } else {
-            // Scrolling up
-            setIsVisible(true);
-          }
-
-          lastScrollY.current = currentScrollY;
-
-          // Allow handling scroll events again after a short delay
-          setTimeout(() => {
-            isHandlingScrollChange = false;
-          }, 100);
-        });
+      // Make sure scroll amount is enough to trigger change
+      if (Math.abs(lastScrollTop - currentScrollY) <= scrollThreshold) {
+        return;
       }
+
+      // If scrolling down AND past the threshold, hide the element
+      if (currentScrollY > lastScrollTop) {
+        setIsVisible(false);
+      } else {
+        // If scrolling up, show the element
+        setIsVisible(true);
+      }
+
+      // Save the current position
+      lastScrollTop = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
+    // Check for scroll at a regular interval instead of on every scroll event
+    const interval = setInterval(() => {
+      if (didScroll) {
+        hasScrolled();
+        didScroll = false;
+      }
+    }, 250); // Check every 250ms
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      cancelAnimationFrame(animationFrameId);
+      clearInterval(interval);
     };
   }, []);
 
