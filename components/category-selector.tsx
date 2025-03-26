@@ -16,7 +16,7 @@ export default function CategorySelector() {
   const [activeCategory, setActiveCategory] = useState('Wszystkie');
 
   return (
-    <div className='sticky top-0 z-10 w-full border-b border-muted h-12 bg-background/95 backdrop-blur-md'>
+    <div className='sticky top-0 z-10 w-full border-b border-muted/50 h-12 bg-background/50 backdrop-blur-md'>
       <ScrollArea className='w-full h-full'>
         <div className='flex items-center justify-center h-full gap-2 px-4'>
           {categories.map((category) => (
@@ -26,7 +26,7 @@ export default function CategorySelector() {
               className={`flex-none px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 activeCategory === category
                   ? 'category-active shadow-md'
-                  : 'bg-muted hover:bg-muted/80'
+                  : 'bg-muted/50 hover:bg-muted/80'
               }`}
             >
               {category}
