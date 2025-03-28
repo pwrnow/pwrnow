@@ -7,7 +7,7 @@ import Footer from '@/components/footer';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PWR Now',
+  title: 'PWr Now',
   description: 'Bądź na bieżąco z najnowszymi wydarzeniami',
   generator: 'v0.dev',
 };
