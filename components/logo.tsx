@@ -1,7 +1,11 @@
+import Link from 'next/link';
+
 export default function Logo() {
   return (
-    <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-center gradient-text'>
-      PWR Now
-    </h1>
+    <Link href='/' className='no-underline'>
+      <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-center gradient-text cursor-pointer'>
+        PWR Now
+      </h1>
+    </Link>
   );
 }
