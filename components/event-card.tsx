@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
@@ -14,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DeleteEventButton from './delete-event-button';
+import { useEventLinkTracking } from './posthog-provider';
 
 interface Event {
   id: string;
@@ -50,6 +53,9 @@ export default function EventCard({
   showVerificationStatus = false,
   allowDelete = false,
 }: EventCardProps) {
+  // Get tracking function from our custom hook
+  const { trackEventClick } = useEventLinkTracking();
+
   // Parse dates
   const startsAt = parseISO(event.starts_at);
   const endsAt = parseISO(event.ends_at);
@@ -78,6 +84,18 @@ export default function EventCard({
 
   // Determine if the event is verified or not
   const isVerified = event.verified !== undefined ? event.verified : false;
+
+  // Handle click on event link
+  const handleEventLinkClick = () => {
+    trackEventClick(event.id, event.title, {
+      organization: event.organization?.name,
+      category: event.category?.name,
+      location: event.location,
+      starts_at: event.starts_at,
+      event_url: event.url,
+      view_source: showOrganization ? 'organization_view' : 'user_view',
+    });
+  };
 
   return (
     <div className='mb-8 border-0 sm:border sm:rounded-lg sm:shadow-sm hover:sm:shadow-md transition-all duration-300 overflow-hidden group'>
@@ -188,7 +206,12 @@ export default function EventCard({
 
           {event.url && (
             <div className='mt-3'>
-              <Link href={event.url} target='_blank' rel='noopener noreferrer'>
+              <Link
+                href={event.url}
+                target='_blank'
+                rel='noopener noreferrer'
+                onClick={handleEventLinkClick}
+              >
                 <Button
                   variant='default'
                   size='sm'
