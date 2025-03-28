@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import EventCard from './event-card';
 import { EventCardSkeleton } from './event-card-skeleton';
 import NoEventsMessage from './no-events-message';
@@ -37,35 +37,25 @@ export default function EventFeed({
     return allEvents.filter((event) => event.category?.slug === categorySlug);
   }, [allEvents, categorySlug]);
 
-  const [isChanging, setIsChanging] = useState(false);
-
-  // Track category changes for animation
-  useEffect(() => {
-    setIsChanging(true);
-    const timer = setTimeout(() => setIsChanging(false), 100);
-    return () => clearTimeout(timer);
-  }, [categorySlug]);
-
   if (filteredEvents.length === 0) {
     return <NoEventsMessage />;
   }
 
   return (
     <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
-      <AnimatePresence mode='wait'>
-        <motion.div
-          key={categorySlug || 'all'}
-          className='flex flex-col'
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </motion.div>
-      </AnimatePresence>
+      <div className='flex flex-col'>
+        {filteredEvents.map((event) => (
+          <motion.div
+            key={event.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15 }}
+            layout
+          >
+            <EventCard event={event} />
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
