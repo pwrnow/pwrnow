@@ -3,7 +3,7 @@
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Category {
   id: string;
@@ -20,7 +20,6 @@ export default function CategorySelector({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [isPending, startTransition] = useTransition();
 
   const currentCategory = searchParams.get('category') || 'wszystkie';
 
@@ -33,21 +32,16 @@ export default function CategorySelector({
 
     setSelectedCategory(categorySlug);
 
-    // Update URL without triggering a full page reload
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams);
 
-      if (categorySlug === 'wszystkie') {
-        params.delete('category');
-      } else {
-        params.set('category', categorySlug);
-      }
+    if (categorySlug === 'wszystkie') {
+      params.delete('category');
+    } else {
+      params.set('category', categorySlug);
+    }
 
-      // Use router.replace with scroll: false to prevent page jump
-      router.replace(`${pathname}?${params.toString()}`, {
-        scroll: false,
-      });
-    });
+    // Using replace instead of push for smoother navigation without adding to history
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Add "Wszystkie" category to the beginning of the list
@@ -87,7 +81,6 @@ export default function CategorySelector({
                       ? 'text-primary-foreground shadow-md'
                       : 'bg-muted/30 hover:bg-muted/80 dark:hover:bg-muted/50 text-foreground/80'
                   }
-                  ${isPending ? 'opacity-70 pointer-events-none' : ''}
                 `}
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.97 }}
