@@ -71,10 +71,13 @@ export default async function Home({
 }: {
   searchParams: { category?: string };
 }) {
-  const categories = await getCategories();
-  const params = await searchParams;
-  const category = params.category;
-  const events = await getAllEvents();
+  // Load all data on server-side
+  const [categories, events] = await Promise.all([
+    getCategories(),
+    getAllEvents(),
+  ]);
+
+  const categoryParam = searchParams.category;
 
   return (
     <main className='min-h-screen'>
@@ -82,7 +85,7 @@ export default async function Home({
 
       <div className='w-full mt-4 sm:mt-6 transition-all duration-300'>
         <Suspense fallback={<EventFeedSkeleton />}>
-          <EventFeed allEvents={events} categorySlug={category} />
+          <EventFeed allEvents={events} categorySlug={categoryParam} />
         </Suspense>
       </div>
     </main>
