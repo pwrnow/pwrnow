@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import EventFeed, { EventFeedSkeleton } from '@/components/event-feed';
 import CategorySelector from '@/components/category-selector';
 import { createClient } from '@/utils/supabase/server';
-import { cache } from 'react';
 
 // Define Event type to be shared across components
 export interface Event {
@@ -27,8 +26,7 @@ export interface Event {
   };
 }
 
-// Use cache to prevent redundant fetches
-const getCategories = cache(async () => {
+async function getCategories() {
   const supabase = await createClient();
 
   const { data: categories, error } = await supabase
@@ -42,10 +40,9 @@ const getCategories = cache(async () => {
   }
 
   return categories;
-});
+}
 
-// Use cache to prevent redundant fetches
-const getAllEvents = cache(async (): Promise<Event[]> => {
+async function getAllEvents(): Promise<Event[]> {
   const supabase = await createClient();
 
   const { data: events, error } = await supabase
@@ -67,7 +64,7 @@ const getAllEvents = cache(async (): Promise<Event[]> => {
   }
 
   return events || [];
-});
+}
 
 export default async function Home({
   searchParams,

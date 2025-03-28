@@ -3,7 +3,7 @@
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useCallback, useMemo, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 interface Category {
   id: string;
@@ -19,40 +19,59 @@ export default function CategorySelector({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [isPending, startTransition] = useTransition();
 
   const currentCategory = searchParams.get('category') || 'wszystkie';
 
-  // Memoize allCategories to prevent unnecessary recalculations
-  const allCategories = useMemo(
-    () => [{ id: 'all', name: 'Wszystkie', slug: 'wszystkie' }, ...categories],
-    [categories]
-  );
+  useEffect(() => {
+    setSelectedCategory(currentCategory);
+  }, [currentCategory]);
 
-  // Optimize the category change handler
-  const handleCategoryChange = useCallback(
-    (categorySlug: string) => {
-      if (categorySlug === currentCategory) return;
+  const handleCategoryChange = (categorySlug: string) => {
+    if (categorySlug === currentCategory) return;
 
-      startTransition(() => {
-        const params = new URLSearchParams(searchParams.toString());
+    setSelectedCategory(categorySlug);
 
-        if (categorySlug === 'wszystkie') {
-          params.delete('category');
-        } else {
-          params.set('category', categorySlug);
-        }
+    // Update URL without triggering a full page reload
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
 
-        router.replace(`${pathname}?${params.toString()}`, {
-          scroll: false,
-        });
+      if (categorySlug === 'wszystkie') {
+        params.delete('category');
+      } else {
+        params.set('category', categorySlug);
+      }
+
+      // Use router.replace with scroll: false to prevent page jump
+      router.replace(`${pathname}?${params.toString()}`, {
+        scroll: false,
       });
+    });
+  };
+
+  // Add "Wszystkie" category to the beginning of the list
+  const allCategories = [
+    { id: 'all', name: 'Wszystkie', slug: 'wszystkie' },
+    ...categories,
+  ];
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.4 },
     },
-    [currentCategory, pathname, router, searchParams]
-  );
+  };
 
   return (
-    <div className='sticky top-0 z-10 w-full border-b border-muted/50 h-14 bg-background/80 backdrop-blur-xl shadow-sm'>
+    <motion.div
+      className='sticky top-0 z-10 w-full border-b border-muted/50 h-14 bg-background/80 backdrop-blur-xl shadow-sm'
+      initial='hidden'
+      animate='visible'
+      variants={containerVariants}
+    >
       <ScrollArea className='w-full h-full'>
         <div className='flex items-center h-full gap-3 px-4 md:px-6 md:justify-center'>
           {allCategories.map((category) => {
@@ -72,15 +91,25 @@ export default function CategorySelector({
                 `}
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.97 }}
-                layoutId={isActive ? 'activeCategory' : undefined}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
+                    delay: 0.03 * allCategories.indexOf(category),
+                  },
+                }}
               >
                 {isActive && (
                   <motion.div
                     className='absolute inset-0 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 dark:from-indigo-600 dark:via-blue-600 dark:to-cyan-500'
-                    layoutId='activeCategoryBg'
+                    layoutId='activeCategory'
                     transition={{
                       type: 'spring',
-                      stiffness: 500,
+                      stiffness: 400,
                       damping: 40,
                     }}
                   />
@@ -94,6 +123,6 @@ export default function CategorySelector({
         </div>
         <ScrollBar orientation='horizontal' className='h-1.5' />
       </ScrollArea>
-    </div>
+    </motion.div>
   );
 }
