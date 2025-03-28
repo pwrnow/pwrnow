@@ -4,7 +4,7 @@ export default function Logo() {
   return (
     <Link href='/' className='no-underline'>
       <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-center gradient-text cursor-pointer'>
-        PWR Now
+        PWr Now
       </h1>
     </Link>
   );

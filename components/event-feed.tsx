@@ -1,75 +1,71 @@
 import EventCard from './event-card';
+import { createClient } from '@/utils/supabase/server';
 
-// Sample events data
-const eventItems = [
-  {
-    id: 1,
-    title: 'Targi Pracy na Politechnice Wrocławskiej',
-    description:
-      'Roczne targi pracy na PWr. Spotkaj przedstawicieli najlepszych firm technologicznych i poznaj możliwości kariery po studiach.',
-    date: '25 maj 2024',
-    time: '10:00',
-    location: 'Budynek C-13, PWr',
-    imageUrl: '/placeholder.svg?height=600&width=600',
-    category: 'Kariera',
-    author: {
-      name: 'Biuro Karier PWr',
-      avatar: '/placeholder.svg',
-    },
-  },
-  {
-    id: 2,
-    title: 'Juwenalia PWr 2024',
-    description:
-      'Największe święto studentów Politechniki Wrocławskiej. Trzy dni koncertów, wydarzeń sportowych i integracji studenckiej.',
-    date: '24 cze 2024',
-    time: '16:00',
-    location: 'Kampus Główny PWr',
-    imageUrl: '/placeholder.svg?height=600&width=600',
-    category: 'Rozrywka',
-    author: {
-      name: 'Samorząd Studencki',
-      avatar: '/placeholder.svg',
-    },
-  },
-  {
-    id: 3,
-    title: 'Konferencja Naukowa: Innowacje w Energetyce',
-    description:
-      'Międzynarodowa konferencja naukowa poświęcona najnowszym rozwiązaniom w dziedzinie energetyki odnawialnej i zrównoważonego rozwoju.',
-    date: '15 lip 2024',
-    time: '09:00',
-    location: 'Centrum Kongresowe PWr',
-    imageUrl: '/placeholder.svg?height=600&width=600',
-    category: 'Nauka',
-    author: {
-      name: 'Wydział Elektryczny',
-      avatar: '/placeholder.svg',
-    },
-  },
-  {
-    id: 4,
-    title: 'Dzień Otwarty Politechniki Wrocławskiej',
-    description:
-      'Poznaj naszą uczelnię! Prezentacje kierunków studiów, zwiedzanie laboratoriów, spotkania z wykładowcami i studentami.',
-    date: '22 maj 2024',
-    time: '10:00',
-    location: 'Kampus Główny PWr',
-    imageUrl: '/placeholder.svg?height=600&width=600',
-    category: 'Edukacja',
-    author: {
-      name: 'Biuro Rekrutacji',
-      avatar: '/placeholder.svg',
-    },
-  },
-];
+export async function getEvents(categorySlug?: string) {
+  const supabase = await createClient();
 
-export default function EventFeed() {
+  // First, handle the category filter
+  let categoryId;
+  if (categorySlug && categorySlug !== 'wszystkie') {
+    // Get the category ID first
+    const { data: category } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', categorySlug)
+      .single();
+
+    categoryId = category?.id;
+  }
+
+  // Then build the main query
+  let query = supabase
+    .from('events')
+    .select(
+      `
+      *,
+      organization:organizations(*),
+      category:categories(*)
+    `
+    )
+    .gte('ends_at', new Date().toISOString())
+    .eq('verified', true)
+    .order('starts_at', { ascending: true });
+
+  // Apply category filter if we have a category ID
+  if (categoryId) {
+    query = query.eq('category_id', categoryId);
+  }
+
+  const { data: events, error } = await query;
+
+  if (error) {
+    console.error('Error fetching events:', error);
+    return [];
+  }
+
+  return events;
+}
+
+export default async function EventFeed({
+  categorySlug,
+}: {
+  categorySlug?: string;
+}) {
+  const events = await getEvents(categorySlug);
+
+  if (events.length === 0) {
+    return (
+      <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-4 py-12 text-center'>
+        <p className='text-muted-foreground'>Brak wydarzeń w tej kategorii.</p>
+      </div>
+    );
+  }
+
   return (
     <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
       <div className='flex flex-col'>
-        {eventItems.map((item) => (
-          <EventCard key={item.id} event={item} />
+        {events.map((event) => (
+          <EventCard key={event.id} event={event} />
         ))}
       </div>
     </div>

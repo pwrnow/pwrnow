@@ -14,7 +14,7 @@ interface PageProps {
 }
 
 export default async function OrganizationPage({ params }: PageProps) {
-  const { orgId } = params;
+  const { orgId } = await params;
   const supabase = await createClient();
 
   const organization = await getOrganization(orgId);
@@ -63,9 +63,6 @@ export default async function OrganizationPage({ params }: PageProps) {
         <h1 className='text-3xl font-bold text-center mb-2'>
           {organization.name}
         </h1>
-        <p className='text-muted-foreground mb-4'>
-          Kod organizacji: {organization.code}
-        </p>
       </div>
 
       {/* Events Header */}
