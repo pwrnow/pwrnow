@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { deleteEvent } from '@/app/actions';
+import { deleteEvent } from '@/app/actions/events';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 

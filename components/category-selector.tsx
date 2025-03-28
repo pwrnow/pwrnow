@@ -31,7 +31,8 @@ export default function CategorySelector({
       params.set('category', categorySlug);
     }
 
-    router.push(`${pathname}?${params.toString()}`);
+    // Using replace instead of push for smoother navigation without adding to history
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Add "Wszystkie" category to the beginning of the list

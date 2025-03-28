@@ -190,9 +190,9 @@ export default function EventCard({
             <div className='mt-3'>
               <Link href={event.url} target='_blank' rel='noopener noreferrer'>
                 <Button
-                  variant='outline'
+                  variant='default'
                   size='sm'
-                  className='w-full flex items-center gap-2 transition-all duration-300 hover:bg-primary/10'
+                  className='w-full flex items-center gap-2 transition-all duration-300'
                 >
                   <ExternalLink className='h-4 w-4' />
                   Odwiedź stronę wydarzenia
