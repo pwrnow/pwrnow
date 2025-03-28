@@ -5,6 +5,7 @@ import EventCard from './event-card';
 import { EventCardSkeleton } from './event-card-skeleton';
 import NoEventsMessage from './no-events-message';
 import { Event } from '@/app/page';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // Server-side version of getEvents removed (will be called from page.tsx)
 
@@ -44,12 +45,15 @@ export default function EventFeed({
     <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
       <div className='flex flex-col'>
         {filteredEvents.map((event) => (
-          <div
+          <motion.div
             key={event.id}
-            className='opacity-100 transition-opacity duration-100'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15 }}
+            layout
           >
             <EventCard event={event} />
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
