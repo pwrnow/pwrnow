@@ -25,7 +25,8 @@ export default async function Home({
   searchParams: { category?: string };
 }) {
   const categories = await getCategories();
-  const category = await searchParams.category;
+  const params = await searchParams;
+  const category = params.category;
 
   return (
     <main className='min-h-screen'>
