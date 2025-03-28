@@ -3,9 +3,17 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  ExternalLink,
+  ShieldCheck,
+  Clock3,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DeleteEventButton from './delete-event-button';
 
 interface Event {
   id: string;
@@ -16,6 +24,7 @@ interface Event {
   location: string | null;
   image_url: string | null;
   url: string | null;
+  verified?: boolean;
   organization?: {
     id: string;
     name: string;
@@ -31,11 +40,15 @@ interface Event {
 interface EventCardProps {
   event: Event;
   showOrganization?: boolean;
+  showVerificationStatus?: boolean;
+  allowDelete?: boolean;
 }
 
 export default function EventCard({
   event,
   showOrganization = false,
+  showVerificationStatus = false,
+  allowDelete = false,
 }: EventCardProps) {
   // Parse dates
   const startsAt = parseISO(event.starts_at);
@@ -63,11 +76,37 @@ export default function EventCard({
 
   const orgInitials = getInitials(organizationName);
 
+  // Determine if the event is verified or not
+  const isVerified = event.verified !== undefined ? event.verified : false;
+
   return (
-    <div className='mb-8 border-0 sm:border sm:rounded-lg sm:shadow-sm'>
+    <div className='mb-8 border-0 sm:border sm:rounded-lg sm:shadow-sm hover:sm:shadow-md transition-all duration-300 overflow-hidden group'>
+      {/* Verification Status Bar - Only shown when showVerificationStatus is true */}
+      {showVerificationStatus && (
+        <div
+          className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
+            isVerified
+              ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+          }`}
+        >
+          {isVerified ? (
+            <>
+              <ShieldCheck className='h-3 w-3' />
+              Zatwierdzony
+            </>
+          ) : (
+            <>
+              <Clock3 className='h-3 w-3' />
+              Oczekuje na weryfikację
+            </>
+          )}
+        </div>
+      )}
+
       <div className='flex flex-col'>
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
-          <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20'>
+          <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
             <AvatarImage
               src={organizationImageUrl || undefined}
               alt={organizationName}
@@ -81,24 +120,33 @@ export default function EventCard({
               <span className='font-medium text-sm sm:text-base truncate'>
                 {organizationName}
               </span>
-              {event.category && (
-                <Badge
-                  variant='outline'
-                  className='bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 text-xs sm:text-sm'
-                >
-                  {categoryName}
-                </Badge>
-              )}
+              <div className='flex items-center gap-2'>
+                {event.category && (
+                  <Badge
+                    variant='outline'
+                    className='bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 text-xs sm:text-sm'
+                  >
+                    {categoryName}
+                  </Badge>
+                )}
+                {allowDelete && event.organization && (
+                  <DeleteEventButton
+                    eventId={event.id}
+                    organizationId={event.organization.id}
+                    eventTitle={event.title}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className='relative aspect-square w-full'>
+        <div className='relative aspect-square w-full overflow-hidden'>
           <Image
             src={event.image_url || '/placeholder.svg'}
             alt={event.title}
             fill
-            className='object-cover'
+            className='object-cover transition-transform duration-500'
             sizes='(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px'
             priority
           />
@@ -144,7 +192,7 @@ export default function EventCard({
                 <Button
                   variant='outline'
                   size='sm'
-                  className='w-full flex items-center gap-2'
+                  className='w-full flex items-center gap-2 transition-all duration-300 hover:bg-primary/10'
                 >
                   <ExternalLink className='h-4 w-4' />
                   Odwiedź stronę wydarzenia

@@ -113,7 +113,7 @@ export default function AddEventForm({
       });
 
       // Navigate back to organization page
-      router.push(`/${organizationId}`);
+      router.push(`/${orgCode}`);
       router.refresh();
     } catch (error) {
       console.error('Error creating event:', error);

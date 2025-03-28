@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Providers } from './providers';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import './globals.css';
@@ -37,13 +38,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className='flex min-h-screen flex-col items-center bg-background'>
-            <div className='w-full mx-auto'>
-              <Header />
-              {children}
-              <Footer />
+          <Providers>
+            <div className='flex min-h-screen flex-col items-center bg-background'>
+              <div className='w-full mx-auto'>
+                <Header />
+                {children}
+                <Footer />
+              </div>
             </div>
-          </div>
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

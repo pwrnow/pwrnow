@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
@@ -19,21 +18,20 @@ export default function CategorySelector({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [isPending, startTransition] = useTransition();
   const currentCategory = searchParams.get('category') || 'wszystkie';
 
   const handleCategoryChange = (categorySlug: string) => {
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams);
+    if (categorySlug === currentCategory) return;
 
-      if (categorySlug === 'wszystkie') {
-        params.delete('category');
-      } else {
-        params.set('category', categorySlug);
-      }
+    const params = new URLSearchParams(searchParams);
 
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    if (categorySlug === 'wszystkie') {
+      params.delete('category');
+    } else {
+      params.set('category', categorySlug);
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   // Add "Wszystkie" category to the beginning of the list
@@ -50,12 +48,13 @@ export default function CategorySelector({
             <button
               key={category.id}
               onClick={() => handleCategoryChange(category.slug)}
-              className={`flex-none px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                currentCategory === category.slug
-                  ? 'category-active shadow-md'
-                  : 'bg-muted/50 hover:bg-muted/80'
-              }`}
-              disabled={isPending}
+              className={`flex-none px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap
+                ${
+                  currentCategory === category.slug
+                    ? 'category-active shadow-md'
+                    : 'bg-muted/50 hover:bg-muted/80'
+                }
+              `}
             >
               {category.name}
             </button>

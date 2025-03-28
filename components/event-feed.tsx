@@ -1,4 +1,6 @@
 import EventCard from './event-card';
+import { EventCardSkeleton } from './event-card-skeleton';
+import NoEventsMessage from './no-events-message';
 import { createClient } from '@/utils/supabase/server';
 
 export async function getEvents(categorySlug?: string) {
@@ -46,6 +48,18 @@ export async function getEvents(categorySlug?: string) {
   return events;
 }
 
+export function EventFeedSkeleton() {
+  return (
+    <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
+      <div className='flex flex-col'>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <EventCardSkeleton key={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function EventFeed({
   categorySlug,
 }: {
@@ -54,16 +68,12 @@ export default async function EventFeed({
   const events = await getEvents(categorySlug);
 
   if (events.length === 0) {
-    return (
-      <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-4 py-12 text-center'>
-        <p className='text-muted-foreground'>Brak wydarzeń w tej kategorii.</p>
-      </div>
-    );
+    return <NoEventsMessage />;
   }
 
   return (
     <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
-      <div className='flex flex-col'>
+      <div className='flex flex-col animate-in fade-in-50 duration-500'>
         {events.map((event) => (
           <EventCard key={event.id} event={event} />
         ))}

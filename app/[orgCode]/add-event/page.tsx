@@ -5,14 +5,14 @@ import { notFound } from 'next/navigation';
 
 interface PageProps {
   params: {
-    orgId: string;
+    orgCode: string;
   };
 }
 
 export default async function AddEventPage({ params }: PageProps) {
-  const { orgId } = params;
+  const { orgCode } = params;
 
-  const organization = await getOrganization(orgId);
+  const organization = await getOrganization(orgCode);
   const categories = await getCategories();
 
   if (!organization) {

@@ -9,15 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface PageProps {
   params: {
-    orgId: string;
+    orgCode: string;
   };
 }
 
 export default async function OrganizationPage({ params }: PageProps) {
-  const { orgId } = await params;
+  const { orgCode } = await params;
   const supabase = await createClient();
 
-  const organization = await getOrganization(orgId);
+  const organization = await getOrganization(orgCode);
 
   if (!organization) {
     return notFound();
@@ -68,7 +68,7 @@ export default async function OrganizationPage({ params }: PageProps) {
       {/* Events Header */}
       <div className='flex justify-between items-center mb-6'>
         <h2 className='text-2xl font-bold'>Wydarzenia</h2>
-        <Link href={`/${orgId}/add-event`}>
+        <Link href={`/${orgCode}/add-event`}>
           <Button className='flex items-center gap-2'>
             <PlusCircle className='h-4 w-4' />
             <span>Dodaj wydarzenie</span>
@@ -98,6 +98,8 @@ export default async function OrganizationPage({ params }: PageProps) {
                   image_url: organization.image_url,
                 },
               }}
+              showVerificationStatus={true}
+              allowDelete={true}
             />
           ))}
         </div>

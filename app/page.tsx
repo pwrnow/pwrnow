@@ -1,4 +1,5 @@
-import EventFeed from '@/components/event-feed';
+import { Suspense } from 'react';
+import EventFeed, { EventFeedSkeleton } from '@/components/event-feed';
 import CategorySelector from '@/components/category-selector';
 import { createClient } from '@/utils/supabase/server';
 
@@ -24,14 +25,17 @@ export default async function Home({
   searchParams: { category?: string };
 }) {
   const categories = await getCategories();
-  const categorySlug = searchParams.category;
+  const category = await searchParams.category;
 
   return (
-    <>
+    <main className='min-h-screen'>
       <CategorySelector categories={categories} />
+
       <div className='w-full mt-4 sm:mt-6 transition-all duration-300'>
-        <EventFeed categorySlug={categorySlug} />
+        <Suspense fallback={<EventFeedSkeleton />}>
+          <EventFeed categorySlug={category} />
+        </Suspense>
       </div>
-    </>
+    </main>
   );
 }
