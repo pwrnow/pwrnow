@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { usePostHog } from 'posthog-js/react';
 
 interface Category {
   id: string;
@@ -24,6 +25,7 @@ export default function CategorySelector({
     null
   );
   const [isInitialRender, setIsInitialRender] = useState(true);
+  const posthog = usePostHog();
 
   const currentCategory = searchParams.get('category') || 'wszystkie';
 
@@ -42,6 +44,15 @@ export default function CategorySelector({
       params.delete('category');
     } else {
       params.set('category', categorySlug);
+    }
+
+    // Track category selection with PostHog
+    if (posthog) {
+      posthog.capture('category_selected', {
+        category: categorySlug,
+        previous_category: currentCategory,
+        url: pathname,
+      });
     }
 
     // Using replace instead of push for smoother navigation without adding to history
