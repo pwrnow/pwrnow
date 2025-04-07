@@ -81,7 +81,7 @@ export default async function OrganizationPage({ params }: PageProps) {
           <p className='text-muted-foreground mb-4'>
             Brak wydarzeń do wyświetlenia
           </p>
-          <Link href={`/${orgId}/add-event`}>
+          <Link href={`/${orgCode}/add-event`}>
             <Button>Dodaj pierwsze wydarzenie</Button>
           </Link>
         </div>
