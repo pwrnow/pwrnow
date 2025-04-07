@@ -27,8 +27,7 @@ export interface Event {
   };
 }
 
-// Add cache control for revalidation (one hour)
-export const revalidate = 3600; // 60 * 60 seconds = 1 hour
+export const revalidate = 60;
 
 export default async function Home({
   searchParams,
