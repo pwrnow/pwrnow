@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
+import { cache } from 'react';
 
-export async function getCategories() {
+export const getCategories = cache(async () => {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -19,4 +20,4 @@ export async function getCategories() {
     console.error('Error in getCategories:', error);
     return [];
   }
-}
+});

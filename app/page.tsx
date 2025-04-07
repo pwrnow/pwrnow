@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import EventFeed, { EventFeedSkeleton } from '@/components/event-feed';
 import CategorySelector from '@/components/category-selector';
-import { createClient } from '@/utils/supabase/server';
+import { getEvents } from './actions/events';
+import { getCategories } from './actions/categories';
 
 // Define Event type to be shared across components
 export interface Event {
@@ -26,45 +27,8 @@ export interface Event {
   };
 }
 
-async function getCategories() {
-  const supabase = await createClient();
-
-  const { data: categories, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching categories:', error);
-    return [];
-  }
-
-  return categories;
-}
-
-async function getAllEvents(): Promise<Event[]> {
-  const supabase = await createClient();
-
-  const { data: events, error } = await supabase
-    .from('events')
-    .select(
-      `
-      *,
-      organization:organizations(*),
-      category:categories(*)
-    `
-    )
-    .gte('ends_at', new Date().toISOString())
-    .eq('verified', true)
-    .order('starts_at', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching events:', error);
-    return [];
-  }
-
-  return events || [];
-}
+// Add cache control for revalidation (one hour)
+export const revalidate = 3600; // 60 * 60 seconds = 1 hour
 
 export default async function Home({
   searchParams,
@@ -74,7 +38,7 @@ export default async function Home({
   const categories = await getCategories();
   const params = await searchParams;
   const category = params.category;
-  const events = await getAllEvents();
+  const events = await getEvents(category);
 
   return (
     <main className='min-h-screen'>

@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 interface Category {
   id: string;
@@ -17,8 +19,19 @@ export default function CategorySelector({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeButtonRect, setActiveButtonRect] = useState<DOMRect | null>(
+    null
+  );
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
   const currentCategory = searchParams.get('category') || 'wszystkie';
+
+  // Add "Wszystkie" category to the beginning of the list
+  const allCategories = [
+    { id: 'all', name: 'Wszystkie', slug: 'wszystkie' },
+    ...categories,
+  ];
 
   const handleCategoryChange = (categorySlug: string) => {
     if (categorySlug === currentCategory) return;
@@ -35,33 +48,84 @@ export default function CategorySelector({
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Add "Wszystkie" category to the beginning of the list
-  const allCategories = [
-    { id: 'all', name: 'Wszystkie', slug: 'wszystkie' },
-    ...categories,
-  ];
+  // Update the active button rect when the current category changes
+  useEffect(() => {
+    const activeButton = containerRef.current?.querySelector(
+      `[data-slug="${currentCategory}"]`
+    ) as HTMLElement;
+    if (activeButton) {
+      const rect = activeButton.getBoundingClientRect();
+      const containerRect = containerRef.current?.getBoundingClientRect() || {
+        left: 0,
+      };
+
+      // Calculate position relative to the container
+      const relativeRect = {
+        x: rect.left - containerRect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+
+      setActiveButtonRect(relativeRect as unknown as DOMRect);
+
+      // Scroll the active button into view
+      activeButton.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+
+    // After initial render, set isInitialRender to false
+    if (isInitialRender) {
+      setTimeout(() => setIsInitialRender(false), 100);
+    }
+  }, [currentCategory, isInitialRender]);
 
   return (
-    <div className='sticky top-0 z-10 w-full border-b border-muted/50 h-12 bg-background/50 backdrop-blur-md'>
+    <div className='sticky top-0 z-10 w-full border-b border-muted/50 h-14 bg-background/80 backdrop-blur-xl'>
       <ScrollArea className='w-full h-full'>
-        <div className='flex items-center justify-center h-full gap-2 px-4'>
+        <div
+          ref={containerRef}
+          className='flex items-center justify-center h-full gap-3 px-4 py-2 relative'
+        >
           {allCategories.map((category) => (
             <button
               key={category.id}
+              data-slug={category.slug}
               onClick={() => handleCategoryChange(category.slug)}
-              className={`flex-none px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap
+              className={`
+                relative flex-none px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap
+                transition-all duration-300 ease-in-out
                 ${
                   currentCategory === category.slug
-                    ? 'category-active shadow-md'
-                    : 'bg-muted/50 hover:bg-muted/80'
+                    ? 'text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 }
               `}
             >
               {category.name}
+              {currentCategory === category.slug && (
+                <motion.span
+                  layoutId='activeCategory'
+                  initial={isInitialRender ? { opacity: 0 } : false}
+                  animate={{ opacity: 1 }}
+                  className='absolute inset-0 bg-primary rounded-full -z-10'
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
+                    opacity: { duration: 0.2 },
+                  }}
+                />
+              )}
             </button>
           ))}
         </div>
-        <ScrollBar orientation='horizontal' />
+        <ScrollBar
+          orientation='horizontal'
+          className='opacity-0 hover:opacity-100 transition-opacity'
+        />
       </ScrollArea>
     </div>
   );

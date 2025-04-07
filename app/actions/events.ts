@@ -3,6 +3,8 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { Event } from '@/app/page';
+import { cache } from 'react';
 
 interface CreateEventParams {
   title: string;
@@ -164,3 +166,57 @@ export async function deleteEvent(eventId: string, organizationId: string) {
     };
   }
 }
+
+// Cached category map to avoid repeated slug-to-id lookups
+const getCategoryIdFromSlug = cache(
+  async (slug: string): Promise<string | null> => {
+    const supabase = await createClient();
+
+    const { data } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    return data?.id || null;
+  }
+);
+
+// Cache the event fetching to improve performance
+export const getEvents = cache(
+  async (categorySlug?: string): Promise<Event[]> => {
+    const supabase = await createClient();
+
+    let query = supabase
+      .from('events')
+      .select(
+        `
+      *,
+      organization:organizations(*),
+      category:categories(*)
+    `
+      )
+      .gte('ends_at', new Date().toISOString())
+      .eq('verified', true);
+
+    // Filter by category at the database level if a category is specified
+    if (categorySlug && categorySlug !== 'wszystkie') {
+      // Filter events that have a category with matching slug
+      query = query
+        .not('category', 'is', null) // Ensure category exists
+        .eq('category.slug', categorySlug);
+    }
+
+    // Apply sorting
+    query = query.order('starts_at', { ascending: true });
+
+    const { data: events, error } = await query;
+
+    if (error) {
+      console.error('Error fetching events:', error);
+      return [];
+    }
+
+    return events || [];
+  }
+);

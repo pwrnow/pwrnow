@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default async function AddEventPage({ params }: PageProps) {
-  const { orgCode } = params;
+  const { orgCode } = await params;
 
   const organization = await getOrganization(orgCode);
   const categories = await getCategories();
