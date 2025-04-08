@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createEvent } from '@/app/actions/events';
+import {
+  eventFormSchema,
+  EventFormValues,
+  formToServerData,
+} from '@/lib/schemas/event';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,32 +40,6 @@ import {
 import { cn } from '@/lib/utils';
 import { Dropzone } from '@/components/ui/dropzone';
 
-const formSchema = z.object({
-  title: z.string().min(1, {
-    message: 'Tytuł jest wymagany',
-  }),
-  categoryId: z.string().uuid({
-    message: 'Wybierz kategorię',
-  }),
-  startsAt: z.date({
-    required_error: 'Wybierz datę i czas rozpoczęcia',
-  }),
-  endsAt: z.date({
-    required_error: 'Wybierz datę i czas zakończenia',
-  }),
-  location: z.string().min(1, {
-    message: 'Lokalizacja jest wymagana',
-  }),
-  description: z.string().optional(),
-  url: z
-    .string()
-    .url({ message: 'Podaj prawidłowy adres URL' })
-    .optional()
-    .or(z.literal('')),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface Category {
   id: string;
   name: string;
@@ -82,9 +60,11 @@ export default function AddEventForm({
   const router = useRouter();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: '',
       categoryId: '',
@@ -94,29 +74,44 @@ export default function AddEventForm({
     },
   });
 
-  async function onSubmit(data: FormValues) {
+  async function onSubmit(data: EventFormValues) {
     try {
+      // Validate image size if an image is uploaded
+      if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+        setImageError('Rozmiar obrazka nie może przekraczać 5MB');
+        return;
+      }
+
       setIsSubmitting(true);
+      setImageError(null);
+      setFormError(null);
+
+      // Transform form data to server format
+      const serverData = formToServerData(data, organizationId, orgCode);
 
       // Call server action
-      await createEvent({
-        title: data.title,
-        startsAt: data.startsAt.toISOString(),
-        endsAt: data.endsAt.toISOString(),
-        location: data.location,
-        description: data.description || null,
-        categoryId: data.categoryId,
-        organizationId,
+      const result = await createEvent({
+        ...serverData,
         imageFile,
-        url: data.url || null,
-        orgCode: orgCode,
       });
 
-      // Navigate back to organization page
-      router.push(`/${orgCode}`);
-      router.refresh();
+      if (result.success) {
+        // Navigate back to organization page
+        router.push(`/${orgCode}`);
+        router.refresh();
+      } else {
+        console.error('Error creating event:', result.error);
+        if (result.error?.includes('image')) {
+          setImageError(result.error);
+        } else {
+          setFormError(
+            result.error || 'Wystąpił błąd podczas dodawania wydarzenia'
+          );
+        }
+      }
     } catch (error) {
       console.error('Error creating event:', error);
+      setFormError('Wystąpił nieoczekiwany błąd podczas dodawania wydarzenia');
     } finally {
       setIsSubmitting(false);
     }
@@ -132,6 +127,12 @@ export default function AddEventForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        {formError && (
+          <div className='p-3 bg-destructive/15 border border-destructive text-destructive rounded-md'>
+            <p>{formError}</p>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name='title'
@@ -141,7 +142,12 @@ export default function AddEventForm({
               <FormControl>
                 <Input placeholder='Nazwa wydarzenia' {...field} />
               </FormControl>
-              <FormMessage />
+              <div className='flex justify-between'>
+                <FormMessage />
+                <p className='text-xs text-muted-foreground'>
+                  {(field.value && field.value.length) || 0}/100
+                </p>
+              </div>
             </FormItem>
           )}
         />
@@ -454,13 +460,21 @@ export default function AddEventForm({
           <Dropzone
             className='mt-2'
             onDrop={(acceptedFiles) => {
-              setImageFile(acceptedFiles[0]);
+              if (acceptedFiles[0].size > 5 * 1024 * 1024) {
+                setImageError('Rozmiar obrazka nie może przekraczać 5MB');
+              } else {
+                setImageError(null);
+                setImageFile(acceptedFiles[0]);
+              }
             }}
           />
-          {imageFile && (
+          {imageFile && !imageError && (
             <p className='text-sm mt-2'>
               Wybrano: {imageFile.name} ({Math.round(imageFile.size / 1024)} KB)
             </p>
+          )}
+          {imageError && (
+            <p className='text-sm mt-2 text-destructive'>{imageError}</p>
           )}
         </FormItem>
 
@@ -476,7 +490,12 @@ export default function AddEventForm({
                   {...field}
                 />
               </FormControl>
-              <FormMessage />
+              <div className='flex justify-between'>
+                <FormMessage />
+                <p className='text-xs text-muted-foreground'>
+                  {(field.value && field.value.length) || 0}/200
+                </p>
+              </div>
             </FormItem>
           )}
         />
@@ -490,7 +509,12 @@ export default function AddEventForm({
               <FormControl>
                 <Input placeholder='https://...' type='url' {...field} />
               </FormControl>
-              <FormMessage />
+              <div className='flex justify-between'>
+                <FormMessage />
+                <p className='text-xs text-muted-foreground'>
+                  {(field.value && field.value.length) || 0}/500
+                </p>
+              </div>
             </FormItem>
           )}
         />
@@ -508,7 +532,12 @@ export default function AddEventForm({
                   {...field}
                 />
               </FormControl>
-              <FormMessage />
+              <div className='flex justify-between'>
+                <FormMessage />
+                <p className='text-xs text-muted-foreground'>
+                  {(field.value && field.value.length) || 0}/2000
+                </p>
+              </div>
             </FormItem>
           )}
         />

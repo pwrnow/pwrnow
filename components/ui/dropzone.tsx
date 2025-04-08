@@ -4,19 +4,31 @@ import * as React from 'react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
 
-interface DropzoneProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DropzoneProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrop'> {
   className?: string;
   onDrop: (acceptedFiles: File[]) => void;
 }
 
 export function Dropzone({ className, onDrop, ...props }: DropzoneProps) {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
-    },
-    maxFiles: 1,
-  });
+  const { getRootProps, getInputProps, isDragActive, fileRejections } =
+    useDropzone({
+      onDrop,
+      accept: {
+        'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
+      },
+      maxFiles: 1,
+      maxSize: 5 * 1024 * 1024, // 5MB max file size
+      validator: (file) => {
+        if (file.size > 5 * 1024 * 1024) {
+          return {
+            code: 'file-too-large',
+            message: `Rozmiar pliku nie może przekraczać 5MB`,
+          };
+        }
+        return null;
+      },
+    });
 
   return (
     <div
@@ -39,6 +51,9 @@ export function Dropzone({ className, onDrop, ...props }: DropzoneProps) {
             <p>Przeciągnij i upuść zdjęcie lub kliknij, aby wybrać</p>
             <p className='text-sm text-muted-foreground'>
               (Akceptowane formaty: JPEG, PNG, GIF, WebP)
+            </p>
+            <p className='text-sm text-muted-foreground'>
+              (Maksymalny rozmiar: 5MB)
             </p>
           </div>
         )}
