@@ -104,12 +104,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
-            <div className='flex min-h-screen flex-col items-center bg-background'>
-              <div className='w-full mx-auto'>
-                <Header />
-                {children}
-                <Footer />
-              </div>
+            <div className='flex min-h-screen flex-col bg-background'>
+              <Header />
+              <main className='flex-grow w-full mx-auto'>{children}</main>
+              <Footer />
             </div>
           </Providers>
         </ThemeProvider>

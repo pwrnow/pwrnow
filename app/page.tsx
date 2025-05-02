@@ -40,7 +40,7 @@ export default async function Home({
   const events = await getEvents(category);
 
   return (
-    <main className='min-h-screen'>
+    <>
       <CategorySelector categories={categories} />
 
       <div className='w-full mt-4 sm:mt-6 transition-all duration-300'>
@@ -48,6 +48,6 @@ export default async function Home({
           <EventFeed allEvents={events} categorySlug={category} />
         </Suspense>
       </div>
-    </main>
+    </>
   );
 }
