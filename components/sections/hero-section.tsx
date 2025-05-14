@@ -68,7 +68,7 @@ export default function HeroSection() {
               Napisz do nas ✉️
             </span>
           </Link>
-          <Link href='#jak-to-dziala'>
+          <Link href='#dlaczego-pwrnow'>
             <Button variant='outline' size='lg' className='w-full sm:w-auto'>
               Dowiedz się więcej
             </Button>
