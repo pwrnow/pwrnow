@@ -99,7 +99,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ThemeProvider
           attribute='class'
-          defaultTheme='dark'
+          defaultTheme='system'
           enableSystem
           disableTransitionOnChange
         >
