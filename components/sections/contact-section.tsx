@@ -56,23 +56,25 @@ export default function ContactSection() {
         Jeśli chcesz, by wydarzenia Twojej organizacji dotarły do większej
         liczby studentów, napisz do nas już teraz!
       </motion.p>
-      <motion.div
-        initial='initial'
-        whileHover='hover'
-        whileTap='tap'
-        variants={buttonHover}
-        className='animate-fade-up animate-duration-1000 animate-delay-500'
-      >
+      <div className='animate-fade-up animate-duration-1000 animate-delay-500'>
         <Link href='mailto:pwrnow.kontakt@gmail.com'>
-          <Button
-            size='lg'
-            className='text-lg px-8 relative overflow-hidden group'
+          <motion.div
+            initial='initial'
+            whileHover='hover'
+            whileTap='tap'
+            variants={buttonHover}
+            className='inline-block'
           >
-            <span className='relative z-10'>pwrnow.kontakt@gmail.com</span>
-            <span className='absolute inset-0 bg-primary/20 -translate-y-full group-hover:translate-y-0 transition-transform duration-300'></span>
-          </Button>
+            <Button
+              size='lg'
+              className='text-lg px-8 relative overflow-hidden group'
+            >
+              <span className='relative z-10'>pwrnow.kontakt@gmail.com</span>
+              <span className='absolute inset-0 bg-primary/20 -translate-y-full group-hover:translate-y-0 transition-transform duration-300'></span>
+            </Button>
+          </motion.div>
         </Link>
-      </motion.div>
+      </div>
     </motion.section>
   );
 }
