@@ -48,7 +48,7 @@ export default async function OrganizationPage({ params }: PageProps) {
     .order('starts_at', { ascending: true });
 
   return (
-    <div className='max-w-3xl mx-auto px-4 py-4'>
+    <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-4 py-4'>
       {/* Organization Header - Combined with events header for better layout */}
       <div className='mb-8 bg-card rounded-lg border overflow-hidden'>
         <div className='bg-gradient-to-r from-primary/10 to-secondary/10 p-6'>
@@ -126,22 +126,24 @@ export default async function OrganizationPage({ params }: PageProps) {
           </Link>
         </div>
       ) : (
-        <div className='flex flex-col'>
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={{
-                ...event,
-                organization: {
-                  id: organization.id,
-                  name: organization.name,
-                  image_url: organization.image_url,
-                },
-              }}
-              showVerificationStatus={true}
-              allowDelete={true}
-            />
-          ))}
+        <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-0 sm:px-4'>
+          <div className='flex flex-col'>
+            {events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={{
+                  ...event,
+                  organization: {
+                    id: organization.id,
+                    name: organization.name,
+                    image_url: organization.image_url,
+                  },
+                }}
+                showVerificationStatus={true}
+                allowDelete={true}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
