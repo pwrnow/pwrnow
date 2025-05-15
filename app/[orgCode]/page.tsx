@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import EventCard from '@/components/event-card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Settings } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { getOrganization } from '@/lib/organization';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,21 +48,61 @@ export default async function OrganizationPage({ params }: PageProps) {
     .order('starts_at', { ascending: true });
 
   return (
-    <div className='max-w-2xl mx-auto px-4 py-4'>
-      {/* Organization Header */}
-      <div className='flex flex-col items-center mb-8'>
-        <Avatar className='w-24 h-24 border-2 border-primary/30 mb-4'>
-          <AvatarImage
-            src={organization.image_url || undefined}
-            alt={organization.name}
-          />
-          <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white text-3xl font-bold'>
-            {orgInitials}
-          </AvatarFallback>
-        </Avatar>
-        <h1 className='text-3xl font-bold text-center mb-2'>
-          {organization.name}
-        </h1>
+    <div className='max-w-3xl mx-auto px-4 py-4'>
+      {/* Organization Header - Combined with events header for better layout */}
+      <div className='mb-8 bg-card rounded-lg border overflow-hidden'>
+        <div className='bg-gradient-to-r from-primary/10 to-secondary/10 p-6'>
+          <div className='flex items-center gap-5'>
+            <Avatar className='w-16 h-16 border-2 border-primary/30 shadow-md'>
+              <AvatarImage
+                src={organization.image_url || undefined}
+                alt={organization.name}
+              />
+              <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white text-2xl font-bold'>
+                {orgInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className='flex-1'>
+              <h1 className='text-2xl font-bold'>{organization.name}</h1>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics */}
+        <div className='grid grid-cols-2 sm:grid-cols-4 gap-2 p-4 bg-background/50'>
+          <div className='flex flex-col items-center p-2 text-center'>
+            <span className='text-2xl font-bold text-primary'>
+              {events?.length || 0}
+            </span>
+            <span className='text-xs text-muted-foreground'>
+              Wszystkie wydarzenia
+            </span>
+          </div>
+
+          <div className='flex flex-col items-center p-2 text-center'>
+            <span className='text-2xl font-bold text-primary'>
+              {events?.filter((event) => new Date(event.starts_at) > new Date())
+                .length || 0}
+            </span>
+            <span className='text-xs text-muted-foreground'>Nadchodzące</span>
+          </div>
+
+          <div className='flex flex-col items-center p-2 text-center'>
+            <span className='text-2xl font-bold text-primary'>
+              {events?.filter(
+                (event) => new Date(event.starts_at) <= new Date()
+              ).length || 0}
+            </span>
+            <span className='text-xs text-muted-foreground'>Zakończone</span>
+          </div>
+
+          <div className='flex flex-col items-center p-2 text-center'>
+            <span className='text-2xl font-bold text-primary'>
+              {events?.filter((event) => event.verified).length || 0}
+            </span>
+            <span className='text-xs text-muted-foreground'>Zweryfikowane</span>
+          </div>
+        </div>
       </div>
 
       {/* Events Header */}
