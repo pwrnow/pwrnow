@@ -48,13 +48,6 @@ export default function Header({ showLogoLink = false }: HeaderProps) {
               </Button>
             </Link>
           )}
-          {!isOrgPage && (
-            <Link href='/dla-organizacji' className='hidden sm:block'>
-              <Button variant='ghost' size='sm' className='text-sm'>
-                Dla organizacji
-              </Button>
-            </Link>
-          )}
           <ThemeToggle />
         </div>
       </div>
