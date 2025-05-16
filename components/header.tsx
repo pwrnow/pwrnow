@@ -14,21 +14,25 @@ interface HeaderProps {
 export default function Header({ showLogoLink = false }: HeaderProps) {
   const pathname = usePathname();
 
-  // Check if we're in an org page - any path with a structure like "/somecode" or "/somecode/add-event"
-  // but excluding "/dla-organizacji" which is a specific route
+  // Improved check for organization pages
+  // Identify organization pages by looking for paths that:
+  // 1. Start with a path segment that's not empty, "zespol", or "dla-organizacji"
+  // 2. Don't have special paths like "add-event" or "settings" at the beginning
+  const pathSegments = pathname.split('/').filter(Boolean);
   const isOrgPage =
-    pathname !== '/' &&
-    pathname !== '/dla-organizacji' &&
-    (pathname.split('/').length === 2 || pathname.includes('/add-event'));
+    pathSegments.length > 0 &&
+    !['zespol', 'dla-organizacji'].includes(pathSegments[0]) &&
+    !pathname.startsWith('/add-event') &&
+    !pathname.startsWith('/settings');
 
   // Get organization code from the pathname if we're on an org page
-  const orgCode = isOrgPage ? pathname.split('/')[1] : null;
+  const orgCode = isOrgPage ? pathSegments[0] : null;
 
   return (
     <header className='sticky top-0 z-20 w-full bg-background/95 backdrop-blur-md'>
       <div className='flex justify-between items-center p-3 sm:p-4'>
         <div className='w-24'></div>
-        {showLogoLink ? (
+        {showLogoLink || isOrgPage ? (
           <Link href='/'>
             <Logo />
           </Link>
