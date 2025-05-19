@@ -2,22 +2,21 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
-
+import { headers } from 'next/headers';
 export async function signInWithGoogle() {
+  const origin = (await headers()).get('origin');
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'http://localhost:3000/auth/callback',
+      redirectTo: `${origin}/auth/callback`,
     },
   });
 
   if (error) {
     throw new Error(error.message);
   }
-
-  console.log(data);
 
   if (data.url) {
     redirect(data.url);
