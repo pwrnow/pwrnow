@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import EventFeed, { EventFeedSkeleton } from '@/components/event-feed';
 import CategorySelector from '@/components/category-selector';
-import { getEvents } from './actions/events';
-import { getCategories } from './actions/categories';
+import { getEvents } from '@/app/actions/events';
+import { getCategories } from '@/app/actions/categories';
 
 // Define Event type to be shared across components
 export interface Event {

@@ -1,10 +1,8 @@
 import type React from 'react';
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Providers } from './providers';
-import Header from '@/components/header';
-import Footer from '@/components/footer';
-import './globals.css';
+import { Providers } from '@/app/providers';
+import '@/app/globals.css';
 
 export const metadata: Metadata = {
   title: 'PWr Now',
@@ -72,7 +70,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'google-site-verification-code', // Replace with actual verification code when available
+    google: 'google-site-verification-code',
   },
   category: 'education',
 };
@@ -103,13 +101,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Providers>
-            <div className='flex min-h-screen flex-col bg-background'>
-              <Header />
-              <main className='flex-grow w-full mx-auto'>{children}</main>
-              <Footer />
-            </div>
-          </Providers>
+          <Providers>{children}</Providers>
         </ThemeProvider>
       </body>
     </html>

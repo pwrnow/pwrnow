@@ -3,7 +3,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Event } from '@/app/page';
 import { cache } from 'react';
 import { eventServerSchema, EventServerParams } from '@/lib/schemas/event';
 
@@ -283,3 +282,43 @@ export const getEvents = cache(
     return events || [];
   }
 );
+
+export async function updateEventStatus(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  if (session.user.role !== 'admin') {
+    throw new Error('Unauthorized');
+  }
+
+  const eventId = formData.get('eventId');
+  const verified = formData.get('verified');
+
+  if (!eventId || verified === null) {
+    throw new Error('Missing required fields');
+  }
+
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('events')
+      .update({ verified: verified === 'true' })
+      .eq('id', eventId);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath('/admin/events');
+  } catch (error) {
+    console.error('Error updating event status:', error);
+    throw new Error('Failed to update event status');
+  }
+}
