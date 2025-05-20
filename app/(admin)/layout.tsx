@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
+import { UserRole } from '@/lib/user';
 
 export default async function AdminLayout({
   children,
@@ -7,22 +8,24 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const user = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!user.data.user) {
+  if (!user) {
     redirect('/login');
   }
 
   // Check if user has admin role
-  // const { data: profile } = await supabase
-  //   .from('profiles')
-  //   .select('role')
-  //   .eq('id', user.data.user.id)
-  //   .single();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
 
-  // if (profile?.role !== 'admin') {
-  //   redirect('/');
-  // }
+  if (profile?.role !== ('admin' as UserRole)) {
+    redirect('/');
+  }
 
   return <main className='flex-1 overflow-auto p-6'>{children}</main>;
 }
