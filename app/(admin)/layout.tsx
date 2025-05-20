@@ -27,5 +27,5 @@ export default async function AdminLayout({
     redirect('/');
   }
 
-  return <main className='flex-1 overflow-auto p-6'>{children}</main>;
+  return <main className='flex-1 overflow-auto'>{children}</main>;
 }
