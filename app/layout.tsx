@@ -3,6 +3,10 @@ import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Providers } from '@/app/providers';
 import '@/app/globals.css';
+import {
+  generateOrganizationJsonLd,
+  generateWebsiteJsonLd,
+} from '@/lib/jsonld';
 
 export const metadata: Metadata = {
   title: 'PWr Now',
@@ -76,6 +80,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Generate JSON-LD data
+  const websiteJsonLd = generateWebsiteJsonLd();
+  const organizationJsonLd = generateOrganizationJsonLd();
+
   return (
     <html lang='pl' suppressHydrationWarning>
       <head>
@@ -88,6 +96,17 @@ export default function RootLayout({
         <link
           href='https://fonts.googleapis.com/css2?family=Righteous&family=Space+Grotesk:wght@300..700&display=swap'
           rel='stylesheet'
+        />
+        {/* Add JSON-LD structured data */}
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
         />
       </head>
       <body suppressHydrationWarning>
