@@ -6,8 +6,10 @@ export function generateEventJsonLd(event: Event) {
     '@type': 'Event',
     name: event.title,
     description: event.description,
-    startDate: event.starts_at,
-    endDate: event.ends_at,
+    startDate: new Date(event.starts_at).toISOString(),
+    endDate: new Date(event.ends_at).toISOString(),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: event.location
       ? {
           '@type': 'Place',
@@ -15,33 +17,49 @@ export function generateEventJsonLd(event: Event) {
           address: {
             '@type': 'PostalAddress',
             addressLocality: 'Wrocław',
+            addressRegion: 'Dolnośląskie',
             addressCountry: 'PL',
+            streetAddress: event.location,
           },
         }
-      : undefined,
+      : {
+          '@type': 'VirtualLocation',
+          url: event.url || `https://pwrnow.pl/events/${event.id}`,
+        },
     organizer: event.organization
       ? {
           '@type': 'Organization',
           name: event.organization.name,
           image: event.organization.image_url,
+          url: `https://pwrnow.pl/organizations/${event.organization.id}`,
         }
-      : undefined,
-    image: event.image_url,
-    url: event.url || `https://pwrnow.pl/events/${event.id}`,
+      : {
+          '@type': 'Organization',
+          name: 'PWr Now',
+          url: 'https://pwrnow.pl',
+        },
+    image: [event.image_url || 'https://pwrnow.pl/og-image.jpg'],
     offers: {
       '@type': 'Offer',
-      availability: 'https://schema.org/InStock',
       price: '0',
       priceCurrency: 'PLN',
-      validFrom: event.starts_at,
+      validFrom: new Date(event.starts_at).toISOString(),
       url: event.url || `https://pwrnow.pl/events/${event.id}`,
+      category: event.category?.name || 'Event',
+      availability: 'https://schema.org/InStock',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '5',
-      ratingCount: '1',
-      bestRating: '5',
-      worstRating: '1',
+    performer: event.organization
+      ? [
+          {
+            '@type': 'Organization',
+            name: event.organization.name,
+          },
+        ]
+      : undefined,
+    isAccessibleForFree: true,
+    audience: {
+      '@type': 'EducationalAudience',
+      educationalRole: 'student',
     },
   };
 }
