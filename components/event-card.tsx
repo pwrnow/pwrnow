@@ -12,6 +12,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Clock3,
+  Navigation,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,6 +96,25 @@ export default function EventCard({
       event_url: event.url,
       view_source: showOrganization ? 'organization_view' : 'user_view',
     });
+  };
+
+  // Function to handle map link clicks
+  const handleMapLinkClick = () => {
+    if (!event.location) return;
+
+    // Check if the user is on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // Encode the location for the URL
+    const encodedLocation = encodeURIComponent(event.location);
+
+    // Create the appropriate maps URL
+    const mapsUrl = isIOS
+      ? `maps://?q=${encodedLocation}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+
+    // Open the maps URL in a new tab
+    window.open(mapsUrl, '_blank');
   };
 
   return (
@@ -193,7 +213,14 @@ export default function EventCard({
                 <div className='p-1.5 rounded-md bg-red-100 dark:bg-red-950 mr-2 flex-shrink-0'>
                   <MapPin className='h-4 w-4 sm:h-5 sm:w-5 text-red-500 dark:text-red-400' />
                 </div>
-                <span className='font-medium'>{event.location}</span>
+                <button
+                  onClick={handleMapLinkClick}
+                  className='font-medium hover:underline flex items-center gap-1'
+                  title='Otwórz w aplikacji map'
+                >
+                  {event.location}
+                  <ExternalLink className='h-3 w-3' />
+                </button>
               </div>
             )}
           </div>
