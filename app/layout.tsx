@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   title: 'PWr Now',
   description:
     'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
-  generator: 'v0.dev',
   metadataBase: new URL('https://pwrnow.pl'),
   applicationName: 'PWr Now',
   keywords: [
@@ -68,9 +67,6 @@ export const metadata: Metadata = {
     languages: {
       'pl-PL': 'https://pwrnow.pl',
     },
-  },
-  verification: {
-    google: 'google-site-verification-code',
   },
   category: 'education',
 };
