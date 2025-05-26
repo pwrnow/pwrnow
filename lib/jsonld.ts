@@ -86,7 +86,7 @@ export function generateWebsiteJsonLd() {
 export function generateOrganizationJsonLd() {
   return {
     '@context': 'https://schema.org',
-    '@type': 'EducationalOrganization',
+    '@type': 'Organization',
     name: 'PWr Now',
     description: 'Centrum wydarzeń na Politechnice Wrocławskiej',
     url: 'https://pwrnow.pl',
