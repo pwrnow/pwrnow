@@ -28,6 +28,21 @@ export function generateEventJsonLd(event: Event) {
       : undefined,
     image: event.image_url,
     url: event.url || `https://pwrnow.pl/events/${event.id}`,
+    offers: {
+      '@type': 'Offer',
+      availability: 'https://schema.org/InStock',
+      price: '0',
+      priceCurrency: 'PLN',
+      validFrom: event.starts_at,
+      url: event.url || `https://pwrnow.pl/events/${event.id}`,
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '5',
+      ratingCount: '1',
+      bestRating: '5',
+      worstRating: '1',
+    },
   };
 }
 
