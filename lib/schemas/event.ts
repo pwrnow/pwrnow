@@ -13,7 +13,8 @@ const eventBaseSchema = {
   description: z
     .string()
     .max(2000, { message: 'Opis nie może przekraczać 2000 znaków' })
-    .optional(),
+    .optional()
+    .transform((val) => (val === '' ? undefined : val)),
   categoryId: z.string().uuid({ message: 'Wybierz kategorię' }),
   url: z
     .string()

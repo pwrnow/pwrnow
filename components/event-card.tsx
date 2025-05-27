@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Calendar,
   MapPin,
@@ -15,9 +16,10 @@ import {
   Navigation,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import DeleteEventButton from './delete-event-button';
 import { useEventLinkTracking } from './posthog-provider';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface Event {
   id: string;
@@ -54,6 +56,7 @@ export default function EventCard({
   showVerificationStatus = false,
   allowDelete = false,
 }: EventCardProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   // Get tracking function from our custom hook
   const { trackEventClick } = useEventLinkTracking();
 
@@ -115,6 +118,11 @@ export default function EventCard({
 
     // Open the maps URL in a new tab
     window.open(mapsUrl, '_blank');
+  };
+
+  const truncateDescription = (text: string, maxLength: number) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.slice(0, maxLength).trim() + '...';
   };
 
   return (
@@ -226,9 +234,33 @@ export default function EventCard({
           </div>
 
           {event.description && (
-            <p className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
-              {event.description}
-            </p>
+            <div className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
+              <div
+                className={cn(
+                  'relative',
+                  !isDescriptionExpanded &&
+                    'after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background'
+                )}
+              >
+                <p className='whitespace-pre-wrap break-words'>
+                  {isDescriptionExpanded
+                    ? event.description
+                    : truncateDescription(event.description, 200)}
+                </p>
+              </div>
+              {event.description.length > 200 && (
+                <Button
+                  variant='link'
+                  size='sm'
+                  className='mt-1 h-auto p-0 text-primary'
+                  onClick={() =>
+                    setIsDescriptionExpanded(!isDescriptionExpanded)
+                  }
+                >
+                  {isDescriptionExpanded ? 'Pokaż mniej' : 'Pokaż więcej'}
+                </Button>
+              )}
+            </div>
           )}
 
           {event.url && (
