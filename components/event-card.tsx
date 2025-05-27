@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Calendar,
   MapPin,
@@ -15,9 +16,9 @@ import {
   Navigation,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import DeleteEventButton from './delete-event-button';
 import { useEventLinkTracking } from './posthog-provider';
+import { useState } from 'react';
 
 interface Event {
   id: string;
@@ -54,6 +55,7 @@ export default function EventCard({
   showVerificationStatus = false,
   allowDelete = false,
 }: EventCardProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   // Get tracking function from our custom hook
   const { trackEventClick } = useEventLinkTracking();
 
@@ -115,6 +117,11 @@ export default function EventCard({
 
     // Open the maps URL in a new tab
     window.open(mapsUrl, '_blank');
+  };
+
+  const truncateDescription = (text: string, maxLength: number) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.slice(0, maxLength).trim() + '...';
   };
 
   return (
@@ -226,9 +233,25 @@ export default function EventCard({
           </div>
 
           {event.description && (
-            <p className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
-              {event.description}
-            </p>
+            <div className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
+              <p>
+                {isDescriptionExpanded
+                  ? event.description
+                  : truncateDescription(event.description, 300)}
+              </p>
+              {event.description.length > 300 && (
+                <Button
+                  variant='link'
+                  size='sm'
+                  className='mt-1 h-auto p-0 text-primary'
+                  onClick={() =>
+                    setIsDescriptionExpanded(!isDescriptionExpanded)
+                  }
+                >
+                  {isDescriptionExpanded ? 'Pokaż mniej' : 'Pokaż więcej'}
+                </Button>
+              )}
+            </div>
           )}
 
           {event.url && (
