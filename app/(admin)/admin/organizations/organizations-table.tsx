@@ -140,7 +140,7 @@ export function OrganizationsTable({
 
     try {
       // Insert organization first
-      const { data, error } = await supabase
+      const { data: org, error: insertError } = await supabase
         .from('organizations')
         .insert([
           {
@@ -152,9 +152,25 @@ export function OrganizationsTable({
         .select()
         .single();
 
-      if (error) throw error;
+      if (insertError) {
+        if (insertError.code === '23505') {
+          setFormError('Organizacja o takim kodzie już istnieje');
+        } else {
+          setFormError('Wystąpił błąd podczas dodawania organizacji');
+        }
+        console.error('Error inserting organization:', insertError);
+        return;
+      }
 
-      if (data && newOrg.imageFile) {
+      if (!org) {
+        setFormError('Nie udało się utworzyć organizacji');
+        return;
+      }
+
+      let finalOrg = org;
+
+      // Handle image upload if provided
+      if (newOrg.imageFile) {
         try {
           // Ensure storage bucket exists
           const { data: buckets } = await supabase.storage.listBuckets();
@@ -181,7 +197,7 @@ export function OrganizationsTable({
           // Generate a unique filename
           const fileExtension = newOrg.imageFile.name.split('.').pop();
           const fileName = `${crypto.randomUUID()}.${fileExtension}`;
-          const filePath = `${data.code}/${fileName}`;
+          const filePath = `${org.code}/${fileName}`;
 
           // Upload file to Supabase Storage
           const { error: uploadError } = await supabase.storage
@@ -193,9 +209,6 @@ export function OrganizationsTable({
             });
 
           if (uploadError) {
-            if (uploadError.message.includes('exceeded')) {
-              throw new Error('Rozmiar obrazka nie może przekraczać 5MB');
-            }
             throw uploadError;
           }
 
@@ -210,39 +223,38 @@ export function OrganizationsTable({
           const { data: updatedOrg, error: updateError } = await supabase
             .from('organizations')
             .update({ image_url: publicUrl })
-            .eq('id', data.id)
+            .eq('id', org.id)
             .select()
             .single();
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            throw updateError;
+          }
 
           if (updatedOrg) {
-            setOrganizations([...organizations, updatedOrg]);
+            finalOrg = updatedOrg;
           }
         } catch (uploadError: any) {
           console.error('Error uploading image:', uploadError);
-          if (uploadError.message.includes('5MB')) {
+          // Don't return here, we still want to add the organization without the image
+          if (uploadError.message.includes('exceeded')) {
             setImageError('Rozmiar obrazka nie może przekraczać 5MB');
           } else {
-            setFormError(
-              'Wystąpił błąd podczas przesyłania obrazka. Spróbuj ponownie.'
-            );
+            setImageError('Wystąpił błąd podczas przesyłania obrazka');
           }
-          return;
         }
-      } else if (data) {
-        setOrganizations([...organizations, data]);
       }
+
+      // Add the organization to the list (with or without image)
+      setOrganizations([...organizations, finalOrg]);
 
       // Reset form
       setNewOrg({ name: '', code: '', imageFile: null });
       setPreviewUrl(null);
       setIsAddDialogOpen(false);
     } catch (error: any) {
-      console.error('Error adding organization:', error);
-      setFormError(
-        'Wystąpił błąd podczas dodawania organizacji. Spróbuj ponownie.'
-      );
+      console.error('Error in handleAddOrganization:', error);
+      setFormError('Wystąpił nieoczekiwany błąd. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
     }

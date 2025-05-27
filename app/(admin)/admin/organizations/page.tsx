@@ -1,5 +1,4 @@
 import { createClient } from '@/utils/supabase/server';
-import { cookies } from 'next/headers';
 import { OrganizationsTable } from './organizations-table';
 
 interface Organization {
