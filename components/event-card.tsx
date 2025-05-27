@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import DeleteEventButton from './delete-event-button';
 import { useEventLinkTracking } from './posthog-provider';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface Event {
   id: string;
@@ -234,12 +235,20 @@ export default function EventCard({
 
           {event.description && (
             <div className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
-              <p>
-                {isDescriptionExpanded
-                  ? event.description
-                  : truncateDescription(event.description, 300)}
-              </p>
-              {event.description.length > 300 && (
+              <div
+                className={cn(
+                  'relative',
+                  !isDescriptionExpanded &&
+                    'after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background'
+                )}
+              >
+                <p className='whitespace-pre-wrap break-words'>
+                  {isDescriptionExpanded
+                    ? event.description
+                    : truncateDescription(event.description, 200)}
+                </p>
+              </div>
+              {event.description.length > 200 && (
                 <Button
                   variant='link'
                   size='sm'

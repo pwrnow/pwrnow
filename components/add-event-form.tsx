@@ -528,7 +528,9 @@ export default function AddEventForm({
               <FormControl>
                 <Textarea
                   placeholder='Opisz swoje wydarzenie (opcjonalnie)'
-                  className='min-h-[120px]'
+                  className='min-h-[120px] whitespace-pre-wrap'
+                  style={{ whiteSpace: 'pre-wrap' }}
+                  spellCheck='true'
                   {...field}
                 />
               </FormControl>
