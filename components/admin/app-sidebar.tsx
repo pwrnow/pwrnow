@@ -7,6 +7,7 @@ import {
   HelpCircle,
   Settings,
   ArrowUpCircle,
+  Navigation,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
@@ -78,14 +79,9 @@ export function AdminSidebar({
 
   const navSecondaryItems = [
     {
-      title: 'Ustawienia',
-      url: '/admin/settings',
-      icon: Settings,
-    },
-    {
-      title: 'Pomoc',
-      url: '/help',
-      icon: HelpCircle,
+      title: 'Strona główna',
+      url: '/',
+      icon: Navigation,
     },
   ];
 
@@ -108,7 +104,7 @@ export function AdminSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainItems} />
-        {/* <NavSecondary items={navSecondaryItems} className='mt-auto' /> */}
+        <NavSecondary items={navSecondaryItems} className='mt-auto' />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
