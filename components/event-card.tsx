@@ -18,7 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import DeleteEventButton from './delete-event-button';
 import { useEventLinkTracking } from './posthog-provider';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Event {
@@ -57,6 +57,8 @@ export default function EventCard({
   allowDelete = false,
 }: EventCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<'1:1' | '16:9'>('16:9');
+  const [isImageLoading, setIsImageLoading] = useState(true);
   // Get tracking function from our custom hook
   const { trackEventClick } = useEventLinkTracking();
 
@@ -88,6 +90,35 @@ export default function EventCard({
 
   // Determine if the event is verified or not
   const isVerified = event.verified !== undefined ? event.verified : false;
+
+  // Function to detect image aspect ratio
+  const detectAspectRatio = (width: number, height: number) => {
+    const ratio = width / height;
+    // Allow some tolerance around the target ratios
+    if (Math.abs(ratio - 1) <= 0.1) {
+      return '1:1';
+    }
+    if (Math.abs(ratio - 16 / 9) <= 0.1) {
+      return '16:9';
+    }
+    // Default to 16:9 for other ratios
+    return '16:9';
+  };
+
+  // Preload image to detect dimensions
+  useEffect(() => {
+    if (event.image_url) {
+      const img = new window.Image();
+      img.src = event.image_url;
+      img.onload = () => {
+        setAspectRatio(detectAspectRatio(img.width, img.height));
+        setIsImageLoading(false);
+      };
+      img.onerror = () => {
+        setIsImageLoading(false);
+      };
+    }
+  }, [event.image_url]);
 
   // Handle click on event link
   const handleEventLinkClick = () => {
@@ -187,14 +218,29 @@ export default function EventCard({
           </div>
         </div>
 
-        <div className='relative aspect-[16/9] w-full overflow-hidden bg-gray-100 dark:bg-gray-900'>
+        <div
+          className={cn(
+            'relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900',
+            aspectRatio === '1:1' ? 'aspect-square' : 'aspect-[16/9]',
+            isImageLoading && 'animate-pulse'
+          )}
+        >
           <Image
             src={event.image_url || '/placeholder.svg'}
             alt={event.title}
             fill
-            className='object-cover transition-transform duration-500 z-10'
+            className={cn(
+              'object-cover transition-transform duration-500 z-10',
+              isImageLoading && 'opacity-0'
+            )}
             sizes='(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px'
             priority
+            onLoadingComplete={(img) => {
+              setAspectRatio(
+                detectAspectRatio(img.naturalWidth, img.naturalHeight)
+              );
+              setIsImageLoading(false);
+            }}
           />
         </div>
 
