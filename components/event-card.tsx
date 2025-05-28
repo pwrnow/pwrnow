@@ -187,12 +187,12 @@ export default function EventCard({
           </div>
         </div>
 
-        <div className='relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-900'>
+        <div className='relative aspect-[16/9] w-full overflow-hidden bg-gray-100 dark:bg-gray-900'>
           <Image
             src={event.image_url || '/placeholder.svg'}
             alt={event.title}
             fill
-            className='object-contain transition-transform duration-500'
+            className='object-cover transition-transform duration-500 z-10'
             sizes='(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px'
             priority
           />
