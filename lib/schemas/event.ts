@@ -42,6 +42,12 @@ const serverBaseSchema = {
     .or(z.literal(''))
     .transform((val) => (val === '' ? null : val))
     .nullish(),
+  categoryId: z
+    .string()
+    .uuid({ message: 'Wybierz kategorię' })
+    .optional()
+    .transform((val) => (val === '' ? null : val))
+    .nullish(),
 };
 
 // Client-side form schema using Date objects
@@ -59,9 +65,6 @@ export const eventFormSchema = z
     message: 'Data zakończenia musi być późniejsza niż data rozpoczęcia',
     path: ['endsAt'],
   });
-
-// Type for form values (client-side)
-export type EventFormValues = z.infer<typeof eventFormSchema>;
 
 // Server-side schema that handles both form submission and API validation
 export const eventServerSchema = z
@@ -81,8 +84,21 @@ export const eventServerSchema = z
     path: ['endsAt'],
   });
 
-// Type for server-side parameters
+// Admin schemas
+export const eventVerificationSchema = z.object({
+  eventId: z.string().uuid({ message: 'Nieprawidłowe ID wydarzenia' }),
+  verified: z.string().transform((val) => val === 'true'),
+});
+
+export const eventDeleteSchema = z.object({
+  eventId: z.string().uuid({ message: 'Nieprawidłowe ID wydarzenia' }),
+});
+
+// Type exports
+export type EventFormValues = z.infer<typeof eventFormSchema>;
 export type EventServerParams = z.infer<typeof eventServerSchema>;
+export type EventVerificationParams = z.infer<typeof eventVerificationSchema>;
+export type EventDeleteParams = z.infer<typeof eventDeleteSchema>;
 
 // Utility function to transform form data to server data
 export function formToServerData(

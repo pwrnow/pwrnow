@@ -4,7 +4,14 @@ import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
-import { eventServerSchema, EventServerParams } from '@/lib/schemas/event';
+import {
+  eventServerSchema,
+  EventServerParams,
+  eventVerificationSchema,
+  eventDeleteSchema,
+} from '@/lib/schemas/event';
+import { requireAdmin } from '@/utils/auth';
+import { z } from 'zod';
 
 interface CreateEventParams extends EventServerParams {
   imageFile: File | null;
@@ -283,42 +290,59 @@ export const getEvents = cache(
   }
 );
 
-export async function updateEventStatus(formData: FormData): Promise<void> {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.user) {
-    redirect('/login');
-  }
-
-  if (session.user.role !== 'admin') {
-    throw new Error('Unauthorized');
-  }
-
-  const eventId = formData.get('eventId');
-  const verified = formData.get('verified');
-
-  if (!eventId || verified === null) {
-    throw new Error('Missing required fields');
-  }
+export async function updateEventStatus(formData: FormData) {
+  await requireAdmin();
 
   try {
-    const supabase = await createClient();
+    const validatedData = eventVerificationSchema.parse({
+      eventId: formData.get('eventId'),
+      verified: formData.get('verified'),
+    });
 
+    const supabase = await createClient();
     const { error } = await supabase
       .from('events')
-      .update({ verified: verified === 'true' })
-      .eq('id', eventId);
+      .update({ verified: validatedData.verified })
+      .eq('id', validatedData.eventId);
 
     if (error) {
-      throw error;
+      throw new Error(`Błąd podczas aktualizacji statusu: ${error.message}`);
     }
 
     revalidatePath('/admin/events');
   } catch (error) {
-    console.error('Error updating event status:', error);
-    throw new Error('Failed to update event status');
+    if (error instanceof z.ZodError) {
+      throw new Error(error.errors[0].message);
+    }
+    throw error instanceof Error
+      ? error
+      : new Error('Błąd podczas aktualizacji statusu wydarzenia');
+  }
+}
+
+export async function adminDeleteEvent(eventId: string) {
+  await requireAdmin();
+
+  try {
+    const validatedData = eventDeleteSchema.parse({ eventId });
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', validatedData.eventId);
+
+    if (error) {
+      throw new Error(`Błąd podczas usuwania wydarzenia: ${error.message}`);
+    }
+
+    revalidatePath('/admin/events');
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(error.errors[0].message);
+    }
+    throw error instanceof Error
+      ? error
+      : new Error('Błąd podczas usuwania wydarzenia');
   }
 }

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Clock3,
   Navigation,
+  Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
@@ -31,19 +32,26 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-} from '@/components/ui/dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { adminDeleteEvent, updateEventStatus } from '@/app/actions/events';
+import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
+import { useFormStatus, useFormState } from 'react-dom';
+import React from 'react';
 
 interface Category {
   id: string;
@@ -77,43 +85,174 @@ interface Event {
 
 type VerificationFilter = 'all' | 'verified' | 'unverified';
 
-interface UrlDialogProps {
-  url: string;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+interface DeleteEventDialogProps {
+  event: Event;
+  onSuccess: () => void;
 }
 
-function UrlDialog({ url, isOpen, onOpenChange, onConfirm }: UrlDialogProps) {
+function DeleteEventDialog({ event, onSuccess }: DeleteEventDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [state, formAction] = useFormState(deleteEvent, null);
+  const { pending } = useFormStatus();
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (state?.error) {
+      toast({
+        title: 'Błąd',
+        description: state.error,
+        variant: 'destructive',
+      });
+    } else if (state?.success) {
+      toast({
+        title: 'Sukces',
+        description: 'Wydarzenie zostało usunięte',
+      });
+      setIsOpen(false);
+      onSuccess();
+    }
+  }, [state, toast, onSuccess]);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Przejdź do zewnętrznej strony</DialogTitle>
-          <DialogDescription>
-            Czy na pewno chcesz przejść do: <br />
-            <span className='font-medium break-all'>{url}</span>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className='flex gap-2 justify-end'>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
-            Anuluj
-          </Button>
-          <Button onClick={onConfirm}>
-            <ExternalLink className='mr-2 h-4 w-4' />
-            Przejdź
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant='outline'
+          size='icon'
+          className='text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30'
+        >
+          <Trash2 className='h-4 w-4' />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Czy na pewno chcesz usunąć to wydarzenie?
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Zamierzasz usunąć wydarzenie{' '}
+            <span className='font-medium'>"{event.title}"</span>. Ta akcja jest
+            nieodwracalna i spowoduje trwałe usunięcie wydarzenia.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Anuluj</AlertDialogCancel>
+          <form action={formAction}>
+            <input type='hidden' name='eventId' value={event.id} />
+            <AlertDialogAction
+              type='submit'
+              disabled={pending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {pending ? 'Usuwanie...' : 'Usuń wydarzenie'}
+            </AlertDialogAction>
+          </form>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
-export function EventsTable({ events }: { events: Event[] }) {
+interface EventsTableProps {
+  events: Event[];
+  categories: Category[];
+}
+
+async function verifyEvent(prevState: any, formData: FormData) {
+  try {
+    await updateEventStatus(formData);
+    return { success: true };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : 'Wystąpił nieoczekiwany błąd',
+    };
+  }
+}
+
+function VerificationButton({
+  event,
+  pending,
+}: {
+  event: Event;
+  pending: boolean;
+}) {
+  return (
+    <Button
+      type='submit'
+      size='icon'
+      variant='ghost'
+      className={cn(
+        'h-6 w-6',
+        event.verified ? 'text-amber-600' : 'text-green-600'
+      )}
+      disabled={pending}
+    >
+      {pending ? (
+        <div className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+      ) : (
+        <Check className='h-3 w-3' />
+      )}
+    </Button>
+  );
+}
+
+function VerificationForm({ event }: { event: Event }) {
+  const [state, formAction] = useFormState(verifyEvent, null);
+  const { pending } = useFormStatus();
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (state?.error) {
+      toast({
+        title: 'Błąd',
+        description: state.error,
+        variant: 'destructive',
+      });
+    } else if (state?.success) {
+      toast({
+        title: 'Sukces',
+        description: event.verified
+          ? 'Status weryfikacji został cofnięty'
+          : 'Wydarzenie zostało zweryfikowane',
+      });
+    }
+  }, [state, event.verified, toast]);
+
+  return (
+    <form action={formAction}>
+      <input type='hidden' name='eventId' value={event.id} />
+      <input
+        type='hidden'
+        name='verified'
+        value={(!event.verified).toString()}
+      />
+      <VerificationButton event={event} pending={pending} />
+    </form>
+  );
+}
+
+async function deleteEvent(prevState: any, formData: FormData) {
+  try {
+    const eventId = formData.get('eventId')?.toString();
+    if (!eventId) throw new Error('Brak ID wydarzenia');
+
+    await adminDeleteEvent(eventId);
+    return { success: true };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : 'Wystąpił nieoczekiwany błąd',
+    };
+  }
+}
+
+export function EventsTable({ events, categories }: EventsTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [verificationFilter, setVerificationFilter] =
     useState<VerificationFilter>('all');
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const router = useRouter();
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
@@ -239,37 +378,17 @@ export function EventsTable({ events }: { events: Event[] }) {
                 </div>
                 <div className='flex items-center gap-2'>
                   <TooltipProvider>
-                    {!event.verified && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            className='h-6 w-6 text-green-600'
-                          >
-                            <Check className='h-3 w-3' />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Weryfikuj</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <VerificationForm event={event} />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {event.verified ? 'Cofnij weryfikację' : 'Weryfikuj'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                   </TooltipProvider>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size='icon' variant='ghost' className='h-6 w-6'>
-                        <MoreHorizontal className='h-3 w-3' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuLabel>Akcje</DropdownMenuLabel>
-                      <DropdownMenuItem className='text-red-600'>
-                        Usuń
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
               </div>
 
@@ -289,14 +408,20 @@ export function EventsTable({ events }: { events: Event[] }) {
                       <span className='font-medium text-base truncate'>
                         {organizationName}
                       </span>
-                      {event.category && (
-                        <Badge
-                          variant='outline'
-                          className='bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50'
-                        >
-                          {categoryName}
-                        </Badge>
-                      )}
+                      <div className='flex items-center gap-2'>
+                        {event.category && (
+                          <Badge
+                            variant='outline'
+                            className='bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50'
+                          >
+                            {categoryName}
+                          </Badge>
+                        )}
+                        <DeleteEventDialog
+                          event={event}
+                          onSuccess={() => router.refresh()}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -389,15 +514,6 @@ export function EventsTable({ events }: { events: Event[] }) {
           );
         })}
       </div>
-
-      {selectedUrl && (
-        <UrlDialog
-          url={selectedUrl}
-          isOpen={!!selectedUrl}
-          onOpenChange={(open) => !open && setSelectedUrl(null)}
-          onConfirm={() => handleUrlClick(selectedUrl)}
-        />
-      )}
     </>
   );
 }

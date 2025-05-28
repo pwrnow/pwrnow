@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
-import { EventsTable } from './events-table';
+import { EventsTable } from '@/app/(admin)/admin/events/events-table';
 
 interface Event {
   id: string;
@@ -35,7 +35,8 @@ interface Organization {
 export default async function EventsPage() {
   const supabase = await createClient();
 
-  const { data: events, error } = await supabase
+  // Fetch events with related data
+  const { data: events, error: eventsError } = await supabase
     .from('events')
     .select(
       `
@@ -46,9 +47,20 @@ export default async function EventsPage() {
     )
     .order('starts_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching events:', error);
+  // Fetch categories
+  const { data: categories, error: categoriesError } = await supabase
+    .from('categories')
+    .select('*')
+    .order('order_index', { ascending: true });
+
+  if (eventsError) {
+    console.error('Error fetching events:', eventsError);
     return <div>Error loading events. Please try again later.</div>;
+  }
+
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError);
+    return <div>Error loading categories. Please try again later.</div>;
   }
 
   return (
@@ -60,7 +72,7 @@ export default async function EventsPage() {
         </p>
       </div>
 
-      <EventsTable events={events || []} />
+      <EventsTable events={events || []} categories={categories || []} />
     </>
   );
 }
