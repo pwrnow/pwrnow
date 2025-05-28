@@ -235,7 +235,8 @@ export default function EventCard({
             )}
             sizes='(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px'
             priority
-            onLoadingComplete={(img) => {
+            onLoad={(event) => {
+              const img = event.target as HTMLImageElement;
               setAspectRatio(
                 detectAspectRatio(img.naturalWidth, img.naturalHeight)
               );
