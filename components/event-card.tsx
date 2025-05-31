@@ -169,13 +169,19 @@ export default function EventCard({
       <div className='flex flex-col'>
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
           <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
-            <AvatarImage
-              src={organizationImageUrl || undefined}
-              alt={organizationName}
-            />
-            <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
-              {orgInitials}
-            </AvatarFallback>
+            {organizationImageUrl ? (
+              <Image
+                src={organizationImageUrl}
+                alt={organizationName}
+                fill
+                className='object-cover rounded-full'
+                sizes='(max-width: 640px) 32px, 40px'
+              />
+            ) : (
+              <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
+                {orgInitials}
+              </AvatarFallback>
+            )}
           </Avatar>
           <div className='flex-1'>
             <div className='flex items-center justify-between'>
