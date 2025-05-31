@@ -51,9 +51,9 @@ export const metadata: Metadata = {
       'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
     images: [
       {
-        url: 'https://pwrnow.pl/og-image.jpg',
+        url: 'https://pwrnow.pl/og-image.png',
         width: 1200,
-        height: 630,
+        height: 675,
         alt: 'PWr Now - Centrum wydarzeń',
       },
     ],
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     title: 'PWr Now - Centrum wydarzeń na Politechnice Wrocławskiej',
     description:
       'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
-    images: ['https://pwrnow.pl/og-image.jpg'],
+    images: ['https://pwrnow.pl/og-image.png'],
     creator: '@pwrnow',
   },
   alternates: {
