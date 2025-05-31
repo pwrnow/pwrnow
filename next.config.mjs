@@ -13,6 +13,14 @@ const nextConfig = {
         hostname: 'grpczfvicmktrahsffnf.supabase.co',
       },
     ],
+    // Cache images for 31 days (2678400 seconds) to reduce transformations and cache writes
+    minimumCacheTTL: 2678400,
+    // Use webp format for better compression while maintaining quality
+    formats: ['image/webp'],
+    // Optimize quality settings to reduce cache reads/writes and transfer costs
+    qualities: [75, 100],
+    // Configure device sizes to match common breakpoints and reduce transformations
+    deviceSizes: [640, 768, 1024, 1280, 1600],
   },
   experimental: {
     webpackBuildWorker: true,
