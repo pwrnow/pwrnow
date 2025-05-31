@@ -105,21 +105,6 @@ export default function EventCard({
     return '16:9';
   };
 
-  // Preload image to detect dimensions
-  useEffect(() => {
-    if (event.image_url) {
-      const img = new window.Image();
-      img.src = event.image_url;
-      img.onload = () => {
-        setAspectRatio(detectAspectRatio(img.width, img.height));
-        setIsImageLoading(false);
-      };
-      img.onerror = () => {
-        setIsImageLoading(false);
-      };
-    }
-  }, [event.image_url]);
-
   // Handle click on event link
   const handleEventLinkClick = () => {
     trackEventClick(event.id, event.title, {
