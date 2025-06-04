@@ -185,7 +185,7 @@ export default function EventCard({
           </Avatar>
           <div className='flex-1'>
             <div className='flex items-center justify-between'>
-              <span className='font-medium text-sm sm:text-base truncate'>
+              <span className='font-medium text-xs sm:text-sm leading-tight break-words max-w-[60%]'>
                 {organizationName}
               </span>
               <div className='flex items-center gap-2'>
