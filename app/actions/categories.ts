@@ -26,6 +26,6 @@ export const getCategories = unstable_cache(
   ['categories'],
   {
     tags: ['categories'],
-    revalidate: 3600, // Cache for 1 hour
+    revalidate: 86400, // Cache for 1 day (24 hours)
   }
 );

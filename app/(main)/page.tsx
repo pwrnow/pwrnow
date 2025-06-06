@@ -1,28 +1,24 @@
 import { Suspense } from 'react';
 import EventFeed, { EventFeedSkeleton } from '@/components/event-feed';
 import CategorySelector from '@/components/category-selector';
-import { getEvents, Event } from '@/app/actions/events';
+import { CategorySelectorSkeleton } from '@/components/category-selector-skeleton';
+import { getEvents } from '@/app/actions/events';
 import { getCategories } from '@/app/actions/categories';
 import { generateEventJsonLd } from '@/lib/jsonld';
 
 // Enable Full Route Cache by setting revalidation
 export const revalidate = 3600; // Revalidate every hour
 
-// Enable static generation for better caching
-export const dynamic = 'force-dynamic';
+// Force static generation
+export const dynamic = 'force-static';
 
 // Cache fetch requests for better performance
 export const fetchCache = 'default-cache';
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: { category?: string };
-}) {
+export default async function Home() {
   const categories = await getCategories();
-  const params = await searchParams;
-  const category = params.category;
-  const events = await getEvents(category);
+  // Load ALL events - filtering will happen client-side
+  const events = await getEvents();
 
   // Generate JSON-LD for all events
   const eventsJsonLd = events.map(generateEventJsonLd);
@@ -45,11 +41,13 @@ export default async function Home({
         }}
       />
 
-      <CategorySelector categories={categories} />
+      <Suspense fallback={<CategorySelectorSkeleton />}>
+        <CategorySelector categories={categories} />
+      </Suspense>
 
       <div className='w-full mt-4 sm:mt-6 transition-all duration-300'>
         <Suspense fallback={<EventFeedSkeleton />}>
-          <EventFeed allEvents={events} categorySlug={category} />
+          <EventFeed allEvents={events} />
         </Suspense>
       </div>
     </>
