@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -62,6 +62,11 @@ export default function AddEventForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isFormLoaded, setIsFormLoaded] = useState(false);
+
+  // Create a unique storage key for this organization
+  const storageKey = `add-event-form-${orgCode}`;
+  const imageStorageKey = `add-event-image-${orgCode}`;
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -73,6 +78,116 @@ export default function AddEventForm({
       url: '',
     },
   });
+
+  // Load saved form data on component mount
+  useEffect(() => {
+    try {
+      const savedFormData = localStorage.getItem(storageKey);
+      if (savedFormData) {
+        const parsedData = JSON.parse(savedFormData);
+
+        // Convert date strings back to Date objects
+        if (parsedData.startsAt) {
+          parsedData.startsAt = new Date(parsedData.startsAt);
+        }
+        if (parsedData.endsAt) {
+          parsedData.endsAt = new Date(parsedData.endsAt);
+        }
+
+        // Set the form values
+        form.reset(parsedData);
+      }
+
+      // Restore saved image if exists
+      const savedImageData = localStorage.getItem(imageStorageKey);
+      if (savedImageData) {
+        try {
+          const parsedImageData = JSON.parse(savedImageData);
+
+          if (parsedImageData.base64 && !parsedImageData.tooLarge) {
+            // Restore full image from base64
+            const restoredFile = base64ToFile(
+              parsedImageData.base64,
+              parsedImageData.name,
+              parsedImageData.type
+            );
+            setImageFile(restoredFile);
+          } else if (parsedImageData.tooLarge) {
+            // Show info about large image that couldn't be persisted
+            setImageError(
+              `⚠️ Poprzednio wybrano duży obraz: ${parsedImageData.name} (${parsedImageData.size}KB). Wybierz go ponownie.`
+            );
+          }
+        } catch (error) {
+          console.error('Error restoring image:', error);
+          localStorage.removeItem(imageStorageKey);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved form data:', error);
+      // Clear corrupted data
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(imageStorageKey);
+    }
+    setIsFormLoaded(true);
+  }, [form, storageKey, imageStorageKey]);
+
+  // Watch form values and save to localStorage with debounce
+  const watchedValues = form.watch();
+  useEffect(() => {
+    if (!isFormLoaded) return; // Don't save during initial load
+
+    const timeoutId = setTimeout(() => {
+      try {
+        // Only save if there's actual data (not just empty strings)
+        const hasData = Object.values(watchedValues).some(
+          (value) => value !== '' && value !== undefined && value !== null
+        );
+
+        if (hasData) {
+          localStorage.setItem(storageKey, JSON.stringify(watchedValues));
+        }
+      } catch (error) {
+        console.error('Error saving form data:', error);
+      }
+    }, 500); // Debounce for 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedValues, storageKey, isFormLoaded]);
+
+  // Helper functions for image persistence
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const base64ToFile = (
+    base64: string,
+    filename: string,
+    mimeType: string
+  ): File => {
+    const byteCharacters = atob(base64.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new File([byteArray], filename, { type: mimeType });
+  };
+
+  // Clear saved data helper function
+  const clearSavedData = () => {
+    try {
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(imageStorageKey);
+    } catch (error) {
+      console.error('Error clearing saved data:', error);
+    }
+  };
 
   async function onSubmit(data: EventFormValues) {
     try {
@@ -96,6 +211,9 @@ export default function AddEventForm({
       });
 
       if (result.success) {
+        // Clear saved form data on successful submission
+        clearSavedData();
+
         // Navigate back to organization page
         router.push(`/${orgCode}`);
         router.refresh();
@@ -459,12 +577,44 @@ export default function AddEventForm({
           <FormLabel>Zdjęcie</FormLabel>
           <Dropzone
             className='mt-2'
-            onDrop={(acceptedFiles) => {
+            onDrop={async (acceptedFiles) => {
               if (acceptedFiles[0].size > 5 * 1024 * 1024) {
                 setImageError('Rozmiar obrazka nie może przekraczać 5MB');
               } else {
                 setImageError(null);
                 setImageFile(acceptedFiles[0]);
+
+                // Save full image data as base64 to localStorage
+                try {
+                  // Only save image to localStorage if it's reasonably small (< 2MB)
+                  // to avoid localStorage size limits
+                  if (acceptedFiles[0].size < 2 * 1024 * 1024) {
+                    const base64 = await fileToBase64(acceptedFiles[0]);
+                    const imageData = {
+                      name: acceptedFiles[0].name,
+                      type: acceptedFiles[0].type,
+                      size: Math.round(acceptedFiles[0].size / 1024),
+                      base64: base64,
+                    };
+                    localStorage.setItem(
+                      imageStorageKey,
+                      JSON.stringify(imageData)
+                    );
+                  } else {
+                    // For larger files, just save metadata and show warning
+                    const imageInfo = {
+                      name: acceptedFiles[0].name,
+                      size: Math.round(acceptedFiles[0].size / 1024),
+                      tooLarge: true,
+                    };
+                    localStorage.setItem(
+                      imageStorageKey,
+                      JSON.stringify(imageInfo)
+                    );
+                  }
+                } catch (error) {
+                  console.error('Error saving image:', error);
+                }
               }
             }}
           />
