@@ -9,7 +9,7 @@ import { generateEventJsonLd } from '@/lib/jsonld';
 export const revalidate = 3600; // Revalidate every hour
 
 // Enable static generation for better caching
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 
 // Cache fetch requests for better performance
 export const fetchCache = 'default-cache';
