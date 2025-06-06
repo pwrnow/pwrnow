@@ -1,34 +1,18 @@
 import { Suspense } from 'react';
 import EventFeed, { EventFeedSkeleton } from '@/components/event-feed';
 import CategorySelector from '@/components/category-selector';
-import { getEvents } from '@/app/actions/events';
+import { getEvents, Event } from '@/app/actions/events';
 import { getCategories } from '@/app/actions/categories';
 import { generateEventJsonLd } from '@/lib/jsonld';
 
-// Define Event type to be shared across components
-export interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  starts_at: string;
-  ends_at: string;
-  location: string | null;
-  image_url: string | null;
-  url: string | null;
-  verified?: boolean;
-  organization?: {
-    id: string;
-    name: string;
-    image_url: string | null;
-  };
-  category?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-}
+// Enable Full Route Cache by setting revalidation
+export const revalidate = 3600; // Revalidate every hour
 
-export const revalidate = 60;
+// Enable static generation for better caching
+export const dynamic = 'force-static';
+
+// Cache fetch requests for better performance
+export const fetchCache = 'default-cache';
 
 export default async function Home({
   searchParams,

@@ -1,7 +1,8 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { createPublicClient } from '@/utils/supabase/public';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import {
@@ -12,6 +13,29 @@ import {
 } from '@/lib/schemas/event';
 import { requireAdmin } from '@/utils/auth';
 import { z } from 'zod';
+
+// Define Event type to be shared across components
+export interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string;
+  location: string | null;
+  image_url: string | null;
+  url: string | null;
+  verified?: boolean;
+  organization?: {
+    id: string;
+    name: string;
+    image_url: string | null;
+  };
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
 
 interface CreateEventParams extends EventServerParams {
   imageFile: File | null;
@@ -175,8 +199,10 @@ export async function createEvent(params: CreateEventParams) {
         };
       }
 
-      // Revalidate the organization page
+      // Revalidate the organization page and cache
       revalidatePath(`/${orgCode}`);
+      revalidatePath('/');
+      revalidateTag('events');
 
       return { success: true, eventId: data.id };
     } catch (dbError) {
@@ -223,8 +249,10 @@ export async function deleteEvent(eventId: string, organizationId: string) {
       return { success: false, error: error.message };
     }
 
-    // Revalidate the organization page
+    // Revalidate the organization page and cache
     revalidatePath(`/${organizationId}`);
+    revalidatePath('/');
+    revalidateTag('events');
 
     return { success: true };
   } catch (error) {
@@ -237,9 +265,9 @@ export async function deleteEvent(eventId: string, organizationId: string) {
 }
 
 // Cached category map to avoid repeated slug-to-id lookups
-const getCategoryIdFromSlug = cache(
+const getCategoryIdFromSlug = unstable_cache(
   async (slug: string): Promise<string | null> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
 
     const { data } = await supabase
       .from('categories')
@@ -248,13 +276,18 @@ const getCategoryIdFromSlug = cache(
       .single();
 
     return data?.id || null;
+  },
+  ['category-slug'],
+  {
+    tags: ['categories'],
+    revalidate: 3600, // Cache for 1 hour
   }
 );
 
 // Cache the event fetching to improve performance
-export const getEvents = cache(
+export const getEvents = unstable_cache(
   async (categorySlug?: string): Promise<Event[]> => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
 
     let query = supabase
       .from('events')
@@ -287,6 +320,11 @@ export const getEvents = cache(
     }
 
     return events || [];
+  },
+  ['events'],
+  {
+    tags: ['events'],
+    revalidate: 3600, // Cache for 1 hour
   }
 );
 
@@ -310,6 +348,8 @@ export async function updateEventStatus(formData: FormData) {
     }
 
     revalidatePath('/admin/events');
+    revalidatePath('/');
+    revalidateTag('events');
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error(error.errors[0].message);
@@ -337,6 +377,8 @@ export async function adminDeleteEvent(eventId: string) {
     }
 
     revalidatePath('/admin/events');
+    revalidatePath('/');
+    revalidateTag('events');
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error(error.errors[0].message);
