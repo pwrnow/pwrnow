@@ -67,6 +67,7 @@ COPY --chown=django:django . ${APP_HOME}
 
 # Create media directory and set permissions
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
+RUN mkdir -p ${APP_HOME}/staticfiles && chown -R django:django ${APP_HOME}/staticfiles
 
 USER django
 
