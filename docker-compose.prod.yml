@@ -1,100 +1,100 @@
 volumes:
-  postgres_data: {}
-  django_media: {}
-  django_static: {}
-  redis_data: {}
+    postgres_data: {}
+    django_media: {}
+    django_static: {}
+    redis_data: {}
 
 services:
-  postgres:
-    image: postgres:17
-    container_name: pwrnow_postgres
-    environment:
-      POSTGRES_DB: pwrnow
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    postgres:
+        image: postgres:17
+        container_name: pwrnow_postgres
+        environment:
+            POSTGRES_DB: pwrnow
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
-  redis:
-    image: redis:7
-    container_name: pwrnow_redis
-    volumes:
-      - redis_data:/data
+    redis:
+        image: redis:7
+        container_name: pwrnow_redis
+        volumes:
+            - redis_data:/data
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pwrnow_backend
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
-      - REDIS_URL=redis://redis:6379/0
-    volumes:
-      - django_media:/app/media
-      - django_static:/app/staticfiles
-    depends_on:
-      - redis
-      - postgres
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        container_name: pwrnow_backend
+        env_file:
+            - .env
+        environment:
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
+            - REDIS_URL=redis://redis:6379/0
+        volumes:
+            - django_media:/app/media
+            - django_static:/app/staticfiles
+        depends_on:
+            - redis
+            - postgres
 
-  celeryworker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pwrnow_celeryworker
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - redis
-      - postgres
-    command: celery -A config.celery_app worker -l INFO
+    celeryworker:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        container_name: pwrnow_celeryworker
+        env_file:
+            - .env
+        environment:
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
+            - REDIS_URL=redis://redis:6379/0
+        depends_on:
+            - redis
+            - postgres
+        command: celery -A config.celery_app worker -l INFO
 
-  celerybeat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pwrnow_celerybeat
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
-      - REDIS_URL=redis://redis:6379/0
-    command: celery -A config.celery_app beat -l INFO
-    depends_on:
-      - redis
-      - postgres
+    celerybeat:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        container_name: pwrnow_celerybeat
+        env_file:
+            - .env
+        environment:
+            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
+            - REDIS_URL=redis://redis:6379/0
+        command: celery -A config.celery_app beat -l INFO
+        depends_on:
+            - redis
+            - postgres
 
-  web:
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-    container_name: pwrnow_web
-    ports:
-      - '3000:3000'
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - HOSTNAME=0.0.0.0
+    web:
+        build:
+            context: ./web
+            dockerfile: Dockerfile
+        container_name: pwrnow_web
+        ports:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+            - HOSTNAME=0.0.0.0
 
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: pwrnow_nginx
-    ports:
-      - '80:80'
-    depends_on:
-      - backend
-      - web
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - django_static:/usr/share/nginx/html/static
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        container_name: pwrnow_nginx
+        #nginx listens on port 80, as specified in the nginx.conf file
+        #coolify will manage the port mapping on its own
+        depends_on:
+            - backend
+            - web
+        volumes:
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - django_static:/usr/share/nginx/html/static
