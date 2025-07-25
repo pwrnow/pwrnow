@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: pwrnow_postgres
+    environment:
+      POSTGRES_DB: pwrnow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    container_name: pwrnow_mailpit
+    ports:
+      - '8025:8025'
+
+  redis:
+    image: redis:7
+    container_name: pwrnow_redis
+    ports:
+      - '6379:6379'
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pwrnow_backend
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - postgres
+    command: ['/start.sh']
+
+  celeryworker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pwrnow_celeryworker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    command: watchfiles --filter python celery.__main__.main --args '-A config.celery_app worker -l INFO'
+    depends_on:
+      - redis
+      - postgres
+
+  celerybeat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pwrnow_celerybeat
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
+      - REDIS_URL=redis://redis:6379/0
+    command: watchfiles --filter python celery.__main__.main --args '-A config.celery_app beat -l INFO'
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  postgres_data:

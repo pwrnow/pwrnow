@@ -1,0 +1,15 @@
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views
+
+# Create a router and register our viewsets with it
+router = DefaultRouter()
+router.register(r'events', views.EventViewSet, basename='event')
+router.register(r'categories', views.CategoryViewSet, basename='category')
+router.register(r'organizations', views.OrganizationViewSet, basename='organization')
+router.register(r'tags', views.TagViewSet, basename='tag')
+
+# The API URLs are now determined automatically by the router
+urlpatterns = [
+    path('api/', include(router.urls)),
+]

@@ -1,0 +1,81 @@
+import type { Metadata } from 'next';
+import { ThemeProvider } from 'next-themes';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'PWr Now',
+  description:
+    'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
+  metadataBase: new URL('https://pwrnow.pl'),
+  applicationName: 'PWr Now',
+  keywords: [
+    'wydarzenia',
+    'Politechnika Wrocławska',
+    'PWr',
+    'studenci',
+    'Wrocław',
+    'uczelnia',
+  ],
+  authors: [{ name: 'PWr Now Team' }],
+  creator: 'PWr Now Team',
+  publisher: 'PWr Now',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'pl_PL',
+    url: 'https://pwrnow.pl',
+    siteName: 'PWr Now',
+    title: 'PWr Now - Centrum wydarzeń na Politechnice Wrocławskiej',
+    description:
+      'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
+  },
+  category: 'education',
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang='pl' suppressHydrationWarning>
+      <head>
+        <link rel='preconnect' href='https://fonts.googleapis.com' />
+        <link
+          rel='preconnect'
+          href='https://fonts.gstatic.com'
+          crossOrigin='anonymous'
+        />
+        <link
+          href='https://fonts.googleapis.com/css2?family=Righteous&family=Space+Grotesk:wght@300..700&display=swap'
+          rel='stylesheet'
+        />
+      </head>
+      <body suppressHydrationWarning>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='system'
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
