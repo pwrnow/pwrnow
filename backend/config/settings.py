@@ -211,6 +211,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://10.0.0.1:8001", # Expo django admin on local network
     "http://192.168.2.2:8001", # Expo django admin on local network
     "http://10.0.0.1:8081", # Expo mobile app on local network
+    
 ]
 
 # Allow all origins in development
