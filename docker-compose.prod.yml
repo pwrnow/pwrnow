@@ -7,12 +7,6 @@ services:
   postgres:
     image: postgres:17
     container_name: pwrnow_postgres
-    environment:
-      POSTGRES_DB: pwrnow
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -32,11 +26,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     container_name: pwrnow_backend
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
-      - REDIS_URL=redis://redis:6379/0
     ports:
       - '8001:5000'
     volumes:
@@ -51,11 +40,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     container_name: pwrnow_celeryworker
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
-      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend:/app
     command: celery -A config.celery_app worker -l INFO
@@ -68,11 +52,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     container_name: pwrnow_celerybeat
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwrnow
-      - REDIS_URL=redis://redis:6379/0
     command: celery -A config.celery_app beat -l INFO
     depends_on:
       - redis
