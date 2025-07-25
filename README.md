@@ -8,6 +8,48 @@ PWr Now is a platform for discovering and managing events at Politechnika Wrocł
 
 ---
 
+## Deployment
+
+### Required Environment Variables (for backend/Django)
+
+- `SECRET_KEY` – Django secret key (required for production)
+- `DEBUG` – Set to `False` for production
+- `ALLOWED_HOSTS` – Comma-separated list of allowed hosts (e.g., `.yourdomain.com`)
+- `DATABASE_URL` – Database connection string (e.g., `postgres://user:password@host:5432/dbname`)
+- `REDIS_URL` – Redis connection string (default: `redis://redis:6379/0`)
+- `SITE_URL` – Public URL of your site (e.g., `https://pwrnow.pl`)
+- `DISCORD_WEBHOOK_URL` – (Optional) Discord webhook for notifications
+
+#### Example `.env` for Production
+
+```env
+SECRET_KEY=your-production-secret-key
+DEBUG=False
+ALLOWED_HOSTS=.pwrnow.pl
+DATABASE_URL=postgres://user:password@postgres:5432/dbname
+REDIS_URL=redis://redis:6379/0
+SITE_URL=https://pwrnow.pl
+DISCORD_WEBHOOK_URL=
+```
+
+---
+
+## Deploying the Web (Next.js) App
+
+The web frontend is a Next.js 15 app.
+
+### Required Environment Variables
+
+- `NEXT_PUBLIC_API_URL` – The base URL of your backend API (for production: `https://pwrnow.pl`)
+
+#### Example `.env` for Production
+
+```env
+NEXT_PUBLIC_API_URL=https://pwrnow.pl
+```
+
+---
+
 ## Project Structure
 
 ```
