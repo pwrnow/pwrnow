@@ -3,7 +3,7 @@ djangorestframework==3.16.0
 django-cors-headers==4.7.0
 django-allauth==65.9.0
 django-filter==24.3
-Pillow==10.0.0
+Pillow==10.3.0
 sqids==0.4.1
 psycopg2-binary==2.9.9
 django-environ==0.11.2
@@ -15,5 +15,5 @@ celery==5.5.3
 django-celery-beat==2.8.1
 flower==2.0.1
 watchfiles==1.1.0
-requests==2.31.0
+requests==2.32.4
 gunicorn==23.0.0
