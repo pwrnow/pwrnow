@@ -92,7 +92,7 @@ services:
         #nginx listens on port 80, as specified in the nginx.conf file
         #coolify will manage the port mapping on its own
         ports:
-            - "8000:80"
+            - "8001:80"
         depends_on:
             - backend
             - web
