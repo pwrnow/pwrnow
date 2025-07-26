@@ -9,7 +9,8 @@ import {
     CreateEventData,
 } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://10.0.0.1:8001";
 
 // Add this temporarily to debug
 console.log("API_BASE_URL:", API_BASE_URL);
