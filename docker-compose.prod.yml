@@ -1,25 +1,9 @@
 volumes:
-    postgres_data: {}
     django_media: {}
     django_static: {}
     redis_data: {}
 
 services:
-    postgres:
-        image: postgres:17
-        container_name: pwrnow_postgres
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U postgres"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-        environment:
-            - POSTGRES_DB=${POSTGRES_DB}
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-
     redis:
         image: redis:7
         container_name: pwrnow_redis
@@ -43,12 +27,8 @@ services:
             - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
             - SITE_URL=${SITE_URL}
             - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
-            - POSTGRES_DB=${POSTGRES_DB}
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         depends_on:
             - redis
-            - postgres
         command: ["/start.sh"]
 
     celeryworker:
@@ -61,7 +41,6 @@ services:
         command: celery -A config.celery_app worker -l INFO
         depends_on:
             - redis
-            - postgres
 
     celerybeat:
         build:
@@ -71,7 +50,6 @@ services:
         command: celery -A config.celery_app beat -l INFO
         depends_on:
             - redis
-            - postgres
 
     web:
         build:

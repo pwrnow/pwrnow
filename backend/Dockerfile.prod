@@ -55,15 +55,14 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
 
 
-# Copy entrypoint scripts and make them executable
+# Copy application code first
+COPY --chown=django:django . ${APP_HOME}
+
+# Copy entrypoint scripts and make them executable (after copying app code)
 COPY entrypoint.sh /entrypoint.sh
 COPY start_prod.sh /start.sh
 COPY entrypoint.prod.sh /app/entrypoint.prod.sh
 RUN chmod +x /entrypoint.sh /start.sh /app/entrypoint.prod.sh
-
-
-# Copy application code
-COPY --chown=django:django . ${APP_HOME}
 
 # Create media directory and set permissions
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
