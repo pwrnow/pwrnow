@@ -5,16 +5,20 @@ volumes:
     redis_data: {}
 
 services:
-  postgres:
-    image: postgres:17
-    container_name: pwrnow_postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    postgres:
+        image: postgres:17
+        container_name: pwrnow_postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
     redis:
         image: redis:7
@@ -22,49 +26,58 @@ services:
         volumes:
             - redis_data:/data
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pwrnow_backend
-    ports:
-      - '8001:5000'
-    volumes:
-      - django_media:/app/media
-    depends_on:
-      - redis
-      - postgres
-    command: ['/start.sh']
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        container_name: pwrnow_backend
+        ports:
+            - "8001:5000"
+        volumes:
+            - django_media:/app/media
+        environment:
+            - SECRET_KEY=${SECRET_KEY}
+            - DEBUG=${DEBUG:-False}
+            - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+            - DATABASE_URL=${DATABASE_URL}
+            - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+            - SITE_URL=${SITE_URL}
+            - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        depends_on:
+            - redis
+            - postgres
+        command: ["/start.sh"]
 
-  celeryworker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pwrnow_celeryworker
-    volumes:
-      - ./backend:/app
-    command: celery -A config.celery_app worker -l INFO
-    depends_on:
-      - redis
-      - postgres
+    celeryworker:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        container_name: pwrnow_celeryworker
+        volumes:
+            - ./backend:/app
+        command: celery -A config.celery_app worker -l INFO
+        depends_on:
+            - redis
+            - postgres
 
-  celerybeat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pwrnow_celerybeat
-    command: celery -A config.celery_app beat -l INFO
-    depends_on:
-      - redis
-      - postgres
-
+    celerybeat:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile.prod
+        container_name: pwrnow_celerybeat
+        command: celery -A config.celery_app beat -l INFO
+        depends_on:
+            - redis
+            - postgres
 
     web:
         build:
             context: ./web
             dockerfile: Dockerfile
         container_name: pwrnow_web
-
         environment:
             - NODE_ENV=production
             - PORT=3000
@@ -75,10 +88,8 @@ services:
             context: ./nginx
             dockerfile: Dockerfile
         container_name: pwrnow_nginx
-        #nginx listens on port 80, as specified in the nginx.conf file
-        #coolify will manage the port mapping on its own
         ports:
-            - "8001:80"
+            - "80:80"
         depends_on:
             - backend
             - web
