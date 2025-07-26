@@ -36,8 +36,6 @@ services:
             context: ./backend
             dockerfile: Dockerfile.prod
         container_name: pwrnow_celeryworker
-        volumes:
-            - ./backend:/app
         command: celery -A config.celery_app worker -l INFO
         depends_on:
             - redis
