@@ -11,8 +11,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import CategorySelector from '../components/CategorySelector';
 import EventFeed from '../components/EventFeed';
 import { api } from '../lib/api';
@@ -59,11 +57,6 @@ export default function HomeScreen() {
       setCategories(allCategories);
     } catch (error) {
       console.error('Error loading initial data:', error);
-      Alert.alert(
-        'Błąd',
-        'Nie udało się załadować danych. Sprawdź połączenie z internetem.',
-        [{ text: 'OK' }]
-      );
     } finally {
       setLoading(false);
     }
@@ -77,11 +70,6 @@ export default function HomeScreen() {
       console.log('Events refreshed successfully!');
     } catch (error) {
       console.error('Error refreshing events:', error);
-      Alert.alert(
-        'Błąd',
-        'Nie udało się odświeżyć wydarzeń. Sprawdź połączenie z internetem.',
-        [{ text: 'OK' }]
-      );
     }
   };
 
