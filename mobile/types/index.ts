@@ -11,6 +11,7 @@ export interface Category {
 
 export interface Event {
   id: string;
+  slug: string;
   title: string;
   description: string | null;
   starts_at: string;
@@ -22,5 +23,4 @@ export interface Event {
   is_new?: boolean;
   organization: Organization;
   category: Category;
-  slug?: string; // Added optional slug property
 }
