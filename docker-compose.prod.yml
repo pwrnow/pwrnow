@@ -15,8 +15,7 @@ services:
             context: ./backend
             dockerfile: Dockerfile.prod
         container_name: pwrnow_backend
-        ports:
-            - "8001:5000"
+
         volumes:
             - django_media:/app/media
         environment:
@@ -65,7 +64,7 @@ services:
             dockerfile: Dockerfile
         container_name: pwrnow_nginx
         ports:
-            - "80:80"
+            - "8001:80"
         depends_on:
             - backend
             - web
