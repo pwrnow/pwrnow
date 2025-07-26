@@ -24,6 +24,7 @@ services:
             - pwrnow_db:pwrnow_db
         volumes:
             - django_media:/app/media
+            - django_static:/app/staticfiles
         environment:
             - SECRET_KEY=${SECRET_KEY}
             - DEBUG=${DEBUG:-False}
@@ -69,7 +70,6 @@ services:
             - NODE_ENV=production
             - PORT=3000
             - HOSTNAME=0.0.0.0
-            - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
     nginx:
         build:
