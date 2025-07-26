@@ -1,7 +1,8 @@
 volumes:
-  postgres_data: {}
-  django_media: {}
-  redis_data: {}
+    postgres_data: {}
+    django_media: {}
+    django_static: {}
+    redis_data: {}
 
 services:
   postgres:
@@ -15,11 +16,11 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7
-    container_name: pwrnow_redis
-    ports:
-      - '6379:6379'
+    redis:
+        image: redis:7
+        container_name: pwrnow_redis
+        volumes:
+            - redis_data:/data
 
   backend:
     build:
@@ -57,14 +58,29 @@ services:
       - redis
       - postgres
 
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: pwrnow_nginx
-    ports:
-      - '80:80'
-    depends_on:
-      - backend
-    volumes:
-      - django_media:/usr/share/nginx/media:ro
+
+    web:
+        build:
+            context: ./web
+            dockerfile: Dockerfile
+        container_name: pwrnow_web
+
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+            - HOSTNAME=0.0.0.0
+
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        container_name: pwrnow_nginx
+        #nginx listens on port 80, as specified in the nginx.conf file
+        #coolify will manage the port mapping on its own
+        ports:
+            - "8001:80"
+        depends_on:
+            - backend
+            - web
+        volumes:
+            - django_static:/usr/share/nginx/html/static
