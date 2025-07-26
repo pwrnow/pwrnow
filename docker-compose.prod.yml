@@ -3,6 +3,11 @@ volumes:
     django_static: {}
     redis_data: {}
 
+networks:
+    default:
+        external: true
+        name: coolify
+
 services:
     redis:
         image: redis:7
@@ -15,7 +20,8 @@ services:
             context: ./backend
             dockerfile: Dockerfile.prod
         container_name: pwrnow_backend
-
+        external_links:
+            - pwrnow_db:pwrnow_db
         volumes:
             - django_media:/app/media
         environment:
@@ -35,6 +41,8 @@ services:
             context: ./backend
             dockerfile: Dockerfile.prod
         container_name: pwrnow_celeryworker
+        external_links:
+            - pwrnow_db:pwrnow_db
         command: celery -A config.celery_app worker -l INFO
         depends_on:
             - redis
@@ -44,6 +52,8 @@ services:
             context: ./backend
             dockerfile: Dockerfile.prod
         container_name: pwrnow_celerybeat
+        external_links:
+            - pwrnow_db:pwrnow_db
         command: celery -A config.celery_app beat -l INFO
         depends_on:
             - redis
