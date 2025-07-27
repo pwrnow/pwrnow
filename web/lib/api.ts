@@ -9,7 +9,12 @@ import {
     CreateEventData,
 } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Fallback chain: env var -> hardcoded local -> hardcoded production
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    (typeof window !== "undefined" && window.location.hostname === "localhost"
+        ? "http://localhost"
+        : "http://10.0.0.1:8001");
 
 // Add this temporarily to debug
 console.log("API_BASE_URL:", API_BASE_URL);
