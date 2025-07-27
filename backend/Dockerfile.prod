@@ -55,9 +55,8 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
 
 # Copy entrypoint script separately to fix line endings and permissions
-COPY ./entrypoint.prod.sh /entrypoint.prod.sh
-RUN sed -i 's/\r$//g' /entrypoint.prod.sh
-RUN chmod +x /entrypoint.prod.sh
+COPY ./entrypoint.prod.sh /app/entrypoint.prod.sh
+RUN chmod +x /app/entrypoint.prod.sh
 
 # Copy application code
 COPY --chown=django:django . ${APP_HOME}
@@ -69,4 +68,4 @@ RUN mkdir -p ${APP_HOME}/staticfiles && chown -R django:django ${APP_HOME}/stati
 USER django
 
 # Use absolute path for entrypoint to avoid path issues
-ENTRYPOINT ["/entrypoint.prod.sh"]
+ENTRYPOINT ["/app/entrypoint.prod.sh"]
