@@ -57,12 +57,27 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
 
 # Copy application code first
 
+# Add this right after WORKDIR to debug
+RUN echo "=== DEBUGGING BUILD CONTEXT ===" && \
+    pwd && \
+    ls -la / && \
+    echo "=== END DEBUG ===" && \
+    sleep 11
+
+
+# Copy application code first
+COPY --chown=django:django . ${APP_HOME}
+
+# Debug what was actually copied
+RUN echo "=== FILES IN APP_HOME ===" && \
+    ls -la ${APP_HOME}/ && \
+    echo "=== END FILES ===" && \
+    sleep 11
+
 # Copy entrypoint scripts and make them executable (after copying app code)
 COPY entrypoint.sh /entrypoint.sh
 COPY start_prod.sh /start.sh
 RUN chmod +x /entrypoint.sh /start.sh 
-
-COPY --chown=django:django . ${APP_HOME}
 
 # Create media directory and set permissions
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
