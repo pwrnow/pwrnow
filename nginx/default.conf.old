@@ -5,3 +5,7 @@ server {
     alias /usr/share/nginx/media/;
   }
 }
+
+
+
+
