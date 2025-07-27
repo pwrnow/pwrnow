@@ -4,6 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+exec python manage.py makemigrations core
 exec python manage.py migrate
 exec python manage.py collectstatic --noinput --clear
 
