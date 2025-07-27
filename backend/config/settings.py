@@ -200,6 +200,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",  # React web app
     "http://localhost:8081",  # Expo mobile app
     "http://127.0.0.1:8081",  # Expo mobile app
+    "https://pwrnow.pl",  # Production frontend
 ]
 
 # CSRF settings
@@ -211,7 +212,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://10.0.0.1:8001", # Expo django admin on local network
     "http://192.168.2.2:8001", # Expo django admin on local network
     "http://10.0.0.1:8081", # Expo mobile app on local network
-    
+    "https://pwrnow.pl",  # Production frontend
 ]
 
 # Allow all origins in development
