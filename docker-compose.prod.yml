@@ -84,3 +84,4 @@ services:
             - web
         volumes:
             - django_static:/usr/share/nginx/html/static
+            - django_media:/usr/share/nginx/media
