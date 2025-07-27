@@ -58,16 +58,19 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
 # Copy application code first
 COPY --chown=django:django . ${APP_HOME}
 
-# Copy entrypoint scripts and make them executable (after copying app code)
+# Copy entrypoint scripts and make them executable (before switching user)
 COPY entrypoint.sh /entrypoint.sh
 COPY start_prod.sh /start.sh
-COPY entrypoint.prod.sh /entrypoint.prod.sh  
-RUN chmod +x /entrypoint.sh /start.sh /entrypoint.prod.sh
+COPY entrypoint.prod.sh /app/entrypoint.prod.sh
+RUN chmod +x /entrypoint.sh /start.sh /app/entrypoint.prod.sh
 
 # Create media directory and set permissions
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
 RUN mkdir -p ${APP_HOME}/staticfiles && chown -R django:django ${APP_HOME}/staticfiles
 
+# Change ownership of the entrypoint script to django user
+RUN chown django:django /app/entrypoint.prod.sh
+
 USER django
 
-ENTRYPOINT ["/entrypoint.prod.sh"]  # Update path
+ENTRYPOINT ["/app/entrypoint.prod.sh"]
