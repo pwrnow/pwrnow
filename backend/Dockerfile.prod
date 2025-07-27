@@ -25,6 +25,10 @@ FROM python AS python-run-stage
 
 ARG APP_HOME=/app
 
+# Set environment variables
+ARG SERVICE=worker
+ENV SERVICE=${SERVICE}
+
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -54,30 +58,13 @@ COPY --from=python-build-stage /usr/src/app/wheels /wheels/
 RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
 
-
-# Copy application code first
-
-# Add this right after WORKDIR to debug
-# RUN echo "=== DEBUGGING BUILD CONTEXT ===" && \
-#     pwd && \
-#     ls -la / && \
-#     echo "=== END DEBUG ===" && \
-#     sleep 11
-
-
 # Copy application code first
 COPY --chown=django:django . ${APP_HOME}
 
-# Debug what was actually copied
-# RUN echo "=== FILES IN APP_HOME ===" && \
-#     ls -la ${APP_HOME}/ && \
-#     echo "=== END FILES ===" && \
-#     sleep 11
-
-# Copy entrypoint scripts and make them executable (after copying app code)
+# Copy entrypoint scripts and start files
 COPY entrypoint.sh /entrypoint.sh
-COPY start_prod.sh /start.sh
-RUN chmod +x /entrypoint.sh /start.sh 
+COPY start_files/ /start_files/
+RUN chmod +x /entrypoint.sh /start_files/*
 
 # Create media directory and set permissions
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
@@ -88,4 +75,4 @@ USER django
 # Use absolute path for entrypoint to avoid path issues
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["/start.sh"]
+CMD /start_files/start_${SERVICE}.sh
