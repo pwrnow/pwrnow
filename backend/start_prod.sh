@@ -4,7 +4,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-exec pwd
 
 exec python manage.py migrate
 exec python manage.py collectstatic --noinput --clear
