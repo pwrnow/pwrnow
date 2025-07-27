@@ -8,14 +8,13 @@ import {
   ApiError,
   CreateEventData,
 } from './types';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { getApiUrl } from './config';
 
 async function fetchWithCredentials(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
+  const response = await fetch(getApiUrl(url), {
     ...options,
     credentials: 'include',
     headers: {
@@ -49,7 +48,7 @@ export async function authenticateOrganization(
 
   try {
     const response = await fetchWithCredentials(
-      '/api/organizations/authenticate/',
+      '/organizations/authenticate/',
       {
         method: 'POST',
         body: JSON.stringify(requestData),
@@ -77,7 +76,7 @@ export async function authenticateOrganization(
 export async function getCurrentOrganization(): Promise<Organization> {
   console.log('🏢 Getting current organization from session');
   try {
-    const response = await fetchWithCredentials('/api/organizations/current/');
+    const response = await fetchWithCredentials('/organizations/current/');
     const data = await response.json();
     console.log('✅ Current organization:', data);
     return data;
@@ -90,7 +89,7 @@ export async function getCurrentOrganization(): Promise<Organization> {
 export async function logoutOrganization(): Promise<{ message: string }> {
   console.log('🚪 Logging out organization');
   try {
-    const response = await fetchWithCredentials('/api/organizations/logout/', {
+    const response = await fetchWithCredentials('/organizations/logout/', {
       method: 'POST',
     });
     const data = await response.json();
@@ -120,7 +119,7 @@ export async function getEvents(params?: {
     searchParams.append('search', params.search);
   }
 
-  const url = `/api/events/${
+  const url = `/events/${
     searchParams.toString() ? '?' + searchParams.toString() : ''
   }`;
   console.log('📅 Loading events:', url);
@@ -140,7 +139,7 @@ export async function getEvents(params?: {
 export async function getUpcomingEvents(): Promise<Event[]> {
   console.log('🔮 Loading upcoming events');
   try {
-    const response = await fetchWithCredentials('/api/events/upcoming/');
+    const response = await fetchWithCredentials('/events/upcoming/');
     const events = await response.json();
     console.log('✅ Upcoming events loaded:', events.length, 'events');
     return events;
@@ -153,7 +152,7 @@ export async function getUpcomingEvents(): Promise<Event[]> {
 export async function getVerifiedEvents(): Promise<Event[]> {
   console.log('✅ Loading verified events');
   try {
-    const response = await fetchWithCredentials('/api/events/verified/');
+    const response = await fetchWithCredentials('/events/verified/');
     const events = await response.json();
     console.log('✅ Verified events loaded:', events.length, 'events');
     return events;
@@ -167,7 +166,7 @@ export async function getVerifiedEvents(): Promise<Event[]> {
 export async function getEventBySlug(slug: string): Promise<Event> {
   if (!slug) throw new Error('Slug is required');
   try {
-    const response = await fetchWithCredentials(`/api/events/${slug}/`);
+    const response = await fetchWithCredentials(`/events/${slug}/`);
     const event = await response.json();
     return event;
   } catch (error) {
@@ -179,7 +178,7 @@ export async function getEventBySlug(slug: string): Promise<Event> {
 // Category endpoints
 export async function getCategories(): Promise<Category[]> {
   try {
-    const response = await fetchWithCredentials('/api/categories/');
+    const response = await fetchWithCredentials('/categories/');
     const categories = await response.json();
     return categories;
   } catch (error) {
@@ -191,7 +190,7 @@ export async function getCategories(): Promise<Category[]> {
 // Tag endpoints
 export async function getTags(): Promise<Tag[]> {
   try {
-    const response = await fetchWithCredentials('/api/tags/');
+    const response = await fetchWithCredentials('/tags/');
     const tags = await response.json();
     return tags;
   } catch (error) {
@@ -218,7 +217,7 @@ export async function createEvent(eventData: CreateEventData): Promise<Event> {
   if (eventData.image) formData.append('image', eventData.image);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/events/`, {
+    const response = await fetch(getApiUrl('/events/'), {
       method: 'POST',
       credentials: 'include',
       body: formData, // Don't set Content-Type for FormData
@@ -253,14 +252,11 @@ export async function uploadOrganizationImage(
   formData.append('image', image);
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/organizations/${slug}/image/`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      }
-    );
+    const response = await fetch(getApiUrl(`/organizations/${slug}/image/`), {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

@@ -1,14 +1,10 @@
 import { Event, Category, Organization } from '../types';
-
-// Configuration
-const API_BASE_URL = __DEV__
-  ? 'http://localhost:8000/api'
-  : 'https://your-production-api.com/api';
+import { getApiUrl } from './config';
 
 // Helper function to make API requests
 async function apiRequest<T>(endpoint: string): Promise<T> {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(getApiUrl(endpoint));
 
     if (!response.ok) {
       throw new Error(
