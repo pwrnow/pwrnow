@@ -54,12 +54,13 @@ COPY --from=python-build-stage /usr/src/app/wheels /wheels/
 RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
 
+# Copy application code
+COPY --chown=django:django . ${APP_HOME}
+
 # Copy entrypoint script separately to fix line endings and permissions
 COPY ./entrypoint.prod.sh /app/entrypoint.prod.sh
 RUN chmod +x /app/entrypoint.prod.sh
 
-# Copy application code
-COPY --chown=django:django . ${APP_HOME}
 
 # Create media directory and set permissions
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
