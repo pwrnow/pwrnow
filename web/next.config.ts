@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     domains: [
       'localhost',
+      'api.pwrnow.pl',
       // add production domains here as needed
     ],
   },
