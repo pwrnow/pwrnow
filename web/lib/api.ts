@@ -14,13 +14,22 @@ async function fetchWithCredentials(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  // Don't set Content-Type for FormData - let the browser set it automatically
+  const isFormData = options.body instanceof FormData;
+  
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+  
+  // Only set Content-Type to application/json if it's not FormData
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(`${getApiUrl()}${url}`, {
     ...options,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
