@@ -3,9 +3,19 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    domains: [
-      'localhost',
-      // add production domains here as needed
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pwrnow.pl',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
