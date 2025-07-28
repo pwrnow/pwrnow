@@ -13,8 +13,8 @@ chmod -R 777 /app/staticfiles /app/media
 python manage.py migrate
 
 # Only collect static files for the main backend service, not workers/beat
-if [ "${SERVICE:-backend}" = "backend" ] || [ "${SERVICE:-backend}" = "web" ]; then
-    echo "Collecting static files for service: ${SERVICE:-backend}"
+if [ "${SERVICE:-gunicorn}" = "backend" ] || [ "${SERVICE:-gunicorn}" = "web" ]; then
+    echo "Collecting static files for service: ${SERVICE:-gunicorn}"
     python manage.py collectstatic --noinput --clear
 else
     echo "Skipping static file collection for service: ${SERVICE}"

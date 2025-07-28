@@ -70,7 +70,7 @@ RUN chmod +x /entrypoint.sh /start_files/*
 RUN mkdir -p ${APP_HOME}/media && chown -R django:django ${APP_HOME}/media
 RUN mkdir -p ${APP_HOME}/staticfiles && chown -R django:django ${APP_HOME}/staticfiles
 
-USER django
+# USER django
 
 # Use absolute path for entrypoint to avoid path issues
 ENTRYPOINT ["/entrypoint.sh"]
