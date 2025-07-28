@@ -5,6 +5,6 @@ export const API_CONFIG = {
 };
 
 // Helper to get full API URL
-export const getApiUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}/api/${API_CONFIG.VERSION}${endpoint}`;
+export const getApiUrl = (): string => {
+  return `${API_CONFIG.BASE_URL}/${API_CONFIG.VERSION}`;
 };
