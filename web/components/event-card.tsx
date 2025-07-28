@@ -28,8 +28,9 @@ export default function EventCard({ event }: EventCardProps) {
     const endTimeString = format(endsAt, "HH:mm");
     const timeString = `${startTimeString} - ${endTimeString}`;
 
-    const organizationName = event.organization?.name || "Wydarzenie";
-    const organizationImageUrl = event.organization?.image_url;
+  const organizationName = event.organization?.name || 'Wydarzenie';
+  const organizationImageUrl = event.organization?.image_url;
+  const categoryName = event.category.name;
 
     // Handle category - it might be a string or an object with name/slug
     const categoryName =
@@ -104,121 +105,60 @@ export default function EventCard({ event }: EventCardProps) {
                         </div>
                     </div>
                 </div>
-                <div
-                    className={cn(
-                        "relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900",
-                        aspectRatio === "1:1"
-                            ? "aspect-square"
-                            : "aspect-[16/9]",
-                        isImageLoading && "animate-pulse"
-                    )}>
-                    <Image
-                        src={event.image_url || "/placeholder.svg"}
-                        alt={event.title}
-                        fill
-                        className={cn(
-                            "object-cover transition-transform duration-500 z-10",
-                            isImageLoading && "opacity-0"
-                        )}
-                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px"
-                        priority
-                        onLoad={(event) => {
-                            const img = event.target as HTMLImageElement;
-                            setAspectRatio(
-                                detectAspectRatio(
-                                    img.naturalWidth,
-                                    img.naturalHeight
-                                )
-                            );
-                            setIsImageLoading(false);
-                        }}
-                    />
-                </div>
-                <div className="px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold display-font mb-2 sm:mb-3">
-                        {event.title}
-                    </h2>
-                    <div className="flex flex-col space-y-2 mb-3 sm:mb-4 text-xs sm:text-sm">
-                        <div className="flex items-center">
-                            <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-950 mr-2 flex-shrink-0">
-                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 dark:text-blue-400" />
-                            </div>
-                            <span className="font-medium">{dateString}</span>
-                        </div>
-                        <div className="flex items-center">
-                            <div className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-950 mr-2 flex-shrink-0">
-                                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 dark:text-purple-400" />
-                            </div>
-                            <span className="font-medium">{timeString}</span>
-                        </div>
-                        {event.location && (
-                            <div className="flex items-center">
-                                <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950 mr-2 flex-shrink-0">
-                                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 dark:text-red-400" />
-                                </div>
-                                <button
-                                    onClick={handleMapLinkClick}
-                                    className="font-medium hover:underline flex items-center gap-1"
-                                    title="Otwórz w aplikacji map">
-                                    {event.location}
-                                    <ExternalLink className="h-3 w-3" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    {event.description && (
-                        <div className="text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4">
-                            <div
-                                className={cn(
-                                    "relative",
-                                    !isDescriptionExpanded &&
-                                        "after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background"
-                                )}>
-                                <p className="whitespace-pre-wrap break-words">
-                                    {isDescriptionExpanded
-                                        ? event.description
-                                        : truncateDescription(
-                                              event.description,
-                                              200
-                                          )}
-                                </p>
-                            </div>
-                            {event.description.length > 200 && (
-                                <Button
-                                    variant="link"
-                                    size="sm"
-                                    className="mt-1 h-auto p-0 text-primary"
-                                    onClick={() =>
-                                        setIsDescriptionExpanded(
-                                            !isDescriptionExpanded
-                                        )
-                                    }>
-                                    {isDescriptionExpanded
-                                        ? "Pokaż mniej"
-                                        : "Pokaż więcej"}
-                                </Button>
-                            )}
-                        </div>
-                    )}
-                    {event.url && (
-                        <div className="mt-3">
-                            <Link
-                                href={event.url}
-                                target="_blank"
-                                rel="noopener noreferrer">
-                                <Button
-                                    variant="default"
-                                    size="sm"
-                                    className="w-full flex items-center gap-2 transition-all duration-300">
-                                    <ExternalLink className="h-4 w-4" />
-                                    Odwiedź stronę wydarzenia
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
-                </div>
+                <button
+                  onClick={handleMapLinkClick}
+                  className='font-medium hover:underline flex items-center gap-1 cursor-pointer'
+                  title='Otwórz w aplikacji map'
+                >
+                  {event.location}
+                  <ExternalLink className='h-3 w-3' />
+                </button>
+              </div>
+            )}
+          </div>
+          {event.description && (
+            <div className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
+              <div
+                className={cn(
+                  'relative',
+                  !isDescriptionExpanded &&
+                    'after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background'
+                )}
+              >
+                <p className='whitespace-pre-wrap break-words'>
+                  {isDescriptionExpanded
+                    ? event.description
+                    : truncateDescription(event.description, 200)}
+                </p>
+              </div>
+              {event.description.length > 200 && (
+                <Button
+                  variant='link'
+                  size='sm'
+                  className='mt-1 h-auto p-0 text-primary cursor-pointer'
+                  onClick={() =>
+                    setIsDescriptionExpanded(!isDescriptionExpanded)
+                  }
+                >
+                  {isDescriptionExpanded ? 'Pokaż mniej' : 'Pokaż więcej'}
+                </Button>
+              )}
             </div>
-            <div className="h-px bg-border sm:hidden mt-2 mb-2"></div>
+          )}
+          {event.url && (
+            <div className='mt-3'>
+              <Link href={event.url} target='_blank' rel='noopener noreferrer'>
+                <Button
+                  variant='default'
+                  size='sm'
+                  className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
+                >
+                  <ExternalLink className='h-4 w-4' />
+                  Odwiedź stronę wydarzenia
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
     );
 }

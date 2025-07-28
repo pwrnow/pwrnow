@@ -19,8 +19,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Calendar from 'expo-calendar';
 import * as Haptics from 'expo-haptics';
+import * as Sharing from 'expo-sharing';
 import { Event } from '../types';
 import { Colors } from '../constants/Colors';
+import { config } from '../lib/config';
 
 interface EventCardProps {
   event: Event;
@@ -332,7 +334,37 @@ export default function EventCard({
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{event.title}</Text>
+          {/* Share Button */}
+          <TouchableOpacity
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              const isAvailable = await Sharing.isAvailableAsync();
+              if (!isAvailable) {
+                Alert.alert(
+                  'Udostępnianie niedostępne',
+                  'Funkcja udostępniania nie jest dostępna na tym urządzeniu.'
+                );
+                return;
+              }
+
+              const shareUrl = `${config.shareBaseUrl}/${event.slug}`;
+
+              try {
+                await Sharing.shareAsync(shareUrl, {
+                  dialogTitle: 'Udostępnij wydarzenie',
+                });
+              } catch (e) {
+                Alert.alert('Błąd', 'Nie udało się udostępnić wydarzenia.');
+              }
+            }}
+            style={styles.shareButton}
+            accessibilityLabel='Udostępnij wydarzenie'
+          >
+            <Feather name='share' size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
         {/* Event Details */}
         <View style={styles.detailsContainer}>
@@ -541,13 +573,20 @@ const createStyles = (colors: any, colorScheme: ColorSchemeName) =>
     content: {
       padding: 20,
     },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+      gap: 12,
+    },
     title: {
       fontSize: 24,
       fontWeight: '700',
       color: colors.text,
-      marginBottom: 16,
       lineHeight: 32,
       fontFamily: 'Righteous-Regular',
+      flex: 1,
     },
     detailsContainer: {
       gap: 12,
@@ -641,5 +680,12 @@ const createStyles = (colors: any, colorScheme: ColorSchemeName) =>
       fontSize: 16,
       fontWeight: '600',
       fontFamily: 'SpaceGrotesk-SemiBold',
+    },
+    shareButton: {
+      padding: 8,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.muted + '40',
     },
   });

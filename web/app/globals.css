@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif,
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
@@ -136,13 +136,13 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-space-grotesk), sans-serif;
   }
   h1,
   h2,
   h3,
   .display-font {
-    font-family: 'Righteous', cursive;
+    font-family: var(--font-righteous), cursive;
   }
 }
 

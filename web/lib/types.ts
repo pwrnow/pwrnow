@@ -9,6 +9,7 @@ export interface Organization {
 
 export interface Event {
   id: string;
+  slug: string;
   title: string;
   description?: string;
   starts_at: string;
@@ -19,7 +20,7 @@ export interface Event {
   verified: boolean;
   is_new?: boolean;
   organization: Organization;
-  category?: string | Category; // Can be either a string (slug) or a Category object
+  category: Category;
 }
 
 export interface Category {

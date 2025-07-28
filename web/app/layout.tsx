@@ -1,6 +1,19 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
+import { Space_Grotesk, Righteous } from 'next/font/google';
 import './globals.css';
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-space-grotesk',
+});
+
+const righteous = Righteous({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-righteous',
+});
 
 export const metadata: Metadata = {
   title: 'PWr Now',
@@ -54,19 +67,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='pl' suppressHydrationWarning>
-      <head>
-        <link rel='preconnect' href='https://fonts.googleapis.com' />
-        <link
-          rel='preconnect'
-          href='https://fonts.gstatic.com'
-          crossOrigin='anonymous'
-        />
-        <link
-          href='https://fonts.googleapis.com/css2?family=Righteous&family=Space+Grotesk:wght@300..700&display=swap'
-          rel='stylesheet'
-        />
-      </head>
-      <body suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${spaceGrotesk.variable} ${righteous.variable}`}
+      >
         <ThemeProvider
           attribute='class'
           defaultTheme='system'

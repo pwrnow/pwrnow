@@ -1,13 +1,13 @@
 import {
-    Organization,
-    Event,
-    Category,
-    Tag,
-    AuthenticateResponse,
-    AuthenticateRequest,
-    ApiError,
-    CreateEventData,
-} from "./types";
+  Organization,
+  Event,
+  Category,
+  Tag,
+  AuthenticateResponse,
+  AuthenticateRequest,
+  ApiError,
+  CreateEventData,
+} from './types';
 
 // Fallback chain: env var -> hardcoded local -> hardcoded production
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -186,6 +186,52 @@ export async function getEventBySlug(slug: string): Promise<Event> {
     }
 }
 
+// Get events by category
+export async function getEventsByCategory(
+  categorySlug: string
+): Promise<Event[]> {
+  try {
+    const response = await fetchWithCredentials(
+      `/events/?category__slug=${categorySlug}`
+    );
+    const events = await response.json();
+    return events;
+  } catch (error) {
+    console.error('❌ Failed to load events by category:', error);
+    throw error;
+  }
+}
+
+// Get events by organization
+export async function getEventsByOrganization(
+  organizationSlug: string
+): Promise<Event[]> {
+  try {
+    const response = await fetchWithCredentials(
+      `/events/?organization__slug=${organizationSlug}`
+    );
+    const events = await response.json();
+    return events;
+  } catch (error) {
+    console.error('❌ Failed to load events by organization:', error);
+    throw error;
+  }
+}
+
+// Search events
+export async function searchEvents(query: string): Promise<Event[]> {
+  try {
+    const response = await fetchWithCredentials(
+      `/events/?search=${encodeURIComponent(query)}`
+    );
+    const events = await response.json();
+    return events;
+  } catch (error) {
+    console.error('❌ Failed to search events:', error);
+    throw error;
+  }
+}
+
 // Category endpoints
 export async function getCategories(): Promise<Category[]> {
     try {
@@ -196,6 +242,17 @@ export async function getCategories(): Promise<Category[]> {
         console.error("❌ Failed to load categories:", error);
         throw error;
     }
+}
+
+export async function getCategory(categorySlug: string): Promise<Category> {
+  try {
+    const response = await fetchWithCredentials(`/categories/${categorySlug}/`);
+    const category = await response.json();
+    return category;
+  } catch (error) {
+    console.error('❌ Failed to load category:', error);
+    throw error;
+  }
 }
 
 // Tag endpoints

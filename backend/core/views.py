@@ -225,8 +225,6 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(verified=True, ends_at__gte=now)
 
-        print(f"Found {queryset.count()} events")
-
         return queryset
 
     def create(self, request, *args, **kwargs):

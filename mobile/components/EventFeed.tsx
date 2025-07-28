@@ -5,6 +5,8 @@ import {
   FlatList,
   useColorScheme,
   RefreshControl,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
@@ -16,12 +18,14 @@ interface EventFeedProps {
   events: Event[];
   selectedCategory: string;
   onRefresh?: () => Promise<void>;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
 export default function EventFeed({
   events,
   selectedCategory,
   onRefresh,
+  onScroll,
 }: EventFeedProps) {
   const [refreshing, setRefreshing] = useState(false);
   const colorScheme = useColorScheme();
@@ -76,6 +80,8 @@ export default function EventFeed({
       keyExtractor={(item) => item.id}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.container}
+      onScroll={onScroll}
+      scrollEventThrottle={16} // Standard throttle for smooth tracking
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

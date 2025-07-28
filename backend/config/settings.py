@@ -199,6 +199,10 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v1',
+    'ALLOWED_VERSIONS': ['v1'],
+    'VERSION_PARAM': 'version',
 }
 
 # CORS settings
@@ -218,8 +222,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8081",  # Expo mobile app
     "http://127.0.0.1:8081",  # Expo mobile app
     "http://10.0.0.1:8081", # Expo mobile app on local network
-    "https://pwrnow.pl",  # Production frontend
     "https://api.pwrnow.pl",  # Production frontend
+    "https://pwrnow.pl",  # Production frontend
 ]
 
 # Allow all origins in development

@@ -26,10 +26,8 @@ import {
   Clock3,
   MoreHorizontal,
 } from 'lucide-react';
-import {
-  getCurrentOrganization,
-  getEvents,
-} from '@/lib/api';
+import Image from 'next/image';
+import { getCurrentOrganization, getEvents } from '@/lib/api';
 import { Organization, Event } from '@/lib/types';
 import { EventBadge } from '@/components/event-badge';
 
@@ -471,10 +469,11 @@ export default function OrganizationPage() {
 
                     {/* Event Image */}
                     <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9]'>
-                      <img
+                      <Image
                         src={event.image_url || '/placeholder.svg'}
                         alt={event.title}
-                        className='w-full h-full object-cover transition-transform duration-500 z-10'
+                        fill
+                        className='object-cover transition-transform duration-500 z-10'
                       />
                     </div>
 
