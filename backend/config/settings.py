@@ -174,8 +174,8 @@ if DEBUG:
     MEDIA_URL = '/media/'
 else:
     # Production settings
-    STATIC_URL = 'https://kckk040o8gsoso8ggcskk4oo.pwrnow.pl/static/'
-    MEDIA_URL = 'https://kckk040o8gsoso8ggcskk4oo.pwrnow.pl/media/'
+    STATIC_URL = env("STATIC_URL")
+    MEDIA_URL = env("MEDIA_URL")
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
