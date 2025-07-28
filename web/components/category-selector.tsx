@@ -19,9 +19,6 @@ export default function CategorySelector({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeButtonRect, setActiveButtonRect] = useState<DOMRect | null>(
-    null
-  );
   const [isInitialRender, setIsInitialRender] = useState(true);
 
   const currentCategory = searchParams.get('category') || 'wszystkie';
@@ -53,20 +50,6 @@ export default function CategorySelector({
       `[data-slug="${currentCategory}"]`
     ) as HTMLElement;
     if (activeButton) {
-      const rect = activeButton.getBoundingClientRect();
-      const containerRect = containerRef.current?.getBoundingClientRect() || {
-        left: 0,
-      };
-
-      // Calculate position relative to the container
-      const relativeRect = {
-        x: rect.left - containerRect.left,
-        width: rect.width,
-        height: rect.height,
-      };
-
-      setActiveButtonRect(relativeRect as unknown as DOMRect);
-
       // Scroll the active button into view
       activeButton.scrollIntoView({
         behavior: 'smooth',

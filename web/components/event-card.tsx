@@ -28,8 +28,8 @@ export default function EventCard({ event }: EventCardProps) {
     const endTimeString = format(endsAt, "HH:mm");
     const timeString = `${startTimeString} - ${endTimeString}`;
 
-  const organizationName = event.organization?.name || 'Wydarzenie';
-  const organizationImageUrl = event.organization?.image_url;
+    const organizationName = event.organization?.name || "Wydarzenie";
+    const organizationImageUrl = event.organization?.image_url;
 
     // Handle category - it might be a string or an object with name/slug
     const categoryName =
@@ -111,9 +111,10 @@ export default function EventCard({ event }: EventCardProps) {
                     <div
                         className={cn(
                             "relative overflow-hidden bg-muted transition-all duration-300",
-                            aspectRatio === "1:1" ? "aspect-square" : "aspect-video"
-                        )}
-                    >
+                            aspectRatio === "1:1"
+                                ? "aspect-square"
+                                : "aspect-video"
+                        )}>
                         <Image
                             src={event.image_url}
                             alt={event.title}
@@ -122,7 +123,12 @@ export default function EventCard({ event }: EventCardProps) {
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             onLoad={(e) => {
                                 const img = e.target as HTMLImageElement;
-                                setAspectRatio(detectAspectRatio(img.naturalWidth, img.naturalHeight));
+                                setAspectRatio(
+                                    detectAspectRatio(
+                                        img.naturalWidth,
+                                        img.naturalHeight
+                                    )
+                                );
                                 setIsImageLoading(false);
                             }}
                             priority={false}
@@ -159,8 +165,7 @@ export default function EventCard({ event }: EventCardProps) {
                         <button
                             onClick={handleMapLinkClick}
                             className="font-medium hover:underline flex items-center gap-1 cursor-pointer"
-                            title="Otwórz w aplikacji map"
-                        >
+                            title="Otwórz w aplikacji map">
                             {event.location}
                             <ExternalLink className="h-3 w-3" />
                         </button>
@@ -175,12 +180,14 @@ export default function EventCard({ event }: EventCardProps) {
                                 "relative",
                                 !isDescriptionExpanded &&
                                     "after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background"
-                            )}
-                        >
+                            )}>
                             <p className="whitespace-pre-wrap break-words">
                                 {isDescriptionExpanded
                                     ? event.description
-                                    : truncateDescription(event.description, 200)}
+                                    : truncateDescription(
+                                          event.description,
+                                          200
+                                      )}
                             </p>
                         </div>
                         {event.description.length > 200 && (
@@ -189,10 +196,13 @@ export default function EventCard({ event }: EventCardProps) {
                                 size="sm"
                                 className="mt-1 h-auto p-0 text-primary cursor-pointer"
                                 onClick={() =>
-                                    setIsDescriptionExpanded(!isDescriptionExpanded)
-                                }
-                            >
-                                {isDescriptionExpanded ? "Pokaż mniej" : "Pokaż więcej"}
+                                    setIsDescriptionExpanded(
+                                        !isDescriptionExpanded
+                                    )
+                                }>
+                                {isDescriptionExpanded
+                                    ? "Pokaż mniej"
+                                    : "Pokaż więcej"}
                             </Button>
                         )}
                     </div>
@@ -201,12 +211,14 @@ export default function EventCard({ event }: EventCardProps) {
                 {/* Event URL */}
                 {event.url && (
                     <div className="mt-3">
-                        <Link href={event.url} target="_blank" rel="noopener noreferrer">
+                        <Link
+                            href={event.url}
+                            target="_blank"
+                            rel="noopener noreferrer">
                             <Button
                                 variant="default"
                                 size="sm"
-                                className="w-full flex items-center gap-2 transition-all duration-300 cursor-pointer"
-                            >
+                                className="w-full flex items-center gap-2 transition-all duration-300 cursor-pointer">
                                 <ExternalLink className="h-4 w-4" />
                                 Odwiedź stronę wydarzenia
                             </Button>
