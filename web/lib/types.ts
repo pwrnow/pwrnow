@@ -19,7 +19,7 @@ export interface Event {
   verified: boolean;
   is_new?: boolean;
   organization: Organization;
-  category?: string; // This is the category slug, not an object
+  category?: string | Category; // Can be either a string (slug) or a Category object
 }
 
 export interface Category {
