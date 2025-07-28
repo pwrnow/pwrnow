@@ -30,7 +30,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   const organizationName = event.organization?.name || 'Wydarzenie';
   const organizationImageUrl = event.organization?.image_url;
-  const categoryName = event.category || 'Wydarzenie';
+  const categoryName = event.category.name;
 
   const getInitials = (name: string) => {
     return name
