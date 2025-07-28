@@ -6,24 +6,30 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { Category } from '@/lib/types';
 
+interface CategoryWithId extends Category {
+  id: string;
+}
+
 export default function CategorySelector({
   categories = [],
 }: {
   categories: Category[];
 }) {
-  console.log('Categories received:', categories);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [activeButtonRect, setActiveButtonRect] = useState<DOMRect | null>(
+    null
+  );
   const [isInitialRender, setIsInitialRender] = useState(true);
 
   const currentCategory = searchParams.get('category') || 'wszystkie';
 
   // Add "Wszystkie" category to the beginning of the list
-  const allCategories = [
-    { name: 'Wszystkie', slug: 'wszystkie' },
-    ...categories,
+  const allCategories: CategoryWithId[] = [
+    { id: 'all', name: 'Wszystkie', slug: 'wszystkie' },
+    ...categories.map((cat, index) => ({ ...cat, id: `cat-${index}` })),
   ];
 
   const handleCategoryChange = (categorySlug: string) => {
@@ -41,12 +47,26 @@ export default function CategorySelector({
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Scroll active button into view when the current category changes
+  // Update the active button rect when the current category changes
   useEffect(() => {
     const activeButton = containerRef.current?.querySelector(
       `[data-slug="${currentCategory}"]`
     ) as HTMLElement;
     if (activeButton) {
+      const rect = activeButton.getBoundingClientRect();
+      const containerRect = containerRef.current?.getBoundingClientRect() || {
+        left: 0,
+      };
+
+      // Calculate position relative to the container
+      const relativeRect = {
+        x: rect.left - containerRect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+
+      setActiveButtonRect(relativeRect as unknown as DOMRect);
+
       // Scroll the active button into view
       activeButton.scrollIntoView({
         behavior: 'smooth',
@@ -70,7 +90,7 @@ export default function CategorySelector({
         >
           {allCategories.map((category) => (
             <button
-              key={category.slug}
+              key={category.id}
               data-slug={category.slug}
               onClick={() => handleCategoryChange(category.slug)}
               className={`
