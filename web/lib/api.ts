@@ -10,11 +10,7 @@ import {
 } from "./types";
 
 // Fallback chain: env var -> hardcoded local -> hardcoded production
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// Add this temporarily to debug
-console.log("API_BASE_URL:", API_BASE_URL);
-console.log("NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function fetchWithCredentials(
     url: string,

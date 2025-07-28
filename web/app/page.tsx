@@ -1,8 +1,6 @@
 "use client";
 
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import EventCard from "@/components/event-card";
@@ -13,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     Calendar,
     Search,
-    Filter,
     ShieldCheck,
     Clock,
     AlertCircle,
@@ -36,10 +33,6 @@ export default function Home() {
         loadEvents();
     }, []);
 
-    useEffect(() => {
-        filterEvents();
-    }, [events, searchTerm, filter]);
-
     const loadEvents = async () => {
         try {
             setLoading(true);
@@ -54,7 +47,7 @@ export default function Home() {
         }
     };
 
-    const filterEvents = () => {
+    const filterEvents = useCallback(() => {
         let filtered = [...events];
 
         // Apply search filter
@@ -68,7 +61,12 @@ export default function Home() {
                         .toLowerCase()
                         .includes(searchLower) ||
                     event.location?.toLowerCase().includes(searchLower) ||
-                    event.category?.toLowerCase().includes(searchLower)
+                    (typeof event.category === "string"
+                        ? event.category
+                        : event.category?.name
+                    )
+                        ?.toLowerCase()
+                        .includes(searchLower)
             );
         }
 
@@ -90,7 +88,11 @@ export default function Home() {
         );
 
         setFilteredEvents(filtered);
-    };
+    }, [events, searchTerm, filter]);
+
+    useEffect(() => {
+        filterEvents();
+    }, [filterEvents]);
 
     const getFilterCount = (filterType: FilterType) => {
         if (filterType === "all") return events.length;
