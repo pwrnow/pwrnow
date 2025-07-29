@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
+from django.conf import settings
 from .models import Event, Category, Organization, Tag, OrganizationCode
 from .forms import OrganizationAdminForm, EventAdminForm
 
@@ -70,7 +71,12 @@ class OrganizationCodeAdmin(admin.ModelAdmin):
 
     @admin.display(description='Code')
     def code_preview(self, obj):
-        url = f"/{obj.code}"
+        if settings.DEBUG:
+            base_url = "http://localhost:3000"
+        else:
+            base_url = "https://pwrnow.pl"
+        
+        url = f"{base_url}/{obj.code}"
         return format_html('<a href="{}" target="_blank">{}</a>', url, obj.code)
 
 
