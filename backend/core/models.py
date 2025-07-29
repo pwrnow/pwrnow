@@ -154,16 +154,12 @@ class Event(models.Model):
     # Relationships
     category = models.ForeignKey(
         Category,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         related_name='events'
     )
     organization = models.ForeignKey(
         Organization,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         related_name='events'
     )
     tags = models.ManyToManyField(
