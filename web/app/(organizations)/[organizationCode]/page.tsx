@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { authenticateOrganization, getCurrentOrganization } from '@/lib/api';
+import { authenticateOrganization } from '@/lib/api';
 import { ApiError, type Organization } from '@/lib/types';
 
 export default function OrganizationCodePage() {
@@ -22,79 +22,55 @@ export default function OrganizationCodePage() {
         setLoading(true);
         setError(null);
 
-        let currentOrg: Organization | null = null;
+        // Always authenticate with the organization code from the URL
+        // This will force authentication even if already authenticated to a different org
+        console.log('Authenticating with organization code:', organizationCode);
+        const authResponse = await authenticateOrganization(organizationCode);
+        const currentOrg = authResponse.organization;
+        console.log('Successfully authenticated organization:', currentOrg);
 
-        // First try to get current organization (if already authenticated)
-        try {
-          currentOrg = await getCurrentOrganization();
-          console.log('Current authenticated organization:', currentOrg);
-
-          // If already authenticated, redirect to org slug URL
-          console.log(
-            'Already authenticated, redirecting to org slug:',
-            currentOrg.slug
-          );
-          router.replace(`/org/${currentOrg.slug}`);
-          return;
-        } catch {
-          // If no current organization, authenticate with the code
-          try {
-            console.log(
-              'Authenticating with organization code:',
-              organizationCode
-            );
-            const authResponse = await authenticateOrganization(
-              organizationCode
-            );
-            currentOrg = authResponse.organization;
-            console.log('Successfully authenticated organization:', currentOrg);
-
-            // Redirect to org slug URL after successful authentication
-            console.log('Redirecting to org slug:', currentOrg.slug);
-            router.replace(`/org/${currentOrg.slug}`);
-            return;
-          } catch (authError) {
-            console.error('Authentication failed:', authError);
-            if (authError instanceof ApiError) {
-              switch (authError.status) {
-                case 400:
-                  if (authError.message.includes('required')) {
-                    setError('Kod organizacji jest wymagany');
-                  } else if (
-                    authError.message.includes('Invalid authentication code')
-                  ) {
-                    setError('Nieprawidłowy kod organizacji');
-                  } else {
-                    setError('Nieprawidłowe dane żądania');
-                  }
-                  break;
-                case 401:
-                  setError('Nieprawidłowy kod organizacji');
-                  break;
-                case 500:
-                  setError('Błąd serwera podczas uwierzytelniania');
-                  break;
-                default:
-                  setError(
-                    authError.message || 'Błąd uwierzytelniania organizacji'
-                  );
+        // Redirect to org slug URL after successful authentication
+        console.log('Redirecting to org slug:', currentOrg.slug);
+        router.replace(`/org/${currentOrg.slug}`);
+      } catch (authError) {
+        console.error('Authentication failed:', authError);
+        if (authError instanceof ApiError) {
+          switch (authError.status) {
+            case 400:
+              if (authError.message.includes('required')) {
+                setError('Kod organizacji jest wymagany');
+              } else if (
+                authError.message.includes('Invalid authentication code')
+              ) {
+                setError('Nieprawidłowy kod organizacji');
+              } else {
+                setError('Nieprawidłowe dane żądania');
               }
-            } else {
-              setError('Nie udało się uwierzytelnić organizacji');
-            }
-            return;
+              break;
+            case 401:
+              setError('Nieprawidłowy kod organizacji');
+              break;
+            case 500:
+              setError('Błąd serwera podczas uwierzytelniania');
+              break;
+            default:
+              setError(
+                authError.message || 'Błąd uwierzytelniania organizacji'
+              );
           }
+        } else {
+          setError('Nie udało się uwierzytelnić organizacji');
         }
-      } catch (error) {
-        console.error('Error during authentication:', error);
-        setError('Nie udało się uwierzytelnić organizacji');
       } finally {
         setLoading(false);
       }
     }
 
     if (organizationCode) {
-      console.log('Authenticating with organization code:', organizationCode);
+      console.log(
+        'Starting authentication with organization code:',
+        organizationCode
+      );
       authenticateAndRedirect();
     }
   }, [organizationCode, router]);
