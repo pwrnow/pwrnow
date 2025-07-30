@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { authenticateOrganization } from '@/lib/api';
-import { ApiError, type Organization } from '@/lib/types';
+import { ApiError } from '@/lib/types';
 
 export default function OrganizationCodePage() {
   const params = useParams();
