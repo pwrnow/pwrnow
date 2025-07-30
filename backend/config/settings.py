@@ -154,8 +154,8 @@ CACHE_KEYS = {
 
 # Cache TTL settings (in seconds)
 CACHE_TTL = {
-    'PUBLIC_EVENTS': 300,  # 5 minutes
-    'CATEGORIES': 1800,    # 30 minutes
+    'PUBLIC_EVENTS': 60 * 60, # 1 hour
+    'CATEGORIES': 60 * 60 * 24, # 1 day
 }
 
 CELERY_TIMEZONE = TIME_ZONE
