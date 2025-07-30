@@ -70,6 +70,7 @@ export default function CategorySelector({
           {allCategories.map((category) => (
             <button
               key={category.slug}
+              type='button'
               data-slug={category.slug}
               onClick={() => handleCategoryChange(category.slug)}
               className={`
