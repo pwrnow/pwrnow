@@ -14,13 +14,11 @@ export default function OrganizationCodePage() {
   const organizationCode = params.organizationCode as string;
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function authenticateAndRedirect() {
       try {
         setLoading(true);
-        setError(null);
 
         // Always authenticate with the organization code from the URL
         // This will force authentication even if already authenticated to a different org
@@ -34,33 +32,8 @@ export default function OrganizationCodePage() {
         router.replace(`/org/${currentOrg.slug}`);
       } catch (authError) {
         console.error('Authentication failed:', authError);
-        if (authError instanceof ApiError) {
-          switch (authError.status) {
-            case 400:
-              if (authError.message.includes('required')) {
-                setError('Kod organizacji jest wymagany');
-              } else if (
-                authError.message.includes('Invalid authentication code')
-              ) {
-                setError('Nieprawidłowy kod organizacji');
-              } else {
-                setError('Nieprawidłowe dane żądania');
-              }
-              break;
-            case 401:
-              setError('Nieprawidłowy kod organizacji');
-              break;
-            case 500:
-              setError('Błąd serwera podczas uwierzytelniania');
-              break;
-            default:
-              setError(
-                authError.message || 'Błąd uwierzytelniania organizacji'
-              );
-          }
-        } else {
-          setError('Nie udało się uwierzytelnić organizacji');
-        }
+        // Redirect to main page on authentication failure
+        router.replace('/');
       } finally {
         setLoading(false);
       }
@@ -87,20 +60,6 @@ export default function OrganizationCodePage() {
           <p className='text-muted-foreground mt-4'>
             Uwierzytelnianie organizacji...
           </p>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-        <Card className='w-full max-w-md p-8 text-center'>
-          <h1 className='text-2xl font-bold text-destructive mb-4'>Błąd</h1>
-          <p className='text-muted-foreground mb-6'>{error}</p>
-          <Button onClick={() => router.push('/')} variant='outline'>
-            Powrót do strony głównej
-          </Button>
         </Card>
       </div>
     );
