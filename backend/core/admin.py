@@ -43,17 +43,17 @@ class TagAdmin(admin.ModelAdmin):
 class OrganizationCodeInline(admin.TabularInline):
     model = OrganizationCode
     extra = 0
-    readonly_fields = ['code', 'created_at']
-    fields = ['code', 'created_at']
+    readonly_fields = ['code', 'created_at', 'last_used_at']
+    fields = ['code', 'created_at', 'last_used_at']
 
 
 @admin.register(OrganizationCode)
 class OrganizationCodeAdmin(admin.ModelAdmin):
-    list_display = ['organization', 'code_preview', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['organization', 'code_preview', 'created_at', 'last_used_display']
+    list_filter = ['created_at', 'last_used_at']
     search_fields = ['organization__name', 'code']
     autocomplete_fields = ['organization']
-    readonly_fields = ['id','created_at', 'updated_at']
+    readonly_fields = ['id','created_at', 'updated_at', 'last_used_at']
     ordering = ['-created_at']
 
     fieldsets = (
@@ -62,6 +62,10 @@ class OrganizationCodeAdmin(admin.ModelAdmin):
         }),
         ('Authentication Details', {
             'fields': ('code',)
+        }),
+        ('Usage Statistics', {
+            'fields': ('last_used_at',),
+            'description': 'Track when this organization code was last used for authentication'
         }),
         ('Metadata', {
             'fields': ('id', 'created_at', 'updated_at'),
@@ -75,9 +79,44 @@ class OrganizationCodeAdmin(admin.ModelAdmin):
             base_url = "http://localhost:3000"
         else:
             base_url = "https://pwrnow.pl"
-        
+
         url = f"{base_url}/{obj.code}"
         return format_html('<a href="{}" target="_blank">{}</a>', url, obj.code)
+
+    @admin.display(description='Last Used', ordering='last_used_at')
+    def last_used_display(self, obj):
+        if obj.last_used_at:
+            from django.utils import timezone
+            now = timezone.now()
+            time_diff = now - obj.last_used_at
+
+            if time_diff.days > 0:
+                return format_html(
+                    '<span title="{}">{} days ago</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    time_diff.days
+                )
+            elif time_diff.seconds > 3600:
+                hours = time_diff.seconds // 3600
+                return format_html(
+                    '<span title="{}">{} hours ago</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    hours
+                )
+            elif time_diff.seconds > 60:
+                minutes = time_diff.seconds // 60
+                return format_html(
+                    '<span title="{}">{} minutes ago</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    minutes
+                )
+            else:
+                return format_html(
+                    '<span title="{}">Just now</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S')
+                )
+        else:
+            return format_html('<span style="color: #999;">Never used</span>')
 
 
 @admin.register(Organization)

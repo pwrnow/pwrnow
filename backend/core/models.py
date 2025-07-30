@@ -102,6 +102,12 @@ class OrganizationCode(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="When this organization code was last used for authentication"
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,

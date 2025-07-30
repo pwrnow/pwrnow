@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.conf import settings
+from django.utils import timezone
 from functools import wraps
 from .models import OrganizationCode, Organization
 
@@ -25,6 +26,10 @@ def authenticate_organization(request, organization_code):
             code=organization_code
         )
         organization = org_code.organization
+
+        # Update last used timestamp
+        org_code.last_used_at = timezone.now()
+        org_code.save(update_fields=['last_used_at'])
 
         # Store organization info in session
         request.session['authenticated_org_id'] = str(organization.id)
