@@ -172,7 +172,7 @@ export const plausibleDashboardUrls = {
  */
 export const logAnalyticsEvent = (
     eventName: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
 ) => {
     if (process.env.NODE_ENV === "development") {
         console.group(`📊 Analytics Event: ${eventName}`);

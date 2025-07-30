@@ -21,7 +21,7 @@ export default function EventCard({ event }: EventCardProps) {
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [aspectRatio, setAspectRatio] = useState<"1:1" | "16:9">("16:9");
     const [isImageLoading, setIsImageLoading] = useState(true);
-    const { trackEventClick, trackEvent, trackEventInteraction } =
+    const { trackEventClick, trackEventInteraction } =
         useAnalytics();
 
     const startsAt = parseISO(event.starts_at);
