@@ -20,7 +20,7 @@ export interface Event {
   verified: boolean;
   is_new?: boolean;
   organization: Organization;
-  category: Category | null;
+  category: Category;
 }
 
 export interface Category {
