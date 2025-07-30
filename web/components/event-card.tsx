@@ -38,11 +38,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   const startTimeString = format(startsAt, 'HH:mm');
   const endTimeString = format(endsAt, 'HH:mm');
-  const timeString = isSameDay
-    ? `${startTimeString} - ${endTimeString}`
-    : `${startTimeString} (${format(startsAt, 'd MMM', {
-        locale: pl,
-      })}) - ${endTimeString} (${format(endsAt, 'd MMM', { locale: pl })})`;
+  const timeString = `${startTimeString} - ${endTimeString}`;
 
   const organizationName = event.organization?.name || 'Wydarzenie';
   const organizationImageUrl = event.organization?.image_url;
@@ -211,7 +207,7 @@ export default function EventCard({ event }: EventCardProps) {
                 <Button
                   variant='default'
                   size='sm'
-                  className='w-full flex items-center gap-2 transition-all duration-300'
+                  className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
                 >
                   <ExternalLink className='h-4 w-4' />
                   Odwiedź stronę wydarzenia
