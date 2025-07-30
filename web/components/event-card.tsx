@@ -165,6 +165,7 @@ export default function EventCard({ event }: EventCardProps) {
                 className={cn(
                   'relative',
                   !isDescriptionExpanded &&
+                    event.description.length > 200 &&
                     'after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background'
                 )}
               >
