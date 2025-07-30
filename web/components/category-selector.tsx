@@ -25,7 +25,13 @@ export default function CategorySelector({
     ...categories,
   ];
 
-  const handleCategoryChange = (categorySlug: string) => {
+  const handleCategoryChange = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    categorySlug: string
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (categorySlug === currentCategory) return;
 
     const params = new URLSearchParams(searchParams);
@@ -37,7 +43,10 @@ export default function CategorySelector({
     }
 
     // Using replace instead of push for smoother navigation without adding to history
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const newUrl = `${pathname}${
+      params.toString() ? `?${params.toString()}` : ''
+    }`;
+    router.replace(newUrl, { scroll: false });
   };
 
   // Update the active button rect when the current category changes
@@ -72,7 +81,7 @@ export default function CategorySelector({
               key={category.slug}
               type='button'
               data-slug={category.slug}
-              onClick={() => handleCategoryChange(category.slug)}
+              onClick={(event) => handleCategoryChange(event, category.slug)}
               className={`
                 relative flex-none px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap
                 transition-all duration-300 ease-in-out
