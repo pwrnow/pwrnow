@@ -187,6 +187,8 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             return EventCreateSerializer
         return EventSerializer
 
+
+
     def get_queryset(self):
         """
         Custom ordering for events:
