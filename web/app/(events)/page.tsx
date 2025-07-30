@@ -6,7 +6,7 @@ import { getEvents } from '@/lib/api';
 import { getCategories } from '@/lib/api';
 
 // Enable Full Route Cache by setting revalidation
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 600; // Revalidate every 10 min
 
 // Force static generation
 export const dynamic = 'force-static';
