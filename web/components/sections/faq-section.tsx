@@ -1,98 +1,104 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
-const faqs = [
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8 },
+  },
+};
+
+const scaleIn = {
+  hidden: { scale: 0.8, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 0.5 },
+  },
+};
+
+const questionsData = [
   {
-    question: 'Jak mogę dodać wydarzenie organizacji na PWr Now?',
+    question: 'Kto może dodawać wydarzenia na platformę?',
     answer:
-      'Skontaktuj się z nami przez e-mail pwrnow.kontakt@gmail.com. Prześlij nam szczegóły wydarzenia: nazwę, datę, miejsce, opis i kategorię. Zweryfikujemy informacje i dodamy wydarzenie do platformy.',
+      'Aktualnie przyjmujemy organizacje studenckie, koła naukowe, samorządy wydziałowe oraz inne grupy związane z Politechniką Wrocławską. Jeśli reprezentujesz taką organizację, skontaktuj się z nami!',
   },
   {
-    question: 'Czy korzystanie z PWr Now jest bezpłatne?',
+    question: 'Czy korzystanie z platformy jest płatne?',
     answer:
-      'Tak! PWr Now jest całkowicie bezpłatną platformą dla wszystkich organizacji studenckich, kół naukowych i jednostek Politechniki Wrocławskiej.',
+      'Nie, korzystanie z PWr Now jest całkowicie bezpłatne zarówno dla organizacji, jak i dla studentów.',
   },
   {
-    question: 'Jakie rodzaje wydarzeń mogę promować?',
+    question: 'Jak szybko moje wydarzenie pojawi się na platformie?',
     answer:
-      'Możesz promować wszystkie wydarzenia związane z życiem akademickim: konferencje, warsztaty, spotkania kół naukowych, konkursy, wydarzenia kulturalne, sportowe i integracyjne.',
+      'Staramy się, aby Twoje wydarzenia pojawiały się na platformie jak najszybciej po ich dodaniu.',
   },
   {
-    question: 'Jak długo trwa proces weryfikacji wydarzenia?',
+    question: 'Czy wydarzenia podlegają weryfikacji?',
     answer:
-      'Proces weryfikacji zwykle trwa 1-2 dni robocze. Staramy się jak najszybciej przetwarzać wszystkie zgłoszenia, aby Twoje wydarzenie pojawiło się na platformie w odpowiednim czasie.',
+      'Tak, wydarzenia przechodzą weryfikację przed pojawieniem się na platformie, aby zapewnić odpowiedni standard i jakość treści dla naszych użytkowników.',
   },
   {
-    question: 'Czy mogę edytować informacje o wydarzeniu po publikacji?',
+    question: 'Czy mogę edytować lub usunąć opublikowane wydarzenie?',
     answer:
-      'Tak, możesz wprowadzać zmiany w informacjach o wydarzeniu. Skontaktuj się z nami z aktualizacjami, a my niezwłocznie zaktualizujemy dane na platformie.',
+      'Tak, w dowolnym momencie możesz edytować szczegóły wydarzenia lub usunąć je z platformy za pomocą panelu organizacji.',
   },
   {
-    question: 'Jak mogę dotrzeć do większej liczby studentów?',
+    question: 'Jakie informacje mogę zamieścić o wydarzeniu?',
     answer:
-      'PWr Now automatycznie promuje wszystkie zweryfikowane wydarzenia. Dodatkowo, upewnij się, że Twój opis jest szczegółowy i zawiera wszystkie istotne informacje, które mogą zainteresować studentów.',
+      'Możesz dodać tytuł, opis, datę i godzinę, miejsce, kategorię wydarzenia, zdjęcie, link do rejestracji oraz inne istotne informacje.',
   },
 ];
 
-function FaqItem({ faq, index }: { faq: (typeof faqs)[0]; index: number }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <Card
-      className='group transition-all duration-300 hover:shadow-md animate-fade-up'
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <CardContent className='p-0'>
-        <button
-          className='w-full p-6 text-left transition-colors duration-200 hover:bg-muted/50'
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold text-foreground pr-4'>
-              {faq.question}
-            </h3>
-            <div className='flex-shrink-0'>
-              {isOpen ? (
-                <ChevronUp className='h-5 w-5 text-muted-foreground transition-transform duration-200' />
-              ) : (
-                <ChevronDown className='h-5 w-5 text-muted-foreground transition-transform duration-200' />
-              )}
-            </div>
-          </div>
-        </button>
-        {isOpen && (
-          <div className='px-6 pb-6 animate-fade-up animate-duration-300'>
-            <p className='text-muted-foreground leading-relaxed'>
-              {faq.answer}
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function FaqSection() {
   return (
-    <section id='faq' className='py-24'>
-      <div className='text-center mb-16'>
-        <h2 className='text-3xl md:text-4xl font-bold mb-4 animate-fade-up'>
-          Najczęściej zadawane <span className='gradient-text'>pytania</span>
-        </h2>
-        <p className='text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up animate-delay-200'>
-          Masz pytania? Sprawdź odpowiedzi na najczęściej zadawane pytania lub
-          skontaktuj się z nami bezpośrednio.
-        </p>
-      </div>
-
-      <div className='max-w-3xl mx-auto space-y-4'>
-        {faqs.map((faq, index) => (
-          <FaqItem key={index} faq={faq} index={index} />
+    <motion.section
+      initial='hidden'
+      whileInView='visible'
+      viewport={{ once: true, amount: 0.3 }}
+      variants={fadeInUp}
+      id='faq'
+      className='scroll-mt-24'
+    >
+      <motion.h2
+        variants={scaleIn}
+        className='text-3xl font-bold text-center mb-12 animate-fade-up animate-duration-1000'
+      >
+        Najczęściej zadawane pytania
+      </motion.h2>
+      <Accordion
+        type='single'
+        collapsible
+        className='w-full max-w-3xl mx-auto animate-fade-up animate-duration-1000 animate-delay-300'
+      >
+        {questionsData.map((item, index) => (
+          <motion.div
+            key={index}
+            variants={fadeInUp}
+            custom={index}
+            transition={{ delay: index * 0.1 }}
+          >
+            <AccordionItem value={`item-${index}`} className='border-b'>
+              <AccordionTrigger className='text-left font-medium py-4'>
+                {item.question}
+              </AccordionTrigger>
+              <AccordionContent className='text-muted-foreground pb-4'>
+                {item.answer}
+              </AccordionContent>
+            </AccordionItem>
+          </motion.div>
         ))}
-      </div>
-    </section>
+      </Accordion>
+    </motion.section>
   );
 }

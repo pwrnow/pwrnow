@@ -1,86 +1,95 @@
 'use client';
 
-import { Calendar, Users, Bell, Filter, Smartphone, Globe } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8 },
+  },
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const scaleIn = {
+  hidden: { scale: 0.8, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 0.5 },
+  },
+};
 
 const features = [
   {
-    icon: Calendar,
-    title: 'Wszystkie wydarzenia w jednym miejscu',
+    title: 'Większa widoczność',
     description:
-      'Nie przegap ważnych wydarzeń. Wszystkie aktywności na PWr zebrane w jednej aplikacji.',
+      'Docieraj do szerszego grona studentów, którzy aktywnie poszukują wydarzeń na uczelni.',
+    icon: '🚀',
+    delay: 300,
   },
   {
-    icon: Filter,
-    title: 'Inteligentne filtrowanie',
+    title: 'Prosta publikacja',
     description:
-      'Znajdź wydarzenia, które Cię interesują dzięki zaawansowanym filtrom według kategorii i organizacji.',
+      'Dodawaj swoje wydarzenia w prosty i intuicyjny sposób, bez zbędnych formalności.',
+    icon: '✨',
+    delay: 500,
   },
   {
-    icon: Users,
-    title: 'Społeczność PWr',
+    title: 'Większa frekwencja',
     description:
-      'Połącz się ze społecznością akademicką i odkryj nowe możliwości rozwoju.',
-  },
-  {
-    icon: Bell,
-    title: 'Powiadomienia',
-    description:
-      'Otrzymuj informacje o nowych wydarzeniach i ważnych aktualizacjach.',
-  },
-  {
-    icon: Smartphone,
-    title: 'Dostępność mobilna',
-    description:
-      'Korzystaj z PWr Now na telefonie, tablecie i komputerze - wszędzie i zawsze.',
-  },
-  {
-    icon: Globe,
-    title: 'Dla całej uczelni',
-    description:
-      'Platforma łączy wszystkie wydziały, koła naukowe i organizacje studenckie.',
+      'Zwiększ liczbę uczestników dzięki lepszej promocji i docieraniu do zainteresowanych osób.',
+    icon: '👥',
+    delay: 700,
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section id='funkcje' className='py-24'>
-      <div className='text-center mb-16'>
-        <h2 className='text-3xl md:text-4xl font-bold mb-4 animate-fade-up'>
-          Dlaczego warto wybrać <span className='gradient-text'>PWr Now</span>?
-        </h2>
-        <p className='text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up animate-delay-200'>
-          Odkryj wszystkie zalety nowoczesnej platformy wydarzeń akademickich
-        </p>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
-        {features.map((feature, index) => (
-          <Card
-            key={index}
-            className='group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/50 animate-fade-up'
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <CardContent className='p-6'>
-              <div className='flex items-start space-x-4'>
-                <div className='flex-shrink-0'>
-                  <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300'>
-                    <feature.icon className='h-6 w-6 text-primary' />
-                  </div>
-                </div>
-                <div className='flex-1'>
-                  <h3 className='text-lg font-semibold mb-2 text-foreground group-hover:text-primary transition-colors duration-300'>
-                    {feature.title}
-                  </h3>
-                  <p className='text-muted-foreground text-sm leading-relaxed'>
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <motion.section
+      initial='hidden'
+      whileInView='visible'
+      viewport={{ once: true, amount: 0.5 }}
+      variants={fadeInUp}
+      id='dlaczego-pwrnow'
+      className='scroll-mt-24'
+    >
+      <motion.h2
+        variants={scaleIn}
+        className='text-3xl font-bold text-center mb-12 animate-fade-up animate-duration-1000'
+      >
+        Dlaczego warto dołączyć do PWr Now?
+      </motion.h2>
+      <motion.div
+        variants={staggerContainer}
+        className='grid grid-cols-1 md:grid-cols-3 gap-8'
+      >
+        {features.map((item, index) => (
+          <motion.div key={index} variants={fadeInUp}>
+            <Card
+              className='p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-up'
+              style={{ animationDelay: `${item.delay}ms` }}
+            >
+              <div className='text-4xl mb-4'>{item.icon}</div>
+              <h3 className='text-xl font-semibold mb-2'>{item.title}</h3>
+              <p className='text-muted-foreground'>{item.description}</p>
+            </Card>
+          </motion.div>
         ))}
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }

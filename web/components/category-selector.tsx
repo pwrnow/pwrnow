@@ -6,10 +6,6 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { Category } from '@/lib/types';
 
-interface CategoryWithId extends Category {
-  id: string;
-}
-
 export default function CategorySelector({
   categories = [],
 }: {
@@ -24,9 +20,9 @@ export default function CategorySelector({
   const currentCategory = searchParams.get('category') || 'wszystkie';
 
   // Add "Wszystkie" category to the beginning of the list
-  const allCategories: CategoryWithId[] = [
-    { id: 'all', name: 'Wszystkie', slug: 'wszystkie' },
-    ...categories.map((cat, index) => ({ ...cat, id: `cat-${index}` })),
+  const allCategories: Category[] = [
+    { name: 'Wszystkie', slug: 'wszystkie' },
+    ...categories,
   ];
 
   const handleCategoryChange = (categorySlug: string) => {
@@ -73,7 +69,7 @@ export default function CategorySelector({
         >
           {allCategories.map((category) => (
             <button
-              key={category.id}
+              key={category.slug}
               data-slug={category.slug}
               onClick={() => handleCategoryChange(category.slug)}
               className={`

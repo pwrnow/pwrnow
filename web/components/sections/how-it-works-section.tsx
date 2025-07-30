@@ -1,129 +1,157 @@
 'use client';
 
-import { Search, Calendar, Users, Heart } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 
-const steps = [
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8 },
+  },
+};
+
+const scaleIn = {
+  hidden: { scale: 0.8, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 0.5 },
+  },
+};
+
+const stepsData = [
   {
-    icon: Search,
-    number: '01',
-    title: 'Odkryj wydarzenia',
-    description:
-      'Przeglądaj aktualne wydarzenia na PWr lub użyj filtru aby znaleźć to, co Cię interesuje.',
-    color: 'from-accent to-primary',
+    title: 'Skontaktuj się z nami',
+    description: (
+      <>
+        Napisz do nas wiadomość na adres{' '}
+        <a
+          href='mailto:pwrnow.kontakt@gmail.com'
+          className='text-primary hover:underline font-medium'
+        >
+          pwrnow.kontakt@gmail.com
+        </a>
+        . Opowiedz nam o swojej organizacji i działalności na uczelni, a my
+        odpowiemy na wszystkie pytania.
+      </>
+    ),
+    step: 1,
+    delay: 300,
+    icon: '✉️',
   },
   {
-    icon: Calendar,
-    number: '02',
-    title: 'Sprawdź szczegóły',
+    title: 'Otrzymaj unikalny link',
     description:
-      'Dowiedz się więcej o wydarzeniu - data, miejsce, organizator i szczegółowy opis.',
-    color: 'from-primary to-secondary',
+      'Po weryfikacji, wyślemy Ci specjalny link umożliwiający zarządzanie wydarzeniami Twojej organizacji na platformie PWr Now.',
+    step: 2,
+    delay: 600,
+    icon: '🔑',
   },
   {
-    icon: Users,
-    number: '03',
-    title: 'Dołącz do społeczności',
+    title: 'Dodawaj wydarzenia',
     description:
-      'Weź udział w wydarzeniu i nawiąż nowe znajomości w społeczności PWr.',
-    color: 'from-secondary to-accent',
+      'Twórz atrakcyjne wydarzenia z opisami, zdjęciami i wszystkimi potrzebnymi informacjami. Nasz intuicyjny interfejs ułatwi Ci to zadanie.',
+    step: 3,
+    delay: 900,
+    icon: '📅',
   },
   {
-    icon: Heart,
-    number: '04',
-    title: 'Rozwijaj się',
+    title: 'Docieraj do studentów',
     description:
-      'Korzystaj z wiedzy i doświadczeń zdobytych podczas wydarzeń akademickich.',
-    color: 'from-accent to-secondary',
+      'Twoje wydarzenia staną się widoczne dla społeczności akademickiej Politechniki Wrocławskiej, co przełoży się na większą frekwencję i rozpoznawalność.',
+    step: 4,
+    delay: 1200,
+    icon: '🎯',
   },
 ];
 
 export default function HowItWorksSection() {
   return (
-    <section id='jak-to-dziala' className='py-24 bg-muted/30'>
-      <div className='text-center mb-16'>
-        <h2 className='text-3xl md:text-4xl font-bold mb-4 animate-fade-up'>
-          Jak działa <span className='gradient-text'>PWr Now</span>?
-        </h2>
-        <p className='text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up animate-delay-200'>
-          Proste kroki do odkrycia najlepszych wydarzeń na Politechnice
-          Wrocławskiej
-        </p>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-8 mb-16'>
-        {steps.map((step, index) => (
-          <Card
+    <motion.section
+      initial='hidden'
+      whileInView='visible'
+      viewport={{ once: true, amount: 0.3 }}
+      variants={fadeInUp}
+      id='jak-to-dziala'
+      className='scroll-mt-24'
+    >
+      <motion.h2
+        variants={scaleIn}
+        className='text-3xl font-bold text-center mb-16 animate-fade-up animate-duration-1000'
+      >
+        Jak to działa?
+      </motion.h2>
+      <div className='relative'>
+        <div className='absolute left-1/2 -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary/50 via-primary to-transparent rounded-full animate-pulse animate-duration-[3000ms]'></div>
+        {stepsData.map((item, index) => (
+          <motion.div
             key={index}
-            className='group relative overflow-hidden hover:shadow-xl transition-all duration-500 border-border/50 animate-fade-up'
-            style={{ animationDelay: `${index * 150}ms` }}
+            variants={fadeInUp}
+            custom={index}
+            className={`relative flex items-start gap-8 mb-16 ${
+              index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'
+            }`}
           >
             <div
-              className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-5 group-hover:opacity-10 transition-opacity duration-500`}
-            ></div>
-
-            <CardContent className='p-6 relative'>
-              <div className='flex items-start space-x-4'>
-                <div className='flex-shrink-0'>
-                  <div
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}
-                  >
-                    <step.icon className='h-8 w-8 text-white' />
-                  </div>
+              className={`hidden md:flex items-center justify-center w-16 h-16 bg-background border-2 border-primary rounded-full z-10 text-xl font-bold shrink-0 animate-fade-${
+                index % 2 === 0 ? 'right' : 'left'
+              } animate-duration-1000 hover:scale-110 transition-transform duration-300`}
+              style={{ animationDelay: `${item.delay}ms` }}
+            >
+              <span
+                className='animate-fade-up animate-float'
+                style={{ animationDelay: `${item.delay + 300}ms` }}
+              >
+                {item.step}
+              </span>
+            </div>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, x: index % 2 === 0 ? -20 : 20 },
+                visible: {
+                  opacity: 1,
+                  x: 0,
+                  transition: {
+                    duration: 0.6,
+                    delay: index * 0.2,
+                  },
+                },
+              }}
+              className={`w-full md:w-[calc(50%-2rem)] p-6 bg-card rounded-lg shadow-md transition-all duration-500 animate-fade-${
+                index % 2 === 0 ? 'left' : 'right'
+              } hover:shadow-xl hover:-translate-y-1 group`}
+              style={{ animationDelay: `${item.delay}ms` }}
+            >
+              <div className='md:hidden flex items-center gap-4 mb-4'>
+                <div className='flex items-center justify-center w-10 h-10 bg-background border-2 border-primary rounded-full z-10 font-bold shrink-0'>
+                  {item.step}
                 </div>
-
+                <h3 className='text-xl font-semibold'>{item.title}</h3>
+              </div>
+              <div className='flex items-start gap-4'>
+                <div
+                  className='text-3xl hidden md:block animate-fade-up animate-duration-1000 group-hover:animate-wiggle'
+                  style={{ animationDelay: `${item.delay + 400}ms` }}
+                >
+                  {item.icon}
+                </div>
                 <div className='flex-1'>
-                  <div className='flex items-center gap-3 mb-3'>
-                    <span
-                      className={`text-2xl font-bold bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}
-                    >
-                      {step.number}
-                    </span>
-                    <h3 className='text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300'>
-                      {step.title}
-                    </h3>
-                  </div>
-                  <p className='text-muted-foreground leading-relaxed'>
-                    {step.description}
+                  <h3 className='hidden md:block text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300'>
+                    {item.title}
+                  </h3>
+                  <p className='text-muted-foreground group-hover:text-foreground transition-colors duration-300'>
+                    {item.description}
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className='w-full h-1 mt-4 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left'></div>
+            </motion.div>
+          </motion.div>
         ))}
       </div>
-
-      {/* CTA Section */}
-      <div className='text-center'>
-        <div className='bg-background/80 backdrop-blur-sm rounded-2xl p-8 border border-border/50 max-w-2xl mx-auto animate-fade-up animate-delay-600'>
-          <h3 className='text-2xl font-bold mb-4'>
-            Gotowy na rozpoczęcie przygody?
-          </h3>
-          <p className='text-muted-foreground mb-6 text-lg'>
-            Dołącz do tysięcy studentów PWr i nie przegap żadnego ważnego
-            wydarzenia!
-          </p>
-
-          <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-            <Button size='lg' className='group' asChild>
-              <Link href='#dla-organizacji'>
-                <span className='flex items-center gap-2'>
-                  Dla organizacji
-                  <Users className='h-4 w-4 group-hover:scale-110 transition-transform' />
-                </span>
-              </Link>
-            </Button>
-
-            <Button variant='outline' size='lg' asChild>
-              <Link href='mailto:pwrnow.kontakt@gmail.com'>
-                Skontaktuj się z nami
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
+    </motion.section>
   );
 }
