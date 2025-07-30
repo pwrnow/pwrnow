@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { Category } from '@/lib/types';
 
@@ -11,13 +11,13 @@ export default function CategorySelector({
 }: {
   categories: Category[];
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInitialRender, setIsInitialRender] = useState(true);
-
-  const currentCategory = searchParams.get('category') || 'wszystkie';
+  const [currentCategory, setCurrentCategory] = useState(
+    () => searchParams.get('category') || 'wszystkie'
+  );
 
   // Add "Wszystkie" category to the beginning of the list
   const allCategories: Category[] = [
@@ -34,6 +34,10 @@ export default function CategorySelector({
 
     if (categorySlug === currentCategory) return;
 
+    // Update local state immediately
+    setCurrentCategory(categorySlug);
+
+    // Update URL without page reload using shallow routing
     const params = new URLSearchParams(searchParams);
 
     if (categorySlug === 'wszystkie') {
@@ -42,12 +46,21 @@ export default function CategorySelector({
       params.set('category', categorySlug);
     }
 
-    // Using replace instead of push for smoother navigation without adding to history
     const newUrl = `${pathname}${
       params.toString() ? `?${params.toString()}` : ''
     }`;
-    router.replace(newUrl, { scroll: false });
+
+    // Use window.history.replaceState for true shallow routing
+    window.history.replaceState(null, '', newUrl);
   };
+
+  // Sync with URL changes (back/forward navigation)
+  useEffect(() => {
+    const urlCategory = searchParams.get('category') || 'wszystkie';
+    if (urlCategory !== currentCategory) {
+      setCurrentCategory(urlCategory);
+    }
+  }, [searchParams]);
 
   // Update the active button rect when the current category changes
   useEffect(() => {
