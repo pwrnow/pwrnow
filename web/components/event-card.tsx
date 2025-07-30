@@ -21,7 +21,8 @@ export default function EventCard({ event }: EventCardProps) {
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [aspectRatio, setAspectRatio] = useState<"1:1" | "16:9">("16:9");
     const [isImageLoading, setIsImageLoading] = useState(true);
-    const { trackEventClick, trackEvent } = useAnalytics();
+    const { trackEventClick, trackEvent, trackEventInteraction } =
+        useAnalytics();
 
     const startsAt = parseISO(event.starts_at);
     const endsAt = parseISO(event.ends_at);
@@ -64,12 +65,14 @@ export default function EventCard({ event }: EventCardProps) {
     const handleMapLinkClick = () => {
         if (!event.location) return;
 
-        // Track map click
-        trackEvent("Map Link Click", {
-            "Event ID": event.id,
-            "Event Title": event.title,
-            Location: event.location,
-        });
+        // Track map click with organization info
+        trackEventInteraction(
+            "map_click",
+            event.id,
+            event.title,
+            event.organization?.id,
+            event.organization?.name
+        );
 
         const isIOS =
             typeof navigator !== "undefined" &&
@@ -82,8 +85,13 @@ export default function EventCard({ event }: EventCardProps) {
     };
 
     const handleEventLinkClick = () => {
-        // Track event link click
-        trackEventClick(event.id, event.title);
+        // Track event link click with organization info
+        trackEventClick(
+            event.id,
+            event.title,
+            event.organization?.id,
+            event.organization?.name
+        );
     };
     const truncateDescription = (text: string, maxLength: number) => {
         if (!text || text.length <= maxLength) return text;

@@ -4,9 +4,7 @@
 
 export const analyticsConfig = {
     domain: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN || "pwrnow.pl",
-    apiHost:
-        process.env.NEXT_PUBLIC_PLAUSIBLE_API_HOST || "https://anal.pwrnow.pl",
-    // enabled: true,
+    apiHost: process.env.SERVICE_FQDN_PLAUSIBLE || "https://anal.pwrnow.pl",
     enabled: process.env.NEXT_PUBLIC_PLAUSIBLE_ENABLED === "true",
     trackLocalhost: true, // Always allow localhost tracking when enabled
 };
