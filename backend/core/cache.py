@@ -5,12 +5,15 @@ Provides production-ready caching for listing endpoints with proper invalidation
 """
 import hashlib
 import json
+import logging
 from typing import Any, Dict, List, Optional
 
 from django.core.cache import cache
 from django.conf import settings
 from django.db.models import QuerySet
 from django_redis import get_redis_connection
+
+logger = logging.getLogger(__name__)
 
 
 def get_cache_key(base_key: str, **params) -> str:
@@ -66,17 +69,17 @@ def cache_queryset_data(cache_key: str, queryset: QuerySet, serializer_class,
     # Try to get from cache first
     cached_data = cache.get(cache_key)
     if cached_data is not None:
-        print(f"📦 CACHE HIT: Using cached data for key: {cache_key}")
+        logger.info(f"📦 CACHE HIT: Using cached data for key: {cache_key}")
         return cached_data
 
-    print(f"🔄 CACHE MISS: Fetching fresh data for key: {cache_key}")
+    logger.info(f"🔄 CACHE MISS: Fetching fresh data for key: {cache_key}")
     # Serialize the queryset
     serializer = serializer_class(queryset, many=True, context=context or {})
     data = serializer.data
 
     # Cache the serialized data
     cache.set(cache_key, data, timeout)
-    print(f"💾 CACHE SET: Stored {len(data)} items with timeout {timeout}s for key: {cache_key}")
+    logger.info(f"💾 CACHE SET: Stored {len(data)} items with timeout {timeout}s for key: {cache_key}")
 
     return data
 
@@ -95,7 +98,7 @@ def cache_public_events(queryset: QuerySet, serializer_class, context: Optional[
     Returns:
         Cached or fresh serialized events data
     """
-    print(f"📅 EVENTS: Checking cache for public events list (filters: {filters})...")
+    logger.info(f"📅 EVENTS: Checking cache for public events list (filters: {filters})...")
     cache_key = get_public_events_cache_key(**filters)
     timeout = settings.CACHE_TTL['PUBLIC_EVENTS']
 
@@ -114,7 +117,7 @@ def cache_categories(queryset: QuerySet, serializer_class, context: Optional[Dic
     Returns:
         Cached or fresh serialized categories data
     """
-    print("🏷️  CATEGORIES: Checking cache for categories list...")
+    logger.info("🏷️  CATEGORIES: Checking cache for categories list...")
     cache_key = get_categories_cache_key()
     timeout = settings.CACHE_TTL['CATEGORIES']
 
