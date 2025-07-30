@@ -23,10 +23,26 @@ export default function EventCard({ event }: EventCardProps) {
 
   const startsAt = parseISO(event.starts_at);
   const endsAt = parseISO(event.ends_at);
-  const dateString = format(startsAt, 'd MMMM yyyy', { locale: pl });
+
+  // Check if event spans multiple days
+  const isSameDay =
+    format(startsAt, 'yyyy-MM-dd') === format(endsAt, 'yyyy-MM-dd');
+
+  const dateString = isSameDay
+    ? format(startsAt, 'd MMMM yyyy', { locale: pl })
+    : `${format(startsAt, 'd MMMM', { locale: pl })} - ${format(
+        endsAt,
+        'd MMMM yyyy',
+        { locale: pl }
+      )}`;
+
   const startTimeString = format(startsAt, 'HH:mm');
   const endTimeString = format(endsAt, 'HH:mm');
-  const timeString = `${startTimeString} - ${endTimeString}`;
+  const timeString = isSameDay
+    ? `${startTimeString} - ${endTimeString}`
+    : `${startTimeString} (${format(startsAt, 'd MMM', {
+        locale: pl,
+      })}) - ${endTimeString} (${format(endsAt, 'd MMM', { locale: pl })})`;
 
   const organizationName = event.organization?.name || 'Wydarzenie';
   const organizationImageUrl = event.organization?.image_url;
