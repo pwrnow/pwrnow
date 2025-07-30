@@ -24,17 +24,32 @@ from .authentication import (
     OrganizationAuthenticationMixin
 )
 from .tasks import send_discord_notification
+from .cache import cache_categories, cache_public_events
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(viewsets.GenericViewSet):
     """
-    ViewSet for listing categories
+    ViewSet for listing categories only (no single category retrieval)
+    Uses Redis caching for performance
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    lookup_field = 'slug'
     permission_classes = [AllowAny]
     authentication_classes = []
+
+    def list(self, request, *args, **kwargs):
+        """List all categories with caching."""
+        # Get all categories ordered by order_index and name
+        queryset = self.get_queryset()
+
+        # Cache the categories list
+        data = cache_categories(
+            queryset=queryset,
+            serializer_class=self.get_serializer_class(),
+            context={'request': request}
+        )
+
+        return Response(data)
 
 
 class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -228,6 +243,37 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             queryset = queryset.filter(verified=True, ends_at__gte=now)
 
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        """
+        List events with caching for public (non-authenticated org) requests.
+        """
+        current_org = self.get_current_organization()
+
+        # Only cache public events (when no org is authenticated)
+        if not current_org:
+            queryset = self.filter_queryset(self.get_queryset())
+
+            # Extract filter parameters for cache key generation
+            filters = {}
+            if hasattr(request, 'query_params'):
+                # Include relevant filter parameters in cache key
+                for param in ['category__slug', 'organization__slug', 'verified', 'search', 'ordering']:
+                    if param in request.query_params:
+                        filters[param] = request.query_params[param]
+
+            # Cache the public events list
+            data = cache_public_events(
+                queryset=queryset,
+                serializer_class=self.get_serializer_class(),
+                context={'request': request},
+                **filters
+            )
+
+            return Response(data)
+
+        # For authenticated organizations, don't cache (private data)
+        return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         """

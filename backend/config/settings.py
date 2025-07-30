@@ -130,6 +130,34 @@ USE_TZ = True
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
 REDIS_SSL = REDIS_URL.startswith("rediss://")
 
+# Cache configuration using django_redis
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'ssl_cert_reqs': None if REDIS_SSL else None,
+            } if REDIS_SSL else {},
+        },
+        'KEY_PREFIX': 'pwrnow_cache',
+        'TIMEOUT': 300,  # Default 5 minutes cache timeout
+    }
+}
+
+# Cache keys
+CACHE_KEYS = {
+    'PUBLIC_EVENTS_LIST': 'public_events_list',
+    'CATEGORIES_LIST': 'categories_list',
+}
+
+# Cache TTL settings (in seconds)
+CACHE_TTL = {
+    'PUBLIC_EVENTS': 300,  # 5 minutes
+    'CATEGORIES': 1800,    # 30 minutes
+}
+
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_URL = REDIS_URL
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-use-ssl
