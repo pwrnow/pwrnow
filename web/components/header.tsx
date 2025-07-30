@@ -3,9 +3,7 @@
 import Logo from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-interface HeaderProps {}
-
-export default function Header({}: HeaderProps) {
+export default function Header() {
   return (
     <header className='sticky top-0 z-20 w-full bg-background/95 backdrop-blur-md'>
       <div className='flex justify-between items-center p-3 sm:p-4'>
