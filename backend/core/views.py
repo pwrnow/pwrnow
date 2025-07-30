@@ -205,44 +205,30 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
 
 
     def get_queryset(self):
-        """
-        Custom ordering for events:
-        1. Events starting today
-        2. New events (verified in the last 24 hours)
-        3. All other events, sorted by start date
-        If an organization is authenticated, return all their events with this custom sorting.
-        If not, return only upcoming and verified events.
-        """
+        """Optimized version with better database performance"""
         now = timezone.now()
         today = now.date()
         twenty_four_hours_ago = now - timezone.timedelta(hours=24)
 
+        # Use raw SQL for better performance on large datasets
         queryset = Event.objects.select_related('category', 'organization').prefetch_related('tags')
-
-        # Annotate with sorting conditions
-        queryset = queryset.annotate(
-            is_today=Case(
-                When(starts_at__date=today, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField()
-            ),
-            is_new=Case(
-                When(verified_at__gte=twenty_four_hours_ago, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField()
-            )
-        )
-
-        # Apply custom ordering
-        queryset = queryset.order_by('-is_today', '-is_new', 'starts_at')
 
         current_org = self.get_current_organization()
         if current_org:
             queryset = queryset.filter(organization__id=current_org.id)
         else:
+            # Apply filters first, then annotations
             queryset = queryset.filter(verified=True, ends_at__gte=now)
 
-        return queryset
+        # Simpler ordering - avoid complex CASE statements
+        return queryset.extra(
+            select={
+                'is_today': "DATE(starts_at) = %s",
+                'is_new': "verified_at >= %s"
+            },
+            select_params=[today, twenty_four_hours_ago],
+            order_by=['-is_today', '-is_new', 'starts_at']
+        )
 
     def list(self, request, *args, **kwargs):
         """
