@@ -150,7 +150,7 @@ export default function EventCard({ event }: EventCardProps) {
                 </div>
                 <button
                   onClick={handleMapLinkClick}
-                  className='font-medium hover:underline flex items-center gap-1'
+                  className='font-medium hover:underline flex items-center gap-1 cursor-pointer'
                   title='Otwórz w aplikacji map'
                 >
                   {event.location}
@@ -179,7 +179,7 @@ export default function EventCard({ event }: EventCardProps) {
                 <Button
                   variant='link'
                   size='sm'
-                  className='mt-1 h-auto p-0 text-primary'
+                  className='mt-1 h-auto p-0 text-primary cursor-pointer'
                   onClick={() =>
                     setIsDescriptionExpanded(!isDescriptionExpanded)
                   }
