@@ -6,13 +6,13 @@ import { getEvents } from '@/lib/api';
 import { getCategories } from '@/lib/api';
 
 // Enable Full Route Cache by setting revalidation
-export const revalidate = 60; // Revalidate every 1 min
+// export const revalidate = 60; // Revalidate every 1 min
 
 // Force static generation
 // export const dynamic = 'force-static';
 
 // Cache fetch requests for better performance
-export const fetchCache = 'default-cache';
+// export const fetchCache = 'default-cache';
 
 export default async function EventsPage() {
   const categories = await getCategories();
