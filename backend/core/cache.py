@@ -5,15 +5,12 @@ Provides production-ready caching for listing endpoints with proper invalidation
 """
 import hashlib
 import json
-import logging
 from typing import Any, Dict, List, Optional
 
 from django.core.cache import cache
 from django.conf import settings
 from django.db.models import QuerySet
 from django_redis import get_redis_connection
-
-logger = logging.getLogger(__name__)
 
 
 def get_cache_key(base_key: str, **params) -> str:
@@ -66,20 +63,25 @@ def cache_queryset_data(cache_key: str, queryset: QuerySet, serializer_class,
     Returns:
         Serialized data list
     """
+    print(f"🔍 CACHE: Checking cache for key: {cache_key}")
+
     # Try to get from cache first
     cached_data = cache.get(cache_key)
     if cached_data is not None:
-        logger.info(f"📦 CACHE HIT: Using cached data for key: {cache_key}")
+        print(f"📦 CACHE HIT: Found {len(cached_data)} items in cache for key: {cache_key}")
         return cached_data
 
-    logger.info(f"🔄 CACHE MISS: Fetching fresh data for key: {cache_key}")
+    print(f"🔄 CACHE MISS: Fetching fresh data for key: {cache_key}")
+
     # Serialize the queryset
     serializer = serializer_class(queryset, many=True, context=context or {})
     data = serializer.data
 
+    print(f"📊 SERIALIZED: Got {len(data)} items from queryset")
+
     # Cache the serialized data
     cache.set(cache_key, data, timeout)
-    logger.info(f"💾 CACHE SET: Stored {len(data)} items with timeout {timeout}s for key: {cache_key}")
+    print(f"💾 CACHE SET: Stored {len(data)} items with timeout {timeout}s for key: {cache_key}")
 
     return data
 
@@ -98,9 +100,10 @@ def cache_public_events(queryset: QuerySet, serializer_class, context: Optional[
     Returns:
         Cached or fresh serialized events data
     """
-    logger.info(f"📅 EVENTS: Checking cache for public events list (filters: {filters})...")
+    print(f"📅 EVENTS: Caching public events with filters: {filters}")
     cache_key = get_public_events_cache_key(**filters)
     timeout = settings.CACHE_TTL['PUBLIC_EVENTS']
+    print(f"📅 EVENTS: Using cache key: {cache_key}, timeout: {timeout}s")
 
     return cache_queryset_data(cache_key, queryset, serializer_class, context, timeout)
 
@@ -117,9 +120,10 @@ def cache_categories(queryset: QuerySet, serializer_class, context: Optional[Dic
     Returns:
         Cached or fresh serialized categories data
     """
-    logger.info("🏷️  CATEGORIES: Checking cache for categories list...")
+    print("🏷️  CATEGORIES: Caching categories list")
     cache_key = get_categories_cache_key()
     timeout = settings.CACHE_TTL['CATEGORIES']
+    print(f"🏷️  CATEGORIES: Using cache key: {cache_key}, timeout: {timeout}s")
 
     return cache_queryset_data(cache_key, queryset, serializer_class, context, timeout)
 
@@ -130,33 +134,51 @@ def invalidate_events_cache():
 
     Uses redis pattern matching to delete all event-related cache keys.
     """
+    print("🗑️  INVALIDATE: Starting events cache invalidation")
     try:
         redis_client = get_redis_connection("default")
 
         # Get all keys matching the events pattern
-        pattern = f"{settings.CACHES['default']['KEY_PREFIX']}:*{settings.CACHE_KEYS['PUBLIC_EVENTS_LIST']}*"
+        base_key = settings.CACHE_KEYS['PUBLIC_EVENTS_LIST']
+        key_prefix = settings.CACHES['default'].get('KEY_PREFIX', '')
+
+        if key_prefix:
+            pattern = f"{key_prefix}:*{base_key}*"
+        else:
+            pattern = f"*{base_key}*"
+
+        print(f"🗑️  INVALIDATE: Searching for keys with pattern: {pattern}")
         keys = redis_client.keys(pattern)
+        print(f"🗑️  INVALIDATE: Found {len(keys)} keys to delete")
 
         if keys:
             redis_client.delete(*keys)
+            print(f"🗑️  INVALIDATE: Successfully deleted {len(keys)} events cache keys")
+        else:
+            print("🗑️  INVALIDATE: No events cache keys found to delete")
 
     except Exception as e:
+        print(f"❌ INVALIDATE ERROR: Redis pattern matching failed: {e}")
         # Fall back to clearing the base cache key if pattern matching fails
         cache.delete(settings.CACHE_KEYS['PUBLIC_EVENTS_LIST'])
+        print("🗑️  INVALIDATE: Fallback - deleted base events cache key")
 
 
 def invalidate_categories_cache():
     """
     Invalidate categories cache.
     """
-    cache.delete(get_categories_cache_key())
+    cache_key = get_categories_cache_key()
+    print(f"🗑️  INVALIDATE: Deleting categories cache key: {cache_key}")
+    cache.delete(cache_key)
+    print("🗑️  INVALIDATE: Categories cache invalidated")
 
 
 def invalidate_all_cache():
     """
     Invalidate both events and categories cache.
     """
+    print("🗑️  INVALIDATE: Starting full cache invalidation")
     invalidate_events_cache()
     invalidate_categories_cache()
-
-
+    print("🗑️  INVALIDATE: Full cache invalidation completed")

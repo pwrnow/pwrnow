@@ -26,6 +26,7 @@ def event_post_save_handler(sender, instance, created, **kwargs):
     """
     # Always invalidate cache
     invalidate_events_cache()
+    print(f"🔍 Event post-save signal received for event {instance.id}")
 
     # Only trigger translation task for newly created events
     if created:
