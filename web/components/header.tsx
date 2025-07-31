@@ -5,7 +5,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Header() {
   return (
-    <header className='sticky top-0 z-20 w-full bg-background/95 backdrop-blur-md'>
+    <header className='sticky top-0 z-20 w-full bg-background/95 backdrop-blur-md border-b border-muted/50'>
       <div className='flex justify-between items-center p-3 sm:p-4'>
         <div className='w-24'></div>
         <Logo />

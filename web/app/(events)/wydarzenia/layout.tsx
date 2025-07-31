@@ -3,5 +3,7 @@ export default function EventsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className='max-w-2xl w-full mx-auto'>{children}</div>;
+  return (
+    <div className='max-w-2xl w-full mx-auto pt-6 sm:pt-8'>{children}</div>
+  );
 }
