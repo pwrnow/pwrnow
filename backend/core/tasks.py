@@ -3,6 +3,9 @@ from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -142,6 +145,62 @@ def send_discord_notification(event_id):
         print(f"Event with ID {event_id} not found")
     except Exception as e:
         print(f"Error sending Discord notification: {str(e)}")
+
+
+@shared_task
+def translate_event_content(event_id, target_languages=None):
+    """
+    TODO: Implement automatic translation for event content.
+
+    This task should translate event title and description from Polish to English
+    when a new event is created.
+
+    Args:
+        event_id: The UUID of the event to translate
+        target_languages: List of language codes to translate to (defaults to ['en'])
+    """
+    from .models import Event
+
+    if target_languages is None:
+        target_languages = ['en']  # Default to English translation
+
+    try:
+        # Get the event
+        event = Event.objects.get(id=event_id)
+
+        logger.info(f"TODO: Implement translation for event: {event.title} (ID: {event_id})")
+
+        # TODO: Implement actual translation logic here
+        # 1. Check if translation fields are empty
+        # 2. Call translation service (Google Translate, OpenAI, DeepL, etc.)
+        # 3. Update the translation fields:
+        #    - event.title_en = translated_title
+        #    - event.description_en = translated_description
+        # 4. Save the event with updated fields
+
+        return {
+            'event_id': str(event_id),
+            'event_title': event.title,
+            'message': 'Translation not implemented yet - TODO',
+            'success': False
+        }
+
+    except Event.DoesNotExist:
+        error_msg = f"Event with ID {event_id} not found"
+        logger.error(error_msg)
+        return {
+            'event_id': str(event_id),
+            'error': error_msg,
+            'success': False
+        }
+    except Exception as e:
+        error_msg = f"Error in translation task: {str(e)}"
+        logger.error(error_msg)
+        return {
+            'event_id': str(event_id),
+            'error': error_msg,
+            'success': False
+        }
 
 
 

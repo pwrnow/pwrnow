@@ -88,7 +88,7 @@ export default function CategorySelector({
   }, [currentCategory, isInitialRender]);
 
   return (
-    <div className='sticky top-0 z-10 w-full border-b border-muted/50 h-14 bg-background/80 backdrop-blur-xl'>
+    <div className='sticky top-0 z-10 w-full h-14 bg-background/80 backdrop-blur-xl'>
       <ScrollArea className='w-full h-full'>
         <div
           ref={containerRef}

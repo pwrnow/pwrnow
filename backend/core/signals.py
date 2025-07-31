@@ -1,18 +1,22 @@
 """
-Django signals for cache invalidation.
+Django signals for cache invalidation and translation tasks.
 
 Automatically invalidates relevant caches when models are created, updated, or deleted.
+Also triggers automatic translation tasks for events.
 """
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from .models import Event, Category, Tag
 from .cache import invalidate_events_cache, invalidate_categories_cache
+from .tasks import translate_event_content
 
 
 @receiver(post_save, sender=Event)
-def invalidate_events_on_save(sender, instance, created, **kwargs):
+def event_post_save_handler(sender, instance, created, **kwargs):
     """
-    Invalidate events cache when an Event is created or updated.
+    Handle Event post-save actions:
+    1. Invalidate events cache when an Event is created or updated
+    2. Trigger translation task for new events
 
     Args:
         sender: The Event model class
@@ -20,7 +24,13 @@ def invalidate_events_on_save(sender, instance, created, **kwargs):
         created: Boolean indicating if this is a new instance
         **kwargs: Additional signal arguments
     """
+    # Always invalidate cache
     invalidate_events_cache()
+
+    # Only trigger translation task for newly created events
+    if created:
+        # Start translation task immediately in background
+        translate_event_content.delay(str(instance.id))
 
 
 @receiver(post_delete, sender=Event)

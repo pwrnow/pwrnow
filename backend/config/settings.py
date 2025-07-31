@@ -38,6 +38,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"] if DEBUG else [])
 # Application definition
 
 INSTALLED_APPS = [
+    'modeltranslation',  # Must be before django.contrib.admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -126,6 +127,19 @@ TIME_ZONE = 'Europe/Warsaw'
 USE_I18N = True
 
 USE_TZ = True
+
+# Languages configuration for django-modeltranslation
+from django.utils.translation import gettext_lazy as _
+
+LANGUAGES = [
+    ('pl', _('Polish')),
+    ('en', _('English')),
+]
+
+# ModelTranslation settings
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'pl'
+MODELTRANSLATION_FALLBACK_LANGUAGES = ('pl', 'en')
+MODELTRANSLATION_PREPOPULATE_LANGUAGE = 'pl'
 
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
 REDIS_SSL = REDIS_URL.startswith("rediss://")

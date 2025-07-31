@@ -4,12 +4,13 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
+from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
 from .models import Event, Category, Organization, Tag, OrganizationCode
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(TranslationAdmin):
     list_display = ['name', 'slug', 'order_index', 'event_count', 'created_at']
     list_filter = ['created_at']
     search_fields = ['name', 'slug']
@@ -17,6 +18,10 @@ class CategoryAdmin(admin.ModelAdmin):
     list_editable = ['order_index']
     ordering = ['order_index', 'name']
     readonly_fields = ['id', 'created_at', 'updated_at']
+
+    # Translation-specific configurations - let TranslationAdmin handle fieldsets automatically
+    # This will create tabs/sections for Polish and English translations
+    group_fieldsets = True
 
     @admin.display(description='Events')
     def event_count(self, obj):
@@ -161,7 +166,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 
 @admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(TranslationAdmin):
     form = EventAdminForm
     list_display = [
         'truncated_title',
@@ -188,6 +193,9 @@ class EventAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
+
+    # Translation-specific configurations
+    group_fieldsets = True
 
     fieldsets = (
         ('Basic Information', {
