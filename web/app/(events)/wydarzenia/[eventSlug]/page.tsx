@@ -50,9 +50,10 @@ export async function generateMetadata({
       openGraph: {
         type: 'article',
         title: event.title,
-        description:
-          event.description ||
-          `Wydarzenie ${event.title} organizowane przez ${event.organization.name}`,
+        description: event.description
+          ? event.description.slice(0, 160) +
+            (event.description.length > 160 ? '...' : '')
+          : `Wydarzenie ${event.title} - ${formattedDate}`,
         images: event.image_url
           ? [
               {
@@ -68,9 +69,10 @@ export async function generateMetadata({
       twitter: {
         card: 'summary_large_image',
         title: event.title,
-        description:
-          event.description ||
-          `Wydarzenie ${event.title} organizowane przez ${event.organization.name}`,
+        description: event.description
+          ? event.description.slice(0, 160) +
+            (event.description.length > 160 ? '...' : '')
+          : `Wydarzenie ${event.title} - ${formattedDate}`,
         images: event.image_url ? [event.image_url] : undefined,
       },
       alternates: {
@@ -79,7 +81,7 @@ export async function generateMetadata({
     };
   } catch {
     return {
-      title: 'Wydarzenie nie znalezione | PwrNow',
+      title: 'Wydarzenie nie znalezione | PWrNow',
       description:
         'Szukane wydarzenie nie zostało znalezione. Sprawdź listę wszystkich dostępnych wydarzeń.',
     };
