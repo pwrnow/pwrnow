@@ -80,7 +80,7 @@ class OrganizationCodeAdmin(admin.ModelAdmin):
         else:
             base_url = "https://pwrnow.pl"
 
-        url = f"{base_url}/{obj.code}"
+        url = f"{base_url}/auth/{obj.code}"
         return format_html('<a href="{}" target="_blank">{}</a>', url, obj.code)
 
     @admin.display(description='Last Used', ordering='last_used_at')
