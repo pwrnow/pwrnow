@@ -4,7 +4,10 @@ import CategorySelector from '@/components/category-selector';
 import { CategorySelectorSkeleton } from '@/components/category-selector-skeleton';
 import { getEvents } from '@/lib/api';
 import { getCategories } from '@/lib/api';
-import { generateEventsListStructuredData } from '@/lib/structured-data';
+import {
+  generateComprehensiveEventsStructuredData,
+  generateWebSiteStructuredData,
+} from '@/lib/structured-data';
 import type { Metadata } from 'next';
 
 // Enable Full Route Cache by setting revalidation
@@ -66,18 +69,31 @@ export default async function EventsPage() {
   const categories = await getCategories();
   const events = await getEvents();
 
-  // Generate structured data for events listing
-  const eventsListStructuredData = generateEventsListStructuredData(events);
+  // Generate comprehensive structured data for better SEO visibility
+  const comprehensiveStructuredData =
+    generateComprehensiveEventsStructuredData(events);
+  const webSiteStructuredData = generateWebSiteStructuredData();
 
   return (
     <>
-      {/* Events List Structured Data for SEO */}
+      {/* Website Structured Data for Site-level SEO */}
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(eventsListStructuredData),
+          __html: JSON.stringify(webSiteStructuredData),
         }}
       />
+
+      {/* Comprehensive Events Structured Data for SEO */}
+      {comprehensiveStructuredData.map((structuredData, index) => (
+        <script
+          key={`structured-data-${index}`}
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
+      ))}
 
       <Suspense fallback={<CategorySelectorSkeleton />}>
         <CategorySelector categories={categories} />
