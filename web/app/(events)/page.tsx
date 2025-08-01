@@ -4,22 +4,61 @@ import CategorySelector from '@/components/category-selector';
 import { CategorySelectorSkeleton } from '@/components/category-selector-skeleton';
 import { getEvents } from '@/lib/api';
 import { getCategories } from '@/lib/api';
+import { generateEventsListStructuredData } from '@/lib/structured-data';
+import type { Metadata } from 'next';
 
 // Enable Full Route Cache by setting revalidation
-// export const revalidate = 60; // Revalidate every 1 min
-
-// Force static generation
-// export const dynamic = 'force-static';
+export const revalidate = 60; // Revalidate every 1 minute
 
 // Cache fetch requests for better performance
-// export const fetchCache = 'default-cache';
+export const fetchCache = 'default-cache';
+
+// Generate metadata for better SEO
+export const metadata: Metadata = {
+  title: 'Wydarzenia | PWrNow',
+  description:
+    'Odkryj najciekawsze wydarzenia w Twojej okolicy. Przeglądaj koncerty, warsztaty, konferencje i wiele więcej na PWrNow.',
+  keywords: [
+    'wydarzenia',
+    'events',
+    'koncerty',
+    'warsztaty',
+    'konferencje',
+    'PWrNow',
+  ],
+  openGraph: {
+    title: 'Wydarzenia | PWrNow',
+    description: 'Odkryj najciekawsze wydarzenia w Twojej okolicy',
+    type: 'website',
+    siteName: 'PWrNow',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Wydarzenia | PWrNow',
+    description: 'Odkryj najciekawsze wydarzenia w Twojej okolicy',
+  },
+  alternates: {
+    canonical: '/',
+  },
+};
 
 export default async function EventsPage() {
   const categories = await getCategories();
   const events = await getEvents();
 
+  // Generate structured data for events listing
+  const eventsListStructuredData = generateEventsListStructuredData(events);
+
   return (
     <>
+      {/* Events List Structured Data for SEO */}
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(eventsListStructuredData),
+        }}
+      />
+
       <Suspense fallback={<CategorySelectorSkeleton />}>
         <CategorySelector categories={categories} />
       </Suspense>

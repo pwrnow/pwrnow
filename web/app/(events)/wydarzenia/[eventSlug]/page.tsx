@@ -7,6 +7,10 @@ import EventCard from '@/components/event-card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import {
+  generateEventStructuredData,
+  generateBreadcrumbStructuredData,
+} from '@/lib/structured-data';
 
 // Enable ISR with 60 second revalidation for SEO and performance
 export const revalidate = 60;
@@ -117,52 +121,31 @@ export default async function EventDetailPage({
   }
   if (!event) return notFound();
 
-  // Generate structured data for SEO
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: event.title,
-    description:
-      event.description ||
-      `Wydarzenie ${event.title} organizowane przez ${event.organization.name}`,
-    startDate: event.starts_at,
-    endDate: event.ends_at,
-    eventStatus: 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    location: event.location
-      ? {
-          '@type': 'Place',
-          name: event.location,
-          address: event.location,
-        }
-      : undefined,
-    image: event.image_url ? [event.image_url] : undefined,
-    organizer: {
-      '@type': 'Organization',
-      name: event.organization.name,
-      url: event.organization.image_url,
-    },
-    url:
-      event.url ||
-      `${process.env.NEXT_PUBLIC_SITE_URL || 'https://pwrnow.pl'}/wydarzenia/${
-        event.slug
-      }`,
-    offers: event.url
-      ? {
-          '@type': 'Offer',
-          url: event.url,
-          availability: 'https://schema.org/InStock',
-        }
-      : undefined,
-  };
+  // Generate structured data for SEO using utility function
+  const structuredData = generateEventStructuredData(event);
+
+  // Generate breadcrumb structured data
+  const breadcrumbData = generateBreadcrumbStructuredData([
+    { name: 'PWrNow', url: '/' },
+    { name: 'Wydarzenia', url: '/' },
+    { name: event.title, url: `/wydarzenia/${event.slug}` },
+  ]);
 
   return (
     <>
-      {/* Structured Data for SEO */}
+      {/* Event Structured Data for SEO */}
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData),
+        }}
+      />
+
+      {/* Breadcrumb Structured Data for SEO */}
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbData),
         }}
       />
 
