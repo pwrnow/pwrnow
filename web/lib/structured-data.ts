@@ -254,7 +254,7 @@ export function generateEventStructuredData(
 
   // Add additional context for university events
   if (event.category?.name) {
-    (structuredData as any).keywords = [
+    structuredData.keywords = [
       event.category.name,
       'PWr',
       'Politechnika Wrocławska',
@@ -264,7 +264,7 @@ export function generateEventStructuredData(
   }
 
   // Add audience information for better targeting
-  (structuredData as any).audience = {
+  structuredData.audience = {
     '@type': 'EducationalAudience',
     audienceType: 'student',
     educationalRole: 'student',
