@@ -15,7 +15,7 @@ export const fetchCache = 'default-cache';
 
 // Generate metadata for better SEO
 export const metadata: Metadata = {
-  title: 'Twoje Wydarzenia PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
+  title: 'Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
   description:
     'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
   keywords: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     'odkryj wydarzenia PWr',
   ],
   openGraph: {
-    title: 'Twoje Wydarzenia PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
+    title: 'Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
     description:
       'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
     type: 'website',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Twoje Wydarzenia PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
+    title: 'Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
     description:
       'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
     images: ['/og-image.svg'],
