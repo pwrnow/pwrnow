@@ -99,26 +99,26 @@ function parseLocation(location: string, attendanceMode: string) {
     };
   }
 
-  // For physical locations, try to parse address components
-  const locationParts = location.split(',').map((part) => part.trim());
+  // // For physical locations, try to parse address components
+  // const locationParts = location.split(',').map((part) => part.trim());
 
-  if (locationParts.length >= 2) {
-    // Assume format: "Venue Name, Street, City" or similar
-    const [venueName, ...addressParts] = locationParts;
+  // if (locationParts.length >= 2) {
+  //   // Assume format: "Venue Name, Street, City" or similar
+  //   const [venueName, ...addressParts] = locationParts;
 
-    return {
-      '@type': 'Place',
-      name: venueName,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: addressParts.length > 1 ? addressParts[0] : undefined,
-        addressLocality:
-          addressParts.length > 1 ? addressParts[1] : addressParts[0],
-        addressRegion: addressParts.length > 2 ? addressParts[2] : undefined,
-        addressCountry: 'PL', // Default to Poland for this app
-      },
-    };
-  }
+  //   return {
+  //     '@type': 'Place',
+  //     name: venueName,
+  //     address: {
+  //       '@type': 'PostalAddress',
+  //       streetAddress: addressParts.length > 1 ? addressParts[0] : undefined,
+  //       addressLocality:
+  //         addressParts.length > 1 ? addressParts[1] : addressParts[0],
+  //       addressRegion: addressParts.length > 2 ? addressParts[2] : undefined,
+  //       addressCountry: 'PL', // Default to Poland for this app
+  //     },
+  //   };
+  // }
 
   // Simple location format
   return {
@@ -335,7 +335,6 @@ export function generateComprehensiveEventsStructuredData(
         'Kompletna lista aktualnych wydarzeń studenckich na Politechnice Wrocławskiej - sport, wyjazdy, imprezy, kursy, rozwój i prelekcje.',
       numberOfItems: eventStructuredDataList.length,
       url: baseUrl,
-      mainEntity: eventStructuredDataList,
       itemListElement: eventStructuredDataList.map((eventData, index) => ({
         '@type': 'ListItem',
         position: index + 1,
@@ -385,14 +384,6 @@ export function generateWebSiteStructuredData(siteUrl?: string) {
     description:
       'Platforma wydarzeń studenckich na Politechnice Wrocławskiej. Znajdź wyjazdy, imprezy, kursy, wydarzenia sportowe i więcej.',
     url: baseUrl,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${baseUrl}/wydarzenia?search={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
     publisher: {
       '@type': 'Organization',
       name: 'PWrNow',
