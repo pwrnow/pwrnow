@@ -31,11 +31,20 @@ export const metadata: Metadata = {
     description: 'Odkryj najciekawsze wydarzenia w Twojej okolicy',
     type: 'website',
     siteName: 'PWrNow',
+    images: [
+      {
+        url: '/og-image.svg',
+        width: 1200,
+        height: 630,
+        alt: 'PWrNow - Wydarzenia',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Wydarzenia | PWrNow',
     description: 'Odkryj najciekawsze wydarzenia w Twojej okolicy',
+    images: ['/og-image.svg'],
   },
   alternates: {
     canonical: '/',
