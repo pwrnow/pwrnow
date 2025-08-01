@@ -15,20 +15,30 @@ export const fetchCache = 'default-cache';
 
 // Generate metadata for better SEO
 export const metadata: Metadata = {
-  title: 'Wydarzenia | PWrNow',
+  title: 'Twoje Wydarzenia PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
   description:
-    'Odkryj najciekawsze wydarzenia w Twojej okolicy. Przeglądaj koncerty, warsztaty, konferencje i wiele więcej na PWrNow.',
+    'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
   keywords: [
-    'wydarzenia',
-    'events',
-    'koncerty',
-    'warsztaty',
-    'konferencje',
-    'PWrNow',
+    'znajdź wydarzenia PWr',
+    'aktualne wydarzenia Politechnika Wrocławska',
+    'wydarzenia studenckie dziś',
+    'sport PWr',
+    'wyjazdy studenckie PWr',
+    'imprezy PWr',
+    'kursy PWr',
+    'rozwój osobisty PWr',
+    'prelekcje PWr',
+    'kalendarz wydarzeń PWr',
+    'co dzieje się na PWr',
+    'PWrNow wydarzenia',
+    'Wrocław wydarzenia studenckie',
+    'życie studenckie PWr dziś',
+    'odkryj wydarzenia PWr',
   ],
   openGraph: {
-    title: 'Wydarzenia | PWrNow',
-    description: 'Odkryj najciekawsze wydarzenia w Twojej okolicy',
+    title: 'Twoje Wydarzenia PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
+    description:
+      'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
     type: 'website',
     siteName: 'PWrNow',
     images: [
@@ -36,14 +46,15 @@ export const metadata: Metadata = {
         url: '/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'PWrNow - Wydarzenia',
+        alt: 'PWrNow - Wydarzenia na Politechnice Wrocławskiej',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Wydarzenia | PWrNow',
-    description: 'Odkryj najciekawsze wydarzenia w Twojej okolicy',
+    title: 'Twoje Wydarzenia PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
+    description:
+      'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
     images: ['/og-image.svg'],
   },
   alternates: {
