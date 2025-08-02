@@ -80,11 +80,6 @@ export default async function RootLayout({
   const analyticsDomain = getAnalyticsDomain();
   const locale = await getLocale();
 
-  console.log(
-    'NEXT_SERVER_ACTIONS_ENCRYPTION_KEY',
-    process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
-  );
-
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
