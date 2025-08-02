@@ -2,17 +2,15 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { format, parseISO } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatEventDateRange, formatEventTimeRange } from '@/lib/utils';
 import type { Event } from '@/lib/types';
 import { useAnalytics } from '@/lib/useAnalytics';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface EventCardProps {
   event: Event;
@@ -24,25 +22,15 @@ export default function EventCard({ event }: EventCardProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const { trackEventClick, trackEventInteraction } = useAnalytics();
   const t = useTranslations('EventCard');
+  const locale = useLocale();
 
-  const startsAt = parseISO(event.starts_at);
-  const endsAt = parseISO(event.ends_at);
-
-  // Check if event spans multiple days
-  const isSameDay =
-    format(startsAt, 'yyyy-MM-dd') === format(endsAt, 'yyyy-MM-dd');
-
-  const dateString = isSameDay
-    ? format(startsAt, 'd MMMM yyyy', { locale: pl })
-    : `${format(startsAt, 'd MMMM', { locale: pl })} - ${format(
-        endsAt,
-        'd MMMM yyyy',
-        { locale: pl }
-      )}`;
-
-  const startTimeString = format(startsAt, 'HH:mm');
-  const endTimeString = format(endsAt, 'HH:mm');
-  const timeString = `${startTimeString} - ${endTimeString}`;
+  // Use utility functions for consistent date/time formatting
+  const dateString = formatEventDateRange(
+    event.starts_at,
+    event.ends_at,
+    locale
+  );
+  const timeString = formatEventTimeRange(event.starts_at, event.ends_at);
 
   const organizationName = event.organization?.name || t('defaultOrganization');
   const organizationImageUrl = event.organization?.image_url;

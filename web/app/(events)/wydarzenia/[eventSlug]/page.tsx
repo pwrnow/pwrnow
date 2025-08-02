@@ -11,7 +11,8 @@ import {
   generateEventStructuredData,
   generateBreadcrumbStructuredData,
 } from '@/lib/structured-data';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, getLocale } from 'next-intl/server';
+import { formatLocalizedDate } from '@/lib/utils';
 
 // Enable ISR with 60 second revalidation for SEO and performance
 export const revalidate = 60;
@@ -43,13 +44,13 @@ export async function generateMetadata({
     const { eventSlug } = await params;
     const event = await getEventBySlug(eventSlug);
     const t = await getTranslations('EventDetailPage');
+    const locale = await getLocale();
 
-    const startDate = new Date(event.starts_at);
-    const formattedDate = startDate.toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const formattedDate = formatLocalizedDate(
+      event.starts_at,
+      'd MMMM yyyy',
+      locale
+    );
 
     return {
       title: `${event.title} | ${formattedDate}`,
