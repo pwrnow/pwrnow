@@ -19,6 +19,7 @@ async function fetchWithCredentials(
   // Don't set Content-Type for FormData - let the browser set it automatically
   const isFormData = options.body instanceof FormData;
 
+  // TODO: Insteed of detecting locale here pass it as a paramter from endpoint
   if (useLocale) {
     const locale = await getUserLocale();
 
