@@ -14,7 +14,7 @@ import type { Metadata } from 'next';
 export const revalidate = 60; // Revalidate every 1 minute
 
 // Cache fetch requests for better performance
-export const fetchCache = 'default-cache';
+// export const fetchCache = 'default-cache';
 
 // Generate metadata for better SEO
 export const metadata: Metadata = {
