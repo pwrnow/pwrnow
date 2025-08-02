@@ -47,6 +47,7 @@
     "ogDescription": "Event {title} - {date}",
     "notFoundTitle": "Event not found | PWrNow",
     "notFoundDescription": "The requested event was not found. Check the list of all available events.",
+    "backToEvents": "Back to events",
     "keywords": {
       "event": "event",
       "eventKeyword": "event"

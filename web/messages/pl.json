@@ -47,6 +47,7 @@
     "ogDescription": "Wydarzenie {title} - {date}",
     "notFoundTitle": "Wydarzenie nie znalezione | PWrNow",
     "notFoundDescription": "Szukane wydarzenie nie zostało znalezione. Sprawdź listę wszystkich dostępnych wydarzeń.",
+    "backToEvents": "Wróć do wydarzeń",
     "keywords": {
       "event": "wydarzenie",
       "eventKeyword": "event"

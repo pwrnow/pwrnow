@@ -124,6 +124,8 @@ export default async function EventDetailPage({
   }
   if (!event) return notFound();
 
+  const t = await getTranslations('EventDetailPage');
+
   // Generate structured data for SEO using utility function
   const structuredData = generateEventStructuredData(event);
 
@@ -157,8 +159,7 @@ export default async function EventDetailPage({
         <Link href='/'>
           <Button variant='ghost' size='sm' className='gap-2'>
             <ArrowLeft className='h-4 w-4' />
-            {/* Note: This will be translated in the EventCard component */}
-            Wróć do wydarzeń
+            {t('backToEvents')}
           </Button>
         </Link>
       </div>
