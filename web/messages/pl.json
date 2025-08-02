@@ -37,7 +37,8 @@
   },
   "NoEventsMessage": {
     "title": "Brak wydarzeń",
-    "description": "Nie znaleziono wydarzeń w tej kategorii. Sprawdź inne kategorie lub spróbuj ponownie później."
+    "description": "Nie znaleziono wydarzeń w tej kategorii. Sprawdź inne kategorie lub spróbuj ponownie później.",
+    "viewAllEvents": "Zobacz wszystkie wydarzenia"
   },
   "CategorySelector": {
     "allCategories": "Wszystkie"

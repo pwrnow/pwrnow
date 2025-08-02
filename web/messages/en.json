@@ -37,7 +37,8 @@
   },
   "NoEventsMessage": {
     "title": "No events",
-    "description": "No events found in this category. Check other categories or try again later."
+    "description": "No events found in this category. Check other categories or try again later.",
+    "viewAllEvents": "View all events"
   },
   "CategorySelector": {
     "allCategories": "All"

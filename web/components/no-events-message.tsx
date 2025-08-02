@@ -1,5 +1,7 @@
 import { CalendarX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function NoEventsMessage() {
   const t = useTranslations('NoEventsMessage');
@@ -14,6 +16,11 @@ export default function NoEventsMessage() {
           <h3 className='text-lg font-semibold'>{t('title')}</h3>
           <p className='text-muted-foreground'>{t('description')}</p>
         </div>
+        <Link href='/'>
+          <Button variant='outline' className='mt-4'>
+            {t('viewAllEvents')}
+          </Button>
+        </Link>
       </div>
     </div>
   );
