@@ -33,7 +33,7 @@ def get_language_from_request(request) -> str:
 
 def get_translated_field(obj, field_name: str, language: str) -> Any:
     """
-    Get the translated field value for a specific language with fallback.
+    Get the translated field value for a specific language with comprehensive fallback.
 
     Args:
         obj: Model instance
@@ -41,23 +41,17 @@ def get_translated_field(obj, field_name: str, language: str) -> Any:
         language: Language code (e.g., 'en', 'pl')
 
     Returns:
-        Translated field value with fallback logic
+        Translated field value with fallback logic, always returns field value at the end
     """
     # Try to get the language-specific field first
     translated_field = f"{field_name}_{language}"
 
     if hasattr(obj, translated_field):
         value = getattr(obj, translated_field)
-        if value is not None and value.strip():  # Check for non-empty string
+        if value is not None and str(value).strip():  # Check for non-empty string
             return value
 
-    # Fallback to the base field (usually Polish as per modeltranslation config)
-    if hasattr(obj, field_name):
-        base_value = getattr(obj, field_name)
-        if base_value is not None and str(base_value).strip():
-            return base_value
-
-    # Fallback to other language versions if both above are empty
+    # Fallback to other language versions
     fallback_languages = getattr(settings, 'MODELTRANSLATION_FALLBACK_LANGUAGES', ['pl', 'en'])
 
     for fallback_lang in fallback_languages:
@@ -67,6 +61,11 @@ def get_translated_field(obj, field_name: str, language: str) -> Any:
                 fallback_value = getattr(obj, fallback_field)
                 if fallback_value is not None and str(fallback_value).strip():
                     return fallback_value
+
+    # Final fallback: always return the base field value
+    if hasattr(obj, field_name):
+        base_value = getattr(obj, field_name)
+        return base_value
 
     return None
 
