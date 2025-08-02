@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies, headers } from 'next/headers';
-import { Locale, defaultLocale, i18nConfig } from '../i18n/config';
+import { Locale, i18nConfig } from '../i18n/config';
 import { detectLocaleFromHeaders } from './locale-detection';
 
 export async function getUserLocale(): Promise<Locale> {
