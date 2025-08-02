@@ -9,18 +9,36 @@ import {
   CreateEventData,
 } from './types';
 import { getApiUrl } from './config';
+import { getUserLocale } from './locale';
 
 async function fetchWithCredentials(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  useLocale: boolean = true
 ): Promise<Response> {
   // Don't set Content-Type for FormData - let the browser set it automatically
   const isFormData = options.body instanceof FormData;
-  
+
+  if (useLocale) {
+    const locale = await getUserLocale();
+
+    // Parse the URL to properly handle existing parameters
+    const urlParts = url.split('?');
+    const baseUrl = urlParts[0];
+    const existingParams = urlParts[1];
+
+    // Create URLSearchParams to properly manage query parameters
+    const searchParams = new URLSearchParams(existingParams || '');
+    searchParams.set('lang', locale);
+
+    // Reconstruct the URL with the locale parameter
+    url = `${baseUrl}?${searchParams.toString()}`;
+  }
+
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
-  
+
   // Only set Content-Type to application/json if it's not FormData
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
