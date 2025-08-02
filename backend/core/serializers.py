@@ -1,11 +1,20 @@
 from rest_framework import serializers
 from .models import Event, Category, Organization, Tag, OrganizationCode
+from .translation_utils import get_language_from_request, get_translated_field
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
         fields = ['name', 'slug']
+
+    def get_name(self, obj):
+        """Get category name in the requested language."""
+        request = self.context.get('request')
+        language = get_language_from_request(request)
+        return get_translated_field(obj, 'name', language)
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -55,6 +64,8 @@ class TagSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     organization = OrganizationSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
+    title = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     is_new = serializers.SerializerMethodField()
 
@@ -65,6 +76,18 @@ class EventSerializer(serializers.ModelSerializer):
             'location', 'image_url', 'url', 'verified',
             'organization', 'category', 'is_new'
         ]
+
+    def get_title(self, obj):
+        """Get event title in the requested language."""
+        request = self.context.get('request')
+        language = get_language_from_request(request)
+        return get_translated_field(obj, 'title', language)
+
+    def get_description(self, obj):
+        """Get event description in the requested language."""
+        request = self.context.get('request')
+        language = get_language_from_request(request)
+        return get_translated_field(obj, 'description', language)
 
     def get_image_url(self, obj):
         if obj.image:

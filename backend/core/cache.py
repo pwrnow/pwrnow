@@ -5,7 +5,7 @@ Provides production-ready caching for listing endpoints with proper invalidation
 """
 import hashlib
 import json
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from django.core.cache import cache
 from django.conf import settings
@@ -43,9 +43,12 @@ def get_public_events_cache_key(**filters) -> str:
     )
 
 
-def get_categories_cache_key() -> str:
-    """Get cache key for categories list."""
-    return settings.CACHE_KEYS['CATEGORIES_LIST']
+def get_categories_cache_key(**filters) -> str:
+    """Get cache key for categories list with optional filters (like language)."""
+    return get_cache_key(
+        settings.CACHE_KEYS['CATEGORIES_LIST'],
+        **filters
+    )
 
 
 def cache_queryset_data(cache_key: str, queryset: QuerySet, serializer_class,
@@ -108,20 +111,21 @@ def cache_public_events(queryset: QuerySet, serializer_class, context: Optional[
     return cache_queryset_data(cache_key, queryset, serializer_class, context, timeout)
 
 
-def cache_categories(queryset: QuerySet, serializer_class, context: Optional[Dict] = None) -> List[Dict]:
+def cache_categories(queryset: QuerySet, serializer_class, context: Optional[Dict] = None, **filters) -> List[Dict]:
     """
-    Cache categories list.
+    Cache categories list with optional filters (like language).
 
     Args:
         queryset: Categories queryset to cache
         serializer_class: Category serializer class
         context: Optional context for serializer
+        **filters: Optional filters to include in cache key
 
     Returns:
         Cached or fresh serialized categories data
     """
-    print("🏷️  CATEGORIES: Caching categories list")
-    cache_key = get_categories_cache_key()
+    print(f"🏷️  CATEGORIES: Caching categories list with filters: {filters}")
+    cache_key = get_categories_cache_key(**filters)
     timeout = settings.CACHE_TTL['CATEGORIES']
     print(f"🏷️  CATEGORIES: Using cache key: {cache_key}, timeout: {timeout}s")
 
@@ -166,12 +170,36 @@ def invalidate_events_cache():
 
 def invalidate_categories_cache():
     """
-    Invalidate categories cache.
+    Invalidate all categories cache (all languages).
     """
-    cache_key = get_categories_cache_key()
-    print(f"🗑️  INVALIDATE: Deleting categories cache key: {cache_key}")
-    cache.delete(cache_key)
-    print("🗑️  INVALIDATE: Categories cache invalidated")
+    print("🗑️  INVALIDATE: Starting categories cache invalidation")
+    try:
+        redis_client = get_redis_connection("default")
+
+        # Get all keys matching the categories pattern
+        base_key = settings.CACHE_KEYS['CATEGORIES_LIST']
+        key_prefix = settings.CACHES['default'].get('KEY_PREFIX', '')
+
+        if key_prefix:
+            pattern = f"{key_prefix}:*{base_key}*"
+        else:
+            pattern = f"*{base_key}*"
+
+        print(f"🗑️  INVALIDATE: Searching for categories keys with pattern: {pattern}")
+        keys = redis_client.keys(pattern)
+        print(f"🗑️  INVALIDATE: Found {len(keys)} categories keys to delete")
+
+        if keys:
+            redis_client.delete(*keys)
+            print(f"🗑️  INVALIDATE: Successfully deleted {len(keys)} categories cache keys")
+        else:
+            print("🗑️  INVALIDATE: No categories cache keys found to delete")
+
+    except Exception as e:
+        print(f"❌ INVALIDATE ERROR: Redis pattern matching failed: {e}")
+        # Fall back to clearing the base cache key if pattern matching fails
+        cache.delete(settings.CACHE_KEYS['CATEGORIES_LIST'])
+        print("🗑️  INVALIDATE: Fallback - deleted base categories cache key")
 
 
 def invalidate_all_cache():

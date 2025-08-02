@@ -1,14 +1,11 @@
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Case, When, BooleanField, Value
 from django.utils import timezone
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny
-from rest_framework.authentication import SessionAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag, OrganizationCode
+from .models import Event, Category, Organization, Tag
 from .serializers import (
     EventSerializer,
     CategorySerializer,
@@ -30,7 +27,7 @@ from .cache import cache_categories, cache_public_events
 class CategoryViewSet(viewsets.GenericViewSet):
     """
     ViewSet for listing categories only (no single category retrieval)
-    Uses Redis caching for performance
+    Uses Redis caching for performance with translation support
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -38,15 +35,23 @@ class CategoryViewSet(viewsets.GenericViewSet):
     authentication_classes = []
 
     def list(self, request, *args, **kwargs):
-        """List all categories with caching."""
+        """List all categories with caching and language support."""
         # Get all categories ordered by order_index and name
         queryset = self.get_queryset()
+
+        # Extract filter parameters for cache key generation
+        filters = {}
+        if hasattr(request, 'query_params'):
+            # Include language parameter in cache key
+            if 'lang' in request.query_params:
+                filters['lang'] = request.query_params['lang']
 
         # Cache the categories list
         data = cache_categories(
             queryset=queryset,
             serializer_class=self.get_serializer_class(),
-            context={'request': request}
+            context={'request': request},
+            **filters
         )
 
         return Response(data)
@@ -244,7 +249,7 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             filters = {}
             if hasattr(request, 'query_params'):
                 # Include relevant filter parameters in cache key
-                for param in ['category__slug', 'organization__slug', 'verified', 'search', 'ordering']:
+                for param in ['category__slug', 'organization__slug', 'verified', 'search', 'ordering', 'lang']:
                     if param in request.query_params:
                         filters[param] = request.query_params[param]
 
@@ -267,7 +272,7 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         ORGANIZATION AUTH REQUIRED
         """
         # Check if organization is authenticated using our session-based auth
-        organization = self.check_organization_authentication()
+        self.check_organization_authentication()
 
         serializer = self.get_serializer(data=request.data, context={'request': request})
         if serializer.is_valid():
