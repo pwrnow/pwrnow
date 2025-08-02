@@ -5,6 +5,7 @@ import EventCard from './event-card';
 import { EventCardSkeleton } from './event-card-skeleton';
 import NoEventsMessage from './no-events-message';
 import type { Event } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 
 export function EventFeedSkeleton() {
   return (
@@ -21,6 +22,7 @@ export function EventFeedSkeleton() {
 export default function EventFeed({ allEvents }: { allEvents: Event[] }) {
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get('category') || 'wszystkie';
+  const t = useTranslations('EventFeed');
 
   // Filter events based on category client-side
   const filteredEvents =
@@ -37,9 +39,7 @@ export default function EventFeed({ allEvents }: { allEvents: Event[] }) {
   if (filteredEvents.length === 0) {
     return (
       <div className='w-full mx-auto max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl px-4 py-12 text-center'>
-        <p className='text-muted-foreground'>
-          Aktualnie brak dostępnych wydarzeń.
-        </p>
+        <p className='text-muted-foreground'>{t('noEventsAvailable')}</p>
       </div>
     );
   }

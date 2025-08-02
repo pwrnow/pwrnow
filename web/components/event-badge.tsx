@@ -1,5 +1,6 @@
 import { Award, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface EventBadgeProps {
   variant: 'new' | 'today';
@@ -7,6 +8,7 @@ interface EventBadgeProps {
 }
 
 export function EventBadge({ variant, className }: EventBadgeProps) {
+  const t = useTranslations('EventBadge');
   const baseStyles =
     'inline-flex items-center rounded-2xl border px-2 py-1 text-xs font-semibold gap-1 shadow-[0_2px_4px_rgba(124,58,237,0.1)]';
 
@@ -20,7 +22,7 @@ export function EventBadge({ variant, className }: EventBadgeProps) {
         )}
       >
         <Award className='size-3' />
-        Nowe
+        {t('new')}
       </span>
     );
   }
@@ -34,7 +36,7 @@ export function EventBadge({ variant, className }: EventBadgeProps) {
       )}
     >
       <Zap className='size-3' />
-      Dziś!
+      {t('today')}
     </span>
   );
 }

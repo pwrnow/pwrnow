@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { authenticateOrganization } from '@/lib/api';
 import { ApiError } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 
 export default function OrganizationCodePage() {
   const params = useParams();
   const router = useRouter();
   const organizationCode = params.organizationCode as string;
+  const t = useTranslations('AuthPage');
 
   const [loading, setLoading] = useState(true);
 
@@ -57,9 +59,7 @@ export default function OrganizationCodePage() {
             <Skeleton className='h-4 w-full' />
             <Skeleton className='h-4 w-2/3 mx-auto' />
           </div>
-          <p className='text-muted-foreground mt-4'>
-            Uwierzytelnianie organizacji...
-          </p>
+          <p className='text-muted-foreground mt-4'>{t('authenticating')}</p>
         </Card>
       </div>
     );

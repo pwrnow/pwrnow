@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('OrgLayout');
+
   return (
     <div className='min-h-screen bg-background flex flex-col'>
       <div className='flex-1'>
@@ -32,27 +35,21 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
                 className='inline-flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground transition-colors'
               >
                 <span>✨</span>
-                <span>Dla organizacji</span>
+                <span>{t('forOrganizations')}</span>
               </Link>
               <a
                 href='mailto:kontakt@pwrnow.pl'
                 className='inline-flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground transition-colors'
               >
                 <span>✉️</span>
-                <span>Kontakt</span>
+                <span>{t('contact')}</span>
               </a>
             </div>
 
             {/* Copyright */}
             <div className='text-center text-sm text-muted-foreground'>
-              <p>
-                © 2025 PWr Now. Twoje centrum wydarzeń na Politechnice
-                Wrocławskiej.
-              </p>
-              <p className='mt-1'>
-                Zrobione z <span className='text-red-500'>❤️</span> dla
-                społeczności akademickiej.
-              </p>
+              <p>{t('copyright')}</p>
+              <p className='mt-1'>{t('madeWithLove')}</p>
             </div>
           </div>
         </div>

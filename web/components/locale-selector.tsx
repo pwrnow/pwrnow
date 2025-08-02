@@ -12,11 +12,7 @@ import { Locale, locales, i18nConfig } from '../i18n/config';
 import { detectLocaleFromBrowser } from '../lib/locale-detection';
 import { useRouter } from 'next/navigation';
 import { useTransition, useEffect } from 'react';
-
-const localeNames = {
-  en: 'English',
-  pl: 'Polski',
-} as const;
+import { useTranslations } from 'next-intl';
 
 const localeFlags = {
   en: '🇺🇸',
@@ -30,6 +26,7 @@ interface LocaleSelectorProps {
 export default function LocaleSelector({ currentLocale }: LocaleSelectorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations('LocaleSelector');
 
   // Client-side locale detection fallback
   useEffect(() => {
@@ -56,6 +53,11 @@ export default function LocaleSelector({ currentLocale }: LocaleSelectorProps) {
       router.refresh();
     });
   }
+
+  const localeNames = {
+    en: t('english'),
+    pl: t('polish'),
+  } as const;
 
   return (
     <DropdownMenu>

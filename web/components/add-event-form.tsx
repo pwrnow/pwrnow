@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Dropzone } from '@/components/ui/dropzone';
+import { useTranslations } from 'next-intl';
 
 interface AddEventFormProps {
   organizationCode: string;
@@ -56,6 +57,7 @@ export default function AddEventForm({
   const [imageError, setImageError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isFormLoaded, setIsFormLoaded] = useState(false);
+  const t = useTranslations('AddEventForm');
 
   // Create a unique storage key for this organization
   const storageKey = `add-event-form-${organizationCode}`;
@@ -108,7 +110,10 @@ export default function AddEventForm({
           } else if (parsedImageData.tooLarge) {
             // Show info about large image that couldn't be persisted
             setImageError(
-              `⚠️ Poprzednio wybrano duży obraz: ${parsedImageData.name} (${parsedImageData.size}KB). Wybierz go ponownie.`
+              t('largeImageWarning', {
+                name: parsedImageData.name,
+                size: parsedImageData.size,
+              })
             );
           }
         } catch (error) {
@@ -123,7 +128,7 @@ export default function AddEventForm({
       localStorage.removeItem(imageStorageKey);
     }
     setIsFormLoaded(true);
-  }, [form, storageKey, imageStorageKey]);
+  }, [form, storageKey, imageStorageKey, t]);
 
   // Watch form values and save to localStorage with debounce
   const watchedValues = form.watch();
@@ -186,7 +191,7 @@ export default function AddEventForm({
     try {
       // Validate image size if an image is uploaded
       if (imageFile && imageFile.size > 5 * 1024 * 1024) {
-        setImageError('Rozmiar obrazka nie może przekraczać 5MB');
+        setImageError(t('imageSizeError'));
         return;
       }
 
@@ -217,14 +222,10 @@ export default function AddEventForm({
         ) {
           setImageError(error.message);
         } else {
-          setFormError(
-            error.message || 'Wystąpił błąd podczas dodawania wydarzenia'
-          );
+          setFormError(error.message || t('defaultError'));
         }
       } else {
-        setFormError(
-          'Wystąpił nieoczekiwany błąd podczas dodawania wydarzenia'
-        );
+        setFormError(t('unexpectedError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -252,9 +253,9 @@ export default function AddEventForm({
           name='title'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tytuł</FormLabel>
+              <FormLabel>{t('title')}</FormLabel>
               <FormControl>
-                <Input placeholder='Nazwa wydarzenia' {...field} />
+                <Input placeholder={t('titlePlaceholder')} {...field} />
               </FormControl>
               <div className='flex justify-between'>
                 <FormMessage />
@@ -271,11 +272,11 @@ export default function AddEventForm({
           name='categorySlug'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Kategoria</FormLabel>
+              <FormLabel>{t('category')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder='Wybierz kategorię' />
+                    <SelectValue placeholder={t('categoryPlaceholder')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -287,7 +288,7 @@ export default function AddEventForm({
                     ))
                   ) : (
                     <SelectItem value='none' disabled>
-                      Brak dostępnych kategorii
+                      {t('noCategoriesAvailable')}
                     </SelectItem>
                   )}
                 </SelectContent>
@@ -303,7 +304,7 @@ export default function AddEventForm({
             name='startsAt'
             render={({ field }) => (
               <FormItem className='flex flex-col'>
-                <FormLabel>Data i czas rozpoczęcia</FormLabel>
+                <FormLabel>{t('startDate')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -317,7 +318,7 @@ export default function AddEventForm({
                         {field.value ? (
                           format(field.value, 'PPp')
                         ) : (
-                          <span>Wybierz datę i czas</span>
+                          <span>{t('selectDateAndTime')}</span>
                         )}
                         <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                       </Button>
@@ -347,7 +348,7 @@ export default function AddEventForm({
                         initialFocus
                       />
                       <div className='px-4 pt-4 pb-2'>
-                        <p className='mb-2 text-sm'>Wybierz czas:</p>
+                        <p className='mb-2 text-sm'>{t('selectTime')}:</p>
                         <div className='flex gap-2'>
                           <Select
                             value={
@@ -438,7 +439,7 @@ export default function AddEventForm({
             name='endsAt'
             render={({ field }) => (
               <FormItem className='flex flex-col'>
-                <FormLabel>Data i czas zakończenia</FormLabel>
+                <FormLabel>{t('endDate')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -452,7 +453,7 @@ export default function AddEventForm({
                         {field.value ? (
                           format(field.value, 'PPp')
                         ) : (
-                          <span>Wybierz datę i czas</span>
+                          <span>{t('selectDateAndTime')}</span>
                         )}
                         <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                       </Button>
@@ -482,7 +483,7 @@ export default function AddEventForm({
                         initialFocus
                       />
                       <div className='px-4 pt-4 pb-2'>
-                        <p className='mb-2 text-sm'>Wybierz czas:</p>
+                        <p className='mb-2 text-sm'>{t('selectTime')}:</p>
                         <div className='flex gap-2'>
                           <Select
                             value={
@@ -570,12 +571,12 @@ export default function AddEventForm({
         </div>
 
         <FormItem>
-          <FormLabel>Zdjęcie</FormLabel>
+          <FormLabel>{t('image')}</FormLabel>
           <Dropzone
             className='mt-2'
             onDrop={async (acceptedFiles) => {
               if (acceptedFiles[0].size > 5 * 1024 * 1024) {
-                setImageError('Rozmiar obrazka nie może przekraczać 5MB');
+                setImageError(t('imageSizeError'));
               } else {
                 setImageError(null);
                 setImageFile(acceptedFiles[0]);
@@ -616,7 +617,10 @@ export default function AddEventForm({
           />
           {imageFile && !imageError && (
             <p className='text-sm mt-2'>
-              Wybrano: {imageFile.name} ({Math.round(imageFile.size / 1024)} KB)
+              {t('selectedFile', {
+                name: imageFile.name,
+                size: Math.round(imageFile.size / 1024),
+              })}
             </p>
           )}
           {imageError && (
@@ -629,12 +633,9 @@ export default function AddEventForm({
           name='location'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Lokalizacja</FormLabel>
+              <FormLabel>{t('location')}</FormLabel>
               <FormControl>
-                <Input
-                  placeholder='Gdzie odbędzie się wydarzenie?'
-                  {...field}
-                />
+                <Input placeholder={t('locationPlaceholder')} {...field} />
               </FormControl>
               <div className='flex justify-between'>
                 <FormMessage />
@@ -651,7 +652,7 @@ export default function AddEventForm({
           name='url'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Link do wydarzenia</FormLabel>
+              <FormLabel>{t('eventLink')}</FormLabel>
               <FormControl>
                 <Input placeholder='https://...' type='url' {...field} />
               </FormControl>
@@ -670,10 +671,10 @@ export default function AddEventForm({
           name='description'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Opis</FormLabel>
+              <FormLabel>{t('description')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder='Opisz swoje wydarzenie (opcjonalnie)'
+                  placeholder={t('descriptionPlaceholder')}
                   className='min-h-[120px] whitespace-pre-wrap'
                   style={{ whiteSpace: 'pre-wrap' }}
                   spellCheck={true}
@@ -691,7 +692,7 @@ export default function AddEventForm({
         />
 
         <Button type='submit' className='w-full' disabled={isSubmitting}>
-          {isSubmitting ? 'Zapisywanie...' : 'Utwórz wydarzenie'}
+          {isSubmitting ? t('saving') : t('createEvent')}
         </Button>
       </form>
     </Form>

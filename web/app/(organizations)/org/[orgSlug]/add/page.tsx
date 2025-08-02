@@ -9,11 +9,13 @@ import { Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslations } from 'next-intl';
 
 export default function AddEventPage() {
   const params = useParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
+  const t = useTranslations('AddEventPage');
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,7 @@ export default function AddEventPage() {
                 authOrgSlug: currentOrg.slug,
               }
             );
-            setError('Nie masz dostępu do tej organizacji');
+            setError(t('accessDenied'));
             return;
           }
         } catch {
@@ -54,14 +56,14 @@ export default function AddEventPage() {
         setCategories(categoriesData);
       } catch (err) {
         console.error('❌ Failed to load add event page data:', err);
-        setError('Nie udało się załadować danych. Spróbuj ponownie.');
+        setError(t('loadError'));
       } finally {
         setLoading(false);
       }
     }
 
     loadData();
-  }, [orgSlug, router]);
+  }, [orgSlug, router, t]);
 
   if (loading) {
     return (
@@ -102,15 +104,13 @@ export default function AddEventPage() {
             >
               <ArrowLeft className='h-4 w-4' />
             </Button>
-            <h1 className='text-2xl font-bold display-font'>
-              Dodaj wydarzenie
-            </h1>
+            <h1 className='text-2xl font-bold display-font'>{t('title')}</h1>
           </div>
 
           <Card className='p-6'>
             <div className='text-center'>
               <p className='text-destructive mb-4'>{error}</p>
-              <Button onClick={() => router.refresh()}>Spróbuj ponownie</Button>
+              <Button onClick={() => router.refresh()}>{t('tryAgain')}</Button>
             </div>
           </Card>
         </div>
@@ -130,10 +130,10 @@ export default function AddEventPage() {
             onClick={() => router.push(`/org/${orgSlug}`)}
           >
             <ArrowLeft className='h-4 w-4' />
-            <span>Powrót</span>
+            <span>{t('back')}</span>
           </Button>
           <h1 className='text-xl font-bold display-font text-center'>
-            Dodaj wydarzenie
+            {t('title')}
           </h1>
         </div>
 

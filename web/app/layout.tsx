@@ -10,7 +10,7 @@ import {
   analyticsConfig,
 } from '@/lib/analytics';
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -24,50 +24,52 @@ const righteous = Righteous({
   variable: '--font-righteous',
 });
 
-export const metadata: Metadata = {
-  title: 'PWr Now',
-  description:
-    'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
-  metadataBase: new URL('https://pwrnow.pl'),
-  applicationName: 'PWr Now',
-  keywords: [
-    'wydarzenia',
-    'Politechnika Wrocławska',
-    'PWr',
-    'studenci',
-    'Wrocław',
-    'uczelnia',
-  ],
-  authors: [{ name: 'PWr Now Team' }],
-  creator: 'PWr Now Team',
-  publisher: 'PWr Now',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('Layout');
+
+  return {
+    title: t('title'),
+    description: t('description'),
+    metadataBase: new URL('https://pwrnow.pl'),
+    applicationName: t('applicationName'),
+    keywords: [
+      t('keywords.events'),
+      t('keywords.politechnikaWroclawska'),
+      t('keywords.pwr'),
+      t('keywords.students'),
+      t('keywords.wroclaw'),
+      t('keywords.university'),
+    ],
+    authors: [{ name: t('teamName') }],
+    creator: t('teamName'),
+    publisher: t('publisher'),
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'pl_PL',
-    url: 'https://pwrnow.pl',
-    siteName: 'PWr Now',
-    title: 'PWr Now - Centrum wydarzeń na Politechnice Wrocławskiej',
-    description:
-      'Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej',
-  },
-  category: 'education',
-};
+    openGraph: {
+      type: 'website',
+      locale: 'pl_PL',
+      url: 'https://pwrnow.pl',
+      siteName: t('siteName'),
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+    },
+    category: 'education',
+  };
+}
 
 export default async function RootLayout({
   children,

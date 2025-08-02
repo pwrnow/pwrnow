@@ -1,1 +1,189 @@
-{}
+{
+  "LocaleSelector": {
+    "english": "English",
+    "polish": "Polski"
+  },
+  "EventsPage": {
+    "title": "Your Events at PWr - Trips, Parties, Courses and More!",
+    "description": "Find and discover the most interesting events at Wrocław University of Technology today! Sports, trips, parties, courses, development and lectures are waiting for you.",
+    "ogImageAlt": "PWrNow - Events at Wrocław University of Technology",
+    "keywords": {
+      "findEvents": "find PWr events",
+      "currentEvents": "current events Wrocław University of Technology",
+      "studentEvents": "student events today",
+      "sport": "sport PWr",
+      "trips": "student trips PWr",
+      "parties": "parties PWr",
+      "courses": "courses PWr",
+      "personalDevelopment": "personal development PWr",
+      "lectures": "lectures PWr",
+      "eventCalendar": "event calendar PWr",
+      "whatsHappening": "what's happening at PWr",
+      "pwrNowEvents": "PWrNow events",
+      "wroclawStudentEvents": "Wrocław student events",
+      "studentLife": "student life PWr today",
+      "discoverEvents": "discover PWr events"
+    }
+  },
+  "EventCard": {
+    "defaultOrganization": "Event",
+    "openInMaps": "Open in maps app",
+    "showLess": "Show less",
+    "showMore": "Show more",
+    "visitEventPage": "Visit event page"
+  },
+  "EventFeed": {
+    "noEventsAvailable": "Currently no events available."
+  },
+  "NoEventsMessage": {
+    "title": "No events",
+    "description": "No events found in this category. Check other categories or try again later."
+  },
+  "CategorySelector": {
+    "allCategories": "All"
+  },
+  "EventDetailPage": {
+    "defaultDescription": "Event {title} organized by {organization}. Date: {date}{location, select, '' {} other {, Location: {location}}}.}",
+    "ogDescription": "Event {title} - {date}",
+    "notFoundTitle": "Event not found | PWrNow",
+    "notFoundDescription": "The requested event was not found. Check the list of all available events.",
+    "keywords": {
+      "event": "event",
+      "eventKeyword": "event"
+    }
+  },
+  "AddEventForm": {
+    "largeImageWarning": "⚠️ Previously selected large image: {name} ({size}KB). Select it again.",
+    "imageSizeError": "Image size cannot exceed 5MB",
+    "defaultError": "An error occurred while adding the event",
+    "unexpectedError": "An unexpected error occurred while adding the event",
+    "title": "Title",
+    "titlePlaceholder": "Event name",
+    "category": "Category",
+    "categoryPlaceholder": "Select category",
+    "noCategoriesAvailable": "No categories available",
+    "startDate": "Start date and time",
+    "endDate": "End date and time",
+    "selectDateAndTime": "Select date and time",
+    "selectTime": "Select time",
+    "image": "Image",
+    "location": "Location",
+    "locationPlaceholder": "Where will the event take place?",
+    "eventLink": "Event link",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe your event (optional)",
+    "saving": "Saving...",
+    "createEvent": "Create event",
+    "selectedFile": "Selected: {name} ({size} KB)"
+  },
+  "OrganizationPage": {
+    "accessDenied": "You don't have access to this organization",
+    "loadError": "Failed to load organization data",
+    "error": "Error",
+    "backToHome": "Back to home page",
+    "allEvents": "All events",
+    "upcomingEvents": "Upcoming events",
+    "completed": "Completed",
+    "verified": "Verified",
+    "events": "Events",
+    "settings": "Settings",
+    "addEvent": "Add event",
+    "filter": "Filter",
+    "all": "All",
+    "unverified": "Unverified",
+    "noEvents": "No events",
+    "noVerifiedEvents": "No verified events",
+    "noUnverifiedEvents": "No unverified events",
+    "addFirstEvent": "Add the first event for your organization",
+    "changeFilter": "Change filter to see other events",
+    "approved": "Approved",
+    "pendingVerification": "Pending verification",
+    "openInMaps": "Open in maps app",
+    "showMore": "Show more",
+    "visitEventPage": "Visit event page"
+  },
+  "Layout": {
+    "title": "PWr Now",
+    "description": "Stay up to date with the latest events at Wrocław University of Technology",
+    "applicationName": "PWr Now",
+    "teamName": "PWr Now Team",
+    "publisher": "PWr Now",
+    "siteName": "PWr Now",
+    "ogTitle": "PWr Now - Event center at Wrocław University of Technology",
+    "ogDescription": "Stay up to date with the latest events at Wrocław University of Technology",
+    "keywords": {
+      "events": "events",
+      "politechnikaWroclawska": "Wrocław University of Technology",
+      "pwr": "PWr",
+      "students": "students",
+      "wroclaw": "Wrocław",
+      "university": "university"
+    }
+  },
+  "EventBadge": {
+    "new": "New",
+    "today": "Today!"
+  },
+  "AuthPage": {
+    "authenticating": "Authenticating organization..."
+  },
+  "AddEventPage": {
+    "accessDenied": "You don't have access to this organization",
+    "loadError": "Failed to load data. Please try again.",
+    "title": "Add event",
+    "tryAgain": "Try again",
+    "back": "Back"
+  },
+  "SettingsPage": {
+    "accessDenied": "You don't have access to this organization",
+    "imageSizeError": "Image size cannot exceed 5MB",
+    "updateError": "An error occurred while updating the image",
+    "error": "Error",
+    "organizationNotFound": "Organization not found",
+    "back": "Back",
+    "title": "Organization settings",
+    "organizationImage": "Organization image",
+    "imageDescription": "Update your organization's profile picture, which will be visible on the organization page and with events.",
+    "currentImage": "Current image",
+    "hasProfileImage": "Your organization already has a profile picture",
+    "noProfileImage": "Your organization doesn't have a profile picture yet",
+    "selectNewImage": "Select new image",
+    "imageRequirements": "Maximum size: 5MB. Supported formats: JPG, PNG, WEBP",
+    "selectedFile": "Selected: {name} ({size} KB)",
+    "updateSuccess": "Image has been successfully updated",
+    "updating": "Updating...",
+    "updateImage": "Update image"
+  },
+  "Footer": {
+    "forOrganizations": "For organizations",
+    "contact": "Contact",
+    "copyright": "© {year} PWr Now. Your event center at Wrocław University of Technology. Made with ❤️ for the academic community."
+  },
+  "AnimatedShowcase": {
+    "aiWorkshop": "AI Workshop",
+    "clubMeeting": "Club Meeting",
+    "hackathon": "Hackathon PWr",
+    "integrationTrip": "Integration Trip",
+    "techTalk": "Tech Talk",
+    "conference": "Conference",
+    "training": "Training",
+    "jobFair": "Job Fair"
+  },
+  "ThemeToggle": {
+    "toggleTheme": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "Dropzone": {
+    "clickToSelect": "Click to select",
+    "orDragHere": "or drag here",
+    "maxSize": "Maximum size: {size}MB"
+  },
+  "OrgLayout": {
+    "forOrganizations": "For organizations",
+    "contact": "Contact",
+    "copyright": "© 2025 PWr Now. Your event center at Wrocław University of Technology.",
+    "madeWithLove": "Made with ❤️ for the academic community."
+  }
+}

@@ -1,1 +1,189 @@
-{}
+{
+  "LocaleSelector": {
+    "english": "English",
+    "polish": "Polski"
+  },
+  "EventsPage": {
+    "title": "Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!",
+    "description": "Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.",
+    "ogImageAlt": "PWrNow - Wydarzenia na Politechnice Wrocławskiej",
+    "keywords": {
+      "findEvents": "znajdź wydarzenia PWr",
+      "currentEvents": "aktualne wydarzenia Politechnika Wrocławska",
+      "studentEvents": "wydarzenia studenckie dziś",
+      "sport": "sport PWr",
+      "trips": "wyjazdy studenckie PWr",
+      "parties": "imprezy PWr",
+      "courses": "kursy PWr",
+      "personalDevelopment": "rozwój osobisty PWr",
+      "lectures": "prelekcje PWr",
+      "eventCalendar": "kalendarz wydarzeń PWr",
+      "whatsHappening": "co dzieje się na PWr",
+      "pwrNowEvents": "PWrNow wydarzenia",
+      "wroclawStudentEvents": "Wrocław wydarzenia studenckie",
+      "studentLife": "życie studenckie PWr dziś",
+      "discoverEvents": "odkryj wydarzenia PWr"
+    }
+  },
+  "EventCard": {
+    "defaultOrganization": "Wydarzenie",
+    "openInMaps": "Otwórz w aplikacji map",
+    "showLess": "Pokaż mniej",
+    "showMore": "Pokaż więcej",
+    "visitEventPage": "Odwiedź stronę wydarzenia"
+  },
+  "EventFeed": {
+    "noEventsAvailable": "Aktualnie brak dostępnych wydarzeń."
+  },
+  "NoEventsMessage": {
+    "title": "Brak wydarzeń",
+    "description": "Nie znaleziono wydarzeń w tej kategorii. Sprawdź inne kategorie lub spróbuj ponownie później."
+  },
+  "CategorySelector": {
+    "allCategories": "Wszystkie"
+  },
+  "EventDetailPage": {
+    "defaultDescription": "Wydarzenie {title} organizowane przez {organization}. Data: {date}{location, select, '' {} other {, Miejsce: {location}}}.}",
+    "ogDescription": "Wydarzenie {title} - {date}",
+    "notFoundTitle": "Wydarzenie nie znalezione | PWrNow",
+    "notFoundDescription": "Szukane wydarzenie nie zostało znalezione. Sprawdź listę wszystkich dostępnych wydarzeń.",
+    "keywords": {
+      "event": "wydarzenie",
+      "eventKeyword": "event"
+    }
+  },
+  "AddEventForm": {
+    "largeImageWarning": "⚠️ Poprzednio wybrano duży obraz: {name} ({size}KB). Wybierz go ponownie.",
+    "imageSizeError": "Rozmiar obrazka nie może przekraczać 5MB",
+    "defaultError": "Wystąpił błąd podczas dodawania wydarzenia",
+    "unexpectedError": "Wystąpił nieoczekiwany błąd podczas dodawania wydarzenia",
+    "title": "Tytuł",
+    "titlePlaceholder": "Nazwa wydarzenia",
+    "category": "Kategoria",
+    "categoryPlaceholder": "Wybierz kategorię",
+    "noCategoriesAvailable": "Brak dostępnych kategorii",
+    "startDate": "Data i czas rozpoczęcia",
+    "endDate": "Data i czas zakończenia",
+    "selectDateAndTime": "Wybierz datę i czas",
+    "selectTime": "Wybierz czas",
+    "image": "Zdjęcie",
+    "location": "Lokalizacja",
+    "locationPlaceholder": "Gdzie odbędzie się wydarzenie?",
+    "eventLink": "Link do wydarzenia",
+    "description": "Opis",
+    "descriptionPlaceholder": "Opisz swoje wydarzenie (opcjonalnie)",
+    "saving": "Zapisywanie...",
+    "createEvent": "Utwórz wydarzenie",
+    "selectedFile": "Wybrano: {name} ({size} KB)"
+  },
+  "OrganizationPage": {
+    "accessDenied": "Nie masz dostępu do tej organizacji",
+    "loadError": "Nie udało się załadować danych organizacji",
+    "error": "Błąd",
+    "backToHome": "Powrót do strony głównej",
+    "allEvents": "Wszystkie wydarzenia",
+    "upcomingEvents": "Nadchodzące wydarzenia",
+    "completed": "Zakończone",
+    "verified": "Zweryfikowane",
+    "events": "Wydarzenia",
+    "settings": "Ustawienia",
+    "addEvent": "Dodaj wydarzenie",
+    "filter": "Filtruj",
+    "all": "Wszystkie",
+    "unverified": "Niezweryfikowane",
+    "noEvents": "Brak wydarzeń",
+    "noVerifiedEvents": "Brak zweryfikowanych wydarzeń",
+    "noUnverifiedEvents": "Brak niezweryfikowanych wydarzeń",
+    "addFirstEvent": "Dodaj pierwsze wydarzenie dla swojej organizacji",
+    "changeFilter": "Zmień filtr aby zobaczyć inne wydarzenia",
+    "approved": "Zatwierdzony",
+    "pendingVerification": "Oczekuje na weryfikację",
+    "openInMaps": "Otwórz w aplikacji map",
+    "showMore": "Pokaż więcej",
+    "visitEventPage": "Odwiedź stronę wydarzenia"
+  },
+  "Layout": {
+    "title": "PWr Now",
+    "description": "Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej",
+    "applicationName": "PWr Now",
+    "teamName": "PWr Now Team",
+    "publisher": "PWr Now",
+    "siteName": "PWr Now",
+    "ogTitle": "PWr Now - Centrum wydarzeń na Politechnice Wrocławskiej",
+    "ogDescription": "Bądź na bieżąco z najnowszymi wydarzeniami na Politechnice Wrocławskiej",
+    "keywords": {
+      "events": "wydarzenia",
+      "politechnikaWroclawska": "Politechnika Wrocławska",
+      "pwr": "PWr",
+      "students": "studenci",
+      "wroclaw": "Wrocław",
+      "university": "uczelnia"
+    }
+  },
+  "EventBadge": {
+    "new": "Nowe",
+    "today": "Dziś!"
+  },
+  "AuthPage": {
+    "authenticating": "Uwierzytelnianie organizacji..."
+  },
+  "AddEventPage": {
+    "accessDenied": "Nie masz dostępu do tej organizacji",
+    "loadError": "Nie udało się załadować danych. Spróbuj ponownie.",
+    "title": "Dodaj wydarzenie",
+    "tryAgain": "Spróbuj ponownie",
+    "back": "Powrót"
+  },
+  "SettingsPage": {
+    "accessDenied": "Nie masz dostępu do tej organizacji",
+    "imageSizeError": "Rozmiar obrazka nie może przekraczać 5MB",
+    "updateError": "Wystąpił błąd podczas aktualizacji zdjęcia",
+    "error": "Błąd",
+    "organizationNotFound": "Nie znaleziono organizacji",
+    "back": "Powrót",
+    "title": "Ustawienia organizacji",
+    "organizationImage": "Zdjęcie organizacji",
+    "imageDescription": "Zaktualizuj zdjęcie profilu Twojej organizacji, które będzie widoczne na stronie organizacji i przy wydarzeniach.",
+    "currentImage": "Aktualne zdjęcie",
+    "hasProfileImage": "Twoja organizacja ma już zdjęcie profilowe",
+    "noProfileImage": "Twoja organizacja nie ma jeszcze zdjęcia profilowego",
+    "selectNewImage": "Wybierz nowe zdjęcie",
+    "imageRequirements": "Maksymalny rozmiar: 5MB. Obsługiwane formaty: JPG, PNG, WEBP",
+    "selectedFile": "Wybrano: {name} ({size} KB)",
+    "updateSuccess": "Zdjęcie zostało pomyślnie zaktualizowane",
+    "updating": "Aktualizowanie...",
+    "updateImage": "Zaktualizuj zdjęcie"
+  },
+  "Footer": {
+    "forOrganizations": "Dla organizacji",
+    "contact": "Kontakt",
+    "copyright": "© {year} PWr Now. Twoje centrum wydarzeń na Politechnice Wrocławskiej. Zrobione z ❤️ dla społeczności akademickiej."
+  },
+  "AnimatedShowcase": {
+    "aiWorkshop": "Warsztaty AI",
+    "clubMeeting": "Spotkanie koła",
+    "hackathon": "Hackathon PWr",
+    "integrationTrip": "Wyjście integracyjne",
+    "techTalk": "Tech Talk",
+    "conference": "Konferencja",
+    "training": "Szkolenie",
+    "jobFair": "Targi pracy"
+  },
+  "ThemeToggle": {
+    "toggleTheme": "Przełącz motyw",
+    "light": "Jasny",
+    "dark": "Ciemny",
+    "system": "System"
+  },
+  "Dropzone": {
+    "clickToSelect": "Kliknij, aby wybrać",
+    "orDragHere": "lub przeciągnij tutaj",
+    "maxSize": "Maksymalny rozmiar: {size}MB"
+  },
+  "OrgLayout": {
+    "forOrganizations": "Dla organizacji",
+    "contact": "Kontakt",
+    "copyright": "© 2025 PWr Now. Twoje centrum wydarzeń na Politechnice Wrocławskiej.",
+    "madeWithLove": "Zrobione z ❤️ dla społeczności akademickiej."
+  }
+}

@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const t = useTranslations('Footer');
 
   return (
     <footer className='w-full py-6 border-t border-muted bg-background/95 backdrop-blur-md'>
@@ -11,18 +13,17 @@ export default function Footer() {
             href='/dla-organizacji'
             className='text-muted-foreground hover:text-foreground transition-colors duration-200 hover:underline flex items-center gap-1'
           >
-            <span>✨</span> Dla organizacji
+            <span>✨</span> {t('forOrganizations')}
           </Link>
           <a
             href='mailto:pwrnow.kontakt@gmail.com'
             className='text-muted-foreground hover:text-foreground transition-colors duration-200 hover:underline flex items-center gap-1'
           >
-            <span>✉️</span> Kontakt
+            <span>✉️</span> {t('contact')}
           </a>
         </div>
         <p className='text-xs text-muted-foreground'>
-          © {currentYear} PWr Now. Twoje centrum wydarzeń na Politechnice
-          Wrocławskiej. Zrobione z ❤️ dla społeczności akademickiej.
+          {t('copyright', { year: currentYear })}
         </p>
       </div>
     </footer>

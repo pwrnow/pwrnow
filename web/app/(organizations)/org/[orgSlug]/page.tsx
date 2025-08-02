@@ -30,6 +30,7 @@ import Image from 'next/image';
 import { getCurrentOrganization, getEvents } from '@/lib/api';
 import { Organization, Event } from '@/lib/types';
 import { EventBadge } from '@/components/event-badge';
+import { useTranslations } from 'next-intl';
 
 type FilterType = 'all' | 'verified' | 'unverified';
 
@@ -37,6 +38,7 @@ export default function OrganizationPage() {
   const params = useParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
+  const t = useTranslations('OrganizationPage');
 
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -57,7 +59,7 @@ export default function OrganizationPage() {
 
           // Verify that the URL slug matches the authenticated organization
           if (currentOrg.slug !== orgSlug) {
-            setError('Nie masz dostępu do tej organizacji');
+            setError(t('accessDenied'));
             return;
           }
 
@@ -94,7 +96,7 @@ export default function OrganizationPage() {
           setEvents([]);
         }
       } catch {
-        setError('Nie udało się załadować danych organizacji');
+        setError(t('loadError'));
       } finally {
         setLoading(false);
       }
@@ -103,7 +105,7 @@ export default function OrganizationPage() {
     if (orgSlug) {
       loadOrganizationData();
     }
-  }, [orgSlug, router]);
+  }, [orgSlug, router, t]);
 
   const getInitials = (name: string) => {
     return name
@@ -206,7 +208,9 @@ export default function OrganizationPage() {
             <div className='w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4'>
               <ExternalLink className='w-8 h-8 text-destructive' />
             </div>
-            <h1 className='text-2xl font-bold text-destructive mb-2'>Błąd</h1>
+            <h1 className='text-2xl font-bold text-destructive mb-2'>
+              {t('error')}
+            </h1>
             <p className='text-muted-foreground mb-6'>{error}</p>
           </div>
           <Button
@@ -214,7 +218,7 @@ export default function OrganizationPage() {
             variant='outline'
             className='cursor-pointer'
           >
-            Powrót do strony głównej
+            {t('backToHome')}
           </Button>
         </Card>
       </div>
@@ -255,7 +259,7 @@ export default function OrganizationPage() {
               {events.length}
             </span>
             <span className='text-xs text-muted-foreground'>
-              Wszystkie wydarzenia
+              {t('allEvents')}
             </span>
           </div>
           <div className='flex flex-col items-center p-2 text-center'>
@@ -266,7 +270,7 @@ export default function OrganizationPage() {
               }
             </span>
             <span className='text-xs text-muted-foreground'>
-              Wszystkie wydarzenia
+              {t('upcomingEvents')}
             </span>
           </div>
           <div className='flex flex-col items-center p-2 text-center'>
@@ -276,20 +280,24 @@ export default function OrganizationPage() {
                   .length
               }
             </span>
-            <span className='text-xs text-muted-foreground'>Zakończone</span>
+            <span className='text-xs text-muted-foreground'>
+              {t('completed')}
+            </span>
           </div>
           <div className='flex flex-col items-center p-2 text-center'>
             <span className='text-2xl font-bold text-primary'>
               {events.filter((event) => event.verified).length}
             </span>
-            <span className='text-xs text-muted-foreground'>Zweryfikowane</span>
+            <span className='text-xs text-muted-foreground'>
+              {t('verified')}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Events Header */}
       <div className='flex justify-between items-center mb-6'>
-        <h2 className='text-2xl font-bold display-font'>Wydarzenia</h2>
+        <h2 className='text-2xl font-bold display-font'>{t('events')}</h2>
         <div className='flex items-center gap-3'>
           <Button
             variant='outline'
@@ -297,7 +305,7 @@ export default function OrganizationPage() {
             className='cursor-pointer flex items-center gap-2'
           >
             <Settings className='w-4 h-4' />
-            <span>Ustawienia</span>
+            <span>{t('settings')}</span>
           </Button>
           <Button
             variant='default'
@@ -305,7 +313,7 @@ export default function OrganizationPage() {
             className='cursor-pointer flex items-center gap-2'
           >
             <PlusCircle className='w-4 h-4' />
-            <span>Dodaj wydarzenie</span>
+            <span>{t('addEvent')}</span>
           </Button>
         </div>
       </div>
@@ -315,19 +323,19 @@ export default function OrganizationPage() {
         <div className='flex items-center space-x-4 p-4 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 shadow-sm'>
           <Filter className='w-5 h-5 text-muted-foreground' />
           <span className='text-sm font-medium text-muted-foreground'>
-            Filtruj:
+            {t('filter')}:
           </span>
           <div className='flex space-x-2'>
             {[
-              { key: 'all', label: 'Wszystkie', count: events.length },
+              { key: 'all', label: t('all'), count: events.length },
               {
                 key: 'verified',
-                label: 'Zweryfikowane',
+                label: t('verified'),
                 count: events.filter((e) => e.verified).length,
               },
               {
                 key: 'unverified',
-                label: 'Niezweryfikowane',
+                label: t('unverified'),
                 count: events.filter((e) => !e.verified).length,
               },
             ].map((filterOption) => (
@@ -368,22 +376,20 @@ export default function OrganizationPage() {
             </div>
             <h3 className='text-xl font-semibold mb-3'>
               {filter === 'all'
-                ? 'Brak wydarzeń'
+                ? t('noEvents')
                 : filter === 'verified'
-                ? 'Brak zweryfikowanych wydarzeń'
-                : 'Brak niezweryfikowanych wydarzeń'}
+                ? t('noVerifiedEvents')
+                : t('noUnverifiedEvents')}
             </h3>
             <p className='text-muted-foreground mb-6'>
-              {filter === 'all'
-                ? 'Dodaj pierwsze wydarzenie dla swojej organizacji'
-                : 'Zmień filtr aby zobaczyć inne wydarzenia'}
+              {filter === 'all' ? t('addFirstEvent') : t('changeFilter')}
             </p>
             <Button
               onClick={() => router.push(`/org/${orgSlug}/add`)}
               className='cursor-pointer'
             >
               <PlusCircle className='w-4 h-4 mr-2' />
-              Dodaj wydarzenie
+              {t('addEvent')}
             </Button>
           </div>
         </Card>
@@ -429,12 +435,12 @@ export default function OrganizationPage() {
                     {event.verified ? (
                       <>
                         <ShieldCheck className='h-3 w-3' />
-                        Zatwierdzony
+                        {t('approved')}
                       </>
                     ) : (
                       <>
                         <Clock3 className='h-3 w-3' />
-                        Oczekuje na weryfikację
+                        {t('pendingVerification')}
                       </>
                     )}
                   </div>
@@ -509,7 +515,7 @@ export default function OrganizationPage() {
                                 handleMapLinkClick(event.location!)
                               }
                               className='font-medium hover:underline flex items-center gap-1 cursor-pointer'
-                              title='Otwórz w aplikacji map'
+                              title={t('openInMaps')}
                             >
                               {event.location}
                               <ExternalLink className='h-3 w-3' />
@@ -533,7 +539,7 @@ export default function OrganizationPage() {
                                   className='p-0 h-auto text-primary hover:text-primary/80 cursor-pointer mt-1'
                                 >
                                   <MoreHorizontal className='h-3 w-3 mr-1' />
-                                  Pokaż więcej
+                                  {t('showMore')}
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className='!max-w-6xl max-h-[80vh] overflow-y-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
@@ -567,7 +573,7 @@ export default function OrganizationPage() {
                               className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
                             >
                               <ExternalLink className='h-4 w-4' />
-                              Odwiedź stronę wydarzenia
+                              {t('visitEventPage')}
                             </Button>
                           </a>
                         </div>

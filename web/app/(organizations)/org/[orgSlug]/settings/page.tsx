@@ -5,17 +5,16 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, ImageIcon, Loader2 } from 'lucide-react';
-import {
-  getCurrentOrganization,
-  uploadOrganizationImage,
-} from '@/lib/api';
+import { getCurrentOrganization, uploadOrganizationImage } from '@/lib/api';
 import { Organization } from '@/lib/types';
 import { Card } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 
 export default function OrganizationSettingsPage() {
   const params = useParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
+  const t = useTranslations('SettingsPage');
 
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +38,7 @@ export default function OrganizationSettingsPage() {
 
         // Verify that the URL slug matches the authenticated organization
         if (currentOrg.slug !== orgSlug) {
-          setError('Nie masz dostępu do tej organizacji');
+          setError(t('accessDenied'));
           return;
         }
 
@@ -54,7 +53,7 @@ export default function OrganizationSettingsPage() {
     if (orgSlug) {
       loadOrganization();
     }
-  }, [orgSlug, router]);
+  }, [orgSlug, router, t]);
 
   const getInitials = (name: string) => {
     return name
@@ -69,7 +68,7 @@ export default function OrganizationSettingsPage() {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setImageError('Rozmiar obrazka nie może przekraczać 5MB');
+        setImageError(t('imageSizeError'));
         setImageFile(null);
         setPreviewUrl(null);
       } else {
@@ -107,9 +106,7 @@ export default function OrganizationSettingsPage() {
       }
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Wystąpił błąd podczas aktualizacji zdjęcia';
+        error instanceof Error ? error.message : t('updateError');
       if (errorMessage.includes('obrazka')) {
         setImageError(errorMessage);
       } else {
@@ -135,15 +132,17 @@ export default function OrganizationSettingsPage() {
     return (
       <div className='max-w-2xl mx-auto px-4 py-4'>
         <Card className='p-8 text-center'>
-          <h1 className='text-2xl font-bold text-destructive mb-4'>Błąd</h1>
+          <h1 className='text-2xl font-bold text-destructive mb-4'>
+            {t('error')}
+          </h1>
           <p className='text-muted-foreground mb-6'>
-            {error || 'Nie znaleziono organizacji'}
+            {error || t('organizationNotFound')}
           </p>
           <Button
             onClick={() => router.push(`/org/${orgSlug}`)}
             variant='outline'
           >
-            Powrót
+            {t('back')}
           </Button>
         </Card>
       </div>
@@ -160,20 +159,19 @@ export default function OrganizationSettingsPage() {
           onClick={() => router.push(`/org/${orgSlug}`)}
         >
           <ArrowLeft className='h-4 w-4' />
-          <span>Powrót</span>
+          <span>{t('back')}</span>
         </Button>
         <h1 className='text-xl font-bold display-font text-center'>
-          Ustawienia organizacji
+          {t('title')}
         </h1>
       </div>
 
       <div className='space-y-8'>
         <div className='bg-card rounded-lg border p-6'>
-          <h2 className='text-xl font-semibold mb-4'>Zdjęcie organizacji</h2>
-          <p className='text-muted-foreground mb-6'>
-            Zaktualizuj zdjęcie profilu Twojej organizacji, które będzie
-            widoczne na stronie organizacji i przy wydarzeniach.
-          </p>
+          <h2 className='text-xl font-semibold mb-4'>
+            {t('organizationImage')}
+          </h2>
+          <p className='text-muted-foreground mb-6'>{t('imageDescription')}</p>
 
           <div className='space-y-6'>
             <div className='flex items-center space-x-6'>
@@ -187,11 +185,11 @@ export default function OrganizationSettingsPage() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className='font-medium'>Aktualne zdjęcie</h3>
+                <h3 className='font-medium'>{t('currentImage')}</h3>
                 <p className='text-sm text-muted-foreground'>
                   {organization.image_url
-                    ? 'Twoja organizacja ma już zdjęcie profilowe'
-                    : 'Twoja organizacja nie ma jeszcze zdjęcia profilowego'}
+                    ? t('hasProfileImage')
+                    : t('noProfileImage')}
                 </p>
               </div>
             </div>
@@ -202,7 +200,7 @@ export default function OrganizationSettingsPage() {
                   htmlFor='image-upload'
                   className='block text-sm font-medium mb-2'
                 >
-                  Wybierz nowe zdjęcie
+                  {t('selectNewImage')}
                 </label>
                 <input
                   id='image-upload'
@@ -212,14 +210,16 @@ export default function OrganizationSettingsPage() {
                   className='block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer'
                 />
                 <p className='text-xs text-muted-foreground mt-1'>
-                  Maksymalny rozmiar: 5MB. Obsługiwane formaty: JPG, PNG, WEBP
+                  {t('imageRequirements')}
                 </p>
               </div>
 
               {imageFile && !imageError && (
                 <p className='text-sm text-green-600'>
-                  Wybrano: {imageFile.name} ({Math.round(imageFile.size / 1024)}{' '}
-                  KB)
+                  {t('selectedFile', {
+                    name: imageFile.name,
+                    size: Math.round(imageFile.size / 1024),
+                  })}
                 </p>
               )}
 
@@ -232,9 +232,7 @@ export default function OrganizationSettingsPage() {
               )}
 
               {success && (
-                <p className='text-sm text-green-600'>
-                  Zdjęcie zostało pomyślnie zaktualizowane
-                </p>
+                <p className='text-sm text-green-600'>{t('updateSuccess')}</p>
               )}
 
               <Button
@@ -245,12 +243,12 @@ export default function OrganizationSettingsPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className='h-4 w-4 animate-spin' />
-                    <span>Aktualizowanie...</span>
+                    <span>{t('updating')}</span>
                   </>
                 ) : (
                   <>
                     <ImageIcon className='h-4 w-4' />
-                    <span>Zaktualizuj zdjęcie</span>
+                    <span>{t('updateImage')}</span>
                   </>
                 )}
               </Button>

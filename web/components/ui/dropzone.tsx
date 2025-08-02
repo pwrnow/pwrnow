@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface DropzoneProps {
   onDrop: (files: File[]) => void;
@@ -24,6 +25,7 @@ export function Dropzone({
 }: DropzoneProps) {
   const [isDragOver, setIsDragOver] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const t = useTranslations('Dropzone');
 
   const handleDrop = React.useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -103,11 +105,11 @@ export function Dropzone({
           <div className='flex flex-col items-center gap-2'>
             <Upload className='size-8 text-muted-foreground' />
             <div className='text-sm'>
-              <span className='font-medium'>Kliknij, aby wybrać</span> lub
-              przeciągnij tutaj
+              <span className='font-medium'>{t('clickToSelect')}</span>{' '}
+              {t('orDragHere')}
             </div>
             <div className='text-xs text-muted-foreground'>
-              Maksymalny rozmiar: {Math.round(maxSize / 1024 / 1024)}MB
+              {t('maxSize', { size: Math.round(maxSize / 1024 / 1024) })}
             </div>
           </div>
         )}

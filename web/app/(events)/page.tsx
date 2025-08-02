@@ -9,6 +9,7 @@ import {
   generateWebSiteStructuredData,
 } from '@/lib/structured-data';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 // Enable Full Route Cache by setting revalidation
 export const revalidate = 60; // Revalidate every 1 minute
@@ -17,53 +18,54 @@ export const revalidate = 60; // Revalidate every 1 minute
 // export const fetchCache = 'default-cache';
 
 // Generate metadata for better SEO
-export const metadata: Metadata = {
-  title: 'Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
-  description:
-    'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
-  keywords: [
-    'znajdź wydarzenia PWr',
-    'aktualne wydarzenia Politechnika Wrocławska',
-    'wydarzenia studenckie dziś',
-    'sport PWr',
-    'wyjazdy studenckie PWr',
-    'imprezy PWr',
-    'kursy PWr',
-    'rozwój osobisty PWr',
-    'prelekcje PWr',
-    'kalendarz wydarzeń PWr',
-    'co dzieje się na PWr',
-    'PWrNow wydarzenia',
-    'Wrocław wydarzenia studenckie',
-    'życie studenckie PWr dziś',
-    'odkryj wydarzenia PWr',
-  ],
-  openGraph: {
-    title: 'Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
-    description:
-      'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
-    type: 'website',
-    siteName: 'PWrNow',
-    images: [
-      {
-        url: '/og-image.svg',
-        width: 1200,
-        height: 630,
-        alt: 'PWrNow - Wydarzenia na Politechnice Wrocławskiej',
-      },
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('EventsPage');
+
+  return {
+    title: t('title'),
+    description: t('description'),
+    keywords: [
+      t('keywords.findEvents'),
+      t('keywords.currentEvents'),
+      t('keywords.studentEvents'),
+      t('keywords.sport'),
+      t('keywords.trips'),
+      t('keywords.parties'),
+      t('keywords.courses'),
+      t('keywords.personalDevelopment'),
+      t('keywords.lectures'),
+      t('keywords.eventCalendar'),
+      t('keywords.whatsHappening'),
+      t('keywords.pwrNowEvents'),
+      t('keywords.wroclawStudentEvents'),
+      t('keywords.studentLife'),
+      t('keywords.discoverEvents'),
     ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!',
-    description:
-      'Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.',
-    images: ['/og-image.svg'],
-  },
-  alternates: {
-    canonical: '/',
-  },
-};
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      type: 'website',
+      siteName: 'PWrNow',
+      images: [
+        {
+          url: '/og-image.svg',
+          width: 1200,
+          height: 630,
+          alt: t('ogImageAlt'),
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('title'),
+      description: t('description'),
+      images: ['/og-image.svg'],
+    },
+    alternates: {
+      canonical: '/',
+    },
+  };
+}
 
 export default async function EventsPage() {
   const categories = await getCategories();

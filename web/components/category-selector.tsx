@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { Category } from '@/lib/types';
 import { useAnalytics } from '@/lib/useAnalytics';
+import { useTranslations } from 'next-intl';
 
 export default function CategorySelector({
   categories = [],
@@ -20,10 +21,11 @@ export default function CategorySelector({
     () => searchParams.get('category') || 'wszystkie'
   );
   const { trackCategoryFilter } = useAnalytics();
+  const t = useTranslations('CategorySelector');
 
   // Add "Wszystkie" category to the beginning of the list
   const allCategories: Category[] = [
-    { name: 'Wszystkie', slug: 'wszystkie' },
+    { name: t('allCategories'), slug: 'wszystkie' },
     ...categories,
   ];
 

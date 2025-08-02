@@ -11,6 +11,7 @@ import {
   generateEventStructuredData,
   generateBreadcrumbStructuredData,
 } from '@/lib/structured-data';
+import { getTranslations } from 'next-intl/server';
 
 // Enable ISR with 60 second revalidation for SEO and performance
 export const revalidate = 60;
@@ -41,6 +42,7 @@ export async function generateMetadata({
   try {
     const { eventSlug } = await params;
     const event = await getEventBySlug(eventSlug);
+    const t = await getTranslations('EventDetailPage');
 
     const startDate = new Date(event.starts_at);
     const formattedDate = startDate.toLocaleDateString('pl-PL', {
@@ -53,17 +55,18 @@ export async function generateMetadata({
       title: `${event.title} | ${formattedDate}`,
       description:
         event.description ||
-        `Wydarzenie ${event.title} organizowane przez ${
-          event.organization.name
-        }. Data: ${formattedDate}${
-          event.location ? `, Miejsce: ${event.location}` : ''
-        }.`,
+        t('defaultDescription', {
+          title: event.title,
+          organization: event.organization.name,
+          date: formattedDate,
+          location: event.location || '',
+        }),
       keywords: [
         event.title,
         event.organization.name,
         event.category.name,
-        'wydarzenie',
-        'event',
+        t('keywords.event'),
+        t('keywords.eventKeyword'),
         ...(event.location ? [event.location] : []),
       ],
       openGraph: {
@@ -72,7 +75,7 @@ export async function generateMetadata({
         description: event.description
           ? event.description.slice(0, 160) +
             (event.description.length > 160 ? '...' : '')
-          : `Wydarzenie ${event.title} - ${formattedDate}`,
+          : t('ogDescription', { title: event.title, date: formattedDate }),
         images: event.image_url
           ? [
               {
@@ -91,7 +94,7 @@ export async function generateMetadata({
         description: event.description
           ? event.description.slice(0, 160) +
             (event.description.length > 160 ? '...' : '')
-          : `Wydarzenie ${event.title} - ${formattedDate}`,
+          : t('ogDescription', { title: event.title, date: formattedDate }),
         images: event.image_url ? [event.image_url] : undefined,
       },
       alternates: {
@@ -99,10 +102,10 @@ export async function generateMetadata({
       },
     };
   } catch {
+    const t = await getTranslations('EventDetailPage');
     return {
-      title: 'Wydarzenie nie znalezione | PWrNow',
-      description:
-        'Szukane wydarzenie nie zostało znalezione. Sprawdź listę wszystkich dostępnych wydarzeń.',
+      title: t('notFoundTitle'),
+      description: t('notFoundDescription'),
     };
   }
 }
@@ -154,6 +157,7 @@ export default async function EventDetailPage({
         <Link href='/'>
           <Button variant='ghost' size='sm' className='gap-2'>
             <ArrowLeft className='h-4 w-4' />
+            {/* Note: This will be translated in the EventCard component */}
             Wróć do wydarzeń
           </Button>
         </Link>

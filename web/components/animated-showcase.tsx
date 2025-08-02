@@ -2,10 +2,12 @@
 
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function AnimatedShowcase() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations('AnimatedShowcase');
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function AnimatedShowcase() {
       {/* Floating event cards */}
       <div className='relative w-full h-full'>
         {[...Array(8)].map((_, i) => (
-          <EventCard key={i} index={i} isDark={isDark} />
+          <EventCard key={i} index={i} isDark={isDark} t={t} />
         ))}
       </div>
     </div>
@@ -33,16 +35,24 @@ export default function AnimatedShowcase() {
 }
 
 // Component for a floating event card
-function EventCard({ index, isDark }: { index: number; isDark: boolean }) {
+function EventCard({
+  index,
+  isDark,
+  t,
+}: {
+  index: number;
+  isDark: boolean;
+  t: any;
+}) {
   const eventTitles = [
-    'Warsztaty AI',
-    'Spotkanie koła',
-    'Hackathon PWr',
-    'Wyjście integracyjne',
-    'Tech Talk',
-    'Konferencja',
-    'Szkolenie',
-    'Targi pracy',
+    t('aiWorkshop'),
+    t('clubMeeting'),
+    t('hackathon'),
+    t('integrationTrip'),
+    t('techTalk'),
+    t('conference'),
+    t('training'),
+    t('jobFair'),
   ];
 
   // Generate distributed positions
