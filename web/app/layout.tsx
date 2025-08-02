@@ -9,6 +9,8 @@ import {
   getAnalyticsDomain,
   analyticsConfig,
 } from '@/lib/analytics';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale } from 'next-intl/server';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -67,39 +69,42 @@ export const metadata: Metadata = {
   category: 'education',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const enableAnalytics = shouldEnableAnalytics();
   const analyticsDomain = getAnalyticsDomain();
+  const locale = await getLocale();
 
   return (
-    <html lang='pl' suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={`${spaceGrotesk.variable} ${righteous.variable}`}
       >
-        <ThemeProvider
-          attribute='class'
-          defaultTheme='system'
-          enableSystem
-          disableTransitionOnChange
-        >
-          {enableAnalytics ? (
-            <PlausibleProvider
-              domain={analyticsDomain}
-              customDomain={analyticsConfig.apiHost}
-              trackLocalhost={analyticsConfig.trackLocalhost}
-              enabled={enableAnalytics}
-            >
-              {children}
-            </PlausibleProvider>
-          ) : (
-            children
-          )}
-        </ThemeProvider>
+        <NextIntlClientProvider>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+          >
+            {enableAnalytics ? (
+              <PlausibleProvider
+                domain={analyticsDomain}
+                customDomain={analyticsConfig.apiHost}
+                trackLocalhost={analyticsConfig.trackLocalhost}
+                enabled={enableAnalytics}
+              >
+                {children}
+              </PlausibleProvider>
+            ) : (
+              children
+            )}
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
