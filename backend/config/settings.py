@@ -310,6 +310,12 @@ SITE_URL = env("SITE_URL", default="http://localhost:8000")
 DISCORD_WEBHOOK_URL = env("DISCORD_WEBHOOK_URL", default="")
 
 # SECURITY SETTINGS
+SESSION_COOKIE_HTTPONLY = True
+# https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-httponly
+CSRF_COOKIE_HTTPONLY = True
+# https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
+X_FRAME_OPTIONS = "DENY"
+
 if not DEBUG:
     # ------------------------------------------------------------------------------
     # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
