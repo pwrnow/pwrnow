@@ -5,12 +5,16 @@ Provides production-ready caching for listing endpoints with proper invalidation
 """
 import hashlib
 import json
+import logging
 from typing import Dict, List, Optional
 
 from django.core.cache import cache
 from django.conf import settings
 from django.db.models import QuerySet
 from django_redis import get_redis_connection
+
+# Set up logger for this module
+logger = logging.getLogger(__name__)
 
 
 def get_cache_key(base_key: str, **params) -> str:
@@ -66,25 +70,25 @@ def cache_queryset_data(cache_key: str, queryset: QuerySet, serializer_class,
     Returns:
         Serialized data list
     """
-    print(f"🔍 CACHE: Checking cache for key: {cache_key}")
+    logger.debug("Checking cache for key: %s", cache_key)
 
     # Try to get from cache first
     cached_data = cache.get(cache_key)
     if cached_data is not None:
-        print(f"📦 CACHE HIT: Found {len(cached_data)} items in cache for key: {cache_key}")
+        logger.debug("Cache HIT: Found %d items in cache for key: %s", len(cached_data), cache_key)
         return cached_data
 
-    print(f"🔄 CACHE MISS: Fetching fresh data for key: {cache_key}")
+    logger.debug("Cache MISS: Fetching fresh data for key: %s", cache_key)
 
     # Serialize the queryset
     serializer = serializer_class(queryset, many=True, context=context or {})
     data = serializer.data
 
-    print(f"📊 SERIALIZED: Got {len(data)} items from queryset")
+    logger.debug("Serialized: Got %d items from queryset", len(data))
 
     # Cache the serialized data
     cache.set(cache_key, data, timeout)
-    print(f"💾 CACHE SET: Stored {len(data)} items with timeout {timeout}s for key: {cache_key}")
+    logger.debug("Cache SET: Stored %d items with timeout %ss for key: %s", len(data), timeout, cache_key)
 
     return data
 
@@ -103,10 +107,10 @@ def cache_public_events(queryset: QuerySet, serializer_class, context: Optional[
     Returns:
         Cached or fresh serialized events data
     """
-    print(f"📅 EVENTS: Caching public events with filters: {filters}")
+    logger.debug("EVENTS: Caching public events with filters: %s", filters)
     cache_key = get_public_events_cache_key(**filters)
     timeout = settings.CACHE_TTL['PUBLIC_EVENTS']
-    print(f"📅 EVENTS: Using cache key: {cache_key}, timeout: {timeout}s")
+    logger.debug("EVENTS: Using cache key: %s, timeout: %ss", cache_key, timeout)
 
     return cache_queryset_data(cache_key, queryset, serializer_class, context, timeout)
 
@@ -124,10 +128,10 @@ def cache_categories(queryset: QuerySet, serializer_class, context: Optional[Dic
     Returns:
         Cached or fresh serialized categories data
     """
-    print(f"🏷️  CATEGORIES: Caching categories list with filters: {filters}")
+    logger.debug("CATEGORIES: Caching categories list with filters: %s", filters)
     cache_key = get_categories_cache_key(**filters)
     timeout = settings.CACHE_TTL['CATEGORIES']
-    print(f"🏷️  CATEGORIES: Using cache key: {cache_key}, timeout: {timeout}s")
+    logger.debug("CATEGORIES: Using cache key: %s, timeout: %ss", cache_key, timeout)
 
     return cache_queryset_data(cache_key, queryset, serializer_class, context, timeout)
 
@@ -138,7 +142,7 @@ def invalidate_events_cache():
 
     Uses redis pattern matching to delete all event-related cache keys.
     """
-    print("🗑️  INVALIDATE: Starting events cache invalidation")
+    logger.info("INVALIDATE: Starting events cache invalidation")
     try:
         redis_client = get_redis_connection("default")
 
@@ -151,28 +155,28 @@ def invalidate_events_cache():
         else:
             pattern = f"*{base_key}*"
 
-        print(f"🗑️  INVALIDATE: Searching for keys with pattern: {pattern}")
+        logger.debug("INVALIDATE: Searching for keys with pattern: %s", pattern)
         keys = redis_client.keys(pattern)
-        print(f"🗑️  INVALIDATE: Found {len(keys)} keys to delete")
+        logger.debug("INVALIDATE: Found %d keys to delete", len(keys))
 
         if keys:
             redis_client.delete(*keys)
-            print(f"🗑️  INVALIDATE: Successfully deleted {len(keys)} events cache keys")
+            logger.info("INVALIDATE: Successfully deleted %d events cache keys", len(keys))
         else:
-            print("🗑️  INVALIDATE: No events cache keys found to delete")
+            logger.debug("INVALIDATE: No events cache keys found to delete")
 
     except Exception as e:
-        print(f"❌ INVALIDATE ERROR: Redis pattern matching failed: {e}")
+        logger.error("INVALIDATE ERROR: Redis pattern matching failed: %s", e)
         # Fall back to clearing the base cache key if pattern matching fails
         cache.delete(settings.CACHE_KEYS['PUBLIC_EVENTS_LIST'])
-        print("🗑️  INVALIDATE: Fallback - deleted base events cache key")
+        logger.warning("INVALIDATE: Fallback - deleted base events cache key")
 
 
 def invalidate_categories_cache():
     """
     Invalidate all categories cache (all languages).
     """
-    print("🗑️  INVALIDATE: Starting categories cache invalidation")
+    logger.info("INVALIDATE: Starting categories cache invalidation")
     try:
         redis_client = get_redis_connection("default")
 
@@ -185,28 +189,28 @@ def invalidate_categories_cache():
         else:
             pattern = f"*{base_key}*"
 
-        print(f"🗑️  INVALIDATE: Searching for categories keys with pattern: {pattern}")
+        logger.debug("INVALIDATE: Searching for categories keys with pattern: %s", pattern)
         keys = redis_client.keys(pattern)
-        print(f"🗑️  INVALIDATE: Found {len(keys)} categories keys to delete")
+        logger.debug("INVALIDATE: Found %d categories keys to delete", len(keys))
 
         if keys:
             redis_client.delete(*keys)
-            print(f"🗑️  INVALIDATE: Successfully deleted {len(keys)} categories cache keys")
+            logger.info("INVALIDATE: Successfully deleted %d categories cache keys", len(keys))
         else:
-            print("🗑️  INVALIDATE: No categories cache keys found to delete")
+            logger.debug("INVALIDATE: No categories cache keys found to delete")
 
     except Exception as e:
-        print(f"❌ INVALIDATE ERROR: Redis pattern matching failed: {e}")
+        logger.error("INVALIDATE ERROR: Redis pattern matching failed: %s", e)
         # Fall back to clearing the base cache key if pattern matching fails
         cache.delete(settings.CACHE_KEYS['CATEGORIES_LIST'])
-        print("🗑️  INVALIDATE: Fallback - deleted base categories cache key")
+        logger.warning("INVALIDATE: Fallback - deleted base categories cache key")
 
 
 def invalidate_all_cache():
     """
     Invalidate both events and categories cache.
     """
-    print("🗑️  INVALIDATE: Starting full cache invalidation")
+    logger.info("INVALIDATE: Starting full cache invalidation")
     invalidate_events_cache()
     invalidate_categories_cache()
-    print("🗑️  INVALIDATE: Full cache invalidation completed")
+    logger.info("INVALIDATE: Full cache invalidation completed")

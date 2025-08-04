@@ -154,6 +154,7 @@ CACHES = {
             'CONNECTION_POOL_KWARGS': {
                 'ssl_cert_reqs': None if REDIS_SSL else None,
             } if REDIS_SSL else {},
+            "IGNORE_EXCEPTIONS": True,
         },
         'KEY_PREFIX': 'pwrnow_cache',
         'TIMEOUT': 300,  # Default 5 minutes cache timeout
@@ -307,3 +308,78 @@ SITE_URL = env("SITE_URL", default="http://localhost:8000")
 
 # Discord Webhook Configuration
 DISCORD_WEBHOOK_URL = env("DISCORD_WEBHOOK_URL", default="")
+
+# SECURITY SETTINGS
+if not DEBUG:
+    # ------------------------------------------------------------------------------
+    # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    # https://docs.djangoproject.com/en/dev/ref/settings/#secure-ssl-redirect
+    SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+    # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-secure
+    SESSION_COOKIE_SECURE = True
+    # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-name
+    SESSION_COOKIE_NAME = "__Secure-sessionid"
+    # https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-secure
+    CSRF_COOKIE_SECURE = True
+    # https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-name
+    CSRF_COOKIE_NAME = "__Secure-csrftoken"
+    # https://docs.djangoproject.com/en/dev/topics/security/#ssl-https
+    # https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-seconds
+    # TODO: set this to 60 seconds first and then to 518400 once you prove the former works
+    SECURE_HSTS_SECONDS = 60
+    # https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-include-subdomains
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
+        "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS",
+        default=True,
+    )
+    # https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-preload
+    SECURE_HSTS_PRELOAD = env.bool("DJANGO_SECURE_HSTS_PRELOAD", default=True)
+    # https://docs.djangoproject.com/en/dev/ref/middleware/#x-content-type-options-nosniff
+    SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
+        "DJANGO_SECURE_CONTENT_TYPE_NOSNIFF",
+        default=True,
+    )
+
+ADMIN_URL = env("DJANGO_ADMIN_URL", default="admin/")
+
+
+# LOGGING
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": True,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {"level": "INFO", "handlers": ["console"]},
+    "loggers": {
+        "django.db.backends": {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        # Errors logged by the SDK itself
+        "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
+        "django.security.DisallowedHost": {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        # Cache module debug logging
+        "core.cache": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+    },
+}
