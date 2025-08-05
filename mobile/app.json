@@ -13,14 +13,19 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "pl.pwrnow.pwrnow"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -44,6 +49,13 @@
         }
       ]
     ],
-    "scheme": "pwrnow"
+    "scheme": "pwrnow",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "28be113a-2b1b-4840-8cdb-47c7faea0694"
+      }
+    },
+    "owner": "pwrnow"
   }
 }
