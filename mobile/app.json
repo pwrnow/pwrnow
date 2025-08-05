@@ -14,7 +14,8 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "pl.pwrnow.pwrnow"
+      "bundleIdentifier": "pl.pwrnow.pwrnow",
+      "associatedDomains": ["applinks:pwrnow.pl"]
     },
     "android": {
       "adaptiveIcon": {
