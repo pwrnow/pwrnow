@@ -68,6 +68,9 @@
         "projectId": "28be113a-2b1b-4840-8cdb-47c7faea0694"
       }
     },
-    "owner": "pwrnow"
+    "owner": "pwrnow",
+    "experiments": {
+      "buildCacheProvider": "eas"
+    }
   }
 }
