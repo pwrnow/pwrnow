@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.michallm.pwrnow</string>
+          <string>pl.pwrnow.pwrnow</string>
         </array>
       </dict>
       <dict>
