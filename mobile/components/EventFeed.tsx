@@ -10,20 +10,25 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
-import { Event } from '../types';
+import { Event, Category } from '../types';
 import EventCard from './EventCard';
+import CategorySelector from './CategorySelector';
 import { Colors } from '../constants/Colors';
 
 interface EventFeedProps {
   events: Event[];
+  categories: Category[];
   selectedCategory: string;
+  onCategoryChange: (categorySlug: string) => void;
   onRefresh?: () => Promise<void>;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
 export default function EventFeed({
   events,
+  categories,
   selectedCategory,
+  onCategoryChange,
   onRefresh,
   onScroll,
 }: EventFeedProps) {
@@ -57,20 +62,26 @@ export default function EventFeed({
       ? events
       : events.filter((event) => event.category.slug === selectedCategory);
 
-  if (filteredEvents.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>
-          {selectedCategory === 'wszystkie'
-            ? 'Aktualnie brak dostępnych wydarzeń.'
-            : 'Brak wydarzeń w tej kategorii.'}
-        </Text>
-      </View>
-    );
-  }
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>
+        {selectedCategory === 'wszystkie'
+          ? 'Aktualnie brak dostępnych wydarzeń.'
+          : 'Brak wydarzeń w tej kategorii.'}
+      </Text>
+    </View>
+  );
 
   const renderEventCard = ({ item, index }: { item: Event; index: number }) => (
     <EventCard event={item} showCalendarHint={index === 0} />
+  );
+
+  const renderHeader = () => (
+    <CategorySelector
+      categories={categories}
+      selectedCategory={selectedCategory}
+      onCategoryChange={onCategoryChange}
+    />
   );
 
   return (
@@ -78,6 +89,8 @@ export default function EventFeed({
       data={filteredEvents}
       renderItem={renderEventCard}
       keyExtractor={(item) => item.id}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmptyComponent}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.container}
       onScroll={onScroll}
@@ -101,7 +114,6 @@ export default function EventFeed({
 const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
-      paddingTop: 8,
       paddingBottom: 40,
       backgroundColor: colors.background,
     },
