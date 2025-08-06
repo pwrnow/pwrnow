@@ -11,11 +11,11 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
-import { Colors } from '../constants/Colors';
-import { api } from '../lib/api';
-import EventCard from '../components/EventCard';
-import Header from '../components/Header';
-import { Event } from '../types';
+import { Colors } from '../../constants/Colors';
+import { api } from '../../lib/api';
+import EventCard from '../../components/EventCard';
+import Header from '../../components/Header';
+import { Event } from '../../types';
 import { Feather } from '@expo/vector-icons';
 
 export default function EventDetailScreen() {
