@@ -15,7 +15,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "pl.pwrnow.pwrnow",
-      "associatedDomains": ["applinks:pwrnow.pl"]
+      "associatedDomains": ["applinks:pwrnow.pl"],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
