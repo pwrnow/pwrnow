@@ -8,7 +8,7 @@ from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from .models import Event, Category, Tag
 from .cache import invalidate_events_cache, invalidate_categories_cache
-from .tasks import translate_event_content
+from .tasks import translate_event_content, detect_event_image_aspect_ratio
 
 
 @receiver(post_save, sender=Event)
@@ -17,6 +17,7 @@ def event_post_save_handler(sender, instance, created, **kwargs):
     Handle Event post-save actions:
     1. Invalidate events cache when an Event is created or updated
     2. Trigger translation task for new events
+    3. Trigger aspect ratio detection task for events with images
 
     Args:
         sender: The Event model class
@@ -32,6 +33,11 @@ def event_post_save_handler(sender, instance, created, **kwargs):
     if created:
         # Start translation task immediately in background
         translate_event_content.delay(str(instance.id))
+
+    # Trigger aspect ratio detection if event has an image and aspect_ratio is not set
+    if instance.image and not instance.aspect_ratio:
+        # Start aspect ratio detection task immediately in background
+        detect_event_image_aspect_ratio.delay(str(instance.id))
 
 
 @receiver(post_delete, sender=Event)

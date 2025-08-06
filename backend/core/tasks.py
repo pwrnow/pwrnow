@@ -4,6 +4,8 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import datetime
 import logging
+from PIL import Image
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +197,90 @@ def translate_event_content(event_id, target_languages=None):
         }
     except Exception as e:
         error_msg = f"Error in translation task: {str(e)}"
+        logger.error(error_msg)
+        return {
+            'event_id': str(event_id),
+            'error': error_msg,
+            'success': False
+        }
+
+
+@shared_task
+def detect_event_image_aspect_ratio(event_id):
+    """
+    Detect the aspect ratio of an event's image and save it to the database.
+
+    Args:
+        event_id: The UUID of the event
+    """
+    from .models import Event
+
+    try:
+        # Get the event
+        event = Event.objects.get(id=event_id)
+
+        # Check if event has an image
+        if not event.image:
+            logger.info(f"Event {event_id} has no image, skipping aspect ratio detection")
+            return {
+                'event_id': str(event_id),
+                'message': 'No image to process',
+                'success': True
+            }
+
+        # Open the image using PIL
+        try:
+            with event.image.open() as img_file:
+                img = Image.open(img_file)
+                width, height = img.size
+
+                # Calculate aspect ratio
+                ratio = width / height
+
+                # Determine aspect ratio category
+                if abs(ratio - 1) <= 0.1:
+                    aspect_ratio = '1:1'
+                elif abs(ratio - 16/9) <= 0.1:
+                    aspect_ratio = '16:9'
+                elif abs(ratio - 4/3) <= 0.1:
+                    aspect_ratio = '4:3'
+                elif abs(ratio - 3/2) <= 0.1:
+                    aspect_ratio = '3:2'
+                else:
+                    # For other ratios, store the actual ratio as a string
+                    aspect_ratio = f"{width}:{height}"
+
+                # Update the event with the detected aspect ratio
+                event.aspect_ratio = aspect_ratio
+                event.save(update_fields=['aspect_ratio'])
+
+                logger.info(f"Detected aspect ratio {aspect_ratio} for event {event_id} (image: {width}x{height})")
+
+                return {
+                    'event_id': str(event_id),
+                    'aspect_ratio': aspect_ratio,
+                    'dimensions': f"{width}x{height}",
+                    'success': True
+                }
+
+        except Exception as e:
+            logger.error(f"Error processing image for event {event_id}: {str(e)}")
+            return {
+                'event_id': str(event_id),
+                'error': f"Image processing error: {str(e)}",
+                'success': False
+            }
+
+    except Event.DoesNotExist:
+        error_msg = f"Event with ID {event_id} not found"
+        logger.error(error_msg)
+        return {
+            'event_id': str(event_id),
+            'error': error_msg,
+            'success': False
+        }
+    except Exception as e:
+        error_msg = f"Error in aspect ratio detection task: {str(e)}"
         logger.error(error_msg)
         return {
             'event_id': str(event_id),

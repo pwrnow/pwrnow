@@ -147,6 +147,12 @@ class Event(models.Model):
         null=True,
         help_text="Event image/poster"
     )
+    aspect_ratio = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text="Detected aspect ratio of the event image (e.g., '16:9', '1:1')"
+    )
     url = models.URLField(
         blank=True,
         null=True,

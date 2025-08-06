@@ -18,7 +18,6 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<'1:1' | '16:9'>('16:9');
   const [isImageLoading, setIsImageLoading] = useState(true);
   const { trackEventClick, trackEventInteraction } = useAnalytics();
   const t = useTranslations('EventCard');
@@ -45,12 +44,6 @@ export default function EventCard({ event }: EventCardProps) {
       .toUpperCase();
   };
   const orgInitials = getInitials(organizationName);
-  const detectAspectRatio = (width: number, height: number) => {
-    const ratio = width / height;
-    if (Math.abs(ratio - 1) <= 0.1) return '1:1';
-    if (Math.abs(ratio - 16 / 9) <= 0.1) return '16:9';
-    return '16:9';
-  };
   const handleMapLinkClick = () => {
     if (!event.location) return;
 
@@ -127,7 +120,7 @@ export default function EventCard({ event }: EventCardProps) {
         <div
           className={cn(
             'relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900',
-            aspectRatio === '1:1' ? 'aspect-square' : 'aspect-[16/9]',
+            event.aspect_ratio === '1:1' ? 'aspect-square' : 'aspect-[16/9]',
             isImageLoading && 'animate-pulse'
           )}
         >
@@ -141,11 +134,7 @@ export default function EventCard({ event }: EventCardProps) {
             )}
             sizes='(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px'
             priority
-            onLoad={(event) => {
-              const img = event.target as HTMLImageElement;
-              setAspectRatio(
-                detectAspectRatio(img.naturalWidth, img.naturalHeight)
-              );
+            onLoad={() => {
               setIsImageLoading(false);
             }}
           />
