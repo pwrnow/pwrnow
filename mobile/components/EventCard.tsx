@@ -34,7 +34,6 @@ export default function EventCard({
   showCalendarHint = false,
 }: EventCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<'1:1' | '16:9'>('16:9');
   const [isImageLoading, setIsImageLoading] = useState(true);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -212,31 +211,10 @@ export default function EventCard({
       .toUpperCase();
   };
 
-  // Detect image aspect ratio
+  // Set image loading to false when component mounts
   useEffect(() => {
-    const imageUrl = event.image_url || 'https://via.placeholder.com/800x600';
-    // Only check for remote images
-    if (imageUrl) {
-      Image.getSize(
-        imageUrl,
-        (width, height) => {
-          const ratio = width / height;
-          if (Math.abs(ratio - 1) <= 0.1) {
-            setAspectRatio('1:1');
-          } else if (Math.abs(ratio - 16 / 9) <= 0.1) {
-            setAspectRatio('16:9');
-          } else {
-            setAspectRatio('16:9'); // Default
-          }
-          setIsImageLoading(false);
-        },
-        () => {
-          setAspectRatio('16:9');
-          setIsImageLoading(false);
-        }
-      );
-    }
-  }, [event.image_url]);
+    setIsImageLoading(false);
+  }, []);
 
   const styles = createStyles(colors, colorScheme);
 
@@ -306,9 +284,10 @@ export default function EventCard({
       <View
         style={[
           styles.imageContainer,
-          aspectRatio === '1:1'
-            ? { aspectRatio: 1, width: '100%' }
-            : { aspectRatio: 16 / 9, width: '100%' },
+          {
+            aspectRatio: event.aspect_ratio === '1:1' ? 1 : 16 / 9,
+            width: '100%',
+          },
         ]}
       >
         <Image

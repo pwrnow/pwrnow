@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'core',
     'users',
+    'notifications',
 ]
 
 
@@ -387,5 +388,37 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
+        # Notifications module logging
+        "notifications": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+    },
+}
+
+# Celery Configuration
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Schedule for periodic tasks
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'update-notification-delivery-status': {
+        'task': 'notifications.tasks.update_notification_delivery_status',
+        'schedule': crontab(minute='*/5'),  # Every 5 minutes
+    },
+    'cleanup-old-notifications': {
+        'task': 'notifications.tasks.cleanup_old_notifications',
+        'schedule': crontab(hour=2, minute=0),  # Daily at 2 AM
+    },
+    'cleanup-inactive-devices': {
+        'task': 'notifications.tasks.cleanup_inactive_devices',
+        'schedule': crontab(hour=3, minute=0),  # Daily at 3 AM
     },
 }

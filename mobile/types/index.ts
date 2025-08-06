@@ -21,6 +21,7 @@ export interface Event {
   url: string | null;
   verified?: boolean;
   is_new?: boolean;
+  aspect_ratio?: string | null;
   organization: Organization;
   category: Category;
 }

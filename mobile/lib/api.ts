@@ -109,9 +109,29 @@ export const organizationsApi = {
   },
 };
 
+// Notifications API
+export const notificationsApi = {
+  // Register or update device for push notifications
+  async registerDevice(deviceData: {
+    expoPushToken: string;
+    platform: string;
+    deviceName?: string;
+    appVersion?: string;
+    notificationsEnabled?: boolean;
+  }) {
+    const response = await fetchWithCredentials('/api/devices/', {
+      method: 'POST',
+      body: JSON.stringify(deviceData),
+    });
+    return await response.json();
+  },
+};
+
 // Export all APIs
 export const api = {
   events: eventsApi,
   categories: categoriesApi,
   organizations: organizationsApi,
+  notifications: notificationsApi,
+  baseUrl: getApiUrl(),
 };

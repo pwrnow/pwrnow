@@ -205,7 +205,7 @@ class EventAdmin(TranslationAdmin):
             'fields': ('starts_at', 'ends_at', 'duration_display')
         }),
         ('Location & Links', {
-            'fields': ('location', 'url', 'image')
+            'fields': ('location', 'url', 'image', 'aspect_ratio')
         }),
         ('Organization & Tags', {
             'fields': ('organization', 'tags')
@@ -228,6 +228,16 @@ class EventAdmin(TranslationAdmin):
         if obj.image:
             return format_html('<img src="{}" width="40" height="40" style="object-fit: cover;" />', obj.image.url)
         return "No image"
+
+    @admin.display(description='Aspect Ratio')
+    def aspect_ratio_display(self, obj):
+        if obj.aspect_ratio:
+            # Add some styling to make it stand out
+            return format_html(
+                '<span style="background-color: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold;">{}</span>',
+                obj.aspect_ratio
+            )
+        return format_html('<span style="color: #999; font-style: italic;">Not set</span>')
 
     @admin.display(description='Status')
     def status_display(self, obj):
