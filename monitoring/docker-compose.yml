@@ -35,15 +35,15 @@ services:
             - alertmanager
 
     alertmanager:
-        build:
-            context: .
-            dockerfile: Dockerfile.alertmanager
+        image: prom/alertmanager:latest
         container_name: alertmanager
         environment:
             - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
         volumes:
             - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
+            - ./entrypoint.sh:/entrypoint.sh:ro
             - alertmanager_data:/alertmanager
+        entrypoint: ["/entrypoint.sh"]
         command:
             - "--config.file=/etc/alertmanager/alertmanager.yml"
             - "--storage.path=/alertmanager"
