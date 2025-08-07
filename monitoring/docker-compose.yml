@@ -4,18 +4,19 @@ services:
     prometheus:
         image: prom/prometheus:latest
         container_name: prometheus
+        user: root
         volumes:
-            - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-            - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+            - ./prometheus.yml:/tmp/prometheus.yml:ro
+            - ./alert_rules.yml:/tmp/alert_rules.yml:ro
             - prometheus_data:/prometheus
-        command:
-            - "--config.file=/etc/prometheus/prometheus.yml"
-            - "--storage.tsdb.path=/prometheus"
-            - "--web.console.libraries=/etc/prometheus/console_libraries"
-            - "--web.console.templates=/etc/prometheus/consoles"
-            - "--storage.tsdb.retention.time=200h"
-            - "--web.enable-lifecycle"
-            - "--web.enable-admin-api"
+        command: |
+            sh -c "
+            mkdir -p /etc/prometheus &&
+            cp /tmp/prometheus.yml /etc/prometheus/prometheus.yml &&
+            cp /tmp/alert_rules.yml /etc/prometheus/alert_rules.yml &&
+            chown -R prometheus:prometheus /etc/prometheus &&
+            exec su prometheus -s /bin/sh -c '/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention.time=200h --web.enable-lifecycle --web.enable-admin-api'
+            "
         healthcheck:
             test:
                 - CMD
@@ -37,15 +38,18 @@ services:
     alertmanager:
         image: prom/alertmanager:latest
         container_name: alertmanager
+        user: root
         environment:
             - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
         volumes:
-            - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
+            - ./alertmanager.yml.template:/tmp/alertmanager.yml.template:ro
             - alertmanager_data:/alertmanager
         command: |
             sh -c "
-            sed 's|\$${DISCORD_WEBHOOK_URL}|${DISCORD_WEBHOOK_URL}|g' /etc/alertmanager/alertmanager.yml.template > /etc/alertmanager/alertmanager.yml &&
-            exec /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager --web.external-url=http://localhost:9093 --web.route-prefix=/
+            mkdir -p /etc/alertmanager &&
+            sed 's|\$${DISCORD_WEBHOOK_URL}|${DISCORD_WEBHOOK_URL}|g' /tmp/alertmanager.yml.template > /etc/alertmanager/alertmanager.yml &&
+            chown -R alertmanager:alertmanager /etc/alertmanager &&
+            exec su alertmanager -s /bin/sh -c '/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager --web.external-url=http://localhost:9093 --web.route-prefix=/'
             "
         restart: unless-stopped
         networks:
