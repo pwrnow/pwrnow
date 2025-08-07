@@ -2,20 +2,10 @@ version: "3.8"
 
 services:
     prometheus:
-        image: prom/prometheus:latest
+        build: ./prometheus # Use your Dockerfile
         container_name: prometheus
         volumes:
-            - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-            - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
             - prometheus_data:/prometheus
-        command:
-            - "--config.file=/etc/prometheus/prometheus.yml"
-            - "--storage.tsdb.path=/prometheus"
-            - "--web.console.libraries=/etc/prometheus/console_libraries"
-            - "--web.console.templates=/etc/prometheus/consoles"
-            - "--storage.tsdb.retention.time=200h"
-            - "--web.enable-lifecycle"
-            - "--web.enable-admin-api"
         healthcheck:
             test:
                 - CMD
@@ -35,26 +25,18 @@ services:
             - alertmanager
 
     alertmanager:
-        image: prom/alertmanager:latest
+        build: ./alertmanager # Use your Dockerfile
         container_name: alertmanager
-        user: root
         environment:
             - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
         volumes:
-            - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
-            - ./start_alert.sh:/etc/alertmanager/start_alert.sh:ro
             - alertmanager_data:/alertmanager
-        entrypoint: ["/bin/sh", "-c"]
-        command:
-            - |
-                chmod +x /etc/alertmanager/start_alert.sh
-                exec /etc/alertmanager/start_alert.sh
         restart: unless-stopped
         networks:
             - monitoring
 
     grafana:
-        image: grafana/grafana-oss
+        build: ./grafana # Use your Dockerfile
         environment:
             - "GF_SERVER_ROOT_URL=${SERVICE_FQDN_GRAFANA}"
             - "GF_SERVER_DOMAIN=${SERVICE_FQDN_GRAFANA}"
@@ -67,7 +49,6 @@ services:
             - GF_USERS_ALLOW_SIGN_UP=false
         volumes:
             - "grafana-data:/var/lib/grafana"
-            - "./grafana/provisioning:/etc/grafana/provisioning:ro"
         healthcheck:
             test:
                 - CMD
@@ -99,29 +80,23 @@ services:
             interval: 5s
             timeout: 20s
             retries: 10
-
         restart: unless-stopped
         networks:
             - monitoring
 
     node-exporter:
-        image: prom/node-exporter:latest
+        build: ./node-exporter # Use your Dockerfile
         container_name: node-exporter
         volumes:
             - /proc:/host/proc:ro
             - /sys:/host/sys:ro
             - /:/rootfs:ro
-        command:
-            - "--path.procfs=/host/proc"
-            - "--path.rootfs=/rootfs"
-            - "--path.sysfs=/host/sys"
-            - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
         restart: unless-stopped
         networks:
             - monitoring
 
     cadvisor:
-        image: gcr.io/cadvisor/cadvisor:latest
+        build: ./cadvisor # Use your Dockerfile
         container_name: cadvisor
         volumes:
             - /:/rootfs:ro
