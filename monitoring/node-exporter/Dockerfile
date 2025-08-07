@@ -1,10 +1,10 @@
 FROM prom/node-exporter:latest
 
-# Copy start script
-COPY start.sh /start.sh
+# Switch to root temporarily
+USER root
 
-# Make start script executable
-RUN chmod +x /start.sh
+# Copy start script with execute permissions
+COPY --chmod=755 start.sh /start.sh
 
 # Use our custom entrypoint
 ENTRYPOINT ["/start.sh"]

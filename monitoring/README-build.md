@@ -42,7 +42,7 @@ docker-compose -f docker-compose.build.yml up -d
 Each service directory can be deployed as a separate service in Coolify:
 
 1. **Prometheus**: Deploy from `./prometheus/` directory
-2. **Alertmanager**: Deploy from `./alertmanager/` directory  
+2. **Alertmanager**: Deploy from `./alertmanager/` directory
 3. **Grafana**: Deploy from `./grafana/` directory
 4. **Node Exporter**: Deploy from `./node-exporter/` directory
 5. **cAdvisor**: Deploy from `./cadvisor/` directory
@@ -67,20 +67,20 @@ PASSWORD_GRAFANA=admin_password_123
 
 ## Advantages
 
-- ✅ **No volume mount issues** - configs are baked into images
-- ✅ **Self-contained services** - each service handles its own setup
-- ✅ **Environment variable substitution** - handled in start scripts
-- ✅ **Coolify friendly** - each service can be deployed separately
-- ✅ **Easy debugging** - isolated build and startup processes
-- ✅ **Version controlled configs** - all configurations tracked in git
+-   ✅ **No volume mount issues** - configs are baked into images
+-   ✅ **Self-contained services** - each service handles its own setup
+-   ✅ **Environment variable substitution** - handled in start scripts
+-   ✅ **Coolify friendly** - each service can be deployed separately
+-   ✅ **Easy debugging** - isolated build and startup processes
+-   ✅ **Version controlled configs** - all configurations tracked in git
 
 ## Service URLs (when using ports)
 
-- Prometheus: http://localhost:9090
-- Alertmanager: http://localhost:9093
-- Grafana: http://localhost:3000
-- Node Exporter: http://localhost:9100
-- cAdvisor: http://localhost:8080
+-   Prometheus: http://localhost:9090
+-   Alertmanager: http://localhost:9093
+-   Grafana: http://localhost:3000
+-   Node Exporter: http://localhost:9100
+-   cAdvisor: http://localhost:8080
 
 ## Building Individual Services
 
