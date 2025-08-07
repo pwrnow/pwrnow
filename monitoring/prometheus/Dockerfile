@@ -5,8 +5,13 @@ COPY prometheus.yml /tmp/prometheus.yml
 COPY alert_rules.yml /tmp/alert_rules.yml
 COPY start.sh /start.sh
 
-# Make start script executable
-RUN chmod +x /start.sh
+# Switch to root temporarily
+USER root
+
+# Copy start script with execute permissions
+COPY --chmod=755 start.sh /start.sh
+
+USER nobody
 
 # Use our custom entrypoint
 ENTRYPOINT ["/start.sh"]
