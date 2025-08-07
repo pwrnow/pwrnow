@@ -15,7 +15,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "pl.pwrnow.pwrnow",
-      "associatedDomains": ["applinks:pwrnow.pl"],
+      "associatedDomains": [
+        "applinks:pwrnow.pl",
+        "applinks:pwrnow.pl"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -27,6 +30,8 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR"
       ]
@@ -71,6 +76,12 @@
     "owner": "pwrnow",
     "experiments": {
       "buildCacheProvider": "eas"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/28be113a-2b1b-4840-8cdb-47c7faea0694"
     }
   }
 }

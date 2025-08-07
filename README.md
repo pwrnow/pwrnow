@@ -161,6 +161,52 @@ npx uri-scheme open exp://172.20.10.2:8081/--/test --ios
 - Replace `/test` with the path you want to test (e.g., `/event/abc123`).
 - Use `--android` instead of `--ios` to test on Android.
 
+### Over-the-Air Updates
+
+The mobile app is configured with EAS (Expo Application Services) for over-the-air updates. This allows you to push critical bug fixes and improvements to users without requiring them to download a new version from the app store.
+
+#### Sending Updates
+
+To send an over-the-air update to production users:
+
+```bash
+cd mobile
+eas update --channel production
+```
+
+This command will create an update and make it available to builds of your app that are configured to receive updates on the `production` channel.
+
+#### Verifying Updates
+
+To verify the update works:
+
+1. Force close the app
+2. Reopen it twice
+3. The update should be applied on the second launch
+
+#### Automatic Updates
+
+You can set up automatic updates using EAS Workflows. Create a file `.eas/workflows/send-updates.yml` at the root of your project:
+
+```yaml
+name: Send updates
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  send_updates:
+    name: Send updates
+    type: update
+    params:
+      channel: production
+```
+
+This workflow will send an over-the-air update for the `production` update channel on every commit to your project's `main` branch.
+
+For more information, see the [Expo documentation on over-the-air updates](https://docs.expo.dev/deploy/send-over-the-air-updates/).
+
 ---
 
 ## Troubleshooting
