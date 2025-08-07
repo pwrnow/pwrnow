@@ -44,12 +44,11 @@ services:
             - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
             - ./start_alert.sh:/etc/alertmanager/start_alert.sh:ro
             - alertmanager_data:/alertmanager
-        entrypoint: ["/etc/alertmanager/start_alert.sh"]
+        entrypoint: ["/bin/sh", "-c"]
         command:
-            - "--config.file=/etc/alertmanager/alertmanager.yml"
-            - "--storage.path=/alertmanager"
-            - "--web.external-url=http://localhost:9093"
-            - "--web.route-prefix=/"
+            - |
+                chmod +x /etc/alertmanager/start_alert.sh
+                exec /etc/alertmanager/start_alert.sh
         restart: unless-stopped
         networks:
             - monitoring
