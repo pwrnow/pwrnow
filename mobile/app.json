@@ -13,11 +13,22 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "backgroundColor": "#000000",
       "supportsTablet": false,
       "bundleIdentifier": "pl.pwrnow.pwrnow",
       "associatedDomains": ["applinks:pwrnow.pl"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "icon": {
+        "light": "./assets/icon-light.png",
+        "dark": "./assets/icon-dark.png"
+      },
+      "splash": {
+        "backgroundColor": "#fff",
+        "dark": {
+          "backgroundColor": "#000"
+        }
       }
     },
     "android": {
