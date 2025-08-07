@@ -51,32 +51,38 @@ Each service directory can be deployed as a separate service in Coolify:
 ## Required Volume Mounts
 
 ### Node Exporter
+
 Node Exporter requires access to host system directories to collect metrics. Configure these volume mounts in your deployment platform:
 
 **Required Volumes:**
-- **Host Path:** `/proc` → **Container Path:** `/host/proc` → **Read Only:** ✅
-- **Host Path:** `/sys` → **Container Path:** `/host/sys` → **Read Only:** ✅  
-- **Host Path:** `/` → **Container Path:** `/rootfs` → **Read Only:** ✅
+
+-   **Host Path:** `/proc` → **Container Path:** `/host/proc` → **Read Only:** ✅
+-   **Host Path:** `/sys` → **Container Path:** `/host/sys` → **Read Only:** ✅
+-   **Host Path:** `/` → **Container Path:** `/rootfs` → **Read Only:** ✅
 
 **In Coolify:**
+
 1. Go to your Node Exporter service
 2. Navigate to "Storages" or "Volumes" section
 3. Add the three volume mounts listed above
 4. Ensure "Read Only" is enabled for security
 
 ### cAdvisor
+
 cAdvisor also requires host system access:
 
 **Required Volumes:**
-- **Host Path:** `/` → **Container Path:** `/rootfs` → **Read Only:** ✅
-- **Host Path:** `/var/run` → **Container Path:** `/var/run` → **Read Write:** ✅
-- **Host Path:** `/sys` → **Container Path:** `/sys` → **Read Only:** ✅
-- **Host Path:** `/var/lib/docker/` → **Container Path:** `/var/lib/docker/` → **Read Only:** ✅
-- **Host Path:** `/dev/disk/` → **Container Path:** `/dev/disk/` → **Read Only:** ✅
+
+-   **Host Path:** `/` → **Container Path:** `/rootfs` → **Read Only:** ✅
+-   **Host Path:** `/var/run` → **Container Path:** `/var/run` → **Read Write:** ✅
+-   **Host Path:** `/sys` → **Container Path:** `/sys` → **Read Only:** ✅
+-   **Host Path:** `/var/lib/docker/` → **Container Path:** `/var/lib/docker/` → **Read Only:** ✅
+-   **Host Path:** `/dev/disk/` → **Container Path:** `/dev/disk/` → **Read Only:** ✅
 
 **Additional Requirements:**
-- **Privileged Mode:** Enabled
-- **Device:** `/dev/kmsg` (if supported by platform)
+
+-   **Privileged Mode:** Enabled
+-   **Device:** `/dev/kmsg` (if supported by platform)
 
 ## Environment Variables
 
@@ -102,9 +108,10 @@ PASSWORD_GRAFANA=admin_password_123
 **Error:** `panic: Couldn't create metrics handler: failed to open procfs: could not read "/host/proc": stat /host/proc: no such file or directory`
 
 **Solution:** Ensure host volume mounts are properly configured. Node Exporter needs access to:
-- Host `/proc` filesystem mounted at `/host/proc`
-- Host `/sys` filesystem mounted at `/host/sys`
-- Host root filesystem mounted at `/rootfs`
+
+-   Host `/proc` filesystem mounted at `/host/proc`
+-   Host `/sys` filesystem mounted at `/host/sys`
+-   Host root filesystem mounted at `/rootfs`
 
 **Fallback:** If you cannot configure host mounts, the Node Exporter will start in limited mode with container-only metrics.
 
@@ -112,10 +119,47 @@ PASSWORD_GRAFANA=admin_password_123
 
 **Error:** Permission denied or cannot access Docker socket
 
-**Solution:** 
+**Solution:**
+
 1. Enable privileged mode for cAdvisor container
 2. Ensure Docker socket is mounted: `/var/run/docker.sock:/var/run/docker.sock`
 3. Mount required host directories (see volume requirements above)
+
+### Alertmanager Issues
+
+**Error:** `chown: unknown user/group alertmanager:alertmanager` or `su: must be suid to work properly`
+
+**Solution:** The alertmanager base image doesn't have the expected user setup. Update your `alertmanager/start.sh` to:
+
+```bash
+#!/bin/sh
+
+echo "Starting Alertmanager setup..."
+
+# Create the alertmanager config directory
+mkdir -p /etc/alertmanager
+
+echo "Substituting Discord webhook URL..."
+
+# Substitute environment variables in the template
+if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+    sed "s|\${DISCORD_WEBHOOK_URL}|$DISCORD_WEBHOOK_URL|g" /tmp/alertmanager.yml.template > /etc/alertmanager/alertmanager.yml
+else
+    echo "WARNING: DISCORD_WEBHOOK_URL not set, using placeholder"
+    cp /tmp/alertmanager.yml.template /etc/alertmanager/alertmanager.yml
+fi
+
+echo "Configuration processed successfully"
+
+# Start alertmanager directly (no user switching needed)
+exec /bin/alertmanager \
+    --config.file=/etc/alertmanager/alertmanager.yml \
+    --storage.path=/alertmanager \
+    --web.external-url=http://localhost:9093 \
+    --web.route-prefix=/
+```
+
+**Alternative:** Remove user switching from all start scripts and run containers as root if security permits.
 
 ### Alertmanager Environment Variables
 
@@ -163,16 +207,18 @@ docker build -t my-cadvisor ./cadvisor
 ## Deployment Notes
 
 ### Coolify Specific
-- Each service can be deployed as a separate application
-- Set environment variables in Coolify's environment section
-- Configure volume mounts in the "Storages" section
-- Enable privileged mode for cAdvisor if available
+
+-   Each service can be deployed as a separate application
+-   Set environment variables in Coolify's environment section
+-   Configure volume mounts in the "Storages" section
+-   Enable privileged mode for cAdvisor if available
 
 ### Security Considerations
-- Node Exporter and cAdvisor require host access for full functionality
-- Always use read-only mounts where possible
-- Consider network policies to limit service communication
-- Regularly update base images for security patches
+
+-   Node Exporter and cAdvisor require host access for full functionality
+-   Always use read-only mounts where possible
+-   Consider network policies to limit service communication
+-   Regularly update base images for security patches
 
 ## Customization
 
