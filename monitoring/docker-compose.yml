@@ -1,0 +1,148 @@
+version: "3.8"
+
+services:
+    prometheus:
+        image: prom/prometheus:latest
+        container_name: prometheus
+        volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+            - prometheus_data:/prometheus
+        command:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--web.console.libraries=/etc/prometheus/console_libraries"
+            - "--web.console.templates=/etc/prometheus/consoles"
+            - "--storage.tsdb.retention.time=200h"
+            - "--web.enable-lifecycle"
+            - "--web.enable-admin-api"
+        healthcheck:
+            test:
+                - CMD
+                - wget
+                - "--no-verbose"
+                - "--tries=1"
+                - "--spider"
+                - "http://localhost:9090/-/healthy"
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 5s
+        restart: unless-stopped
+        networks:
+            - monitoring
+        depends_on:
+            - alertmanager
+
+    alertmanager:
+        image: prom/alertmanager:latest
+        container_name: alertmanager
+        user: root
+        environment:
+            - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+        volumes:
+            - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
+            - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+            - alertmanager_data:/alertmanager
+        entrypoint: ["start_alert.sh"]
+        command:
+            - "--config.file=/etc/alertmanager/alertmanager.yml"
+            - "--storage.path=/alertmanager"
+            - "--web.external-url=http://localhost:9093"
+            - "--web.route-prefix=/"
+        restart: unless-stopped
+        networks:
+            - monitoring
+
+    grafana:
+        image: grafana/grafana-oss
+        environment:
+            - "GF_SERVER_ROOT_URL=${SERVICE_FQDN_GRAFANA}"
+            - "GF_SERVER_DOMAIN=${SERVICE_FQDN_GRAFANA}"
+            - "GF_SECURITY_ADMIN_PASSWORD=${SERVICE_PASSWORD_GRAFANA}"
+            - GF_DATABASE_TYPE=postgres
+            - GF_DATABASE_HOST=postgresql
+            - GF_DATABASE_USER=${SERVICE_USER_POSTGRES}
+            - GF_DATABASE_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+            - GF_DATABASE_NAME=${POSTGRES_DB}
+            - GF_USERS_ALLOW_SIGN_UP=false
+        volumes:
+            - "grafana-data:/var/lib/grafana"
+            - "./grafana/provisioning:/etc/grafana/provisioning:ro"
+        healthcheck:
+            test:
+                - CMD
+                - curl
+                - "-f"
+                - "http://127.0.0.1:3000/api/health"
+            interval: 5s
+            timeout: 20s
+            retries: 10
+        depends_on:
+            - postgresql
+            - prometheus
+        restart: unless-stopped
+        networks:
+            - monitoring
+
+    postgresql:
+        image: "postgres:16-alpine"
+        volumes:
+            - "postgresql-data:/var/lib/postgresql/data"
+        environment:
+            - POSTGRES_USER=${SERVICE_USER_POSTGRES}
+            - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+            - POSTGRES_DB=${POSTGRES_DB}
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+            interval: 5s
+            timeout: 20s
+            retries: 10
+
+        restart: unless-stopped
+        networks:
+            - monitoring
+
+    node-exporter:
+        image: prom/node-exporter:latest
+        container_name: node-exporter
+        volumes:
+            - /proc:/host/proc:ro
+            - /sys:/host/sys:ro
+            - /:/rootfs:ro
+        command:
+            - "--path.procfs=/host/proc"
+            - "--path.rootfs=/rootfs"
+            - "--path.sysfs=/host/sys"
+            - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+        restart: unless-stopped
+        networks:
+            - monitoring
+
+    cadvisor:
+        image: gcr.io/cadvisor/cadvisor:latest
+        container_name: cadvisor
+        volumes:
+            - /:/rootfs:ro
+            - /var/run:/var/run:rw
+            - /sys:/sys:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+            - /dev/disk/:/dev/disk:ro
+        privileged: true
+        devices:
+            - /dev/kmsg
+        restart: unless-stopped
+        networks:
+            - monitoring
+
+volumes:
+    prometheus_data:
+    alertmanager_data:
+    grafana-data:
+    postgresql-data:
+
+networks:
+    monitoring:
+        driver: bridge

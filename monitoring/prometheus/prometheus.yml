@@ -19,22 +19,17 @@ scrape_configs:
       static_configs:
           - targets: ["localhost:9090"]
 
-    # Alertmanager
-    - job_name: "alertmanager"
-      static_configs:
-          - targets: ["alertmanager:9093"]
-
     # Node Exporter for system metrics
     - job_name: "node-exporter"
       static_configs:
-          - targets: ["node-exporter:9100"]
+          - targets: ["host.docker.internal:9100"]
       scrape_interval: 15s
       metrics_path: "/metrics"
 
     # cAdvisor for container metrics
     - job_name: "cadvisor"
       static_configs:
-          - targets: ["cadvisor:8080"]
+          - targets: ["host.docker.internal:8081"]
       scrape_interval: 15s
       metrics_path: "/metrics"
 
@@ -44,3 +39,8 @@ scrape_configs:
           - targets: ["host.docker.internal:9323"]
       scrape_interval: 30s
       metrics_path: "/metrics"
+
+    # Alertmanager
+    - job_name: "alertmanager"
+      static_configs:
+          - targets: ["host.docker.internal:9093"]

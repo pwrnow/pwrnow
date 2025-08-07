@@ -53,13 +53,58 @@ groups:
 
           # High container memory usage
           - alert: ContainerHighMemoryUsage
-            expr: (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 90
+            expr: |
+                (
+                    container_memory_usage_bytes{name!="", container!="POD", container!=""} 
+                    / 
+                    container_spec_memory_limit_bytes{name!="", container!="POD", container!=""} 
+                ) * 100 > 90
+                and 
+                container_spec_memory_limit_bytes{name!="", container!="POD", container!=""} > 0
+                and 
+                container_spec_memory_limit_bytes{name!="", container!="POD", container!=""} < 1e15
+            for: 2m
+            labels:
+                severity: warning
+            annotations:
+                summary: "Container {{ $labels.name }} high memory usage"
+                description: "Container {{ $labels.name }} on {{ $labels.instance }} has been using more than 90% of its memory limit for more than 2 minutes. Current usage: {{ $value | humanizePercentage }}"
+
+          # Alternative: Host memory usage (more reliable)
+          - alert: HostHighMemoryUsage
+            expr: |
+                (
+                    (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) 
+                    / 
+                    node_memory_MemTotal_bytes
+                ) * 100 > 80
             for: 5m
             labels:
                 severity: warning
             annotations:
-                summary: "Container high memory usage"
-                description: "Container {{ $labels.name }} memory usage is above 90%"
+                summary: "Host {{ $labels.instance }} high memory usage"
+                description: "Host {{ $labels.instance }} memory usage is above 80%. Current usage: {{ $value | humanizePercentage }}"
+
+          # Container memory usage without limits (absolute)
+          - alert: ContainerHighMemoryAbsolute
+            expr: container_memory_usage_bytes{name!="", container!="POD", container!=""} > 1e9 # 1GB
+            for: 5m
+            labels:
+                severity: info
+            annotations:
+                summary: "Container {{ $labels.name }} using significant memory"
+                description: "Container {{ $labels.name }} is using {{ $value | humanize1024 }}B of memory"
+
+          # CPU usage rule
+          - alert: ContainerHighCPUUsage
+            expr: |
+                rate(container_cpu_usage_seconds_total{name!="", container!="POD", container!=""}[5m]) * 100 > 80
+            for: 2m
+            labels:
+                severity: warning
+            annotations:
+                summary: "Container {{ $labels.name }} high CPU usage"
+                description: "Container {{ $labels.name }} on {{ $labels.instance }} has been using more than 80% CPU for more than 2 minutes. Current usage: {{ $value }}%"
 
           # PWr Now specific alerts
           - alert: PWrNowBackendDown
