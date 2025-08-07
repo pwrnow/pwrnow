@@ -3,7 +3,6 @@ FROM prom/prometheus:latest
 # Copy configuration files
 COPY prometheus.yml /tmp/prometheus.yml
 COPY alert_rules.yml /tmp/alert_rules.yml
-COPY start.sh /start.sh
 
 # Switch to root temporarily
 USER root

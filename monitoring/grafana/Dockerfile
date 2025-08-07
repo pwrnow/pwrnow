@@ -2,7 +2,6 @@ FROM grafana/grafana-oss:latest
 
 # Copy provisioning configuration
 COPY provisioning/ /etc/grafana/provisioning/
-COPY start.sh /start.sh
 
 # Switch to root temporarily
 USER root
