@@ -38,9 +38,9 @@ services:
     grafana:
         build: ./grafana # Use your Dockerfile
         environment:
-            - "GF_SERVER_ROOT_URL=${SERVICE_FQDN_GRAFANA}"
-            - "GF_SERVER_DOMAIN=${SERVICE_FQDN_GRAFANA}"
-            - "GF_SECURITY_ADMIN_PASSWORD=${SERVICE_PASSWORD_GRAFANA}"
+            - GF_SERVER_ROOT_URL=${SERVICE_FQDN_GRAFANA}
+            - GF_SERVER_DOMAIN=${SERVICE_FQDN_GRAFANA}
+            - GF_SECURITY_ADMIN_PASSWORD=${SERVICE_PASSWORD_GRAFANA}
             - GF_DATABASE_TYPE=postgres
             - GF_DATABASE_HOST=postgresql
             - GF_DATABASE_USER=${SERVICE_USER_POSTGRES}
