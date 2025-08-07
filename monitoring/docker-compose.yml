@@ -57,7 +57,6 @@ services:
     grafana:
         image: grafana/grafana-oss
         environment:
-            - SERVICE_FQDN_GRAFANA_3000
             - "GF_SERVER_ROOT_URL=${SERVICE_FQDN_GRAFANA}"
             - "GF_SERVER_DOMAIN=${SERVICE_FQDN_GRAFANA}"
             - "GF_SECURITY_ADMIN_PASSWORD=${SERVICE_PASSWORD_GRAFANA}"
@@ -65,7 +64,7 @@ services:
             - GF_DATABASE_HOST=postgresql
             - GF_DATABASE_USER=${SERVICE_USER_POSTGRES}
             - GF_DATABASE_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
-            - "GF_DATABASE_NAME=${POSTGRES_DB:-grafana}"
+            - GF_DATABASE_NAME=${POSTGRES_DB}
             - GF_USERS_ALLOW_SIGN_UP=false
         volumes:
             - "grafana-data:/var/lib/grafana"
@@ -93,7 +92,7 @@ services:
         environment:
             - POSTGRES_USER=${SERVICE_USER_POSTGRES}
             - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
-            - "POSTGRES_DB=${POSTGRES_DB:-grafana}"
+            - POSTGRES_DB=${POSTGRES_DB}
         healthcheck:
             test:
                 - CMD-SHELL
