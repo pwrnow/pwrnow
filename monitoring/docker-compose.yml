@@ -68,7 +68,7 @@ services:
     postgresql:
         image: "postgres:16-alpine"
         volumes:
-            - "postgresql-data:/var/lib/postgresql/data"
+            - "postgresql-data-v2:/var/lib/postgresql/data"
         environment:
             - POSTGRES_USER=${SERVICE_USER_POSTGRES}
             - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
@@ -115,7 +115,7 @@ volumes:
     prometheus_data:
     alertmanager_data:
     grafana-data:
-    postgresql-data:
+    postgresql-data-v2:
 
 networks:
     monitoring:
