@@ -37,6 +37,7 @@ services:
     alertmanager:
         image: prom/alertmanager:latest
         container_name: alertmanager
+        user: root
         environment:
             - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
         volumes:
