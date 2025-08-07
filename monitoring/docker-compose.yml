@@ -39,12 +39,12 @@ services:
         container_name: alertmanager
         user: root
         environment:
-            - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+            - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
         volumes:
             - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
-            - ./entrypoint.sh:/entrypoint.sh:ro
+            - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
             - alertmanager_data:/alertmanager
-        entrypoint: ["/entrypoint.sh"]
+        entrypoint: ["/usr/local/bin/entrypoint.sh"]
         command:
             - "--config.file=/etc/alertmanager/alertmanager.yml"
             - "--storage.path=/alertmanager"
@@ -63,8 +63,8 @@ services:
             - "GF_SECURITY_ADMIN_PASSWORD=${SERVICE_PASSWORD_GRAFANA}"
             - GF_DATABASE_TYPE=postgres
             - GF_DATABASE_HOST=postgresql
-            - GF_DATABASE_USER=$SERVICE_USER_POSTGRES
-            - GF_DATABASE_PASSWORD=$SERVICE_PASSWORD_POSTGRES
+            - GF_DATABASE_USER=${SERVICE_USER_POSTGRES}
+            - GF_DATABASE_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
             - "GF_DATABASE_NAME=${POSTGRES_DB:-grafana}"
             - GF_USERS_ALLOW_SIGN_UP=false
         volumes:
@@ -91,8 +91,8 @@ services:
         volumes:
             - "postgresql-data:/var/lib/postgresql/data"
         environment:
-            - POSTGRES_USER=$SERVICE_USER_POSTGRES
-            - POSTGRES_PASSWORD=$SERVICE_PASSWORD_POSTGRES
+            - POSTGRES_USER=${SERVICE_USER_POSTGRES}
+            - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
             - "POSTGRES_DB=${POSTGRES_DB:-grafana}"
         healthcheck:
             test:

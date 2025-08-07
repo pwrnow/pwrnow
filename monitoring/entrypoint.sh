@@ -9,5 +9,8 @@ else
     sed "s|\${DISCORD_WEBHOOK_URL}|${DISCORD_WEBHOOK_URL}|g" /etc/alertmanager/alertmanager.yml.template > /etc/alertmanager/alertmanager.yml
 fi
 
+# Make sure the config file has proper permissions
+chmod 644 /etc/alertmanager/alertmanager.yml
+
 # Start alertmanager with the provided arguments
 exec /bin/alertmanager "$@"
