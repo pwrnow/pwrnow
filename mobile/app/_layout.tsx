@@ -4,9 +4,8 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme, View, TouchableOpacity, Platform } from 'react-native';
+import { useColorScheme, View, TouchableOpacity } from 'react-native';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 
@@ -49,17 +48,20 @@ export default function StackLayout() {
       <StatusBar
         style={isDark ? 'light' : 'dark'}
         animated
-        translucent
-        backgroundColor={'transparent'}
+        translucent={false}
+        backgroundColor={isDark ? '#000000' : '#FFFFFF'}
       />
       <Stack
         screenOptions={{
           headerShown: true,
           headerTitle: () => <Logo size='medium' />,
           headerTitleAlign: 'left',
-          headerTransparent: true,
+          headerTransparent: false,
           headerShadowVisible: true,
-          headerBlurEffect: 'prominent',
+          headerStyle: {
+            backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          },
+          headerTintColor: isDark ? '#FFFFFF' : '#000000',
 
           headerRight: () => (
             <View
