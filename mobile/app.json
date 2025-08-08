@@ -16,7 +16,9 @@
       "backgroundColor": "#000000",
       "supportsTablet": false,
       "bundleIdentifier": "pl.pwrnow.pwrnow",
-      "associatedDomains": ["applinks:pwrnow.pl"],
+      "associatedDomains": [
+        "applinks:pwrnow.pl"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -70,7 +72,8 @@
           "color": "#ffffff",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "scheme": "pwrnow",
     "extra": {

@@ -50,7 +50,7 @@ export default function CategorySelector({
       const itemEnd = x + width;
 
       let targetX: number | null = null;
-      const sidePadding = 12; // matches contentContainerStyle paddingHorizontal
+      const sidePadding = 10; // matches contentContainerStyle paddingHorizontal
 
       if (itemStart < visibleStart) {
         targetX = Math.max(0, itemStart - sidePadding);
@@ -73,7 +73,7 @@ export default function CategorySelector({
       showsHorizontalScrollIndicator={false}
       bounces
       decelerationRate='fast'
-      contentContainerStyle={{ paddingHorizontal: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 10 }}
       onLayout={(e) => {
         containerWidthRef.current = e.nativeEvent.layout.width;
       }}
@@ -99,7 +99,7 @@ export default function CategorySelector({
                 const visibleEnd = visibleStart + containerWidth;
                 const itemStart = x;
                 const itemEnd = x + width;
-                const sidePadding = 12;
+                const sidePadding = 10;
                 let targetX: number | null = null;
                 if (itemStart < visibleStart) {
                   targetX = Math.max(0, itemStart - sidePadding);

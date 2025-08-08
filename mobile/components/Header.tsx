@@ -18,7 +18,7 @@ export default function Header({ logoSize = 'medium', onBack }: HeaderProps) {
   const isDark = colorScheme === 'dark';
   const iconPrimary = isDark ? '#FFFFFF' : '#000000';
   return (
-    <SafeAreaView className='bg-white dark:bg-black px-4 pt-2 pb-3 border-b border-black/10 dark:border-[#1F1F1F]'>
+    <SafeAreaView className='bg-white dark:bg-black px-3 pt-2 pb-3 border-b border-black/10 dark:border-[#1F1F1F]'>
       <View className='flex-row items-center justify-between mb-2'>
         {onBack ? (
           <TouchableOpacity

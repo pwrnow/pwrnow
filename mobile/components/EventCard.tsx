@@ -17,6 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
+import * as Calendar from 'expo-calendar';
 import { Event } from '../types';
 import { config } from '../lib/config';
 
@@ -59,11 +60,62 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   };
 
   const handleAddToCalendar = async () => {
-    await Haptics.selectionAsync();
-    Alert.alert(
-      'Kalendarz',
-      'Dodawanie do kalendarza będzie dostępne wkrótce.'
-    );
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Check/request permissions
+      let { status } = await Calendar.getCalendarPermissionsAsync();
+      if (status !== 'granted') {
+        const req = await Calendar.requestCalendarPermissionsAsync();
+        status = req.status;
+        if (status !== 'granted') {
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Error
+          );
+          Alert.alert(
+            'Brak uprawnień',
+            'Aplikacja potrzebuje dostępu do kalendarza, aby dodać wydarzenie.',
+            [
+              { text: 'Anuluj', style: 'cancel' },
+              { text: 'Ustawienia', onPress: () => Linking.openSettings() },
+            ]
+          );
+          return;
+        }
+      }
+
+      const startsAt = new Date(event.starts_at);
+      const endsAt = new Date(event.ends_at);
+
+      const result = await Calendar.createEventInCalendarAsync({
+        title: event.title,
+        startDate: startsAt,
+        endDate: endsAt,
+        location: event.location ?? '',
+        notes: event.description ?? '',
+        url: event.url || `${config.shareBaseUrl}/${event.slug}`,
+      });
+
+      if (result?.action === Calendar.CalendarDialogResultActions.saved) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+        Alert.alert(
+          'Sukces!',
+          `Wydarzenie "${event.title}" zostało dodane do kalendarza.`
+        );
+      } else if (
+        result?.action === Calendar.CalendarDialogResultActions.canceled
+      ) {
+        await Haptics.selectionAsync();
+      }
+    } catch (error) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Błąd',
+        'Nie udało się otworzyć kalendarza. Spróbuj ponownie.'
+      );
+    }
   };
 
   const handleEventLinkPress = async () => {
@@ -202,7 +254,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       className='mb-0 bg-white dark:bg-black'
     >
       {/* Header: org + category */}
-      <View className='px-4 pt-4 pb-3'>
+      <View className='px-3 pt-4 pb-3'>
         <View className='flex-row items-center gap-3'>
           <View className='w-10 h-10 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center'>
             {event.organization.image_url ? (
@@ -259,7 +311,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       ) : null}
 
       {/* Content */}
-      <View className='px-4 pt-4 pb-5'>
+      <View className='px-3 pt-4 pb-5'>
         {/* Title and Share */}
         <View className='flex-row items-start'>
           <Text
@@ -281,20 +333,28 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {/* Meta chips under title */}
         <View className='flex-row flex-wrap gap-2 mb-1.5'>
           {/* Date range chip */}
-          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+          <TouchableOpacity
+            onPress={handleAddToCalendar}
+            activeOpacity={0.7}
+            className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
+          >
             <Feather name='calendar' size={14} color={iconPrimary} />
             <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
               {formatDateRangeShort(event.starts_at, event.ends_at)}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Time chip */}
-          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+          <TouchableOpacity
+            onPress={handleAddToCalendar}
+            activeOpacity={0.7}
+            className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
+          >
             <Feather name='clock' size={14} color={iconPrimary} />
             <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
               {formatTimeRangeShort(event.starts_at, event.ends_at)}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Location chip */}
           {event.location ? (
@@ -385,7 +445,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             }}
           >
             <View
-              className='rounded-[13px] py-2.5 px-5 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
+              className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
               style={
                 isDark
                   ? undefined
