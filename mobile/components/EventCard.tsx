@@ -331,37 +331,39 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         </View>
 
         {/* Meta chips under title */}
-        <View className='flex-row flex-wrap gap-2 mb-1.5'>
-          {/* Date range chip */}
-          <TouchableOpacity
-            onPress={handleAddToCalendar}
-            activeOpacity={0.7}
-            className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
-          >
-            <Feather name='calendar' size={14} color={iconPrimary} />
-            <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
-              {formatDateRangeShort(event.starts_at, event.ends_at)}
-            </Text>
-          </TouchableOpacity>
+        <View className='gap-2 mb-1.5'>
+          <View className='flex-row gap-2'>
+            {/* Date range chip */}
+            <TouchableOpacity
+              onPress={handleAddToCalendar}
+              activeOpacity={0.7}
+              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
+            >
+              <Feather name='calendar' size={14} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
+                {formatDateRangeShort(event.starts_at, event.ends_at)}
+              </Text>
+            </TouchableOpacity>
 
-          {/* Time chip */}
-          <TouchableOpacity
-            onPress={handleAddToCalendar}
-            activeOpacity={0.7}
-            className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
-          >
-            <Feather name='clock' size={14} color={iconPrimary} />
-            <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
-              {formatTimeRangeShort(event.starts_at, event.ends_at)}
-            </Text>
-          </TouchableOpacity>
+            {/* Time chip */}
+            <TouchableOpacity
+              onPress={handleAddToCalendar}
+              activeOpacity={0.7}
+              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
+            >
+              <Feather name='clock' size={14} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
+                {formatTimeRangeShort(event.starts_at, event.ends_at)}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Location chip */}
+          {/* Location chip on its own row */}
           {event.location ? (
             <TouchableOpacity
               onPress={handleMapPress}
               activeOpacity={0.7}
-              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
+              className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
             >
               <Feather name='map-pin' size={14} color={iconPrimary} />
               <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>

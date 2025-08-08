@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   VERSION: 'v1',
-  BASE_URL: __DEV__ ? 'https://api.pwrnow.pl' : 'https://pwrnow.pl',
+  BASE_URL: __DEV__ ? 'http://localhost:8000' : 'https://pwrnow.pl',
 };
 
 // Helper to get full API URL
