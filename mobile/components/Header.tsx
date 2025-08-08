@@ -1,42 +1,37 @@
 import React from 'react';
-import { View, SafeAreaView, TouchableOpacity, Text } from 'react-native';
+import { View, SafeAreaView, TouchableOpacity } from 'react-native';
 import Logo from './Logo';
-import CategorySelector from './CategorySelector';
 import { Feather } from '@expo/vector-icons';
 
 interface HeaderProps {
   logoSize?: 'small' | 'medium' | 'large';
-  categories?: any[];
-  selectedCategory?: string;
-  onCategoryChange?: (slug: string) => void;
   onBack?: () => void;
 }
 
-export default function Header({
-  logoSize = 'medium',
-  categories = [],
-  selectedCategory = 'wszystkie',
-  onCategoryChange,
-  onBack,
-}: HeaderProps) {
+export default function Header({ logoSize = 'medium', onBack }: HeaderProps) {
   return (
-    <SafeAreaView>
-      {onBack && (
-        <TouchableOpacity onPress={onBack}>
-          <Feather name='arrow-left' size={22} />
-          <Text>Wróć</Text>
-        </TouchableOpacity>
-      )}
+    <SafeAreaView className='bg-black px-4 pt-2 pb-3 border-b border-[#1F1F1F]'>
+      <View className='flex-row items-center justify-between mb-2'>
+        {onBack ? (
+          <TouchableOpacity
+            onPress={onBack}
+            activeOpacity={0.7}
+            className='p-2 rounded-full'
+            style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+          >
+            <Feather name='arrow-left' size={22} color={'#FFFFFF'} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 38 }} />
+        )}
 
-      <Logo size={logoSize} />
+        <View style={{ width: 38 }} />
+      </View>
 
-      {categories.length > 0 && onCategoryChange && (
-        <CategorySelector
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={onCategoryChange}
-        />
-      )}
+      {/* Centered logo */}
+      <View className='items-center pb-2'>
+        <Logo size={logoSize} />
+      </View>
     </SafeAreaView>
   );
 }

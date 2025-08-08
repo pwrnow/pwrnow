@@ -39,11 +39,14 @@ export default function EventDetailScreen() {
   };
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
       <Header onBack={() => router.replace('/')} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 8 }}
+      >
         {loading ? (
-          <ActivityIndicator size='large' />
+          <ActivityIndicator size='large' color={'#FFFFFF'} />
         ) : event ? (
           <EventCard event={event} />
         ) : null}

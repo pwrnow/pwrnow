@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -38,10 +39,19 @@ export default function StackLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    />
+    <>
+      <StatusBar
+        style='light'
+        animated
+        translucent
+        backgroundColor='rgba(0,0,0,0.1)'
+      />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#000000' },
+        }}
+      />
+    </>
   );
 }

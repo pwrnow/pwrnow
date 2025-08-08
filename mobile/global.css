@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global app styling for minimal black/white aesthetic */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #111111;
+  --border: #1f1f1f;
+  --accent-blue: #2066df;
+  --accent-pink: #ec2e81;
+}
+
+/* NativeWind resets don't touch RN defaults; keep typography tight */
+body,
+#root,
+.app-root {
+  background-color: var(--background);
+  color: var(--foreground);
+}

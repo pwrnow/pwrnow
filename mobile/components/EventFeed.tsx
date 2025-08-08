@@ -4,29 +4,27 @@ import {
   RefreshControl,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  View,
 } from 'react-native';
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
-import { Event, Category } from '../types';
+import { Event } from '../types';
 import EventCard from './EventCard';
-import CategorySelector from './CategorySelector';
 
 interface EventFeedProps {
   events: Event[];
-  categories: Category[];
-  selectedCategory: string;
-  onCategoryChange: (categorySlug: string) => void;
+  selectedCategory?: string;
   onRefresh?: () => Promise<void>;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEnabled?: boolean;
 }
 
 export default function EventFeed({
   events,
-  categories,
   selectedCategory,
-  onCategoryChange,
   onRefresh,
   onScroll,
+  scrollEnabled,
 }: EventFeedProps) {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -49,48 +47,54 @@ export default function EventFeed({
     }
   };
 
-  // Filter events based on selected category
-  const filteredEvents =
-    selectedCategory === 'wszystkie'
-      ? events
-      : events.filter((event) => event.category.slug === selectedCategory);
-
   const renderEmptyComponent = () => (
-    <Text>
-      {selectedCategory === 'wszystkie'
-        ? 'Aktualnie brak dostępnych wydarzeń.'
-        : 'Brak wydarzeń w tej kategorii.'}
-    </Text>
+    <View style={{ padding: 24 }}>
+      <Text style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
+        {selectedCategory === 'wszystkie'
+          ? 'Aktualnie brak dostępnych wydarzeń.'
+          : 'Brak wydarzeń w tej kategorii.'}
+      </Text>
+    </View>
   );
 
-  const renderEventCard = ({ item, index }: { item: Event; index: number }) => (
-    <EventCard event={item} showCalendarHint={index === 0} />
-  );
-
-  const renderHeader = () => (
-    <CategorySelector
-      categories={categories}
-      selectedCategory={selectedCategory}
-      onCategoryChange={onCategoryChange}
-    />
+  const renderEventCard = ({ item }: { item: Event; index: number }) => (
+    <EventCard event={item} />
   );
 
   return (
     <FlatList
-      data={filteredEvents}
+      data={events}
       renderItem={renderEventCard}
       keyExtractor={(item) => item.id}
-      ListHeaderComponent={renderHeader}
       ListEmptyComponent={renderEmptyComponent}
+      ItemSeparatorComponent={() => (
+        <View
+          style={{
+            height: 1,
+            backgroundColor: '#1F1F1F',
+            width: '100%',
+          }}
+        />
+      )}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
-      scrollEventThrottle={16} // Standard throttle for smooth tracking
+      scrollEventThrottle={16}
+      scrollEnabled={scrollEnabled !== false}
+      contentContainerStyle={{
+        paddingTop: 8,
+        paddingBottom: 24,
+        backgroundColor: '#000000',
+      }}
       refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          title='Odświeżanie wydarzeń...'
-        />
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={'#FFFFFF'}
+            title='Odświeżanie wydarzeń...'
+            titleColor={'#FFFFFF'}
+          />
+        ) : undefined
       }
     />
   );

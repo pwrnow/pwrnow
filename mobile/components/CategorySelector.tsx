@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Text, TouchableOpacity, ScrollView, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Category } from '../types';
 
@@ -15,6 +15,11 @@ export default function CategorySelector({
   onCategoryChange,
 }: CategorySelectorProps) {
   const scrollRef = useRef<ScrollView>(null);
+  const containerWidthRef = useRef<number>(0);
+  const currentOffsetXRef = useRef<number>(0);
+  const itemLayoutsRef = useRef<Record<string, { x: number; width: number }>>(
+    {}
+  );
 
   // Ensure 'Wszystkie' is first
   const allCategories =
@@ -29,24 +34,109 @@ export default function CategorySelector({
     }
   };
 
+  // Ensure the selected category pill stays visible when selection changes
+  useEffect(() => {
+    const ensureVisible = () => {
+      const layout = itemLayoutsRef.current[selectedCategory];
+      const scrollView = scrollRef.current;
+      const containerWidth = containerWidthRef.current;
+      if (!layout || !scrollView || !containerWidth) return;
+
+      const { x, width } = layout;
+      const visibleStart = currentOffsetXRef.current;
+      const visibleEnd = visibleStart + containerWidth;
+
+      const itemStart = x;
+      const itemEnd = x + width;
+
+      let targetX: number | null = null;
+      const sidePadding = 12; // matches contentContainerStyle paddingHorizontal
+
+      if (itemStart < visibleStart) {
+        targetX = Math.max(0, itemStart - sidePadding);
+      } else if (itemEnd > visibleEnd) {
+        targetX = Math.max(0, itemEnd - containerWidth + sidePadding);
+      }
+
+      if (targetX !== null) {
+        scrollView.scrollTo({ x: targetX, animated: true });
+      }
+    };
+
+    ensureVisible();
+  }, [selectedCategory]);
+
   return (
     <ScrollView
       ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
-      bounces={true}
+      bounces
       decelerationRate='fast'
+      contentContainerStyle={{ paddingHorizontal: 12 }}
+      onLayout={(e) => {
+        containerWidthRef.current = e.nativeEvent.layout.width;
+      }}
+      onScroll={(e) => {
+        currentOffsetXRef.current = e.nativeEvent.contentOffset.x;
+      }}
+      scrollEventThrottle={16}
     >
       {allCategories.map((category) => {
         const isActive = selectedCategory === category.slug;
         return (
-          <TouchableOpacity
+          <View
             key={category.slug}
-            onPress={() => handlePress(category.slug)}
-            activeOpacity={0.7}
+            onLayout={(e) => {
+              const { x, width } = e.nativeEvent.layout;
+              itemLayoutsRef.current[category.slug] = { x, width };
+              // If this is the selected item, ensure it is visible after layout
+              if (category.slug === selectedCategory) {
+                const containerWidth = containerWidthRef.current;
+                const scrollView = scrollRef.current;
+                if (!containerWidth || !scrollView) return;
+                const visibleStart = currentOffsetXRef.current;
+                const visibleEnd = visibleStart + containerWidth;
+                const itemStart = x;
+                const itemEnd = x + width;
+                const sidePadding = 12;
+                let targetX: number | null = null;
+                if (itemStart < visibleStart) {
+                  targetX = Math.max(0, itemStart - sidePadding);
+                } else if (itemEnd > visibleEnd) {
+                  targetX = Math.max(0, itemEnd - containerWidth + sidePadding);
+                }
+                if (targetX !== null) {
+                  scrollView.scrollTo({ x: targetX, animated: true });
+                }
+              }
+            }}
           >
-            <Text>{category.name}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handlePress(category.slug)}
+              activeOpacity={0.8}
+              className='mr-2 rounded-full border px-3 py-2'
+              style={{
+                borderColor: isActive ? '#2066DF' : '#1F1F1F',
+                backgroundColor: isActive
+                  ? 'rgba(32,102,223,0.12)'
+                  : 'rgba(255,255,255,0.03)',
+              }}
+            >
+              <Text
+                className={isActive ? 'text-white' : ''}
+                style={{
+                  color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.8)',
+                  fontFamily: isActive
+                    ? 'SpaceGrotesk-SemiBold'
+                    : 'SpaceGrotesk-Regular',
+                  letterSpacing: 0.2,
+                }}
+              >
+                {category.name}
+              </Text>
+            </TouchableOpacity>
+          </View>
         );
       })}
     </ScrollView>
