@@ -4,8 +4,11 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, View, TouchableOpacity, Platform } from 'react-native';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { BlurView } from 'expo-blur';
+import { Feather } from '@expo/vector-icons';
+import Logo from '../components/Logo';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -47,11 +50,34 @@ export default function StackLayout() {
         style={isDark ? 'light' : 'dark'}
         animated
         translucent
-        backgroundColor={isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}
+        backgroundColor={'transparent'}
       />
       <Stack
         screenOptions={{
-          headerShown: false,
+          headerShown: true,
+          headerTitle: () => <Logo size='medium' />,
+          headerTitleAlign: 'left',
+          headerTransparent: true,
+          headerShadowVisible: true,
+          headerBlurEffect: 'light',
+
+          headerRight: () => (
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            >
+              <TouchableOpacity
+                accessibilityLabel='Open profile'
+                onPress={() => {}}
+                style={{ padding: 6, borderRadius: 9999 }}
+              >
+                <Feather
+                  name='user'
+                  size={22}
+                  color={isDark ? '#FFFFFF' : '#000000'}
+                />
+              </TouchableOpacity>
+            </View>
+          ),
           contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
         }}
       />

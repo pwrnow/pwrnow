@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,9 @@ import { useColorScheme } from 'react-native';
 import Animated, {
   FadeInDown,
   LinearTransition,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { Feather } from '@expo/vector-icons';
@@ -33,6 +36,18 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const iconPrimary = isDark ? '#FFFFFF' : '#000000';
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+
+  // Animated fade for the description gradient overlay (keeps fade when collapsed)
+  const gradientOpacity = useSharedValue(1);
+  useEffect(() => {
+    gradientOpacity.value = withTiming(isDescriptionExpanded ? 0 : 1, {
+      duration: 200,
+    });
+  }, [isDescriptionExpanded, gradientOpacity]);
+
+  const animatedGradientStyle = useAnimatedStyle(() => ({
+    opacity: gradientOpacity.value,
+  }));
 
   const getAspectRatio = (ratio?: string | null): number => {
     if (!ratio) return 16 / 9;
@@ -284,7 +299,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           </View>
           {event.is_new ? (
             <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
-              <Text className='text-accentPink text-[11px] font-semibold tracking-[0.5px]'>
+              <Text className='text-accentPink text-xs font-semibold tracking-[0.5px]'>
                 {t('newTag')}
               </Text>
             </View>
@@ -342,7 +357,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
               <Feather name='calendar' size={14} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
+              <Text className='text-black dark:text-white text-sm font-medium ml-1.5'>
                 {formatDateRangeShort(event.starts_at, event.ends_at)}
               </Text>
             </TouchableOpacity>
@@ -354,7 +369,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
               <Feather name='clock' size={14} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
+              <Text className='text-black dark:text-white text-sm font-medium ml-1.5'>
                 {formatTimeRangeShort(event.starts_at, event.ends_at)}
               </Text>
             </TouchableOpacity>
@@ -368,7 +383,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
             >
               <Feather name='map-pin' size={14} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
+              <Text className='text-black dark:text-white text-sm font-medium ml-1.5'>
                 {event.location}
               </Text>
             </TouchableOpacity>
@@ -379,32 +394,50 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {event.description ? (
           <View className='mb-2'>
             <View className='relative'>
-              <Text className='text-black/90 dark:text-white/90 text-[15px] leading-[22px] font-sans'>
-                {isDescriptionExpanded
-                  ? event.description
-                  : `${event.description.slice(0, 150)}${
-                      event.description.length > 150 ? '...' : ''
-                    }`}
-              </Text>
+              <Animated.View
+                layout={LinearTransition.springify().damping(22).stiffness(200)}
+              >
+                <Text className='text-black/90 dark:text-white/90 text-base leading-[22px] font-sans'>
+                  {isDescriptionExpanded
+                    ? event.description
+                    : `${event.description.slice(0, 150)}${
+                        event.description.length > 150 ? '...' : ''
+                      }`}
+                </Text>
+              </Animated.View>
 
-              {!isDescriptionExpanded && event.description.length > 150 ? (
-                <LinearGradient
+              {event.description.length > 150 ? (
+                <Animated.View
                   pointerEvents='none'
-                  colors={
-                    isDark
-                      ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
-                      : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
-                  }
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: 24,
-                  }}
-                />
+                  style={[
+                    {
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: 24,
+                    },
+                    animatedGradientStyle,
+                  ]}
+                >
+                  <LinearGradient
+                    pointerEvents='none'
+                    colors={
+                      isDark
+                        ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
+                        : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                    }}
+                  />
+                </Animated.View>
               ) : null}
             </View>
 

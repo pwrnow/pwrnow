@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { api } from '../../lib/api';
 import EventCard from '../../components/EventCard';
-import Header from '../../components/Header';
 import { Event } from '../../types';
 
 export default function EventDetailScreen() {
@@ -43,7 +42,6 @@ export default function EventDetailScreen() {
 
   return (
     <SafeAreaView className='flex-1 bg-white dark:bg-black'>
-      <Header onBack={() => router.replace('/')} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingVertical: 8 }}

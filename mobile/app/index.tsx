@@ -9,7 +9,6 @@ import {
 import EventFeed from '../components/EventFeed';
 import { api } from '../lib/api';
 import { Event, Category } from '../types';
-import Header from '../components/Header';
 import CategorySelector from '../components/CategorySelector';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
@@ -74,7 +73,6 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className='flex-1 bg-white dark:bg-black'>
-      <Header logoSize='large' />
       <ScrollView
         className='bg-white dark:bg-black'
         refreshControl={
