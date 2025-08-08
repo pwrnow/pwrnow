@@ -34,6 +34,7 @@
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.10",
     "expo-updates": "~0.28.17",
+    "i18n-js": "^4.5.1",
     "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-native": "0.79.5",

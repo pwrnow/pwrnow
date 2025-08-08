@@ -20,6 +20,7 @@ import * as Sharing from 'expo-sharing';
 import * as Calendar from 'expo-calendar';
 import { Event } from '../types';
 import { config } from '../lib/config';
+import { t, deviceLocaleTag } from '../lib/i18n';
 
 interface EventCardProps {
   event: Event;
@@ -73,11 +74,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             Haptics.NotificationFeedbackType.Error
           );
           Alert.alert(
-            'Brak uprawnień',
-            'Aplikacja potrzebuje dostępu do kalendarza, aby dodać wydarzenie.',
+            t('permissionDeniedTitle'),
+            t('permissionDeniedMessage'),
             [
-              { text: 'Anuluj', style: 'cancel' },
-              { text: 'Ustawienia', onPress: () => Linking.openSettings() },
+              { text: t('cancel'), style: 'cancel' },
+              { text: t('settings'), onPress: () => Linking.openSettings() },
             ]
           );
           return;
@@ -101,8 +102,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           Haptics.NotificationFeedbackType.Success
         );
         Alert.alert(
-          'Sukces!',
-          `Wydarzenie "${event.title}" zostało dodane do kalendarza.`
+          t('successTitle'),
+          t('eventAddedToCalendar', { title: event.title })
         );
       } else if (
         result?.action === Calendar.CalendarDialogResultActions.canceled
@@ -111,10 +112,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       }
     } catch (error) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(
-        'Błąd',
-        'Nie udało się otworzyć kalendarza. Spróbuj ponownie.'
-      );
+      Alert.alert(t('errorTitle'), t('calendarOpenFailed'));
     }
   };
 
@@ -135,17 +133,17 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const handleShare = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const shareUrl = `${config.shareBaseUrl}/${event.slug}`;
-    const shareText = `${event.title}\n\n${
-      event.description || ''
-    }\n\nWiecej informacji: ${shareUrl}`;
+    const shareText = `${event.title}\n\n${event.description || ''}\n\n${t(
+      'moreInfo'
+    )}: ${shareUrl}`;
 
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(shareUrl, {
         mimeType: 'text/plain',
-        dialogTitle: 'Udostępnij wydarzenie',
+        dialogTitle: t('shareEvent'),
       });
     } else {
-      Alert.alert('Udostępnij', shareText);
+      Alert.alert(t('share'), shareText);
     }
   };
 
@@ -160,7 +158,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
+    const locale = deviceLocaleTag;
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -170,7 +169,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('pl-PL', {
+    const locale = deviceLocaleTag;
+    return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -205,8 +205,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       endDate.getFullYear() !== now.getFullYear() ||
       startDate.getFullYear() !== endDate.getFullYear();
 
+    const locale = deviceLocaleTag;
     const monthLong = (d: Date) =>
-      d.toLocaleDateString('pl-PL', {
+      d.toLocaleDateString(locale, {
         month: 'long',
       });
     const day = (d: Date) => d.getDate();
@@ -234,8 +235,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     const startDate = new Date(startString);
     const endDate = new Date(endString);
 
+    const locale = deviceLocaleTag;
     const time = (d: Date) =>
-      d.toLocaleTimeString('pl-PL', {
+      d.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit',
       });
@@ -283,7 +285,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           {event.is_new ? (
             <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
               <Text className='text-accentPink text-[11px] font-semibold tracking-[0.5px]'>
-                NOWE
+                {t('newTag')}
               </Text>
             </View>
           ) : null}
@@ -414,7 +416,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               >
                 <View className='flex-row items-center'>
                   <Text className='text-accentBlue font-semibold text-sm mr-1'>
-                    {isDescriptionExpanded ? 'Zwiń' : 'Rozwiń'}
+                    {isDescriptionExpanded ? t('collapse') : t('expand')}
                   </Text>
                   <Feather
                     name={isDescriptionExpanded ? 'chevron-up' : 'chevron-down'}
@@ -463,7 +465,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               <View className='flex-row items-center gap-2.5'>
                 <Feather name='arrow-right' size={18} color={iconPrimary} />
                 <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
-                  Odwiedź stronę
+                  {t('visitPage')}
                 </Text>
               </View>
             </View>

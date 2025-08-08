@@ -11,6 +11,7 @@ import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Event } from '../types';
 import EventCard from './EventCard';
+import { t } from '../lib/i18n';
 
 interface EventFeedProps {
   events: Event[];
@@ -54,8 +55,8 @@ export default function EventFeed({
     <View className='p-6'>
       <Text className='text-black/70 dark:text-white/70 text-center'>
         {selectedCategory === 'wszystkie'
-          ? 'Aktualnie brak dostępnych wydarzeń.'
-          : 'Brak wydarzeń w tej kategorii.'}
+          ? t('noEventsAll')
+          : t('noEventsInCategory')}
       </Text>
     </View>
   );
@@ -85,7 +86,7 @@ export default function EventFeed({
             refreshing={refreshing}
             onRefresh={handleRefresh}
             tintColor={isDark ? '#FFFFFF' : '#000000'}
-            title='Odświeżanie wydarzeń...'
+            title={t('refreshingEvents')}
             titleColor={isDark ? '#FFFFFF' : '#000000'}
           />
         ) : undefined

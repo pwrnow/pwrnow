@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
 import { Text, TouchableOpacity, ScrollView, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Category } from '../types';
+import { t } from '../lib/i18n';
 
 interface CategorySelectorProps {
   categories: Category[];
@@ -14,18 +14,11 @@ export default function CategorySelector({
   selectedCategory,
   onCategoryChange,
 }: CategorySelectorProps) {
-  const scrollRef = useRef<ScrollView>(null);
-  const containerWidthRef = useRef<number>(0);
-  const currentOffsetXRef = useRef<number>(0);
-  const itemLayoutsRef = useRef<Record<string, { x: number; width: number }>>(
-    {}
-  );
-
   // Ensure 'Wszystkie' is first
   const allCategories =
     categories[0]?.slug === 'wszystkie'
       ? categories
-      : [{ name: 'Wszystkie', slug: 'wszystkie' }, ...categories];
+      : [{ name: t('all'), slug: 'wszystkie' }, ...categories];
 
   const handlePress = async (slug: string) => {
     if (slug !== selectedCategory) {
@@ -34,84 +27,20 @@ export default function CategorySelector({
     }
   };
 
-  // Ensure the selected category pill stays visible when selection changes
-  useEffect(() => {
-    const ensureVisible = () => {
-      const layout = itemLayoutsRef.current[selectedCategory];
-      const scrollView = scrollRef.current;
-      const containerWidth = containerWidthRef.current;
-      if (!layout || !scrollView || !containerWidth) return;
-
-      const { x, width } = layout;
-      const visibleStart = currentOffsetXRef.current;
-      const visibleEnd = visibleStart + containerWidth;
-
-      const itemStart = x;
-      const itemEnd = x + width;
-
-      let targetX: number | null = null;
-      const sidePadding = 10; // matches contentContainerStyle paddingHorizontal
-
-      if (itemStart < visibleStart) {
-        targetX = Math.max(0, itemStart - sidePadding);
-      } else if (itemEnd > visibleEnd) {
-        targetX = Math.max(0, itemEnd - containerWidth + sidePadding);
-      }
-
-      if (targetX !== null) {
-        scrollView.scrollTo({ x: targetX, animated: true });
-      }
-    };
-
-    ensureVisible();
-  }, [selectedCategory]);
+  // Removed auto-scroll visibility logic for category pills
 
   return (
     <ScrollView
-      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
       bounces
       decelerationRate='fast'
       contentContainerStyle={{ paddingHorizontal: 10 }}
-      onLayout={(e) => {
-        containerWidthRef.current = e.nativeEvent.layout.width;
-      }}
-      onScroll={(e) => {
-        currentOffsetXRef.current = e.nativeEvent.contentOffset.x;
-      }}
-      scrollEventThrottle={16}
     >
       {allCategories.map((category) => {
         const isActive = selectedCategory === category.slug;
         return (
-          <View
-            key={category.slug}
-            onLayout={(e) => {
-              const { x, width } = e.nativeEvent.layout;
-              itemLayoutsRef.current[category.slug] = { x, width };
-              // If this is the selected item, ensure it is visible after layout
-              if (category.slug === selectedCategory) {
-                const containerWidth = containerWidthRef.current;
-                const scrollView = scrollRef.current;
-                if (!containerWidth || !scrollView) return;
-                const visibleStart = currentOffsetXRef.current;
-                const visibleEnd = visibleStart + containerWidth;
-                const itemStart = x;
-                const itemEnd = x + width;
-                const sidePadding = 10;
-                let targetX: number | null = null;
-                if (itemStart < visibleStart) {
-                  targetX = Math.max(0, itemStart - sidePadding);
-                } else if (itemEnd > visibleEnd) {
-                  targetX = Math.max(0, itemEnd - containerWidth + sidePadding);
-                }
-                if (targetX !== null) {
-                  scrollView.scrollTo({ x: targetX, animated: true });
-                }
-              }
-            }}
-          >
+          <View key={category.slug}>
             <TouchableOpacity
               onPress={() => handlePress(category.slug)}
               activeOpacity={0.8}

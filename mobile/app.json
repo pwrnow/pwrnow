@@ -16,9 +16,7 @@
       "backgroundColor": "#000000",
       "supportsTablet": false,
       "bundleIdentifier": "pl.pwrnow.pwrnow",
-      "associatedDomains": [
-        "applinks:pwrnow.pl"
-      ],
+      "associatedDomains": ["applinks:pwrnow.pl"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -27,9 +25,9 @@
         "dark": "./assets/icon-dark.png"
       },
       "splash": {
-        "backgroundColor": "#fff",
+        "backgroundColor": "#ffffff",
         "dark": {
-          "backgroundColor": "#000"
+          "backgroundColor": "#000000"
         }
       }
     },
@@ -73,7 +71,15 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-localization"
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "pl"],
+            "android": ["en", "pl"]
+          }
+        }
+      ]
     ],
     "scheme": "pwrnow",
     "extra": {

@@ -12,6 +12,7 @@ import { Event, Category } from '../types';
 import Header from '../components/Header';
 import CategorySelector from '../components/CategorySelector';
 import * as Haptics from 'expo-haptics';
+import { t } from '../lib/i18n';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -35,9 +36,9 @@ export default function HomeScreen() {
         api.categories.getCategories(),
       ]);
 
-      // Add "Wszystkie" category at the beginning
+      // Add "All" (localized) category at the beginning
       const allCategories: Category[] = [
-        { name: 'Wszystkie', slug: 'wszystkie' },
+        { name: t('all'), slug: 'wszystkie' },
         ...categoriesData,
       ];
 
@@ -81,7 +82,7 @@ export default function HomeScreen() {
             refreshing={refreshing}
             onRefresh={handleRefresh}
             tintColor={isDark ? '#FFFFFF' : '#000000'}
-            title='Odświeżanie wydarzeń...'
+            title={t('refreshingEvents')}
             titleColor={isDark ? '#FFFFFF' : '#000000'}
           />
         }
