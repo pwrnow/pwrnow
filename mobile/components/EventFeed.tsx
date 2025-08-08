@@ -1,9 +1,6 @@
 import {
-  View,
   Text,
-  StyleSheet,
   FlatList,
-  useColorScheme,
   RefreshControl,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -13,7 +10,6 @@ import * as Haptics from 'expo-haptics';
 import { Event, Category } from '../types';
 import EventCard from './EventCard';
 import CategorySelector from './CategorySelector';
-import { Colors } from '../constants/Colors';
 
 interface EventFeedProps {
   events: Event[];
@@ -33,9 +29,6 @@ export default function EventFeed({
   onScroll,
 }: EventFeedProps) {
   const [refreshing, setRefreshing] = useState(false);
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const styles = createStyles(colors);
 
   // Handle refresh with haptic feedback and smooth animation
   const handleRefresh = async () => {
@@ -63,13 +56,11 @@ export default function EventFeed({
       : events.filter((event) => event.category.slug === selectedCategory);
 
   const renderEmptyComponent = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>
-        {selectedCategory === 'wszystkie'
-          ? 'Aktualnie brak dostępnych wydarzeń.'
-          : 'Brak wydarzeń w tej kategorii.'}
-      </Text>
-    </View>
+    <Text>
+      {selectedCategory === 'wszystkie'
+        ? 'Aktualnie brak dostępnych wydarzeń.'
+        : 'Brak wydarzeń w tej kategorii.'}
+    </Text>
   );
 
   const renderEventCard = ({ item, index }: { item: Event; index: number }) => (
@@ -92,45 +83,15 @@ export default function EventFeed({
       ListHeaderComponent={renderHeader}
       ListEmptyComponent={renderEmptyComponent}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}
       onScroll={onScroll}
       scrollEventThrottle={16} // Standard throttle for smooth tracking
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary, colors.secondary]}
-          progressBackgroundColor={colors.background}
           title='Odświeżanie wydarzeń...'
-          titleColor={colors.mutedForeground}
-          progressViewOffset={20}
         />
       }
     />
   );
 }
-
-const createStyles = (colors: any) =>
-  StyleSheet.create({
-    container: {
-      paddingBottom: 40,
-      backgroundColor: colors.background,
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingVertical: 80,
-      paddingHorizontal: 40,
-      backgroundColor: colors.background,
-    },
-    emptyText: {
-      fontSize: 18,
-      color: colors.mutedForeground,
-      textAlign: 'center',
-      lineHeight: 28,
-      fontFamily: 'SpaceGrotesk-Medium',
-      opacity: 0.8,
-    },
-  });

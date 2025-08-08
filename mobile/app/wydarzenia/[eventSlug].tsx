@@ -1,31 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  View,
-  StyleSheet,
   ActivityIndicator,
   Alert,
   SafeAreaView,
-  useColorScheme,
   ScrollView,
-  TouchableOpacity,
-  Text,
 } from 'react-native';
-import { Colors } from '../../constants/Colors';
 import { api } from '../../lib/api';
 import EventCard from '../../components/EventCard';
 import Header from '../../components/Header';
 import { Event } from '../../types';
-import { Feather } from '@expo/vector-icons';
 
 export default function EventDetailScreen() {
   const { eventSlug } = useLocalSearchParams();
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const styles = createStyles(colors);
 
   useEffect(() => {
     if (typeof eventSlug === 'string') {
@@ -49,14 +39,11 @@ export default function EventDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView>
       <Header onBack={() => router.replace('/')} />
-      <ScrollView
-        contentContainerStyle={styles.eventFeedContainer}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
         {loading ? (
-          <ActivityIndicator size='large' color={colors.primary} />
+          <ActivityIndicator size='large' />
         ) : event ? (
           <EventCard event={event} />
         ) : null}
@@ -64,17 +51,3 @@ export default function EventDetailScreen() {
     </SafeAreaView>
   );
 }
-
-const createStyles = (colors: any) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.card,
-    },
-    eventFeedContainer: {
-      paddingTop: 8,
-      paddingBottom: 40,
-      backgroundColor: colors.background,
-      // No alignItems or justifyContent for list-like layout
-    },
-  });

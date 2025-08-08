@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, useColorScheme, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native';
 import EventFeed from '../components/EventFeed';
 import { api } from '../lib/api';
 import { Event, Category } from '../types';
-import { Colors } from '../constants/Colors';
 import Header from '../components/Header';
 
 export default function HomeScreen() {
@@ -11,9 +10,6 @@ export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const styles = createStyles(colors);
 
   // Load initial data
   useEffect(() => {
@@ -55,30 +51,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView>
       <Header />
-
-      <View style={styles.eventFeedContainer}>
-        <EventFeed
-          events={events}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          onRefresh={handleRefresh}
-        />
-      </View>
+      <EventFeed
+        events={events}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        onRefresh={handleRefresh}
+      />
     </SafeAreaView>
   );
 }
-
-const createStyles = (colors: any) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.card,
-    },
-    eventFeedContainer: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-  });
