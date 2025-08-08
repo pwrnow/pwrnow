@@ -59,7 +59,7 @@ export default function StackLayout() {
           headerTitleAlign: 'left',
           headerTransparent: true,
           headerShadowVisible: true,
-          headerBlurEffect: 'light',
+          headerBlurEffect: 'prominent',
 
           headerRight: () => (
             <View

@@ -14,6 +14,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
+  withSequence,
+  withRepeat,
+  interpolate,
+  Extrapolation,
 } from 'react-native-reanimated';
 
 import { Feather } from '@expo/vector-icons';
@@ -39,15 +44,59 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   // Animated fade for the description gradient overlay (keeps fade when collapsed)
   const gradientOpacity = useSharedValue(1);
+  // CTA button animations
+  const ctaScale = useSharedValue(1);
+  const ctaBreath = useSharedValue(0);
+  const ringProgress = useSharedValue(0);
   useEffect(() => {
     gradientOpacity.value = withTiming(isDescriptionExpanded ? 0 : 1, {
       duration: 200,
     });
   }, [isDescriptionExpanded, gradientOpacity]);
 
+  // Subtle breathing animation for CTA to increase emotional engagement
+  useEffect(() => {
+    ctaBreath.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1800 }),
+        withTiming(0, { duration: 1800 })
+      ),
+      -1,
+      true
+    );
+  }, [ctaBreath]);
+
   const animatedGradientStyle = useAnimatedStyle(() => ({
     opacity: gradientOpacity.value,
   }));
+
+  const ctaAnimatedStyle = useAnimatedStyle(() => {
+    const scale = ctaScale.value * (1 + 0.01 * ctaBreath.value);
+    return {
+      transform: [{ scale }],
+    };
+  });
+
+  const pulseRingStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        ringProgress.value,
+        [0, 1],
+        [0.15, 0],
+        Extrapolation.CLAMP
+      ),
+      transform: [
+        {
+          scale: interpolate(
+            ringProgress.value,
+            [0, 1],
+            [1, 1.3],
+            Extrapolation.CLAMP
+          ),
+        },
+      ],
+    };
+  });
 
   const getAspectRatio = (ratio?: string | null): number => {
     if (!ratio) return 16 / 9;
@@ -135,6 +184,23 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
     await Linking.openURL(url);
+  };
+
+  // Dedicated CTA handler without extra haptics (we trigger haptics on press-in)
+  const handleVisitPagePress = async () => {
+    const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
+    await Linking.openURL(url);
+  };
+
+  const handleCtaPressIn = async () => {
+    ctaScale.value = withSpring(0.96, { damping: 14, stiffness: 300 });
+    ringProgress.value = 0;
+    ringProgress.value = withTiming(1, { duration: 650 });
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleCtaPressOut = () => {
+    ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
   };
 
   const handleMapPress = async () => {
@@ -464,45 +530,69 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
         {/* Improved CTA Button */}
         <TouchableOpacity
-          onPress={handleEventLinkPress}
+          onPress={handleVisitPagePress}
+          onPressIn={handleCtaPressIn}
+          onPressOut={handleCtaPressOut}
           activeOpacity={0.8}
-          className='mt-1'
+          className='relative mt-1'
         >
-          <LinearGradient
-            colors={
-              isDark
-                ? ['rgba(32, 102, 223, 0.32)', 'rgba(236, 46, 129, 0.32)']
-                : ['rgba(32, 102, 223, 0.5)', 'rgba(236, 46, 129, 0.5)']
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{
-              borderRadius: 14,
-              padding: 1,
-            }}
-          >
-            <View
-              className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
-              style={
+          {/* Pulsing glow ring on tap */}
+          <Animated.View
+            pointerEvents='none'
+            style={[
+              {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+                borderRadius: 16,
+                zIndex: 1,
+                backgroundColor: isDark
+                  ? 'rgba(32, 102, 223, 0.20)'
+                  : 'rgba(236, 46, 129, 0.20)',
+              },
+              pulseRingStyle,
+            ]}
+          />
+
+          <Animated.View style={ctaAnimatedStyle}>
+            <LinearGradient
+              colors={
                 isDark
-                  ? undefined
-                  : {
-                      shadowColor: '#000',
-                      shadowOpacity: 0.06,
-                      shadowRadius: 8,
-                      shadowOffset: { width: 0, height: 2 },
-                      elevation: 2,
-                    }
+                  ? ['rgba(32, 102, 223, 0.32)', 'rgba(236, 46, 129, 0.32)']
+                  : ['rgba(32, 102, 223, 0.5)', 'rgba(236, 46, 129, 0.5)']
               }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                borderRadius: 14,
+                padding: 1,
+              }}
             >
-              <View className='flex-row items-center gap-2.5'>
-                <Feather name='arrow-right' size={18} color={iconPrimary} />
-                <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
-                  {t('visitPage')}
-                </Text>
+              <View
+                className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
+                style={
+                  isDark
+                    ? undefined
+                    : {
+                        shadowColor: '#000',
+                        shadowOpacity: 0.06,
+                        shadowRadius: 8,
+                        shadowOffset: { width: 0, height: 2 },
+                        elevation: 2,
+                      }
+                }
+              >
+                <View className='flex-row items-center gap-2.5'>
+                  <Feather name='arrow-right' size={18} color={iconPrimary} />
+                  <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
+                    {t('visitPage')}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </LinearGradient>
+            </LinearGradient>
+          </Animated.View>
         </TouchableOpacity>
       </View>
     </Animated.View>
