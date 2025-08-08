@@ -57,8 +57,8 @@ export default function EventFeed({
     </View>
   );
 
-  const renderEventCard = ({ item }: { item: Event; index: number }) => (
-    <EventCard event={item} />
+  const renderEventCard = ({ item, index }: { item: Event; index: number }) => (
+    <EventCard event={item} index={index} />
   );
 
   return (

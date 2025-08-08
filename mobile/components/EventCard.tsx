@@ -7,6 +7,10 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import Animated, {
+  FadeInDown,
+  LinearTransition,
+} from 'react-native-reanimated';
 
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,9 +21,10 @@ import { config } from '../lib/config';
 
 interface EventCardProps {
   event: Event;
+  index?: number;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, index = 0 }: EventCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
 
@@ -183,7 +188,15 @@ export default function EventCard({ event }: EventCardProps) {
   };
 
   return (
-    <View className='mb-0 bg-black'>
+    <Animated.View
+      entering={FadeInDown.duration(420)
+        .delay(Math.min(index, 30) * 45)
+        .springify()
+        .damping(18)
+        .stiffness(160)}
+      layout={LinearTransition.springify().damping(20).stiffness(180)}
+      className='mb-0 bg-black'
+    >
       {/* Header: org + category */}
       <View className='px-4 pt-4 pb-3'>
         <View className='flex-row items-center gap-3'>
@@ -370,6 +383,6 @@ export default function EventCard({ event }: EventCardProps) {
           </LinearGradient>
         </TouchableOpacity>
       </View>
-    </View>
+    </Animated.View>
   );
 }
