@@ -183,88 +183,37 @@ export default function EventCard({ event }: EventCardProps) {
   };
 
   return (
-    <View
-      className='mb-0'
-      style={{
-        backgroundColor: '#000000',
-      }}
-    >
+    <View className='mb-0 bg-black'>
       {/* Header: org + category */}
       <View className='px-4 pt-4 pb-3'>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 999,
-              overflow: 'hidden',
-              backgroundColor: 'rgba(255,255,255,0.08)',
-              borderColor: 'rgba(255,255,255,0.12)',
-              borderWidth: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
+        <View className='flex-row items-center gap-3'>
+          <View className='w-10 h-10 rounded-full overflow-hidden bg-white/10 border border-white/15 justify-center items-center'>
             {event.organization.image_url ? (
               <Image
                 source={{ uri: event.organization.image_url }}
-                style={{ width: '100%', height: '100%', borderRadius: 999 }}
+                className='w-full h-full'
                 resizeMode='cover'
               />
             ) : (
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontFamily: 'SpaceGrotesk-SemiBold',
-                  fontSize: 14,
-                }}
-              >
+              <Text className='text-white font-semibold text-sm'>
                 {getInitials(event.organization.name)}
               </Text>
             )}
           </View>
-          <View style={{ flex: 1 }}>
+          <View className='flex-1'>
             <Text
-              style={{
-                color: '#FFFFFF',
-                fontFamily: 'SpaceGrotesk-SemiBold',
-                fontSize: 14,
-                lineHeight: 18,
-              }}
+              className='text-white font-semibold text-sm leading-4'
               numberOfLines={1}
             >
               {event.organization.name}
             </Text>
-            <Text
-              style={{
-                color: 'rgba(255,255,255,0.65)',
-                fontSize: 12,
-                lineHeight: 16,
-                marginTop: 1,
-              }}
-            >
+            <Text className='text-white/65 text-xs leading-4 mt-[1px]'>
               {event.category.name}
             </Text>
           </View>
           {event.is_new ? (
-            <View
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 12,
-                backgroundColor: 'rgba(236,46,129,0.15)',
-                borderColor: 'rgba(236,46,129,0.3)',
-                borderWidth: 1,
-              }}
-            >
-              <Text
-                style={{
-                  color: '#EC2E81',
-                  fontSize: 11,
-                  fontFamily: 'SpaceGrotesk-SemiBold',
-                  letterSpacing: 0.5,
-                }}
-              >
+            <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
+              <Text className='text-accentPink text-[11px] font-semibold tracking-[0.5px]'>
                 NOWE
               </Text>
             </View>
@@ -277,22 +226,14 @@ export default function EventCard({ event }: EventCardProps) {
         <View>
           <TouchableOpacity onPress={handleEventLinkPress} activeOpacity={0.92}>
             <View
-              style={{
-                width: '100%',
-                aspectRatio: imageAspectRatio,
-                backgroundColor: '#111111',
-                borderRadius: 0,
-                overflow: 'visible',
-              }}
+              className='w-full bg-muted overflow-visible'
+              style={{ aspectRatio: imageAspectRatio }}
             >
               <Image
                 source={{ uri: event.image_url }}
                 onLoadStart={() => setIsImageLoading(true)}
                 onLoadEnd={() => setIsImageLoading(false)}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                }}
+                className='w-full h-full'
                 resizeMode='cover'
               />
             </View>
@@ -303,21 +244,9 @@ export default function EventCard({ event }: EventCardProps) {
       {/* Content */}
       <View className='px-4 pt-4 pb-5'>
         {/* Title and Share */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-          }}
-        >
+        <View className='flex-row items-start'>
           <Text
-            style={{
-              color: '#FFFFFF',
-              fontFamily: 'SpaceGrotesk-SemiBold',
-              fontSize: 20,
-              lineHeight: 26,
-              flex: 1,
-              marginRight: 12,
-            }}
+            className='text-white font-semibold text-xl leading-6 flex-1 mr-3'
             numberOfLines={3}
           >
             {event.title}
@@ -326,75 +255,26 @@ export default function EventCard({ event }: EventCardProps) {
             onPress={handleShare}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             activeOpacity={0.7}
-            style={{
-              backgroundColor: 'rgba(236,46,129,0.12)',
-              borderColor: 'rgba(236,46,129,0.25)',
-              borderWidth: 1,
-              borderRadius: 10,
-              padding: 10,
-            }}
+            className='bg-accentPink/12 border border-accentPink/25 rounded-lg p-2.5'
           >
             <Feather name='share-2' size={18} color={'#EC2E81'} />
           </TouchableOpacity>
         </View>
 
         {/* Meta chips under title */}
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: 8,
-            marginBottom: 6,
-          }}
-        >
+        <View className='flex-row flex-wrap gap-2 mb-1.5'>
           {/* Date range chip */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 6,
-              paddingHorizontal: 10,
-              borderRadius: 999,
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.1)',
-            }}
-          >
+          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-white/5 border border-white/10'>
             <Feather name='calendar' size={14} color={'#FFFFFF'} />
-            <Text
-              style={{
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontFamily: 'SpaceGrotesk-Medium',
-                marginLeft: 6,
-              }}
-            >
+            <Text className='text-white text-[13px] font-medium ml-1.5'>
               {formatDateRangeShort(event.starts_at, event.ends_at)}
             </Text>
           </View>
 
           {/* Time chip */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 6,
-              paddingHorizontal: 10,
-              borderRadius: 999,
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.1)',
-            }}
-          >
+          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-white/5 border border-white/10'>
             <Feather name='clock' size={14} color={'#FFFFFF'} />
-            <Text
-              style={{
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontFamily: 'SpaceGrotesk-Medium',
-                marginLeft: 6,
-              }}
-            >
+            <Text className='text-white text-[13px] font-medium ml-1.5'>
               {formatTimeRangeShort(event.starts_at, event.ends_at)}
             </Text>
           </View>
@@ -404,27 +284,10 @@ export default function EventCard({ event }: EventCardProps) {
             <TouchableOpacity
               onPress={handleMapPress}
               activeOpacity={0.7}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingVertical: 6,
-                paddingHorizontal: 10,
-                borderRadius: 999,
-                backgroundColor: 'rgba(255,255,255,0.06)',
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.1)',
-                maxWidth: '100%',
-              }}
+              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-white/5 border border-white/10 max-w-full'
             >
               <Feather name='map-pin' size={14} color={'#FFFFFF'} />
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                  fontFamily: 'SpaceGrotesk-Medium',
-                  marginLeft: 6,
-                }}
-              >
+              <Text className='text-white text-[13px] font-medium ml-1.5'>
                 {event.location}
               </Text>
             </TouchableOpacity>
@@ -433,16 +296,9 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Description (truncated with expand/collapse + fade) */}
         {event.description ? (
-          <View style={{ marginBottom: 12 }}>
-            <View style={{ position: 'relative' }}>
-              <Text
-                style={{
-                  color: 'rgba(255,255,255,0.9)',
-                  fontSize: 15,
-                  lineHeight: 22,
-                  fontFamily: 'SpaceGrotesk-Regular',
-                }}
-              >
+          <View className='mb-2'>
+            <View className='relative'>
+              <Text className='text-white/90 text-[15px] leading-[22px] font-sans'>
                 {isDescriptionExpanded
                   ? event.description
                   : `${event.description.slice(0, 150)}${
@@ -460,8 +316,8 @@ export default function EventCard({ event }: EventCardProps) {
                     position: 'absolute',
                     left: 0,
                     right: 0,
-                    bottom: -2,
-                    height: 36,
+                    bottom: 0,
+                    height: 24,
                   }}
                 />
               ) : null}
@@ -471,23 +327,10 @@ export default function EventCard({ event }: EventCardProps) {
               <TouchableOpacity
                 onPress={handleDescriptionToggle}
                 activeOpacity={0.7}
-                style={{
-                  marginTop: 8,
-                  alignSelf: 'flex-start',
-                  paddingVertical: 4,
-                  paddingHorizontal: 6,
-                  borderRadius: 8,
-                }}
+                className='mt-1 self-start py-1 px-1.5 rounded-lg'
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text
-                    style={{
-                      color: '#2066DF',
-                      fontFamily: 'SpaceGrotesk-SemiBold',
-                      fontSize: 14,
-                      marginRight: 4,
-                    }}
-                  >
+                <View className='flex-row items-center'>
+                  <Text className='text-accentBlue font-semibold text-sm mr-1'>
                     {isDescriptionExpanded ? 'Zwiń' : 'Rozwiń'}
                   </Text>
                   <Feather
@@ -505,9 +348,7 @@ export default function EventCard({ event }: EventCardProps) {
         <TouchableOpacity
           onPress={handleEventLinkPress}
           activeOpacity={0.8}
-          style={{
-            marginTop: 4,
-          }}
+          className='mt-1'
         >
           <LinearGradient
             colors={['rgba(32, 102, 223, 0.2)', 'rgba(236, 46, 129, 0.2)']}
@@ -518,34 +359,10 @@ export default function EventCard({ event }: EventCardProps) {
               padding: 1,
             }}
           >
-            <View
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                borderRadius: 13,
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.1)',
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
+            <View className='bg-black/40 rounded-[13px] py-2.5 px-5 items-center justify-center border border-white/10'>
+              <View className='flex-row items-center gap-2.5'>
                 <Feather name='arrow-right' size={18} color={'#FFFFFF'} />
-                <Text
-                  style={{
-                    color: '#FFFFFF',
-                    fontFamily: 'SpaceGrotesk-SemiBold',
-                    fontSize: 16,
-                    letterSpacing: 0.5,
-                  }}
-                >
+                <Text className='text-white font-semibold text-base tracking-[0.5px]'>
                   Odwiedź stronę
                 </Text>
               </View>

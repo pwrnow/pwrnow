@@ -64,10 +64,10 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
+    <SafeAreaView className='flex-1 bg-black'>
       <Header logoSize='large' />
       <ScrollView
-        contentContainerStyle={{ backgroundColor: '#000000' }}
+        className='bg-black'
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -79,7 +79,7 @@ export default function HomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ paddingTop: 6, backgroundColor: '#000000' }}>
+        <View className='pt-3 bg-black'>
           <CategorySelector
             categories={categories}
             selectedCategory={selectedCategory}

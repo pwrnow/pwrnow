@@ -16,16 +16,15 @@ export default function Header({ logoSize = 'medium', onBack }: HeaderProps) {
           <TouchableOpacity
             onPress={onBack}
             activeOpacity={0.7}
-            className='p-2 rounded-full'
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+            className='p-2 rounded-full bg-white/5'
           >
             <Feather name='arrow-left' size={22} color={'#FFFFFF'} />
           </TouchableOpacity>
         ) : (
-          <View style={{ width: 38 }} />
+          <View className='w-[38px]' />
         )}
 
-        <View style={{ width: 38 }} />
+        <View className='w-[38px]' />
       </View>
 
       {/* Centered logo */}

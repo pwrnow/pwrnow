@@ -48,8 +48,8 @@ export default function EventFeed({
   };
 
   const renderEmptyComponent = () => (
-    <View style={{ padding: 24 }}>
-      <Text style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
+    <View className='p-6'>
+      <Text className='text-white/70 text-center'>
         {selectedCategory === 'wszystkie'
           ? 'Aktualnie brak dostępnych wydarzeń.'
           : 'Brak wydarzeń w tej kategorii.'}
@@ -68,23 +68,14 @@ export default function EventFeed({
       keyExtractor={(item) => item.id}
       ListEmptyComponent={renderEmptyComponent}
       ItemSeparatorComponent={() => (
-        <View
-          style={{
-            height: 1,
-            backgroundColor: '#1F1F1F',
-            width: '100%',
-          }}
-        />
+        <View className='h-px bg-[#1F1F1F] w-full' />
       )}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
       scrollEnabled={scrollEnabled !== false}
-      contentContainerStyle={{
-        paddingTop: 8,
-        paddingBottom: 24,
-        backgroundColor: '#000000',
-      }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
+      className='bg-black'
       refreshControl={
         onRefresh ? (
           <RefreshControl

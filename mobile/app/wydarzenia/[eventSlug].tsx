@@ -39,7 +39,7 @@ export default function EventDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
+    <SafeAreaView className='flex-1 bg-black'>
       <Header onBack={() => router.replace('/')} />
       <ScrollView
         showsVerticalScrollIndicator={false}

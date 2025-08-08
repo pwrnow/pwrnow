@@ -115,23 +115,16 @@ export default function CategorySelector({
             <TouchableOpacity
               onPress={() => handlePress(category.slug)}
               activeOpacity={0.8}
-              className='mr-2 rounded-full border px-3 py-2'
-              style={{
-                borderColor: isActive ? '#2066DF' : '#1F1F1F',
-                backgroundColor: isActive
-                  ? 'rgba(32,102,223,0.12)'
-                  : 'rgba(255,255,255,0.03)',
-              }}
+              className={`mr-2 rounded-full border px-3 py-2 ${
+                isActive
+                  ? 'border-accentBlue bg-accentBlue/15'
+                  : 'border-[#1F1F1F] bg-white/5'
+              }`}
             >
               <Text
-                className={isActive ? 'text-white' : ''}
-                style={{
-                  color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.8)',
-                  fontFamily: isActive
-                    ? 'SpaceGrotesk-SemiBold'
-                    : 'SpaceGrotesk-Regular',
-                  letterSpacing: 0.2,
-                }}
+                className={`${
+                  isActive ? 'text-white font-semibold' : 'text-white/80'
+                } tracking-[0.2px]`}
               >
                 {category.name}
               </Text>
