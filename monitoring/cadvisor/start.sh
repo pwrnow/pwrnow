@@ -6,3 +6,4 @@ echo "Starting cAdvisor..."
 exec /usr/bin/cadvisor \
     -logtostderr \
     -port=8080
+
