@@ -7,6 +7,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { useColorScheme } from 'react-native';
 import Animated, {
   FadeInDown,
   LinearTransition,
@@ -25,6 +26,9 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, index = 0 }: EventCardProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const iconPrimary = isDark ? '#FFFFFF' : '#000000';
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
 
@@ -195,12 +199,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         .damping(18)
         .stiffness(160)}
       layout={LinearTransition.springify().damping(20).stiffness(180)}
-      className='mb-0 bg-black'
+      className='mb-0 bg-white dark:bg-black'
     >
       {/* Header: org + category */}
       <View className='px-4 pt-4 pb-3'>
         <View className='flex-row items-center gap-3'>
-          <View className='w-10 h-10 rounded-full overflow-hidden bg-white/10 border border-white/15 justify-center items-center'>
+          <View className='w-10 h-10 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center'>
             {event.organization.image_url ? (
               <Image
                 source={{ uri: event.organization.image_url }}
@@ -208,19 +212,19 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 resizeMode='cover'
               />
             ) : (
-              <Text className='text-white font-semibold text-sm'>
+              <Text className='text-black dark:text-white font-semibold text-sm'>
                 {getInitials(event.organization.name)}
               </Text>
             )}
           </View>
           <View className='flex-1'>
             <Text
-              className='text-white font-semibold text-sm leading-4'
+              className='text-black dark:text-white font-semibold text-sm leading-4'
               numberOfLines={1}
             >
               {event.organization.name}
             </Text>
-            <Text className='text-white/65 text-xs leading-4 mt-[1px]'>
+            <Text className='text-black/65 dark:text-white/65 text-xs leading-4 mt-[1px]'>
               {event.category.name}
             </Text>
           </View>
@@ -239,7 +243,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         <View>
           <TouchableOpacity onPress={handleEventLinkPress} activeOpacity={0.92}>
             <View
-              className='w-full bg-muted overflow-visible'
+              className='w-full overflow-visible bg-black/5 dark:bg-muted'
               style={{ aspectRatio: imageAspectRatio }}
             >
               <Image
@@ -259,7 +263,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {/* Title and Share */}
         <View className='flex-row items-start'>
           <Text
-            className='text-white font-semibold text-xl leading-6 flex-1 mr-3'
+            className='text-black dark:text-white font-semibold text-xl leading-6 flex-1 mr-3'
             numberOfLines={3}
           >
             {event.title}
@@ -277,17 +281,17 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {/* Meta chips under title */}
         <View className='flex-row flex-wrap gap-2 mb-1.5'>
           {/* Date range chip */}
-          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-white/5 border border-white/10'>
-            <Feather name='calendar' size={14} color={'#FFFFFF'} />
-            <Text className='text-white text-[13px] font-medium ml-1.5'>
+          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+            <Feather name='calendar' size={14} color={iconPrimary} />
+            <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
               {formatDateRangeShort(event.starts_at, event.ends_at)}
             </Text>
           </View>
 
           {/* Time chip */}
-          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-white/5 border border-white/10'>
-            <Feather name='clock' size={14} color={'#FFFFFF'} />
-            <Text className='text-white text-[13px] font-medium ml-1.5'>
+          <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+            <Feather name='clock' size={14} color={iconPrimary} />
+            <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
               {formatTimeRangeShort(event.starts_at, event.ends_at)}
             </Text>
           </View>
@@ -297,10 +301,10 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             <TouchableOpacity
               onPress={handleMapPress}
               activeOpacity={0.7}
-              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-white/5 border border-white/10 max-w-full'
+              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
             >
-              <Feather name='map-pin' size={14} color={'#FFFFFF'} />
-              <Text className='text-white text-[13px] font-medium ml-1.5'>
+              <Feather name='map-pin' size={14} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-[13px] font-medium ml-1.5'>
                 {event.location}
               </Text>
             </TouchableOpacity>
@@ -311,7 +315,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {event.description ? (
           <View className='mb-2'>
             <View className='relative'>
-              <Text className='text-white/90 text-[15px] leading-[22px] font-sans'>
+              <Text className='text-black/90 dark:text-white/90 text-[15px] leading-[22px] font-sans'>
                 {isDescriptionExpanded
                   ? event.description
                   : `${event.description.slice(0, 150)}${
@@ -322,7 +326,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               {!isDescriptionExpanded && event.description.length > 150 ? (
                 <LinearGradient
                   pointerEvents='none'
-                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,1)']}
+                  colors={
+                    isDark
+                      ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
+                      : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
+                  }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 1 }}
                   style={{
@@ -364,7 +372,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           className='mt-1'
         >
           <LinearGradient
-            colors={['rgba(32, 102, 223, 0.2)', 'rgba(236, 46, 129, 0.2)']}
+            colors={
+              isDark
+                ? ['rgba(32, 102, 223, 0.32)', 'rgba(236, 46, 129, 0.32)']
+                : ['rgba(32, 102, 223, 0.5)', 'rgba(236, 46, 129, 0.5)']
+            }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={{
@@ -372,10 +384,23 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               padding: 1,
             }}
           >
-            <View className='bg-black/40 rounded-[13px] py-2.5 px-5 items-center justify-center border border-white/10'>
+            <View
+              className='rounded-[13px] py-2.5 px-5 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
+              style={
+                isDark
+                  ? undefined
+                  : {
+                      shadowColor: '#000',
+                      shadowOpacity: 0.06,
+                      shadowRadius: 8,
+                      shadowOffset: { width: 0, height: 2 },
+                      elevation: 2,
+                    }
+              }
+            >
               <View className='flex-row items-center gap-2.5'>
-                <Feather name='arrow-right' size={18} color={'#FFFFFF'} />
-                <Text className='text-white font-semibold text-base tracking-[0.5px]'>
+                <Feather name='arrow-right' size={18} color={iconPrimary} />
+                <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
                   Odwiedź stronę
                 </Text>
               </View>

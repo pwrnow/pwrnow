@@ -5,6 +5,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   View,
+  useColorScheme,
 } from 'react-native';
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
@@ -26,6 +27,8 @@ export default function EventFeed({
   onScroll,
   scrollEnabled,
 }: EventFeedProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [refreshing, setRefreshing] = useState(false);
 
   // Handle refresh with haptic feedback and smooth animation
@@ -49,7 +52,7 @@ export default function EventFeed({
 
   const renderEmptyComponent = () => (
     <View className='p-6'>
-      <Text className='text-white/70 text-center'>
+      <Text className='text-black/70 dark:text-white/70 text-center'>
         {selectedCategory === 'wszystkie'
           ? 'Aktualnie brak dostępnych wydarzeń.'
           : 'Brak wydarzeń w tej kategorii.'}
@@ -68,22 +71,22 @@ export default function EventFeed({
       keyExtractor={(item) => item.id}
       ListEmptyComponent={renderEmptyComponent}
       ItemSeparatorComponent={() => (
-        <View className='h-px bg-[#1F1F1F] w-full' />
+        <View className='h-px w-full bg-black/10 dark:bg-[#1F1F1F]' />
       )}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
       scrollEnabled={scrollEnabled !== false}
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
-      className='bg-black'
+      className='bg-white dark:bg-black'
       refreshControl={
         onRefresh ? (
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={'#FFFFFF'}
+            tintColor={isDark ? '#FFFFFF' : '#000000'}
             title='Odświeżanie wydarzeń...'
-            titleColor={'#FFFFFF'}
+            titleColor={isDark ? '#FFFFFF' : '#000000'}
           />
         ) : undefined
       }

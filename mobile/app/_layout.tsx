@@ -4,12 +4,15 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { useColorScheme } from 'react-native';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
 
 export default function StackLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [loaded, error] = useFonts({
     'Righteous-Regular': require('../assets/fonts/Righteous-Regular.ttf'),
     'SpaceGrotesk-Regular': require('../assets/fonts/SpaceGrotesk-Regular.ttf'),
@@ -41,15 +44,15 @@ export default function StackLayout() {
   return (
     <>
       <StatusBar
-        style='light'
+        style={isDark ? 'light' : 'dark'}
         animated
         translucent
-        backgroundColor='rgba(0,0,0,0.1)'
+        backgroundColor={isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}
       />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#000000' },
+          contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
         }}
       />
     </>

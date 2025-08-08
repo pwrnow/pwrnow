@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { SafeAreaView, View, ScrollView, RefreshControl } from 'react-native';
+import {
+  SafeAreaView,
+  View,
+  ScrollView,
+  RefreshControl,
+  useColorScheme,
+} from 'react-native';
 import EventFeed from '../components/EventFeed';
 import { api } from '../lib/api';
 import { Event, Category } from '../types';
@@ -8,6 +14,8 @@ import CategorySelector from '../components/CategorySelector';
 import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [selectedCategory, setSelectedCategory] = useState('wszystkie');
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -64,22 +72,22 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className='flex-1 bg-black'>
+    <SafeAreaView className='flex-1 bg-white dark:bg-black'>
       <Header logoSize='large' />
       <ScrollView
-        className='bg-black'
+        className='bg-white dark:bg-black'
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={'#FFFFFF'}
+            tintColor={isDark ? '#FFFFFF' : '#000000'}
             title='Odświeżanie wydarzeń...'
-            titleColor={'#FFFFFF'}
+            titleColor={isDark ? '#FFFFFF' : '#000000'}
           />
         }
         showsVerticalScrollIndicator={false}
       >
-        <View className='pt-3 bg-black'>
+        <View className='pt-3 bg-white dark:bg-black'>
           <CategorySelector
             categories={categories}
             selectedCategory={selectedCategory}

@@ -118,12 +118,14 @@ export default function CategorySelector({
               className={`mr-2 rounded-full border px-3 py-2 ${
                 isActive
                   ? 'border-accentBlue bg-accentBlue/15'
-                  : 'border-[#1F1F1F] bg-white/5'
+                  : 'border-black/10 dark:border-[#1F1F1F] bg-black/5 dark:bg-white/5'
               }`}
             >
               <Text
                 className={`${
-                  isActive ? 'text-white font-semibold' : 'text-white/80'
+                  isActive
+                    ? 'text-black dark:text-white font-semibold'
+                    : 'text-black/80 dark:text-white/80'
                 } tracking-[0.2px]`}
               >
                 {category.name}
