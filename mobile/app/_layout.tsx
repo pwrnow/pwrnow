@@ -77,7 +77,8 @@ export default function StackLayout() {
             headerStyle: {
               backgroundColor: isDark ? '#000000' : '#FFFFFF',
             },
-            headerTintColor: isDark ? '#FFFFFF' : '#000000',
+            // Use a slightly off-white tint in dark mode so the back icon isn't pure white
+            headerTintColor: isDark ? '#E5E7EB' : '#000000',
 
             // headerRight: () => (
             //   <View
