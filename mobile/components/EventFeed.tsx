@@ -5,6 +5,7 @@ import {
   NativeSyntheticEvent,
   View,
   useColorScheme,
+  TouchableOpacity,
 } from 'react-native';
 import { useState } from 'react';
 import { Event } from '../types';
@@ -16,6 +17,7 @@ interface EventFeedProps {
   selectedCategory?: string;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrollEnabled?: boolean;
+  onClearCategory?: () => void;
 }
 
 export default function EventFeed({
@@ -23,18 +25,28 @@ export default function EventFeed({
   selectedCategory,
   onScroll,
   scrollEnabled,
+  onClearCategory,
 }: EventFeedProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [refreshing] = useState(false);
 
   const renderEmptyComponent = () => (
-    <View className='p-6'>
+    <View className='p-6 items-center'>
       <Text className='text-black/70 dark:text-white/70 text-center text-sm'>
         {selectedCategory === 'wszystkie'
           ? t('noEventsAll')
           : t('noEventsInCategory')}
       </Text>
+      {selectedCategory !== 'wszystkie' && onClearCategory ? (
+        <TouchableOpacity
+          onPress={onClearCategory}
+          activeOpacity={0.6}
+          className='mt-3'
+        >
+          <Text className='text-accentBlue text-sm'>{t('showAllEvents')}</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 

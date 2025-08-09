@@ -78,26 +78,26 @@ export default function StackLayout() {
             },
             headerTintColor: isDark ? '#FFFFFF' : '#000000',
 
-            headerRight: () => (
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-              >
-                <TouchableOpacity
-                  accessibilityLabel='Open profile'
-                  onPressIn={() => {
-                    Haptics.selectionAsync();
-                  }}
-                  onPress={() => {}}
-                  style={{ padding: 6, borderRadius: 9999 }}
-                >
-                  <Feather
-                    name='user'
-                    size={22}
-                    color={isDark ? '#FFFFFF' : '#000000'}
-                  />
-                </TouchableOpacity>
-              </View>
-            ),
+            // headerRight: () => (
+            //   <View
+            //     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            //   >
+            //     <TouchableOpacity
+            //       accessibilityLabel='Open profile'
+            //       onPressIn={() => {
+            //         Haptics.selectionAsync();
+            //       }}
+            //       onPress={() => {}}
+            //       style={{ padding: 6, borderRadius: 9999 }}
+            //     >
+            //       <Feather
+            //         name='user'
+            //         size={22}
+            //         color={isDark ? '#FFFFFF' : '#000000'}
+            //       />
+            //     </TouchableOpacity>
+            //   </View>
+            // ),
             contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
           }}
         />

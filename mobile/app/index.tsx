@@ -94,6 +94,7 @@ export default function HomeScreen() {
         <EventFeed
           events={filteredEvents}
           selectedCategory={selectedCategory}
+          onClearCategory={() => setSelectedCategory('wszystkie')}
           scrollEnabled={false}
         />
       </ScrollView>

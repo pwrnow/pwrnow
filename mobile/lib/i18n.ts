@@ -9,6 +9,7 @@ const translations: Record<string, TranslationMap> = {
     refreshingEvents: 'Refreshing events...',
     noEventsAll: 'No events are available right now.',
     noEventsInCategory: 'No events in this category.',
+    showAllEvents: 'Show all events',
     permissionDeniedTitle: 'Permission denied',
     permissionDeniedMessage:
       'The app needs access to your calendar to add the event.',
@@ -32,6 +33,7 @@ const translations: Record<string, TranslationMap> = {
     refreshingEvents: 'Odświeżanie wydarzeń...',
     noEventsAll: 'Aktualnie brak dostępnych wydarzeń.',
     noEventsInCategory: 'Brak wydarzeń w tej kategorii.',
+    showAllEvents: 'Pokaż wszystkie wydarzenia',
     permissionDeniedTitle: 'Brak uprawnień',
     permissionDeniedMessage:
       'Aplikacja potrzebuje dostępu do kalendarza, aby dodać wydarzenie.',
