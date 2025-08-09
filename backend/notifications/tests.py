@@ -29,8 +29,9 @@ class DeviceModelTest(TestCase):
 
         # Device older than 30 days should be inactive
         old_date = timezone.now() - timezone.timedelta(days=31)
-        self.device.last_active_at = old_date
-        self.device.save()
+        # Bypass auto_now by updating directly
+        Device.objects.filter(id=self.device.id).update(last_active_at=old_date)
+        self.device.refresh_from_db()
         self.assertFalse(self.device.is_active())
 
 

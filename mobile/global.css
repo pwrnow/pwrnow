@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global app styling: support light and dark via media */
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --muted: #f3f4f6; /* light gray */
+  --border: #e5e7eb; /* light border */
+  --accent-blue: #2066df;
+  --accent-pink: #ec2e81;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000000;
+    --foreground: #ffffff;
+    --muted: #111111;
+    --border: #1f1f1f;
+  }
+}
+
+/* NativeWind resets don't touch RN defaults; keep typography tight */
+body,
+#root,
+.app-root {
+  background-color: var(--background);
+  color: var(--foreground);
+}

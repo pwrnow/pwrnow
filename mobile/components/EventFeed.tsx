@@ -1,136 +1,63 @@
 import {
-  View,
   Text,
-  StyleSheet,
   FlatList,
-  useColorScheme,
-  RefreshControl,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  View,
+  useColorScheme,
 } from 'react-native';
 import { useState } from 'react';
-import * as Haptics from 'expo-haptics';
-import { Event, Category } from '../types';
+import { Event } from '../types';
 import EventCard from './EventCard';
-import CategorySelector from './CategorySelector';
-import { Colors } from '../constants/Colors';
+import { t } from '../lib/i18n';
 
 interface EventFeedProps {
   events: Event[];
-  categories: Category[];
-  selectedCategory: string;
-  onCategoryChange: (categorySlug: string) => void;
-  onRefresh?: () => Promise<void>;
+  selectedCategory?: string;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEnabled?: boolean;
 }
 
 export default function EventFeed({
   events,
-  categories,
   selectedCategory,
-  onCategoryChange,
-  onRefresh,
   onScroll,
+  scrollEnabled,
 }: EventFeedProps) {
-  const [refreshing, setRefreshing] = useState(false);
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const styles = createStyles(colors);
-
-  // Handle refresh with haptic feedback and smooth animation
-  const handleRefresh = async () => {
-    if (!onRefresh) return;
-
-    // Light haptic feedback when starting refresh
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    setRefreshing(true);
-    try {
-      await onRefresh();
-      // Success haptic feedback
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (error) {
-      // Silently fail
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // Filter events based on selected category
-  const filteredEvents =
-    selectedCategory === 'wszystkie'
-      ? events
-      : events.filter((event) => event.category.slug === selectedCategory);
+  const isDark = colorScheme === 'dark';
+  const [refreshing] = useState(false);
 
   const renderEmptyComponent = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>
+    <View className='p-6'>
+      <Text className='text-black/70 dark:text-white/70 text-center text-sm'>
         {selectedCategory === 'wszystkie'
-          ? 'Aktualnie brak dostępnych wydarzeń.'
-          : 'Brak wydarzeń w tej kategorii.'}
+          ? t('noEventsAll')
+          : t('noEventsInCategory')}
       </Text>
     </View>
   );
 
   const renderEventCard = ({ item, index }: { item: Event; index: number }) => (
-    <EventCard event={item} showCalendarHint={index === 0} />
-  );
-
-  const renderHeader = () => (
-    <CategorySelector
-      categories={categories}
-      selectedCategory={selectedCategory}
-      onCategoryChange={onCategoryChange}
-    />
+    <EventCard event={item} index={index} />
   );
 
   return (
     <FlatList
-      data={filteredEvents}
+      data={events}
       renderItem={renderEventCard}
       keyExtractor={(item) => item.id}
-      ListHeaderComponent={renderHeader}
       ListEmptyComponent={renderEmptyComponent}
+      ItemSeparatorComponent={() => (
+        <View className='h-px w-full bg-black/10 dark:bg-[#1F1F1F]' />
+      )}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}
       onScroll={onScroll}
-      scrollEventThrottle={16} // Standard throttle for smooth tracking
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary, colors.secondary]}
-          progressBackgroundColor={colors.background}
-          title='Odświeżanie wydarzeń...'
-          titleColor={colors.mutedForeground}
-          progressViewOffset={20}
-        />
-      }
+      scrollEventThrottle={16}
+      scrollEnabled={scrollEnabled !== false}
+      contentContainerStyle={{ paddingBottom: 24 }}
+      className='bg-white dark:bg-black'
+      refreshControl={undefined}
     />
   );
 }
-
-const createStyles = (colors: any) =>
-  StyleSheet.create({
-    container: {
-      paddingBottom: 40,
-      backgroundColor: colors.background,
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingVertical: 80,
-      paddingHorizontal: 40,
-      backgroundColor: colors.background,
-    },
-    emptyText: {
-      fontSize: 18,
-      color: colors.mutedForeground,
-      textAlign: 'center',
-      lineHeight: 28,
-      fontFamily: 'SpaceGrotesk-Medium',
-      opacity: 0.8,
-    },
-  });

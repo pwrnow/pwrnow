@@ -4,6 +4,7 @@ import {
   pushNotificationService,
   type NotificationData,
 } from '../lib/push-notification-service';
+import { deviceLocaleTag } from '../lib/i18n';
 
 /**
  * React hook for managing push notifications
@@ -33,7 +34,9 @@ export function usePushNotifications() {
         setExpoPushToken(token);
 
         // Register device with backend
-        const registered = await pushNotificationService.registerDevice(token);
+        const registered = await pushNotificationService.registerDevice(token, {
+          preferredLanguage: deviceLocaleTag,
+        });
         setIsRegistered(registered);
       }
 

@@ -21,6 +21,10 @@ def send_discord_notification(event_id):
     from .models import Event
 
     try:
+        # Suppress discord notifications if requested (e.g., during import)
+        if getattr(settings, "SUPPRESS_NOTIFICATIONS", False) or getattr(settings, "SUPPRESS_DISCORD_NOTIFICATIONS", False):
+            logger.info("Discord notifications suppressed by settings; skipping")
+            return
         # Get the event
         event = Event.objects.select_related('category', 'organization').prefetch_related('tags').get(id=event_id)
 
@@ -37,9 +41,6 @@ def send_discord_notification(event_id):
             "color": 0x00ff00,  # Green color
             "fields": [],
             "timestamp": event.created_at.isoformat(),
-            "footer": {
-                "text": "PwrNow Events"
-            }
         }
 
         # Add event image if available

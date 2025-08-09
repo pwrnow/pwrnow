@@ -1,105 +1,134 @@
-import { useState, useEffect, useRef } from 'react';
-import type { ColorSchemeName } from 'react-native';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Linking,
   Image,
-  useColorScheme,
-  Platform,
-  LayoutAnimation,
   Alert,
-  Animated,
-  Easing,
 } from 'react-native';
+import { useColorScheme } from 'react-native';
+import Animated, {
+  FadeInDown,
+  LinearTransition,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withSequence,
+  withRepeat,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import * as Calendar from 'expo-calendar';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
+import * as Calendar from 'expo-calendar';
 import { Event } from '../types';
-import { Colors } from '../constants/Colors';
 import { config } from '../lib/config';
+import { t, deviceLocaleTag } from '../lib/i18n';
 
 interface EventCardProps {
   event: Event;
-  showCalendarHint?: boolean;
+  index?: number;
 }
 
-export default function EventCard({
-  event,
-  showCalendarHint = false,
-}: EventCardProps) {
+export default function EventCard({ event, index = 0 }: EventCardProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const iconPrimary = isDark ? '#FFFFFF' : '#000000';
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateYAnim = useRef(new Animated.Value(30)).current;
-
+  // Animated fade for the description gradient overlay (keeps fade when collapsed)
+  const gradientOpacity = useSharedValue(1);
+  // CTA button animations
+  const ctaScale = useSharedValue(1);
+  const ctaBreath = useSharedValue(0);
+  const ringProgress = useSharedValue(0);
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-      easing: Easing.out(Easing.cubic),
-    }).start();
-    Animated.timing(translateYAnim, {
-      toValue: 0,
-      duration: 500,
-      useNativeDriver: true,
-      easing: Easing.out(Easing.cubic),
-    }).start();
-  }, [fadeAnim, translateYAnim]);
-
-  // Simplified layout animation
-  const animateLayout = () => {
-    LayoutAnimation.configureNext({
-      duration: 300,
-      create: { type: LayoutAnimation.Types.easeInEaseOut },
-      update: { type: LayoutAnimation.Types.easeInEaseOut },
+    gradientOpacity.value = withTiming(isDescriptionExpanded ? 0 : 1, {
+      duration: 200,
     });
+  }, [isDescriptionExpanded, gradientOpacity]);
+
+  // Subtle breathing animation for CTA to increase emotional engagement
+  useEffect(() => {
+    ctaBreath.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1800 }),
+        withTiming(0, { duration: 1800 })
+      ),
+      -1,
+      true
+    );
+  }, [ctaBreath]);
+
+  const animatedGradientStyle = useAnimatedStyle(() => ({
+    opacity: gradientOpacity.value,
+  }));
+
+  const ctaAnimatedStyle = useAnimatedStyle(() => {
+    const scale = ctaScale.value * (1 + 0.01 * ctaBreath.value);
+    return {
+      transform: [{ scale }],
+    };
+  });
+
+  const pulseRingStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        ringProgress.value,
+        [0, 1],
+        [0.15, 0],
+        Extrapolation.CLAMP
+      ),
+      transform: [
+        {
+          scale: interpolate(
+            ringProgress.value,
+            [0, 1],
+            [1, 1.3],
+            Extrapolation.CLAMP
+          ),
+        },
+      ],
+    };
+  });
+
+  // Mirror the website behavior: only treat 1:1 as square; otherwise crop to a 16:9 frame
+  const getAspectRatio = (ratio?: string | null): number => {
+    return ratio === '1:1' ? 1 : 16 / 9;
   };
+
+  const imageAspectRatio = getAspectRatio(event.aspect_ratio);
 
   const handleDescriptionToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    animateLayout();
     setIsDescriptionExpanded(!isDescriptionExpanded);
   };
 
-  useEffect(() => {
-    if (showCalendarHint) {
-      setTimeout(() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }, 1000);
-    }
-  }, [showCalendarHint]);
-
   const handleAddToCalendar = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
     try {
-      const { status } = await Calendar.getCalendarPermissionsAsync();
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+      // Check/request permissions
+      let { status } = await Calendar.getCalendarPermissionsAsync();
       if (status !== 'granted') {
-        const { status: newStatus } =
-          await Calendar.requestCalendarPermissionsAsync();
-
-        if (newStatus !== 'granted') {
+        const req = await Calendar.requestCalendarPermissionsAsync();
+        status = req.status;
+        if (status !== 'granted') {
           await Haptics.notificationAsync(
             Haptics.NotificationFeedbackType.Error
           );
           Alert.alert(
-            'Brak uprawnień',
-            'Aplikacja potrzebuje dostępu do kalendarza, aby dodać wydarzenie.',
+            t('permissionDeniedTitle'),
+            t('permissionDeniedMessage'),
             [
-              { text: 'Anuluj', style: 'cancel' },
-              { text: 'Ustawienia', onPress: () => Linking.openSettings() },
+              { text: t('cancel'), style: 'cancel' },
+              { text: t('settings'), onPress: () => Linking.openSettings() },
             ]
           );
           return;
@@ -109,562 +138,449 @@ export default function EventCard({
       const startsAt = new Date(event.starts_at);
       const endsAt = new Date(event.ends_at);
 
-      const eventData = {
+      const result = await Calendar.createEventInCalendarAsync({
         title: event.title,
         startDate: startsAt,
         endDate: endsAt,
-        location: event.location || '',
-        notes: event.description || '',
-      };
+        location: event.location ?? '',
+        notes: event.description ?? '',
+        url: event.url || `${config.shareBaseUrl}/${event.slug}`,
+      });
 
-      const result = await Calendar.createEventInCalendarAsync(eventData);
-
-      if (result.action === Calendar.CalendarDialogResultActions.saved) {
+      if (result?.action === Calendar.CalendarDialogResultActions.saved) {
         await Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Success
         );
         Alert.alert(
-          'Sukces!',
-          `Wydarzenie "${event.title}" zostało dodane do kalendarza.`,
-          [{ text: 'OK' }]
+          t('successTitle'),
+          t('eventAddedToCalendar', { title: event.title })
         );
       } else if (
-        result.action === Calendar.CalendarDialogResultActions.canceled
+        result?.action === Calendar.CalendarDialogResultActions.canceled
       ) {
         await Haptics.selectionAsync();
       }
     } catch (error) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(
-        'Błąd',
-        'Nie udało się otworzyć kalendarza. Spróbuj ponownie.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert(t('errorTitle'), t('calendarOpenFailed'));
     }
   };
 
   const handleEventLinkPress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
+    await Linking.openURL(url);
+  };
+
+  // Dedicated CTA handler without extra haptics (we trigger haptics on press-in)
+  const handleVisitPagePress = async () => {
+    const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
+    await Linking.openURL(url);
+  };
+
+  const handleCtaPressIn = async () => {
+    ctaScale.value = withSpring(0.96, { damping: 14, stiffness: 300 });
+    ringProgress.value = 0;
+    ringProgress.value = withTiming(1, { duration: 650 });
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (event.url) {
-      Linking.openURL(event.url);
-    }
+  };
+
+  const handleCtaPressOut = () => {
+    ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
   };
 
   const handleMapPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (event.location) {
-      const encodedLocation = encodeURIComponent(event.location);
-
-      const urls = Platform.select({
-        ios: {
-          primary: `maps://maps.apple.com/?q=${encodedLocation}`,
-          fallback: `http://maps.apple.com/?q=${encodedLocation}`,
-        },
-        android: {
-          primary: `geo:0,0?q=${encodedLocation}`,
-          fallback: `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
-        },
-      });
-
-      if (!urls) return;
-
-      const canOpenPrimary = await Linking.canOpenURL(urls.primary);
-      Linking.openURL(canOpenPrimary ? urls.primary : urls.fallback);
-    }
+    const url = `https://maps.apple.com/?q=${encodeURIComponent(
+      event.location || ''
+    )}`;
+    await Linking.openURL(url);
   };
 
-  const startsAt = new Date(event.starts_at);
-  const endsAt = new Date(event.ends_at);
+  const handleShare = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const shareUrl = `${config.shareBaseUrl}/${event.slug}`;
+    const shareText = `${event.title}\n\n${event.description || ''}\n\n${t(
+      'moreInfo'
+    )}: ${shareUrl}`;
 
-  const isEventToday = (() => {
-    const eventDate = startsAt;
-    const today = new Date();
-    return (
-      eventDate.getDate() === today.getDate() &&
-      eventDate.getMonth() === today.getMonth() &&
-      eventDate.getFullYear() === today.getFullYear()
-    );
-  })();
-
-  // Format date and time
-  const dateString = startsAt.toLocaleDateString('pl-PL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-
-  const timeString = `${startsAt.toLocaleTimeString('pl-PL', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })} - ${endsAt.toLocaleTimeString('pl-PL', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })}`;
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(shareUrl, {
+        mimeType: 'text/plain',
+        dialogTitle: t('shareEvent'),
+      });
+    } else {
+      Alert.alert(t('share'), shareText);
+    }
+  };
 
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map((part) => part[0])
-      .slice(0, 2)
+      .map((word) => word.charAt(0))
       .join('')
-      .toUpperCase();
+      .toUpperCase()
+      .slice(0, 2);
   };
 
-  // Set image loading to false when component mounts
-  useEffect(() => {
-    setIsImageLoading(false);
-  }, []);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const locale = deviceLocaleTag;
+    return date.toLocaleDateString(locale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
-  const styles = createStyles(colors, colorScheme);
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const locale = deviceLocaleTag;
+    return date.toLocaleTimeString(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const isToday = (dateString: string) => {
+    const today = new Date();
+    const eventDate = new Date(dateString);
+    return (
+      today.getDate() === eventDate.getDate() &&
+      today.getMonth() === eventDate.getMonth() &&
+      today.getFullYear() === eventDate.getFullYear()
+    );
+  };
+
+  const formatDateRangeShort = (startString: string, endString: string) => {
+    const startDate = new Date(startString);
+    const endDate = new Date(endString);
+    const now = new Date();
+
+    const sameDay =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getDate() === endDate.getDate();
+
+    const sameMonthAndYear =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth() === endDate.getMonth();
+
+    const shouldShowYear =
+      startDate.getFullYear() !== now.getFullYear() ||
+      endDate.getFullYear() !== now.getFullYear() ||
+      startDate.getFullYear() !== endDate.getFullYear();
+
+    const locale = deviceLocaleTag;
+    const monthLong = (d: Date) =>
+      d.toLocaleDateString(locale, {
+        month: 'long',
+      });
+    const day = (d: Date) => d.getDate();
+
+    if (sameDay) {
+      return `${day(startDate)} ${monthLong(startDate)}$${
+        shouldShowYear ? ` ${startDate.getFullYear()}` : ''
+      }`.replace('$', '');
+    }
+
+    if (sameMonthAndYear) {
+      return `${day(startDate)}–${day(endDate)} ${monthLong(startDate)}$${
+        shouldShowYear ? ` ${startDate.getFullYear()}` : ''
+      }`.replace('$', '');
+    }
+
+    const startYearPart = shouldShowYear ? ` ${startDate.getFullYear()}` : '';
+    const endYearPart = shouldShowYear ? ` ${endDate.getFullYear()}` : '';
+    return `${day(startDate)} ${monthLong(startDate)}${startYearPart}–${day(
+      endDate
+    )} ${monthLong(endDate)}${endYearPart}`;
+  };
+
+  const formatTimeRangeShort = (startString: string, endString: string) => {
+    const startDate = new Date(startString);
+    const endDate = new Date(endString);
+
+    const locale = deviceLocaleTag;
+    const time = (d: Date) =>
+      d.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+    return `${time(startDate)}–${time(endDate)}`;
+  };
 
   return (
     <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: translateYAnim }],
-        },
-      ]}
+      entering={FadeInDown.duration(420)
+        .delay(Math.min(index, 30) * 45)
+        .springify()
+        .damping(18)
+        .stiffness(160)}
+      layout={LinearTransition.springify().damping(20).stiffness(180)}
+      className='mb-0 bg-white dark:bg-black'
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.avatarContainer}>
-            {event.organization?.image_url ? (
+      {/* Header: org + category */}
+      <View className='px-3 pt-4 pb-3'>
+        <View className='flex-row items-center gap-3'>
+          <View className='w-10 h-10 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center'>
+            {event.organization.image_url ? (
               <Image
                 source={{ uri: event.organization.image_url }}
-                style={styles.avatar}
+                className='w-full h-full'
+                resizeMode='cover'
               />
             ) : (
-              <LinearGradient
-                colors={[colors.primary + '33', colors.secondary + '33']}
-                style={styles.avatar}
-              >
-                <Text style={styles.avatarText}>
-                  {getInitials(event.organization.name)}
-                </Text>
-              </LinearGradient>
+              <Text className='text-black dark:text-white font-semibold text-sm'>
+                {getInitials(event.organization.name)}
+              </Text>
             )}
           </View>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.organizationName} numberOfLines={1}>
+          <View className='flex-1'>
+            <Text
+              className='text-black dark:text-white font-semibold text-base leading-5'
+              numberOfLines={1}
+            >
               {event.organization.name}
             </Text>
-            <Text style={styles.categoryText}>{event.category.name}</Text>
+            <Text className='text-black/65 dark:text-white/65 text-xs leading-4 mt-[1px]'>
+              {event.category.name}
+            </Text>
           </View>
-        </View>
-        <View style={styles.badgesContainer}>
-          {isEventToday ? (
-            <View style={[styles.badge, styles.todayBadge]}>
-              <View style={styles.badgeIconContainer}>
-                <Feather name='zap' size={12} color={colors.accent} />
-              </View>
-              <Text style={[styles.badgeText, styles.todayBadgeText]}>
-                Dziś!
+          {event.is_new ? (
+            <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
+              <Text className='text-accentPink text-xs font-semibold tracking-[0.5px]'>
+                {t('newTag')}
               </Text>
             </View>
-          ) : (
-            event.is_new && (
-              <View style={[styles.badge, styles.newBadge]}>
-                <View style={styles.badgeIconContainer}>
-                  <Feather name='award' size={12} color={colors.primary} />
-                </View>
-                <Text style={[styles.badgeText, styles.newBadgeText]}>
-                  Nowe
-                </Text>
-              </View>
-            )
-          )}
+          ) : null}
         </View>
       </View>
 
-      {/* Event Image */}
-      <View
-        style={[
-          styles.imageContainer,
-          {
-            aspectRatio: event.aspect_ratio === '1:1' ? 1 : 16 / 9,
-            width: '100%',
-          },
-        ]}
-      >
-        <Image
-          source={{
-            uri: event.image_url || 'https://via.placeholder.com/800x600',
-          }}
-          style={[
-            styles.eventImage,
-            { width: '100%', height: '100%', position: 'absolute' },
-          ]}
-          resizeMode='cover'
-          onLoadEnd={() => setIsImageLoading(false)}
-        />
-        {isImageLoading && (
-          <View
-            style={{
-              ...StyleSheet.absoluteFillObject,
-              backgroundColor: colors.muted,
-            }}
-          />
-        )}
-      </View>
+      {/* Image */}
+      {event.image_url ? (
+        <View>
+          <TouchableOpacity onPress={handleEventLinkPress} activeOpacity={0.92}>
+            <View
+              className='w-full overflow-hidden bg-black/5 dark:bg-muted'
+              style={{ aspectRatio: imageAspectRatio }}
+            >
+              <Image
+                source={{ uri: event.image_url }}
+                onLoadStart={() => setIsImageLoading(true)}
+                onLoadEnd={() => setIsImageLoading(false)}
+                className='w-full h-full'
+                resizeMode='cover'
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       {/* Content */}
-      <View style={styles.content}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{event.title}</Text>
-          {/* Share Button */}
-          <TouchableOpacity
-            onPress={async () => {
-              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              const isAvailable = await Sharing.isAvailableAsync();
-              if (!isAvailable) {
-                Alert.alert(
-                  'Udostępnianie niedostępne',
-                  'Funkcja udostępniania nie jest dostępna na tym urządzeniu.'
-                );
-                return;
-              }
-
-              const shareUrl = `${config.shareBaseUrl}/${event.slug}`;
-
-              try {
-                await Sharing.shareAsync(shareUrl, {
-                  dialogTitle: 'Udostępnij wydarzenie',
-                });
-              } catch (e) {
-                Alert.alert('Błąd', 'Nie udało się udostępnić wydarzenia.');
-              }
-            }}
-            style={styles.shareButton}
-            accessibilityLabel='Udostępnij wydarzenie'
+      <View className='px-3 pt-4 pb-5'>
+        {/* Title and Share */}
+        <View className='flex-row items-start'>
+          <Text
+            className='text-black dark:text-white font-semibold text-2xl leading-7 flex-1 mr-3'
+            numberOfLines={3}
           >
-            <Feather name='share' size={20} color={colors.primary} />
+            {event.title}
+          </Text>
+          <TouchableOpacity
+            onPress={handleShare}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}
+            className='bg-accentPink/12 border border-accentPink/25 rounded-lg p-2.5'
+          >
+            <Feather name='share-2' size={18} color={'#EC2E81'} />
           </TouchableOpacity>
         </View>
 
-        {/* Event Details */}
-        <View style={styles.detailsContainer}>
-          <TouchableOpacity
-            style={styles.detailRow}
-            onPress={handleAddToCalendar}
-          >
-            <View style={[styles.iconContainer, styles.dateIcon]}>
-              <Feather name='calendar' size={18} color={colors.blue} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.detailText}>{dateString}</Text>
-              {showCalendarHint && (
-                <Text style={styles.calendarHint}>
-                  Stuknij, aby dodać do kalendarza
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.detailRow}
-            onPress={handleAddToCalendar}
-          >
-            <View style={[styles.iconContainer, styles.timeIcon]}>
-              <Feather name='clock' size={18} color={colors.purple} />
-            </View>
-            <Text style={styles.detailText}>{timeString}</Text>
-          </TouchableOpacity>
-
-          {event.location && (
-            <View style={styles.detailRow}>
-              <View style={[styles.iconContainer, styles.locationIcon]}>
-                <Feather name='map-pin' size={22} color={colors.accent} />
-              </View>
-              <TouchableOpacity
-                onPress={handleMapPress}
-                style={styles.locationButton}
-              >
-                <Text style={styles.locationText}>{event.location}</Text>
-                <Feather name='external-link' size={18} color={'#14181f'} />
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        {/* Description */}
-        {event.description && (
-          <View style={styles.descriptionContainer}>
-            <Text
-              style={styles.description}
-              numberOfLines={isDescriptionExpanded ? undefined : 3}
+        {/* Meta chips under title */}
+        <View className='gap-2 mb-1.5'>
+          <View className='flex-row gap-2'>
+            {/* Date range chip */}
+            <TouchableOpacity
+              onPress={handleAddToCalendar}
+              activeOpacity={0.7}
+              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
-              {event.description}
-            </Text>
-            {event.description.length > 150 && (
-              <TouchableOpacity onPress={handleDescriptionToggle}>
-                <Text style={styles.expandButton}>
-                  {isDescriptionExpanded ? 'Pokaż mniej' : 'Pokaż więcej'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+              <Feather name='calendar' size={12} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                {formatDateRangeShort(event.starts_at, event.ends_at)}
+              </Text>
+            </TouchableOpacity>
 
-        {/* Action Button */}
-        {event.url && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleEventLinkPress}
-          >
-            <Feather name='external-link' size={16} color='white' />
-            <Text style={styles.actionButtonText}>
-              Odwiedź stronę wydarzenia
-            </Text>
-          </TouchableOpacity>
-        )}
+            {/* Time chip */}
+            <TouchableOpacity
+              onPress={handleAddToCalendar}
+              activeOpacity={0.7}
+              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
+            >
+              <Feather name='clock' size={12} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                {formatTimeRangeShort(event.starts_at, event.ends_at)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Location chip on its own row */}
+          {event.location ? (
+            <TouchableOpacity
+              onPress={handleMapPress}
+              activeOpacity={0.7}
+              className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
+            >
+              <Feather name='map-pin' size={12} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                {event.location}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Description (truncated with expand/collapse + fade) */}
+        {event.description ? (
+          <View className='mb-2'>
+            <View className='relative'>
+              <Animated.View
+                layout={LinearTransition.springify().damping(22).stiffness(200)}
+              >
+                <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
+                  {isDescriptionExpanded
+                    ? event.description
+                    : `${event.description.slice(0, 150)}${
+                        event.description.length > 150 ? '...' : ''
+                      }`}
+                </Text>
+              </Animated.View>
+
+              {event.description.length > 150 ? (
+                <Animated.View
+                  pointerEvents='none'
+                  style={[
+                    {
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: 24,
+                    },
+                    animatedGradientStyle,
+                  ]}
+                >
+                  <LinearGradient
+                    pointerEvents='none'
+                    colors={
+                      isDark
+                        ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
+                        : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                    }}
+                  />
+                </Animated.View>
+              ) : null}
+            </View>
+
+            {event.description.length > 150 ? (
+              <TouchableOpacity
+                onPress={handleDescriptionToggle}
+                activeOpacity={0.7}
+                className='mt-1 self-start py-1 px-1.5 rounded-lg'
+              >
+                <View className='flex-row items-center'>
+                  <Text className='text-accentBlue font-semibold text-sm mr-1'>
+                    {isDescriptionExpanded ? t('collapse') : t('expand')}
+                  </Text>
+                  <Feather
+                    name={isDescriptionExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color={'#2066DF'}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Improved CTA Button */}
+        <TouchableOpacity
+          onPress={handleVisitPagePress}
+          onPressIn={handleCtaPressIn}
+          onPressOut={handleCtaPressOut}
+          activeOpacity={0.8}
+          className='relative mt-1'
+        >
+          {/* Pulsing glow ring on tap */}
+          <Animated.View
+            pointerEvents='none'
+            style={[
+              {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+                borderRadius: 16,
+                zIndex: 1,
+                backgroundColor: isDark
+                  ? 'rgba(32, 102, 223, 0.20)'
+                  : 'rgba(236, 46, 129, 0.20)',
+              },
+              pulseRingStyle,
+            ]}
+          />
+
+          <Animated.View style={ctaAnimatedStyle}>
+            <LinearGradient
+              colors={
+                isDark
+                  ? ['rgba(32, 102, 223, 0.32)', 'rgba(236, 46, 129, 0.32)']
+                  : ['rgba(32, 102, 223, 0.5)', 'rgba(236, 46, 129, 0.5)']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                borderRadius: 14,
+                padding: 1,
+              }}
+            >
+              <View
+                className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
+                style={
+                  isDark
+                    ? undefined
+                    : {
+                        shadowColor: '#000',
+                        shadowOpacity: 0.06,
+                        shadowRadius: 8,
+                        shadowOffset: { width: 0, height: 2 },
+                        elevation: 2,
+                      }
+                }
+              >
+                <View className='flex-row items-center gap-2.5'>
+                  <Feather name='arrow-right' size={18} color={iconPrimary} />
+                  <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
+                    {t('visitPage')}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        </TouchableOpacity>
       </View>
     </Animated.View>
   );
 }
-
-const createStyles = (colors: any, colorScheme: ColorSchemeName) =>
-  StyleSheet.create({
-    container: {
-      backgroundColor: colors.card,
-      marginBottom: 24,
-      borderRadius: 12,
-      overflow: 'hidden',
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 24,
-      elevation: 12,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      backgroundColor: colors.card,
-    },
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-      gap: 12,
-    },
-    headerTextContainer: {
-      flexDirection: 'column',
-      flex: 1,
-    },
-    avatarContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      overflow: 'hidden',
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    avatar: {
-      width: 40,
-      height: 40,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    avatarText: {
-      color: 'white',
-      fontSize: 18,
-      fontWeight: '700',
-      fontFamily: 'SpaceGrotesk-Bold',
-    },
-    organizationName: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: colors.text,
-      fontFamily: 'SpaceGrotesk-Bold',
-    },
-    categoryText: {
-      fontSize: 12,
-      color: colors.mutedForeground,
-      fontFamily: 'SpaceGrotesk-Regular',
-    },
-    imageContainer: {
-      position: 'relative',
-      width: '100%',
-      // height is set by aspectRatio inline
-      backgroundColor: colors.muted,
-      overflow: 'hidden',
-    },
-    eventImage: {
-      // width and height are set inline
-      // backgroundColor: colors.muted, // moved to imageContainer
-    },
-    // Improved badge styles
-    badgesContainer: {
-      flexDirection: 'row',
-      gap: 6,
-    },
-    badge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      borderRadius: 16,
-      gap: 4,
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    newBadge: {
-      backgroundColor: colors.primary + '15',
-      borderWidth: 1,
-      borderColor: colors.primary + '30',
-    },
-    todayBadge: {
-      backgroundColor: colors.accent + '15',
-      borderWidth: 1,
-      borderColor: colors.accent + '30',
-    },
-
-    badgeIconContainer: {
-      width: 16,
-      height: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    badgeText: {
-      fontSize: 11,
-      fontWeight: '600',
-      fontFamily: 'SpaceGrotesk-SemiBold',
-    },
-    newBadgeText: {
-      color: colors.primary,
-    },
-    todayBadgeText: {
-      color: colors.accent,
-    },
-
-    content: {
-      padding: 20,
-    },
-    titleContainer: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-      marginBottom: 16,
-      gap: 12,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: '700',
-      color: colors.text,
-      lineHeight: 32,
-      fontFamily: 'Righteous-Regular',
-      flex: 1,
-    },
-    detailsContainer: {
-      gap: 12,
-      marginBottom: 16,
-    },
-    detailRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    iconContainer: {
-      width: 36,
-      height: 36,
-      borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    dateIcon: {
-      backgroundColor: colorScheme === 'dark' ? '#172554' : '#dbeafe', // blue-950 for dark, blue-100 for light
-    },
-    timeIcon: {
-      backgroundColor: colorScheme === 'dark' ? '#581c87' : '#f3e8ff', // purple-950 for dark, purple-100 for light
-    },
-    locationIcon: {
-      backgroundColor: colorScheme === 'dark' ? '#450a0a' : '#fee2e2', // red-950 for dark, red-100 for light
-    },
-    detailText: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: colors.text,
-      fontFamily: 'SpaceGrotesk-Medium',
-      flex: 1,
-    },
-    locationButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      flex: 1,
-    },
-    locationText: {
-      fontSize: 17,
-      fontWeight: '600',
-      color: '#14181f', // black (web --foreground)
-      fontFamily: 'SpaceGrotesk-SemiBold',
-    },
-    calendarHint: {
-      fontSize: 12,
-      color: colors.mutedForeground,
-      fontFamily: 'SpaceGrotesk-Regular',
-      marginTop: 2,
-      marginLeft: 0,
-      backgroundColor: 'transparent',
-      fontStyle: 'normal',
-      paddingHorizontal: 0,
-      paddingVertical: 0,
-    },
-    descriptionContainer: {
-      marginBottom: 20,
-    },
-    description: {
-      fontSize: 16,
-      lineHeight: 24,
-      color: colors.mutedForeground,
-      marginBottom: 8,
-      fontFamily: 'SpaceGrotesk-Regular',
-    },
-    expandButton: {
-      fontSize: 14,
-      color: colors.primary,
-      fontWeight: '600',
-      fontFamily: 'SpaceGrotesk-SemiBold',
-      textDecorationLine: 'underline',
-    },
-    actionButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: colors.primary,
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      borderRadius: 12,
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 6,
-    },
-    actionButtonText: {
-      color: 'white',
-      fontSize: 16,
-      fontWeight: '600',
-      fontFamily: 'SpaceGrotesk-SemiBold',
-    },
-    shareButton: {
-      padding: 8,
-      borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.muted + '40',
-    },
-  });

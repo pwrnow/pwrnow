@@ -10,6 +10,7 @@ class DeviceAdmin(admin.ModelAdmin):
     list_display = [
         'device_name',
         'platform',
+        'preferred_language',
         'notifications_enabled',
         'is_active_display',
         'created_at',
@@ -18,6 +19,7 @@ class DeviceAdmin(admin.ModelAdmin):
     list_filter = [
         'platform',
         'notifications_enabled',
+        'preferred_language',
         'created_at',
         'last_active_at',
     ]
@@ -47,6 +49,7 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Preferences', {
             'fields': (
                 'notifications_enabled',
+                'preferred_language',
             )
         }),
         ('Timestamps', {

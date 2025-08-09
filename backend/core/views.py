@@ -21,6 +21,7 @@ from .authentication import (
     OrganizationAuthenticationMixin
 )
 from .tasks import send_discord_notification
+from django.conf import settings
 from .cache import cache_categories, cache_public_events
 
 
@@ -278,8 +279,9 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         if serializer.is_valid():
             event = serializer.save()
 
-            # Send Discord notification asynchronously
-            send_discord_notification.delay(str(event.id))
+            # Send Discord notification unless suppressed via settings
+            if not (getattr(settings, "SUPPRESS_NOTIFICATIONS", False) or getattr(settings, "SUPPRESS_DISCORD_NOTIFICATIONS", False)):
+                send_discord_notification.delay(str(event.id))
 
             # Return the created event using the read serializer
             read_serializer = EventSerializer(event, context={'request': request})
