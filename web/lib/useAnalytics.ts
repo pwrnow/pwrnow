@@ -36,12 +36,12 @@ export const useAnalytics = () => {
       if (typeof window !== 'undefined') {
         try {
           if (props) {
-            posthog.capture(eventName, props as Record<string, any>);
+            posthog.capture(eventName, props as EventProps);
           } else {
             posthog.capture(eventName);
           }
-        } catch (_) {
-          // no-op if PostHog not initialized
+        } catch (error) {
+          console.error('Error tracking event with PostHog:', error);
         }
       }
     },
