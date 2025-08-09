@@ -10,17 +10,8 @@ import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 import * as Haptics from 'expo-haptics';
 import { PosthogProvider } from '../providers/posthog';
+import { QueryProvider } from '../providers/query';
 import StartupAnimation from '../components/StartupAnimation';
-
-import { onlineManager } from '@tanstack/react-query';
-import * as Network from 'expo-network';
-
-onlineManager.setEventListener((setOnline) => {
-  const eventSubscription = Network.addNetworkStateListener((state) => {
-    setOnline(!!state.isConnected);
-  });
-  return eventSubscription.remove;
-});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -60,55 +51,57 @@ export default function StackLayout() {
   }
 
   return (
-    <PosthogProvider>
-      {/* Startup overlay animation shown briefly after splash */}
-      <StartupAnimation
-        visible={showStartup}
-        onEnd={() => setShowStartup(false)}
-      />
-      <StatusBar
-        style={isDark ? 'light' : 'dark'}
-        animated
-        translucent={false}
-        backgroundColor={isDark ? '#000000' : '#FFFFFF'}
-      />
-      <Stack
-        screenOptions={{
-          headerShown: true,
-          headerBackTitle: '',
-          headerBackButtonDisplayMode: 'minimal',
-          headerTitle: () => <Logo size='medium' />,
-          headerTitleAlign: 'left',
-          headerTransparent: false,
-          headerShadowVisible: true,
-          headerStyle: {
-            backgroundColor: isDark ? '#000000' : '#FFFFFF',
-          },
-          headerTintColor: isDark ? '#FFFFFF' : '#000000',
+    <QueryProvider>
+      <PosthogProvider>
+        {/* Startup overlay animation shown briefly after splash */}
+        <StartupAnimation
+          visible={showStartup}
+          onEnd={() => setShowStartup(false)}
+        />
+        <StatusBar
+          style={isDark ? 'light' : 'dark'}
+          animated
+          translucent={false}
+          backgroundColor={isDark ? '#000000' : '#FFFFFF'}
+        />
+        <Stack
+          screenOptions={{
+            headerShown: true,
+            headerBackTitle: '',
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitle: () => <Logo size='medium' />,
+            headerTitleAlign: 'left',
+            headerTransparent: false,
+            headerShadowVisible: true,
+            headerStyle: {
+              backgroundColor: isDark ? '#000000' : '#FFFFFF',
+            },
+            headerTintColor: isDark ? '#FFFFFF' : '#000000',
 
-          headerRight: () => (
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            >
-              <TouchableOpacity
-                accessibilityLabel='Open profile'
-                onPressIn={() => {
-                  Haptics.selectionAsync();
-                }}
-                onPress={() => {}}
-                style={{ padding: 6, borderRadius: 9999 }}
+            headerRight: () => (
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
               >
-                <Feather
-                  name='user'
-                  size={22}
-                  color={isDark ? '#FFFFFF' : '#000000'}
-                />
-              </TouchableOpacity>
-            </View>
-          ),
-          contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
-        }}
-      />
-    </PosthogProvider>
+                <TouchableOpacity
+                  accessibilityLabel='Open profile'
+                  onPressIn={() => {
+                    Haptics.selectionAsync();
+                  }}
+                  onPress={() => {}}
+                  style={{ padding: 6, borderRadius: 9999 }}
+                >
+                  <Feather
+                    name='user'
+                    size={22}
+                    color={isDark ? '#FFFFFF' : '#000000'}
+                  />
+                </TouchableOpacity>
+              </View>
+            ),
+            contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
+          }}
+        />
+      </PosthogProvider>
+    </QueryProvider>
   );
 }

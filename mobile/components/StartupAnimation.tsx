@@ -56,36 +56,36 @@ export default function StartupAnimation({
 
       // Staggered animation sequence for buttery smooth effect
       progress.value = withTiming(1, {
-        duration: 1400,
+        duration: 2000,
         easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
       });
 
       logoProgress.value = withDelay(
-        200,
+        300,
         withSequence(
           withTiming(1, {
-            duration: 800,
+            duration: 1100,
             easing: Easing.bezier(0.34, 1.56, 0.64, 1),
           }),
-          withTiming(1.1, { duration: 100 }),
-          withTiming(1, { duration: 200, easing: Easing.out(Easing.quad) })
+          withTiming(1.1, { duration: 150 }),
+          withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) })
         )
       );
 
       particleProgress.value = withDelay(
-        100,
+        200,
         withTiming(1, {
-          duration: 1200,
+          duration: 1600,
           easing: Easing.out(Easing.cubic),
         })
       );
 
       glowProgress.value = withDelay(
-        300,
+        400,
         withSequence(
-          withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }),
-          withTiming(0.7, { duration: 400 }),
-          withTiming(0, { duration: 300 })
+          withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) }),
+          withTiming(0.7, { duration: 600 }),
+          withTiming(0, { duration: 400 })
         )
       );
 
@@ -94,17 +94,15 @@ export default function StartupAnimation({
         if (onEnd) {
           runOnJS(onEnd)();
         }
-      }, 1600);
+      }, 2300);
     }
   }, [visible, progress, logoProgress, particleProgress, glowProgress, onEnd]);
 
-  // Smooth overlay fade with blur effect simulation
+  // Simple overlay fade without scaling - stays full screen
   const overlayStyle = useAnimatedStyle(() => {
     const opacity = interpolate(progress.value, [0, 0.9, 1], [1, 1, 0]);
-    const scale = interpolate(progress.value, [0.9, 1], [1, 1.02]);
     return {
       opacity,
-      transform: [{ scale }],
     };
   });
 

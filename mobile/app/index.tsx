@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   SafeAreaView,
   View,
@@ -8,49 +8,32 @@ import {
   Platform,
 } from 'react-native';
 import EventFeed from '../components/EventFeed';
-import { api } from '../lib/api';
 import { Event, Category } from '../types';
 import CategorySelector from '../components/CategorySelector';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
+import { useCategories, useEvents } from '../lib/queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../lib/queryKeys';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [selectedCategory, setSelectedCategory] = useState('wszystkie');
-  const [events, setEvents] = useState<Event[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
+  const queryClient = useQueryClient();
+  const {
+    data: events = [],
+    isFetching: isFetchingEvents,
+    isRefetching: isRefetchingEvents,
+  } = useEvents();
+  const { data: fetchedCategories = [] } = useCategories();
 
-  // Load initial data
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
-    try {
-      setLoading(true);
-      const [eventsData, categoriesData] = await Promise.all([
-        api.events.getEvents(),
-        api.categories.getCategories(),
-      ]);
-
-      // Add "All" (localized) category at the beginning
-      const allCategories: Category[] = [
-        { name: t('all'), slug: 'wszystkie' },
-        ...categoriesData,
-      ];
-
-      setEvents(eventsData);
-      setCategories(allCategories);
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Compose categories with the localized "All"
+  const categories: Category[] = useMemo(() => {
+    return [{ name: t('all'), slug: 'wszystkie' }, ...fetchedCategories];
+  }, [fetchedCategories]);
 
   // Compute filtered events based on selected category
   const filteredEvents = useMemo(() => {
@@ -63,8 +46,7 @@ export default function HomeScreen() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setRefreshing(true);
-      const eventsData = await api.events.getEvents();
-      setEvents(eventsData);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.events });
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.error('Error refreshing events:', error);
@@ -82,7 +64,7 @@ export default function HomeScreen() {
         }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={refreshing || isFetchingEvents || isRefetchingEvents}
             onRefresh={handleRefresh}
             // iOS supports only a single color; Android supports an array (spins through colors)
             tintColor={Platform.OS === 'ios' ? subtleSpinnerColor : undefined}
