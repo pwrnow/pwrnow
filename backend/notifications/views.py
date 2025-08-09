@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from .models import Device
-from .serializers import DeviceSerializer
+from .serializers import DeviceSerializer, DeviceRegistrationSerializer
+from django.conf import settings
 
 
 @api_view(['POST'])
@@ -12,38 +13,37 @@ from .serializers import DeviceSerializer
 def register_device(request):
     """Register or update a device for push notifications."""
 
-    expo_push_token = request.data.get('expoPushToken')
-    if not expo_push_token:
-        return Response(
-            {'error': 'expoPushToken is required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    serializer_in = DeviceRegistrationSerializer(data=request.data)
+    if not serializer_in.is_valid():
+        return Response(serializer_in.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Validate token format
-    if not expo_push_token.startswith('ExponentPushToken[') and not expo_push_token.startswith('ExpoPushToken['):
-        return Response(
-            {'error': 'Invalid Expo push token format'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    validated = serializer_in.validated_data
+    expo_push_token = validated['expoPushToken']
+
+    # Preferred language is validated/normalized by serializer
+    normalized_lang = validated.get('preferredLanguage', settings.LANGUAGE_CODE)
 
     # Get or create device
     device, created = Device.objects.get_or_create(
         expo_push_token=expo_push_token,
         defaults={
-            'platform': request.data.get('platform', 'ios'),
-            'device_name': request.data.get('deviceName', ''),
-            'app_version': request.data.get('appVersion', ''),
-            'notifications_enabled': request.data.get('notificationsEnabled', True),
+            'platform': validated.get('platform', 'ios'),
+            'device_name': validated.get('deviceName') or '',
+            'app_version': validated.get('appVersion') or '',
+            'notifications_enabled': validated.get('notificationsEnabled', True),
+            'preferred_language': normalized_lang,
         }
     )
 
     # If device exists, update basic info and last_active_at
     if not created:
-        device.platform = request.data.get('platform', device.platform)
-        device.device_name = request.data.get('deviceName', device.device_name)
-        device.app_version = request.data.get('appVersion', device.app_version)
-        if 'notificationsEnabled' in request.data:
-            device.notifications_enabled = request.data['notificationsEnabled']
+        device.platform = validated.get('platform', device.platform)
+        device.device_name = validated.get('deviceName', device.device_name)
+        device.app_version = validated.get('appVersion', device.app_version)
+        if 'notificationsEnabled' in validated:
+            device.notifications_enabled = validated['notificationsEnabled']
+        if 'preferredLanguage' in validated:
+            device.preferred_language = normalized_lang
 
     # Always update last_active_at
     device.last_active_at = timezone.now()

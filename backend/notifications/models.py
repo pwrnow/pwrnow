@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 
 
@@ -47,6 +48,12 @@ class Device(models.Model):
         help_text="Whether push notifications are enabled for this device"
     )
 
+    preferred_language = models.CharField(
+        max_length=5,
+        choices=settings.LANGUAGES,
+        default=settings.LANGUAGE_CODE,
+        help_text="Preferred language for notifications"
+    )
 
 
     # Tracking

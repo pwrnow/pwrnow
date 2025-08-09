@@ -142,6 +142,7 @@ MODELTRANSLATION_DEFAULT_LANGUAGE = 'pl'
 MODELTRANSLATION_FALLBACK_LANGUAGES = ('pl', 'en')
 MODELTRANSLATION_PREPOPULATE_LANGUAGE = 'pl'
 
+
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
 REDIS_SSL = REDIS_URL.startswith("rediss://")
 
@@ -396,6 +397,10 @@ LOGGING = {
         },
     },
 }
+
+# Notification/Discord suppression flags (can be overridden via env)
+SUPPRESS_NOTIFICATIONS = env.bool("SUPPRESS_NOTIFICATIONS", default=False)
+SUPPRESS_DISCORD_NOTIFICATIONS = env.bool("SUPPRESS_DISCORD_NOTIFICATIONS", default=False)
 
 # Celery Configuration
 CELERY_BROKER_URL = REDIS_URL

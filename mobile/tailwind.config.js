@@ -15,11 +15,15 @@ module.exports = {
         accentPink: '#EC2E81',
       },
       fontFamily: {
-        display: ['Righteous-Regular', 'SpaceGrotesk-Bold', 'System'],
+        // Keep default sans for backwards compatibility (regular weight)
         sans: ['SpaceGrotesk-Regular', 'System'],
-        medium: ['SpaceGrotesk-Medium', 'System'],
-        semibold: ['SpaceGrotesk-SemiBold', 'System'],
-        light: ['SpaceGrotesk-Light', 'System'],
+        // Display/logo font
+        display: ['Righteous-Regular', 'System'],
+        // Explicit family aliases to avoid conflict with Tailwind weight utilities
+        grotesk: ['SpaceGrotesk-Regular', 'System'],
+        groteskMedium: ['SpaceGrotesk-Medium', 'System'],
+        groteskSemibold: ['SpaceGrotesk-SemiBold', 'System'],
+        groteskLight: ['SpaceGrotesk-Light', 'System'],
       },
       borderRadius: {
         xl: '16px',

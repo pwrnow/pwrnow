@@ -5,6 +5,7 @@ import {
   ScrollView,
   RefreshControl,
   useColorScheme,
+  Platform,
 } from 'react-native';
 import EventFeed from '../components/EventFeed';
 import { api } from '../lib/api';
@@ -21,6 +22,7 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
 
   // Load initial data
   useEffect(() => {
@@ -72,21 +74,35 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className='flex-1 bg-white dark:bg-black'>
+    <SafeAreaView className='flex-1'>
       <ScrollView
         className='bg-white dark:bg-black'
+        contentContainerStyle={{
+          backgroundColor: isDark ? 'black' : 'white',
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={isDark ? '#FFFFFF' : '#000000'}
+            // iOS supports only a single color; Android supports an array (spins through colors)
+            tintColor={Platform.OS === 'ios' ? subtleSpinnerColor : undefined}
+            colors={
+              Platform.OS === 'android' ? [subtleSpinnerColor] : undefined
+            }
+            progressBackgroundColor={
+              Platform.OS === 'android'
+                ? isDark
+                  ? '#000000'
+                  : '#FFFFFF'
+                : undefined
+            }
             title={t('refreshingEvents')}
-            titleColor={isDark ? '#FFFFFF' : '#000000'}
+            titleColor={Platform.OS === 'ios' ? subtleSpinnerColor : undefined}
           />
         }
         showsVerticalScrollIndicator={false}
       >
-        <View className='pt-3 bg-white dark:bg-black'>
+        <View className='bg-white dark:bg-black pb-2'>
           <CategorySelector
             categories={categories}
             selectedCategory={selectedCategory}

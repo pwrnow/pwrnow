@@ -3,6 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from core.models import Event
 from .services import push_service
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +11,11 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=Event)
 def event_verification_notification(sender, instance, created, **kwargs):
     """Send push notification when an event is initially verified."""
+
+    # Suppress notifications if requested (e.g., during data import)
+    if getattr(settings, "SUPPRESS_NOTIFICATIONS", False):
+        logger.info("Notifications are suppressed by settings.SUPPRESS_NOTIFICATIONS; skipping push notification")
+        return
 
     # Skip if this is a new event creation
     if created:

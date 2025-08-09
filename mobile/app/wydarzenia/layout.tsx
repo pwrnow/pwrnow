@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useColorScheme, View, TouchableOpacity, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../../components/Logo';
 
@@ -34,6 +35,9 @@ export default function WydarzeniaLayout() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
               accessibilityLabel='Open profile'
+              onPressIn={() => {
+                Haptics.selectionAsync();
+              }}
               onPress={() => {}}
               style={{ padding: 6, borderRadius: 9999 }}
             >

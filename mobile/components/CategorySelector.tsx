@@ -35,7 +35,7 @@ export default function CategorySelector({
       showsHorizontalScrollIndicator={false}
       bounces
       decelerationRate='fast'
-      contentContainerStyle={{ paddingHorizontal: 10 }}
+      contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 10 }}
     >
       {allCategories.map((category) => {
         const isActive = selectedCategory === category.slug;
@@ -55,7 +55,7 @@ export default function CategorySelector({
                   isActive
                     ? 'text-black dark:text-white font-semibold'
                     : 'text-black/80 dark:text-white/80'
-                } tracking-[0.2px]`}
+                } text-sm tracking-[0.2px]`}
               >
                 {category.name}
               </Text>

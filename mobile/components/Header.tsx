@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Logo from './Logo';
 import { Feather } from '@expo/vector-icons';
 
@@ -22,7 +23,10 @@ export default function Header({ logoSize = 'medium', onBack }: HeaderProps) {
       <View className='flex-row items-center justify-between mb-2'>
         {onBack ? (
           <TouchableOpacity
-            onPress={onBack}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              onBack?.();
+            }}
             activeOpacity={0.7}
             className='p-2 rounded-full bg-black/5 dark:bg-white/5'
           >

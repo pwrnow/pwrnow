@@ -8,6 +8,7 @@ import { useColorScheme, View, TouchableOpacity } from 'react-native';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
+import * as Haptics from 'expo-haptics';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -69,6 +70,9 @@ export default function StackLayout() {
             >
               <TouchableOpacity
                 accessibilityLabel='Open profile'
+                onPressIn={() => {
+                  Haptics.selectionAsync();
+                }}
                 onPress={() => {}}
                 style={{ padding: 6, borderRadius: 9999 }}
               >

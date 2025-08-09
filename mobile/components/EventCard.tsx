@@ -98,23 +98,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     };
   });
 
+  // Mirror the website behavior: only treat 1:1 as square; otherwise crop to a 16:9 frame
   const getAspectRatio = (ratio?: string | null): number => {
-    if (!ratio) return 16 / 9;
-    // Handle explicit common labels
-    if (ratio === '1:1') return 1;
-    if (ratio === '16:9') return 16 / 9;
-    if (ratio === '4:3') return 4 / 3;
-    if (ratio === '3:2') return 3 / 2;
-    // Handle generic WIDTH:HEIGHT strings like "1200:628"
-    if (ratio.includes(':')) {
-      const [widthString, heightString] = ratio.split(':');
-      const width = parseFloat(widthString);
-      const height = parseFloat(heightString);
-      if (Number.isFinite(width) && Number.isFinite(height) && height > 0) {
-        return width / height;
-      }
-    }
-    return 16 / 9;
+    return ratio === '1:1' ? 1 : 16 / 9;
   };
 
   const imageAspectRatio = getAspectRatio(event.aspect_ratio);
@@ -354,7 +340,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           </View>
           <View className='flex-1'>
             <Text
-              className='text-black dark:text-white font-semibold text-sm leading-4'
+              className='text-black dark:text-white font-semibold text-base leading-5'
               numberOfLines={1}
             >
               {event.organization.name}
@@ -378,7 +364,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         <View>
           <TouchableOpacity onPress={handleEventLinkPress} activeOpacity={0.92}>
             <View
-              className='w-full overflow-visible bg-black/5 dark:bg-muted'
+              className='w-full overflow-hidden bg-black/5 dark:bg-muted'
               style={{ aspectRatio: imageAspectRatio }}
             >
               <Image
@@ -398,7 +384,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {/* Title and Share */}
         <View className='flex-row items-start'>
           <Text
-            className='text-black dark:text-white font-semibold text-xl leading-6 flex-1 mr-3'
+            className='text-black dark:text-white font-semibold text-2xl leading-7 flex-1 mr-3'
             numberOfLines={3}
           >
             {event.title}
@@ -422,8 +408,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               activeOpacity={0.7}
               className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
-              <Feather name='calendar' size={14} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-sm font-medium ml-1.5'>
+              <Feather name='calendar' size={12} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
                 {formatDateRangeShort(event.starts_at, event.ends_at)}
               </Text>
             </TouchableOpacity>
@@ -434,8 +420,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               activeOpacity={0.7}
               className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
-              <Feather name='clock' size={14} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-sm font-medium ml-1.5'>
+              <Feather name='clock' size={12} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
                 {formatTimeRangeShort(event.starts_at, event.ends_at)}
               </Text>
             </TouchableOpacity>
@@ -448,8 +434,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               activeOpacity={0.7}
               className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
             >
-              <Feather name='map-pin' size={14} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-sm font-medium ml-1.5'>
+              <Feather name='map-pin' size={12} color={iconPrimary} />
+              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
                 {event.location}
               </Text>
             </TouchableOpacity>
@@ -463,7 +449,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               <Animated.View
                 layout={LinearTransition.springify().damping(22).stiffness(200)}
               >
-                <Text className='text-black/90 dark:text-white/90 text-base leading-[22px] font-sans'>
+                <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
                   {isDescriptionExpanded
                     ? event.description
                     : `${event.description.slice(0, 150)}${
