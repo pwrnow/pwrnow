@@ -19,5 +19,6 @@ export const getApiUrl = (): string => {
 
 // Share configuration
 export const config = {
-  shareBaseUrl: API_CONFIG.BASE_URL + '/wydarzenia',
+  shareBaseUrl:
+    process.env.EXPO_PUBLIC_SITE_URL || 'https://pwrnow.pl' + '/wydarzenia',
 };
