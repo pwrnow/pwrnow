@@ -86,10 +86,26 @@ def send_test_notification(device_id, title="Test Notification", body="This is a
     try:
         device = Device.objects.get(id=device_id)
 
+        # Try to attach latest valid event data for deep linking tests
+        event = (
+            Event.objects
+            .filter(verified=True, ends_at__gte=timezone.now())
+            .order_by('-verified_at', 'starts_at')
+            .first()
+        )
+
         data = {
             'type': 'test',
             'timestamp': timezone.now().isoformat(),
         }
+
+        if event:
+            data.update({
+                'event_id': str(event.id),
+                'event_slug': event.slug,
+                'category_slug': event.category.slug if event.category else None,
+                'organization_slug': event.organization.slug if event.organization else None,
+            })
 
         success = push_service.send_notification_to_device(
             device=device,

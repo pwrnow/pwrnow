@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 import {
   pushNotificationService,
   type NotificationData,
@@ -9,12 +10,13 @@ import { deviceLocaleTag } from '../lib/i18n';
 /**
  * React hook for managing push notifications
  */
-export function usePushNotifications() {
+export function usePushNotifications(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<
     Notifications.Notification | undefined
   >(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
 
   const notificationListener = useRef<Notifications.EventSubscription | null>(
@@ -22,7 +24,29 @@ export function usePushNotifications() {
   );
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
+  function navigateFromNotificationData(data: NotificationData | undefined) {
+    if (!data) return;
+
+    // Handle different notification types
+    if (
+      (data.type === 'event_verified' || data.type === 'test') &&
+      data.event_slug
+    ) {
+      const targetPath = `/wydarzenia/${data.event_slug}` as const;
+      console.log('[Notifications] Navigating to event:', targetPath);
+      try {
+        router.push(targetPath as any);
+      } catch (err) {
+        console.warn('[Notifications] Navigation failed:', err);
+      }
+    }
+  }
+
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     async function setupPushNotifications() {
       setIsLoading(true);
 
@@ -65,19 +89,20 @@ export function usePushNotifications() {
           .data as NotificationData;
 
         console.log('Notification tap data:', data);
-
-        // Handle different notification types
-        if (data?.type === 'event_verified' && data.event_slug) {
-          console.log('Event notification tapped:', data.event_slug);
-          // Add your navigation logic here if needed
-        } else if (data?.type === 'test') {
-          console.log('Test notification tapped');
-        } else {
-          console.log('Unknown notification type or missing data');
-        }
+        navigateFromNotificationData(data);
       });
 
     setupPushNotifications();
+
+    // Handle cold start: if the app was opened by tapping a notification while killed
+    Notifications.getLastNotificationResponseAsync().then((lastResponse) => {
+      if (lastResponse) {
+        const data = lastResponse.notification.request.content
+          .data as NotificationData;
+        console.log('Last notification response found on mount:', data);
+        navigateFromNotificationData(data);
+      }
+    });
 
     return () => {
       if (notificationListener.current) {
@@ -87,7 +112,7 @@ export function usePushNotifications() {
         responseListener.current.remove();
       }
     };
-  }, []);
+  }, [enabled]);
 
   return {
     expoPushToken,

@@ -1,13 +1,13 @@
 import requests
 import json
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from django.conf import settings
 from django.utils import timezone
 from .models import Device, PushNotification
 from core.models import Event
 from core.translation_utils import get_translated_field
-from django.conf import settings
+# Duplicate import removed
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,8 @@ class ExpoPushNotificationService:
         device: Device,
         title: str,
         body: str,
-        data: Optional[Dict] = None
+        data: Optional[Dict] = None,
+        subtitle: Optional[str] = None,
     ) -> bool:
         """Send a single notification to a device."""
 
@@ -54,7 +55,7 @@ class ExpoPushNotificationService:
 
         try:
             # Prepare the message
-            message = {
+            message: Dict[str, object] = {
                 'to': device.expo_push_token,
                 'sound': 'default',
                 'title': title,
@@ -63,6 +64,10 @@ class ExpoPushNotificationService:
                 'priority': 'high',
                 'channelId': 'default',
             }
+
+            # Optional iOS-only subtitle (ignored on Android)
+            if subtitle:
+                message['subtitle'] = subtitle
 
             # Send to Expo
             response = self.session.post(
@@ -143,28 +148,65 @@ class ExpoPushNotificationService:
         for device in eligible_devices:
             lang = (getattr(device, 'preferred_language', None) or settings.LANGUAGE_CODE).split('-')[0]
 
-            # Localize title
-            title = "🎉 " + ("Nowe wydarzenie!" if lang == 'pl' else "New event!")
+            # Build localized, concise content
+            title, body, subtitle = self._build_notification_content(event, lang)
 
-            # Localize body using translated event fields
-            localized_title = get_translated_field(event, 'title', lang)
-            body_parts = [f"{localized_title}"] if localized_title else []
-
-            if event.starts_at:
-                from django.utils.dateformat import format
-                formatted_date = format(event.starts_at, 'd.m.Y H:i')
-                body_parts.append(formatted_date)
-
-            if event.location:
-                body_parts.append(event.location)
-
-            body = " • ".join(body_parts)
-
-            if self.send_notification_to_device(device, title, body, data):
+            if self.send_notification_to_device(device, title, body, data, subtitle=subtitle):
                 success_count += 1
 
         logger.info(f"Sent {success_count}/{len(eligible_devices)} notifications for event {event.id}")
         return success_count
+
+    # --- Helpers ---------------------------------------------------------
+
+    def _truncate(self, text: Optional[str], max_length: int) -> str:
+        if not text:
+            return ""
+        return text if len(text) <= max_length else text[: max_length - 1] + "…"
+
+    def _format_event_time(self, dt, lang: str) -> str:
+        if not dt:
+            return ""
+        local_dt = timezone.localtime(dt)
+        today = timezone.localdate()
+        date_only = local_dt.date()
+
+        if date_only == today:
+            prefix = "Dziś" if lang == 'pl' else "Today"
+            return f"{prefix} {local_dt.strftime('%H:%M')}"
+
+        if date_only == today + timezone.timedelta(days=1):
+            prefix = "Jutro" if lang == 'pl' else "Tomorrow"
+            return f"{prefix} {local_dt.strftime('%H:%M')}"
+
+        # Fallback simple format: 12.09 18:00
+        return local_dt.strftime('%d.%m %H:%M')
+
+    def _build_notification_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
+        # Title: event title (concise)
+        localized_title = get_translated_field(event, 'title', lang) or event.title
+        title = self._truncate(localized_title, 64)
+
+        # Subtitle: organization name (iOS only); keep short
+        org_name = getattr(event.organization, 'name', None)
+        subtitle = self._truncate(org_name, 40) if org_name else None
+
+        # Body: friendly time + location (or organization) + gentle CTA
+        time_part = self._format_event_time(event.starts_at, lang)
+        location_part = (event.location or "").strip()
+
+        parts: List[str] = []
+        if time_part:
+            parts.append(time_part)
+        if location_part:
+            parts.append(self._truncate(location_part, 60))
+        elif org_name:
+            parts.append(self._truncate(org_name, 60))
+
+        body = " • ".join(p for p in parts if p)
+        body = self._truncate(body, 140)
+
+        return title, body, subtitle
 
     def check_delivery_receipts(self, ticket_ids: List[str]) -> Dict:
         """Check delivery receipts for sent notifications."""

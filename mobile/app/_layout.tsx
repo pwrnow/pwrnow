@@ -16,10 +16,12 @@ import StartupAnimation from '../components/StartupAnimation';
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
 
+let hasShownStartupOnce = false;
+
 export default function StackLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const [showStartup, setShowStartup] = useState(true);
+  const [showStartup, setShowStartup] = useState(() => !hasShownStartupOnce);
   const [loaded, error] = useFonts({
     'Righteous-Regular': require('../assets/fonts/Righteous-Regular.ttf'),
     'SpaceGrotesk-Regular': require('../assets/fonts/SpaceGrotesk-Regular.ttf'),
@@ -29,14 +31,16 @@ export default function StackLayout() {
     'SpaceGrotesk-SemiBold': require('../assets/fonts/SpaceGrotesk-SemiBold.ttf'),
   });
 
-  // Initialize push notifications
-  const { expoPushToken, isLoading: pushLoading } = usePushNotifications();
+  // Initialize push notifications only after startup animation finishes
+  const { expoPushToken, isLoading: pushLoading } = usePushNotifications({
+    enabled: !showStartup,
+  });
 
   useEffect(() => {
     if (loaded || error) {
-      // Immediately hide the native splash, then show our custom startup overlay
+      // Immediately hide the native splash, then show our custom startup overlay once
       SplashScreen.hideAsync();
-      setShowStartup(true);
+      setShowStartup(!hasShownStartupOnce);
     }
   }, [loaded, error]);
 
@@ -47,6 +51,7 @@ export default function StackLayout() {
   }, [expoPushToken]);
 
   const handleStartupEnd = useCallback(() => {
+    hasShownStartupOnce = true;
     setShowStartup(false);
   }, []);
 
