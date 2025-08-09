@@ -55,6 +55,8 @@ export default function StackLayout() {
       <Stack
         screenOptions={{
           headerShown: true,
+          headerBackTitle: '',
+          headerBackButtonDisplayMode: 'minimal',
           headerTitle: () => <Logo size='medium' />,
           headerTitleAlign: 'left',
           headerTransparent: false,
