@@ -32,6 +32,7 @@
       }
     },
     "android": {
+      "package": "pl.pwrnow.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -40,6 +41,20 @@
       "permissions": [
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "pwrnow.pl",
+              "pathPrefix": "/wydarzenia"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "plugins": [
@@ -83,7 +98,9 @@
     ],
     "scheme": "pwrnow",
     "extra": {
-      "router": {},
+      "router": {
+        "origin": "https://pwrnow.pl"
+      },
       "eas": {
         "projectId": "28be113a-2b1b-4840-8cdb-47c7faea0694"
       }
