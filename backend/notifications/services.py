@@ -6,6 +6,8 @@ from django.conf import settings
 from django.utils import timezone
 from .models import Device, PushNotification
 from core.models import Event
+from core.translation_utils import get_translated_field
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -127,17 +129,7 @@ class ExpoPushNotificationService:
             logger.info(f"No eligible devices for event {event.id}")
             return 0
 
-        # Prepare notification content
-        title = "🎉 Nowe wydarzenie!"
-        body = f"{event.title}"
-        if event.starts_at:
-            from django.utils.dateformat import format
-            formatted_date = format(event.starts_at, 'd.m.Y H:i')
-            body += f" • {formatted_date}"
-
-        if event.location:
-            body += f" • {event.location}"
-
+        # Prepare base data
         data = {
             'type': 'event_verified',
             'event_id': str(event.id),
@@ -146,9 +138,28 @@ class ExpoPushNotificationService:
             'organization_slug': event.organization.slug if event.organization else None,
         }
 
-                # Send notifications
+        # Send notifications per-device with localized content
         success_count = 0
         for device in eligible_devices:
+            lang = (getattr(device, 'preferred_language', None) or settings.LANGUAGE_CODE).split('-')[0]
+
+            # Localize title
+            title = "🎉 " + ("Nowe wydarzenie!" if lang == 'pl' else "New event!")
+
+            # Localize body using translated event fields
+            localized_title = get_translated_field(event, 'title', lang)
+            body_parts = [f"{localized_title}"] if localized_title else []
+
+            if event.starts_at:
+                from django.utils.dateformat import format
+                formatted_date = format(event.starts_at, 'd.m.Y H:i')
+                body_parts.append(formatted_date)
+
+            if event.location:
+                body_parts.append(event.location)
+
+            body = " • ".join(body_parts)
+
             if self.send_notification_to_device(device, title, body, data):
                 success_count += 1
 

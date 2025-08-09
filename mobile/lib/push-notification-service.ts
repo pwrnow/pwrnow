@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { getApiUrl } from './config';
+import { deviceLocaleTag } from './i18n';
 
 // Configure how notifications are handled when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -20,6 +21,7 @@ export interface DeviceRegistration {
   deviceName?: string;
   appVersion?: string;
   notificationsEnabled: boolean;
+  preferredLanguage?: string;
 }
 
 export interface NotificationData {
@@ -112,6 +114,7 @@ class PushNotificationService {
         deviceName: Device.deviceName || `${Device.modelName} (${Platform.OS})`,
         appVersion: Constants.expoConfig?.version || '1.0.0',
         notificationsEnabled: true,
+        preferredLanguage: deviceLocaleTag,
         ...preferences,
       };
 

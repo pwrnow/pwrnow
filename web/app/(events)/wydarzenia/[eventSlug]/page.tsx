@@ -18,22 +18,22 @@ import { formatLocalizedDate } from '@/lib/utils';
 export const revalidate = 60;
 
 // Cache fetch requests for better performance
-export const fetchCache = 'default-cache';
+// export const fetchCache = 'default-cache';
 
 // Generate static params for all events at build time
-export async function generateStaticParams() {
-  try {
-    const events = await getEvents();
+// export async function generateStaticParams() {
+//   try {
+//     const events = await getEvents();
 
-    return events.map((event) => ({
-      eventSlug: event.slug,
-    }));
-  } catch (error) {
-    console.error('Failed to generate static params:', error);
-    // Return empty array on error to prevent build failure
-    return [];
-  }
-}
+//     return events.map((event) => ({
+//       eventSlug: event.slug,
+//     }));
+//   } catch (error) {
+//     console.error('Failed to generate static params:', error);
+//     // Return empty array on error to prevent build failure
+//     return [];
+//   }
+// }
 
 export async function generateMetadata({
   params,
@@ -170,4 +170,3 @@ export default async function EventDetailPage({
     </>
   );
 }
-// Developer tip: To link to this page, use `/wydarzenia/[event.slug]` for any event object.

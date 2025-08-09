@@ -19,3 +19,5 @@ requests==2.32.4
 gunicorn==23.0.0
 django-modeltranslation==0.19.16
 flower==2.0.1
+pytest==8.4.1
+pytest-django==4.9.0

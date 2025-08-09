@@ -1,11 +1,27 @@
 import { Event, Category, Organization } from '../types';
 import { getApiUrl } from './config';
+import i18n from './i18n';
 
 // Helper function to make API requests with credentials and error handling
 async function fetchWithCredentials(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  useLocale: boolean = true
 ): Promise<Response> {
+  // Append language parameter similarly to web to get translated content
+  if (useLocale) {
+    const locale = (i18n?.locale || 'pl').toLowerCase();
+
+    const urlParts = url.split('?');
+    const baseUrl = urlParts[0];
+    const existingParams = urlParts[1];
+
+    const searchParams = new URLSearchParams(existingParams || '');
+    searchParams.set('lang', locale);
+
+    url = `${baseUrl}?${searchParams.toString()}`;
+  }
+
   const response = await fetch(`${getApiUrl()}${url}`, {
     ...options,
     credentials: 'include',
