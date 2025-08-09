@@ -10,6 +10,7 @@ import {
 import { api } from '../../lib/api';
 import EventCard from '../../components/EventCard';
 import { Event } from '../../types';
+import { useAnalytics } from '../../lib/analytics';
 
 export default function EventDetailScreen() {
   const colorScheme = useColorScheme();
@@ -18,6 +19,7 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const analytics = useAnalytics();
 
   useEffect(() => {
     if (typeof eventSlug === 'string') {
@@ -31,6 +33,7 @@ export default function EventDetailScreen() {
       const eventData = await api.events.getEventBySlug(slug);
       if (!eventData) throw new Error('Event not found');
       setEvent(eventData);
+      analytics.trackEventDetailViewed(eventData as any, 'navigation');
     } catch (error) {
       Alert.alert('Błąd', 'Nie udało się załadować wydarzenia.', [
         { text: 'OK', onPress: () => router.replace('/') },

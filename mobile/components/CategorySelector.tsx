@@ -1,6 +1,7 @@
 import { Text, TouchableOpacity, ScrollView, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Category } from '../types';
+import { useAnalytics } from '../lib/analytics';
 import { t } from '../lib/i18n';
 
 interface CategorySelectorProps {
@@ -14,6 +15,7 @@ export default function CategorySelector({
   selectedCategory,
   onCategoryChange,
 }: CategorySelectorProps) {
+  const analytics = useAnalytics();
   // Ensure 'Wszystkie' is first
   const allCategories =
     categories[0]?.slug === 'wszystkie'
@@ -24,6 +26,10 @@ export default function CategorySelector({
     if (slug !== selectedCategory) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onCategoryChange(slug);
+      const cat = allCategories.find((c) => c.slug === slug);
+      if (cat) {
+        analytics.trackCategorySelected(cat.slug, cat.name, 'home');
+      }
     }
   };
 

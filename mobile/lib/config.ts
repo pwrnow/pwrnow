@@ -17,8 +17,9 @@ export const getApiUrl = (): string => {
   return `${API_CONFIG.BASE_URL}/${API_CONFIG.VERSION}`;
 };
 
-// Share configuration
 export const config = {
   shareBaseUrl:
     process.env.EXPO_PUBLIC_SITE_URL || 'https://pwrnow.pl' + '/wydarzenia',
+  posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
+  posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST,
 };

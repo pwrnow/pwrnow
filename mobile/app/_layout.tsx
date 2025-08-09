@@ -2,13 +2,25 @@ import '../global.css';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, View, TouchableOpacity } from 'react-native';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 import * as Haptics from 'expo-haptics';
+import { PosthogProvider } from '../providers/posthog';
+import StartupAnimation from '../components/StartupAnimation';
+
+import { onlineManager } from '@tanstack/react-query';
+import * as Network from 'expo-network';
+
+onlineManager.setEventListener((setOnline) => {
+  const eventSubscription = Network.addNetworkStateListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+  return eventSubscription.remove;
+});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -16,6 +28,7 @@ SplashScreen.preventAutoHideAsync();
 export default function StackLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [showStartup, setShowStartup] = useState(true);
   const [loaded, error] = useFonts({
     'Righteous-Regular': require('../assets/fonts/Righteous-Regular.ttf'),
     'SpaceGrotesk-Regular': require('../assets/fonts/SpaceGrotesk-Regular.ttf'),
@@ -30,7 +43,9 @@ export default function StackLayout() {
 
   useEffect(() => {
     if (loaded || error) {
+      // Immediately hide the native splash, then show our custom startup overlay
       SplashScreen.hideAsync();
+      setShowStartup(true);
     }
   }, [loaded, error]);
 
@@ -45,7 +60,12 @@ export default function StackLayout() {
   }
 
   return (
-    <>
+    <PosthogProvider>
+      {/* Startup overlay animation shown briefly after splash */}
+      <StartupAnimation
+        visible={showStartup}
+        onEnd={() => setShowStartup(false)}
+      />
       <StatusBar
         style={isDark ? 'light' : 'dark'}
         animated
@@ -89,6 +109,6 @@ export default function StackLayout() {
           contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
         }}
       />
-    </>
+    </PosthogProvider>
   );
 }

@@ -27,6 +27,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import * as Calendar from 'expo-calendar';
 import { Event } from '../types';
+import { useAnalytics } from '../lib/analytics';
 import { config } from '../lib/config';
 import { t, deviceLocaleTag } from '../lib/i18n';
 
@@ -41,6 +42,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const iconPrimary = isDark ? '#FFFFFF' : '#000000';
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const analytics = useAnalytics();
 
   // Animated fade for the description gradient overlay (keeps fade when collapsed)
   const gradientOpacity = useSharedValue(1);
@@ -108,6 +110,10 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const handleDescriptionToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsDescriptionExpanded(!isDescriptionExpanded);
+    analytics.trackEventDescriptionToggled(
+      event as any,
+      !isDescriptionExpanded
+    );
   };
 
   const handleAddToCalendar = async () => {
@@ -170,12 +176,14 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
     await Linking.openURL(url);
+    analytics.trackEventImageClicked(event as any);
   };
 
   // Dedicated CTA handler without extra haptics (we trigger haptics on press-in)
   const handleVisitPagePress = async () => {
     const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
     await Linking.openURL(url);
+    analytics.trackEventCtaClicked(event as any, 'card_cta');
   };
 
   const handleCtaPressIn = async () => {
@@ -195,6 +203,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       event.location || ''
     )}`;
     await Linking.openURL(url);
+    analytics.trackEventPillClicked(event as any, 'location');
   };
 
   const handleShare = async () => {
@@ -212,6 +221,16 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     } else {
       Alert.alert(t('share'), shareText);
     }
+  };
+
+  const handleDatePillPress = async () => {
+    await handleAddToCalendar();
+    analytics.trackEventPillClicked(event as any, 'date');
+  };
+
+  const handleTimePillPress = async () => {
+    await handleAddToCalendar();
+    analytics.trackEventPillClicked(event as any, 'time');
   };
 
   const getInitials = (name: string) => {
@@ -404,7 +423,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           <View className='flex-row gap-2'>
             {/* Date range chip */}
             <TouchableOpacity
-              onPress={handleAddToCalendar}
+              onPress={handleDatePillPress}
               activeOpacity={0.7}
               className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
@@ -416,7 +435,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
             {/* Time chip */}
             <TouchableOpacity
-              onPress={handleAddToCalendar}
+              onPress={handleTimePillPress}
               activeOpacity={0.7}
               className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
             >
