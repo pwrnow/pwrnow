@@ -112,6 +112,9 @@ importers:
         specifier: 15.11.2
         version: 15.11.2(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
     devDependencies:
+      '@babel/plugin-transform-react-jsx':
+        specifier: ^7.27.1
+        version: 7.27.1(@babel/core@7.28.0)
       '@types/react':
         specifier: ~19.0.14
         version: 19.0.14
