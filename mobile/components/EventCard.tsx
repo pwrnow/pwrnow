@@ -221,6 +221,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     } else {
       Alert.alert(t('share'), shareText);
     }
+    analytics.trackEventShareClicked(event as any);
   };
 
   const handleDatePillPress = async () => {

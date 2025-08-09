@@ -102,5 +102,8 @@ export function useAnalytics() {
         ...buildEventProps(event),
         expanded,
       }),
+
+    trackEventShareClicked: (event: EventIdentity) =>
+      safeCapture('event_share_clicked', buildEventProps(event)),
   } as const;
 }
