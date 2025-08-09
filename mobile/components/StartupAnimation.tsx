@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   View,
   useColorScheme,
@@ -47,6 +47,12 @@ export default function StartupAnimation({
   const particleProgress = useSharedValue(0);
   const glowProgress = useSharedValue(0);
 
+  // Keep latest onEnd without causing effect restarts
+  const onEndRef = useRef(onEnd);
+  useEffect(() => {
+    onEndRef.current = onEnd;
+  }, [onEnd]);
+
   useEffect(() => {
     if (visible) {
       progress.value = 0;
@@ -91,12 +97,12 @@ export default function StartupAnimation({
 
       // Complete animation callback
       setTimeout(() => {
-        if (onEnd) {
-          runOnJS(onEnd)();
+        if (onEndRef.current) {
+          onEndRef.current();
         }
       }, 2300);
     }
-  }, [visible, progress, logoProgress, particleProgress, glowProgress, onEnd]);
+  }, [visible]);
 
   // Simple overlay fade without scaling - stays full screen
   const overlayStyle = useAnimatedStyle(() => {

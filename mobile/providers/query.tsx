@@ -16,7 +16,8 @@ const queryClient = new QueryClient({
       retry: 2,
       staleTime: 30 * 1000,
       refetchOnReconnect: true,
-      refetchOnWindowFocus: true,
+      // Avoid extra re-renders on initial mount/focus that can restart UI overlays
+      refetchOnWindowFocus: false,
     },
   },
 });

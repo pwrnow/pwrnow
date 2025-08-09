@@ -2,7 +2,7 @@ import '../global.css';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, View, TouchableOpacity } from 'react-native';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -46,6 +46,10 @@ export default function StackLayout() {
     }
   }, [expoPushToken]);
 
+  const handleStartupEnd = useCallback(() => {
+    setShowStartup(false);
+  }, []);
+
   if (!loaded && !error) {
     return null;
   }
@@ -54,10 +58,7 @@ export default function StackLayout() {
     <QueryProvider>
       <PosthogProvider>
         {/* Startup overlay animation shown briefly after splash */}
-        <StartupAnimation
-          visible={showStartup}
-          onEnd={() => setShowStartup(false)}
-        />
+        <StartupAnimation visible={showStartup} onEnd={handleStartupEnd} />
         <StatusBar
           style={isDark ? 'light' : 'dark'}
           animated
