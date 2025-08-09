@@ -15,7 +15,7 @@
     "ios": {
       "backgroundColor": "#000000",
       "supportsTablet": false,
-      "bundleIdentifier": "pl.pwrnow.pwrnow",
+      "bundleIdentifier": "pl.pwrnow.app",
       "associatedDomains": ["applinks:pwrnow.pl"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
