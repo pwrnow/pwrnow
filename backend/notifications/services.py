@@ -4,6 +4,9 @@ import logging
 from typing import List, Dict, Optional, Tuple
 from django.conf import settings
 from django.utils import timezone
+from django.utils import formats
+from django.utils.translation import gettext as _
+from django.utils.translation import override
 from .models import Device, PushNotification
 from core.models import Event
 from core.translation_utils import get_translated_field
@@ -171,42 +174,44 @@ class ExpoPushNotificationService:
         today = timezone.localdate()
         date_only = local_dt.date()
 
-        if date_only == today:
-            prefix = "Dziś" if lang == 'pl' else "Today"
-            return f"{prefix} {local_dt.strftime('%H:%M')}"
+        with override(lang):
+            if date_only == today:
+                prefix = _("Today")
+                return f"{prefix} {formats.date_format(local_dt, 'TIME_FORMAT')}"
 
-        if date_only == today + timezone.timedelta(days=1):
-            prefix = "Jutro" if lang == 'pl' else "Tomorrow"
-            return f"{prefix} {local_dt.strftime('%H:%M')}"
+            if date_only == today + timezone.timedelta(days=1):
+                prefix = _("Tomorrow")
+                return f"{prefix} {formats.date_format(local_dt, 'TIME_FORMAT')}"
 
-        # Fallback simple format: 12.09 18:00
-        return local_dt.strftime('%d.%m %H:%M')
+            # Locale-aware concise fallback
+            return formats.date_format(local_dt, 'SHORT_DATETIME_FORMAT')
 
     def _build_notification_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
-        # Title: event title (concise)
-        localized_title = get_translated_field(event, 'title', lang) or event.title
-        title = self._truncate(localized_title, 64)
+        with override(lang):
+            # Title: event title (concise)
+            localized_title = get_translated_field(event, 'title', lang) or event.title
+            title = self._truncate(localized_title, 64)
 
-        # Subtitle: organization name (iOS only); keep short
-        org_name = getattr(event.organization, 'name', None)
-        subtitle = self._truncate(org_name, 40) if org_name else None
+            # Subtitle: organization name (iOS only); keep short
+            org_name = getattr(event.organization, 'name', None)
+            subtitle = self._truncate(org_name, 40) if org_name else None
 
-        # Body: friendly time + location (or organization) + gentle CTA
-        time_part = self._format_event_time(event.starts_at, lang)
-        location_part = (event.location or "").strip()
+            # Body: friendly time + location (or organization)
+            time_part = self._format_event_time(event.starts_at, lang)
+            location_part = (event.location or "").strip()
 
-        parts: List[str] = []
-        if time_part:
-            parts.append(time_part)
-        if location_part:
-            parts.append(self._truncate(location_part, 60))
-        elif org_name:
-            parts.append(self._truncate(org_name, 60))
+            parts: List[str] = []
+            if time_part:
+                parts.append(time_part)
+            if location_part:
+                parts.append(self._truncate(location_part, 60))
+            elif org_name:
+                parts.append(self._truncate(org_name, 60))
 
-        body = " • ".join(p for p in parts if p)
-        body = self._truncate(body, 140)
+            body = " • ".join(p for p in parts if p)
+            body = self._truncate(body, 140)
 
-        return title, body, subtitle
+            return title, body, subtitle
 
     def check_delivery_receipts(self, ticket_ids: List[str]) -> Dict:
         """Check delivery receipts for sent notifications."""

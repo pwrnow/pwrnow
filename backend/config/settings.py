@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -135,6 +136,11 @@ from django.utils.translation import gettext_lazy as _
 LANGUAGES = [
     ('pl', _('Polish')),
     ('en', _('English')),
+]
+
+# Where compiled and source translation files live
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
 ]
 
 # ModelTranslation settings
