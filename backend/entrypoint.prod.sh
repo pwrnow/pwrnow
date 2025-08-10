@@ -11,7 +11,6 @@ chmod -R 777 /app/staticfiles /app/media
 
 # Apply database migrations
 python manage.py migrate
-python manage.py compilemessages
 
 # Only collect static files for the main backend service, not workers/beat
 if [ "${SERVICE:-gunicorn}" = "backend" ] || [ "${SERVICE:-gunicorn}" = "web" ]; then

@@ -104,6 +104,37 @@ docker-compose exec backend python manage.py <command>
 
 ---
 
+### Translations (Django i18n)
+
+- Locale files live in `backend/locale/<lang>/LC_MESSAGES/django.po`.
+- Wrap all user-facing strings in the backend with Django i18n, e.g.:
+
+  ```python
+  from django.utils.translation import gettext_lazy as _
+
+  class User(models.Model):
+      email = models.EmailField(_("email address"))
+  ```
+
+Extract/update messages:
+
+```bash
+docker-compose exec backend python manage.py makemessages -l pl -l en --ignore "staticfiles/*" --ignore "media/*"
+```
+
+Compile messages after editing `.po` files:
+
+```bash
+docker-compose exec backend python manage.py compilemessages
+```
+
+Notes:
+
+- Supported languages are defined in `backend/config/settings.py` under `LANGUAGES` and `LOCALE_PATHS`.
+- Add another language by updating `LANGUAGES` and running `makemessages -l <lang>`.
+
+---
+
 ## Web (Next.js)
 
 - Next.js 15, React 19, Tailwind CSS
