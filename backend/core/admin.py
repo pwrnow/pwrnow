@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -270,7 +271,7 @@ class EventAdmin(TranslationAdmin):
             'category', 'organization'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -281,6 +282,40 @@ class EventAdmin(TranslationAdmin):
         updated = queryset.update(verified=False)
         self.message_user(request, f'{updated} events marked as unverified.')
     mark_as_unverified.short_description = "Mark selected events as unverified"
+
+    def resend_push_notifications(self, request, queryset):
+        """Resend the "new event" push notification for selected, verified events."""
+        queued_count = 0
+        sent_sync_count = 0
+        skipped_count = 0
+
+        for event in queryset:
+            if not event.verified:
+                skipped_count += 1
+                continue
+
+            # Prefer async via Celery; fall back to sync if Celery is unavailable
+            try:
+                from notifications.tasks import send_event_verification_notifications
+                send_event_verification_notifications.delay(str(event.id))
+                queued_count += 1
+            except Exception:
+                from notifications.services import push_service
+                push_service.send_event_verification_notification(event)
+                sent_sync_count += 1
+
+        if queued_count or sent_sync_count:
+            parts = []
+            if queued_count:
+                parts.append(f"queued {queued_count}")
+            if sent_sync_count:
+                parts.append(f"sent synchronously {sent_sync_count}")
+            if skipped_count:
+                parts.append(f"skipped {skipped_count} not verified")
+            self.message_user(request, f"Resend triggered: {', '.join(parts)}.")
+        else:
+            self.message_user(request, "No verified events selected.", level=messages.WARNING)
+    resend_push_notifications.short_description = "Resend push notification (verified events only)"
 
 
 admin.site.site_header = "PWr Now Admin"

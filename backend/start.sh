@@ -6,5 +6,6 @@ set -o nounset
 
 python manage.py migrate
 python manage.py collectstatic --noinput --clear
+python manage.py compilemessages
 
 exec python manage.py runserver 0.0.0.0:8000

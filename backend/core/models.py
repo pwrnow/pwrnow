@@ -1,4 +1,5 @@
 import uuid
+from django.db.models import Q
 import secrets
 from django.db import models
 from django.utils import timezone
@@ -32,6 +33,9 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "categories"
         ordering = ['order_index', 'name']
+        indexes = [
+            models.Index(fields=['order_index', 'name'], name='category_order_name_idx'),
+        ]
 
     def __str__(self):
         return self.name
@@ -196,6 +200,12 @@ class Event(models.Model):
             models.Index(fields=['verified_at']),
             models.Index(fields=['category', 'starts_at']),
             models.Index(fields=['organization', 'starts_at']),
+            models.Index(fields=['verified', 'ends_at', 'starts_at'], name='event_verified_ends_start_idx'),
+            models.Index(
+                fields=['ends_at', 'starts_at'],
+                name='event_public_time_idx',
+                condition=Q(verified=True),
+            ),
         ]
 
     def __str__(self):

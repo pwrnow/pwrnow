@@ -69,6 +69,7 @@ class Device(models.Model):
             models.Index(fields=['platform']),
             models.Index(fields=['notifications_enabled']),
             models.Index(fields=['last_active_at']),
+            models.Index(fields=['notifications_enabled', 'last_active_at'], name='device_enabled_last_active_idx'),
         ]
 
     def __str__(self):
@@ -147,6 +148,7 @@ class PushNotification(models.Model):
             models.Index(fields=['status']),
             models.Index(fields=['device']),
             models.Index(fields=['sent_at']),
+            models.Index(fields=['status', 'delivered_at'], name='pn_status_delivered_idx'),
         ]
 
     def __str__(self):

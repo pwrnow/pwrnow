@@ -167,49 +167,80 @@ class ExpoPushNotificationService:
             return ""
         return text if len(text) <= max_length else text[: max_length - 1] + "…"
 
-    def _format_event_time(self, dt, lang: str) -> str:
-        if not dt:
+    def _format_event_range(self, starts_at, ends_at, lang: str) -> str:
+        """Return a localized, human-friendly date/time range for the event.
+
+        Rules:
+        - If the range is within the current ISO week: show weekday names with times.
+        - Otherwise: show full dates with verbose month names and times.
+        - Always prefix with a calendar icon.
+        """
+        if not starts_at:
             return ""
-        local_dt = timezone.localtime(dt)
+
+        local_start = timezone.localtime(starts_at)
+        local_end = timezone.localtime(ends_at) if ends_at else None
+
+        start_date = local_start.date()
+        end_date = local_end.date() if local_end else start_date
         today = timezone.localdate()
-        date_only = local_dt.date()
+        show_year = start_date.year != end_date.year
+
+        start_iso_year, start_iso_week, _ = start_date.isocalendar()
+        today_iso_year, today_iso_week, _ = today.isocalendar()
+        end_iso_year, end_iso_week, _ = end_date.isocalendar()
+
+        in_this_week = (
+            start_iso_year == today_iso_year == end_iso_year and
+            start_iso_week == today_iso_week == end_iso_week
+        )
 
         with override(lang):
-            if date_only == today:
-                prefix = _("Today")
-                return f"{prefix} {formats.date_format(local_dt, 'TIME_FORMAT')}"
+            time_start = formats.date_format(local_start, 'TIME_FORMAT')
+            time_end = formats.date_format(local_end, 'TIME_FORMAT') if local_end else None
 
-            if date_only == today + timezone.timedelta(days=1):
-                prefix = _("Tomorrow")
-                return f"{prefix} {formats.date_format(local_dt, 'TIME_FORMAT')}"
+            if start_date == end_date:
+                if in_this_week:
+                    # e.g., "📅 Wednesday 14:00–16:30"
+                    weekday = formats.date_format(local_start, 'l')
+                    return f"📅 {weekday} {time_start}–{time_end}" if time_end else f"📅 {weekday} {time_start}"
+                # e.g., "📅 12 September, 14:00–16:30" (year omitted unless cross-year)
+                full_date = formats.date_format(local_start, 'j F Y' if show_year else 'j F')
+                return f"📅 {full_date}, {time_start}–{time_end}" if time_end else f"📅 {full_date}, {time_start}"
 
-            # Locale-aware concise fallback
-            return formats.date_format(local_dt, 'SHORT_DATETIME_FORMAT')
+            # Multi-day events
+            if in_this_week:
+                # e.g., "📅 Wed 18:00 – Fri 10:00"
+                weekday_start = formats.date_format(local_start, 'D')
+                weekday_end = formats.date_format(local_end, 'D') if local_end else None
+                if time_end and weekday_end:
+                    return f"📅 {weekday_start} {time_start} – {weekday_end} {time_end}"
+                return f"📅 {weekday_start} {time_start}"
+
+            # Not in current week → use full dates with verbose month, omit year unless cross-year
+            fmt = 'j F Y' if show_year else 'j F'
+            date_start_verbose = formats.date_format(local_start, fmt)
+            date_end_verbose = formats.date_format(local_end, fmt) if local_end else None
+            if time_end and date_end_verbose:
+                return f"📅 {date_start_verbose} {time_start} – {date_end_verbose} {time_end}"
+            return f"📅 {date_start_verbose} {time_start}"
 
     def _build_notification_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
         with override(lang):
-            # Title: event title (concise)
-            localized_title = get_translated_field(event, 'title', lang) or event.title
-            title = self._truncate(localized_title, 64)
+            # Title: generic, localized
+            title_text = _("New event available")
+            title = self._truncate(f"✨ {title_text}", 100)
 
-            # Subtitle: organization name (iOS only); keep short
-            org_name = getattr(event.organization, 'name', None)
-            subtitle = self._truncate(org_name, 40) if org_name else None
+            # Subtitle: event title (localized)
+            localized_event_title = get_translated_field(event, 'title', lang) or event.title
+            subtitle = self._truncate(localized_event_title, 100)
 
-            # Body: friendly time + location (or organization)
-            time_part = self._format_event_time(event.starts_at, lang)
-            location_part = (event.location or "").strip()
-
-            parts: List[str] = []
-            if time_part:
-                parts.append(time_part)
-            if location_part:
-                parts.append(self._truncate(location_part, 60))
-            elif org_name:
-                parts.append(self._truncate(org_name, 60))
-
-            body = " • ".join(p for p in parts if p)
-            body = self._truncate(body, 140)
+            # Body: single line human-friendly, localized date/time range
+            event_time = self._format_event_range(event.starts_at, event.ends_at, lang)
+            body_lines: List[str] = []
+            if event_time:
+                body_lines.append(event_time)
+            body = self._truncate("\n".join(body_lines), 140)
 
             return title, body, subtitle
 
