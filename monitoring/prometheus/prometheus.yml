@@ -36,7 +36,7 @@ scrape_configs:
     # Docker daemon metrics (if enabled)
     - job_name: "docker"
       static_configs:
-          - targets: ["host.docker.internal:9323"]
+          - targets: ["http://172.17.0.1:9323/metrics"]
       scrape_interval: 30s
       metrics_path: "/metrics"
 
