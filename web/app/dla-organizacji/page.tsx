@@ -117,30 +117,6 @@ export default async function ForOrganizationsPage() {
                     </a>
                 </Button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{t("howToPostTitle")}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground leading-relaxed">
-                            {t("howToPostDescription")}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{t("contactTitle")}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground leading-relaxed">
-                            {t("contactDescription")}
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
         </section>
     );
 }
