@@ -18,7 +18,8 @@
       "bundleIdentifier": "pl.pwrnow.app",
       "associatedDomains": ["applinks:pwrnow.pl"],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true
       },
       "icon": {
         "light": "./assets/icon-light.png",
