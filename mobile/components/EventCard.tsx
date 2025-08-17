@@ -404,7 +404,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {/* Title and Share */}
         <View className='flex-row items-start'>
           <Text
-            className='text-black dark:text-white font-semibold text-2xl leading-7 flex-1 mr-3'
+            className='text-black dark:text-white font-semibold text-2xl leading-7 flex-1 mr-3 mb-2'
             numberOfLines={3}
           >
             {event.title}
