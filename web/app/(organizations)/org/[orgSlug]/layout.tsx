@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { CONTACT_CONFIG } from '@/lib/config';
 
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations('OrgLayout');
@@ -37,13 +38,13 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
                 <span>✨</span>
                 <span>{t('forOrganizations')}</span>
               </Link>
-              <a
-                href='mailto:kontakt@pwrnow.pl'
+              <Link
+                href='/kontakt'
                 className='inline-flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground transition-colors'
               >
                 <span>✉️</span>
                 <span>{t('contact')}</span>
-              </a>
+              </Link>
             </div>
 
             {/* Copyright */}

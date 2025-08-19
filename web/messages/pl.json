@@ -211,5 +211,76 @@
     "title": "Polityka Prywatności | PWrNow",
     "description": "Dowiedz się, jak PWrNow zbiera, wykorzystuje i chroni Twoje dane osobowe.",
     "backToHome": "Powrót do strony głównej"
+  },
+  "ContactPage": {
+    "title": "Kontakt | PWR Now",
+    "description": "Skontaktuj się z zespołem PWR Now. Mamy odpowiedzi na wszystkie Twoje pytania i jesteśmy tutaj, aby pomóc!",
+    "pageTitle": "Skontaktuj się",
+    "pageSubtitle": "Masz pytania o PWR Now? Chcesz zgłosić problem? A może masz pomysł na ulepszenie? Jesteśmy tutaj, aby pomóc i poprawić Twoje doświadczenie!",
+    "contact": {
+      "email": {
+        "title": "E-mail",
+        "description": "Napisz do nas maila w razie pytań lub zapytań",
+        "button": "Wyślij E-mail"
+      },
+      "messenger": {
+        "title": "Messenger",
+        "description": "Napisz do nas na Facebook Messenger",
+        "button": "Otwórz Messenger"
+      },
+      "facebook": {
+        "title": "Strona Facebook",
+        "description": "Odwiedź naszą stronę Facebook i napisz wiadomość",
+        "button": "Odwiedź Facebook"
+      },
+      "instagram": {
+        "title": "Instagram DM",
+        "description": "Napisz do nas wiadomość bezpośrednią na Instagramie",
+        "button": "Otwórz Instagram"
+      }
+    },
+    "faq": {
+      "title": "❓ Często Zadawane Pytania (FAQ)",
+      "subtitle": "Znajdź odpowiedzi na najczęściej zadawane pytania o PWrNow",
+      "questions": {
+        "1": {
+          "question": "1. Czym jest PWr Now?",
+          "answer": "PWr Now to aplikacja dla studentów Politechniki Wrocławskiej, która ułatwia odkrywanie wydarzeń na uczelni – wykładów, warsztatów, spotkań, wydarzeń sportowych i kulturalnych."
+        },
+        "2": {
+          "question": "2. Kto może korzystać z aplikacji?",
+          "answer": "Aplikacja jest przeznaczona głównie dla studentów Politechniki Wrocławskiej, ale każdy zainteresowany wydarzeniami na uczelni może z niej korzystać."
+        },
+        "3": {
+          "question": "3. Czy aplikacja jest darmowa?",
+          "answer": "Tak, PWr Now jest całkowicie darmowa."
+        },
+        "4": {
+          "question": "4. Jak mogę znaleźć interesujące mnie wydarzenia?",
+          "answer": "Możesz przeglądać wszystkie dostępne wydarzenia lub skorzystać z wyszukiwarki i filtrów, aby znaleźć te, które najbardziej Cię interesują."
+        },
+        "5": {
+          "question": "5. Czy mogę zapisać wydarzenia na później?",
+          "answer": "Tak, w aplikacji możesz dodać wydarzenia do ulubionych, aby mieć do nich szybki dostęp."
+        },
+        "6": {
+          "question": "6. Nie mogę znaleźć wydarzenia, o którym słyszałem/am. Co robić?",
+          "answer": "Niektóre wydarzenia mogą nie być jeszcze dodane. Jeśli wiesz o wydarzeniu, którego nie ma w aplikacji – skontaktuj się z nami, abyśmy mogli je dodać."
+        },
+        "7": {
+          "question": "7. Aplikacja nie działa poprawnie. Jak zgłosić problem?",
+          "answer": "Jeśli napotkasz problem techniczny, prosimy o kontakt przez e-mail: {email}. Postaramy się jak najszybciej pomóc."
+        },
+        "8": {
+          "question": "8. Jak mogę skontaktować się z zespołem PWr Now?",
+          "answer": "Najprościej napisać do nas na adres: {email}."
+        }
+      }
+    },
+    "cta": {
+      "title": "Gotowy do Rozpoczęcia?",
+      "subtitle": "Dołącz do tysięcy studentów, którzy już korzystają z naszej platformy.",
+      "button": "Skontaktuj się Teraz"
+    }
   }
 }

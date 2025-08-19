@@ -256,3 +256,126 @@ body {
 .prose hr {
   @apply border-border my-8;
 }
+
+/* Contact Page Animations - Add these to your global.css */
+
+/* Keyframe Animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift-slow {
+  0%,
+  100% {
+    transform: translateX(0px) translateY(0px);
+  }
+  33% {
+    transform: translateX(30px) translateY(-30px);
+  }
+  66% {
+    transform: translateX(-20px) translateY(20px);
+  }
+}
+
+@keyframes drift-reverse {
+  0%,
+  100% {
+    transform: translateX(0px) translateY(0px);
+  }
+  33% {
+    transform: translateX(-40px) translateY(30px);
+  }
+  66% {
+    transform: translateX(20px) translateY(-20px);
+  }
+}
+
+@keyframes drift-gentle {
+  0%,
+  100% {
+    transform: translateX(0px) translateY(0px);
+  }
+  50% {
+    transform: translateX(15px) translateY(-15px);
+  }
+}
+
+/* Animation Classes */
+.animate-slide-up {
+  animation: slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-drift-slow {
+  animation: drift-slow 20s ease-in-out infinite;
+}
+
+.animate-drift-reverse {
+  animation: drift-reverse 25s ease-in-out infinite;
+}
+
+.animate-drift-gentle {
+  animation: drift-gentle 15s ease-in-out infinite;
+}
+
+/* Contact Card Styles */
+.contact-card {
+  @apply relative overflow-hidden bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 transition-all duration-500;
+}
+
+.contact-card:hover {
+  @apply shadow-2xl shadow-primary/10 -translate-y-2;
+}
+
+.contact-card::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 transition-opacity duration-500;
+}
+
+.contact-card:hover::before {
+  @apply opacity-100;
+}
+
+/* Contact Button Styles */
+.contact-button {
+  @apply inline-flex items-center px-6 py-3 text-primary-foreground font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl;
+}
+
+.contact-button:hover {
+  @apply scale-105;
+}
+
+/* FAQ Item Styles */
+.faq-item {
+  @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 transition-all duration-500;
+}
+
+.faq-item:hover {
+  @apply shadow-xl shadow-primary/5 -translate-y-1;
+}
+
+.faq-item::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-primary/2 to-accent/2 opacity-0 transition-opacity duration-300 rounded-2xl;
+}
+
+.faq-item:hover::before {
+  @apply opacity-100;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .contact-card:hover {
+    @apply -translate-y-1;
+  }
+
+  .faq-item:hover {
+    @apply -translate-y-0.5;
+  }
+}

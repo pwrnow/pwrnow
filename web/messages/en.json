@@ -211,5 +211,84 @@
     "title": "Privacy Policy | PWrNow",
     "description": "Learn about how PWrNow collects, uses, and protects your personal information.",
     "backToHome": "Back to home"
+  },
+  "ContactPage": {
+    "title": "Contact | PWrNow",
+    "description": "Get in touch with the PWrNow team. We have answers to all your questions and we're here to help!",
+    "hero": {
+      "badge": "Get in Touch",
+      "title": "Get in touch with us",
+      "subtitle": "Have questions? Want to report an issue? Or maybe you have an idea for improvement? We're here to help!"
+    },
+    "stats": {
+      "response": "< 24h Response",
+      "support": "Active Support",
+      "satisfaction": "100% Satisfaction"
+    },
+    "contact": {
+      "email": {
+        "title": "Email",
+        "description": "Send us an email for any questions or inquiries",
+        "button": "Send Email"
+      },
+      "messenger": {
+        "title": "Messenger",
+        "description": "Chat with us on Facebook Messenger",
+        "button": "Open Messenger"
+      },
+      "facebook": {
+        "title": "Facebook Page",
+        "description": "Visit our Facebook page and send us a message",
+        "button": "Visit Facebook"
+      },
+      "instagram": {
+        "title": "Instagram DMs",
+        "description": "Send us a direct message on Instagram",
+        "button": "Open Instagram"
+      }
+    },
+    "faq": {
+      "title": "❓ Frequently Asked Questions (FAQ)",
+      "subtitle": "Find answers to the most common questions about PWrNow",
+      "questions": {
+        "1": {
+          "question": "1. What is PWr Now?",
+          "answer": "PWr Now is an application for students of Wrocław University of Technology that makes it easier to discover events at the university – lectures, workshops, meetings, sports and cultural events."
+        },
+        "2": {
+          "question": "2. Who can use the application?",
+          "answer": "The application is mainly intended for students of Wrocław University of Technology, but anyone interested in university events can use it."
+        },
+        "3": {
+          "question": "3. Is the application free?",
+          "answer": "Yes, PWr Now is completely free."
+        },
+        "4": {
+          "question": "4. How can I find events that interest me?",
+          "answer": "You can browse all available events or use the search engine and filters to find those that interest you most."
+        },
+        "5": {
+          "question": "5. Can I save events for later?",
+          "answer": "Yes, in the application you can add events to favorites to have quick access to them."
+        },
+        "6": {
+          "question": "6. I can't find an event I heard about. What should I do?",
+          "answer": "Some events may not have been added yet. If you know about an event that's not in the application – contact us so we can add it."
+        },
+        "7": {
+          "question": "7. The application is not working properly. How to report a problem?",
+          "answer": "If you encounter a technical problem, please contact us by email: {email}. We will try to help as soon as possible."
+        },
+        "8": {
+          "question": "8. How can I contact the PWr Now team?",
+          "answer": "The easiest way is to write to us at: {email}."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of students who are already benefiting from our platform.",
+      "button": "Contact Us Now"
+    }
   }
 }
