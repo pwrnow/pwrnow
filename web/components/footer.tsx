@@ -43,6 +43,12 @@ export default function Footer() {
             <span>✨</span> {t('forOrganizations')}
           </Link>
           <Link
+            href='/zespol'
+            className='text-muted-foreground hover:text-foreground transition-colors duration-200 hover:underline flex items-center gap-1'
+          >
+            <span>👥</span> {t('team')}
+          </Link>
+          <Link
             href='/kontakt'
             className='text-muted-foreground hover:text-foreground transition-colors duration-200 hover:underline flex items-center gap-1'
           >

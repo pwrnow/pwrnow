@@ -159,6 +159,7 @@
   "Footer": {
     "forOrganizations": "For organizations",
     "contact": "Contact",
+    "team": "Team",
     "privacyPolicy": "Privacy Policy",
     "copyright": "© {year} PWr Now. Your event center at Wrocław University of Technology. Made with ❤️ for the academic community."
   },
@@ -295,17 +296,14 @@
   },
   "TeamPage": {
     "title": "Meet Our Team | PWr Now",
-    "description": "Get to know the passionate team behind PWr Now. Discover the people who are building the future of student events at Wrocław University of Technology.",
-    "badge": "� Meet the Creators",
+    "description": "Meet the professionals behind PWr Now - experienced developers, designers, and marketers building the future of student experience.",
     "hero": {
-      "headline": "We Are the Faces Behind",
-      "highlight": "PWr Now",
-      "subheading": "Get to know the real people building your favorite student event platform. We're not just developers – we're your fellow PWr community members making student life better."
+      "title": "Meet Our Team"
     },
     "cta": {
-      "title": "Want to Connect with Us?",
-      "subtitle": "We love hearing from the PWr community! Whether you have feedback, ideas, or just want to say hi – reach out anytime.",
-      "button": "Get in Touch"
+      "title": "Want to Join Our Adventure? 🚀",
+      "subtitle": "We're always looking for passionate students who want to make a real impact! Whether you're into coding, design, marketing, or just have cool ideas - there's a place for you in our team. Let's build something amazing together!",
+      "button": "I Want to Join!"
     }
   }
 }

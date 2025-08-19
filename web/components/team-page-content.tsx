@@ -5,12 +5,12 @@ import { Github, Linkedin, Mail } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
-// Team member data - focused on personal recognition and being the faces behind PWr Now
+// Team member data - showcasing professional expertise and individual achievements
 const teamMembers = [
   {
     id: 1,
     name: "Michał Kowalski",
-    description: "Hey! I'm the one behind the technical architecture of PWr Now. When you see a smooth, fast-loading event page or notice how quickly everything works – that's my passion for clean code and performance in action. I'm a PWr student just like you, and I built this platform because I wanted to make finding campus events actually enjoyable.",
+    description: "Full-Stack Developer & Technical Lead with expertise in modern web technologies. Architected PWr Now's scalable infrastructure using React, Next.js, and Django. Passionate about clean code, performance optimization, and delivering exceptional user experiences. Experienced in leading technical projects from conception to deployment.",
     image: "https://picsum.photos/seed/michal/400/500",
     social: {
       github: "https://github.com/michal",
@@ -21,7 +21,7 @@ const teamMembers = [
   {
     id: 2,
     name: "Anna Wiśniewska",
-    description: "I'm the one who designed every button, color, and interaction you see in PWr Now! My goal is making sure the app feels intuitive and delightful to use. As a fellow PWr student, I know how frustrating bad interfaces can be, so I spend my time researching what actually works and making sure every student can easily find the events they love.",
+    description: "Senior UX/UI Designer specializing in user-centered design and brand development. Created PWr Now's complete design system and user experience strategy. Expert in design thinking, prototyping, and converting complex user needs into intuitive interfaces. Proven track record in creating engaging digital experiences.",
     image: "https://picsum.photos/seed/anna/400/500",
     social: {
       linkedin: "https://linkedin.com/in/anna",
@@ -31,7 +31,7 @@ const teamMembers = [
   {
     id: 3,
     name: "Jakub Nowak",
-    description: "I'm the guy making sure PWr Now reaches every student who needs it! I analyze how people use the platform, work with student organizations to get their events featured, and figure out how to make PWr Now grow sustainably. I love connecting with the community and understanding what makes student life at PWr special.",
+    description: "Digital Marketing Strategist & Community Growth Specialist. Built PWr Now's user acquisition strategy and community engagement programs. Experienced in data-driven marketing, social media strategy, and product growth. Successfully scaled user base through innovative marketing campaigns and partnerships.",
     image: "https://picsum.photos/seed/jakub/400/500",
     social: {
       github: "https://github.com/jakub",
@@ -438,173 +438,17 @@ export default function TeamPageContent() {
         </motion.div>
       </div>
 
-      {/* Enhanced Hero Section */}
+      {/* Simple Hero Section */}
       <section className="pt-32 pb-24 px-6 relative">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              ease: "easeOut",
-              staggerChildren: 0.2
-            }}
-            className="text-center relative"
+            transition={{ duration: 0.6 }}
           >
-            {/* Enhanced floating background elements */}
-            <motion.div
-              className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-r from-primary/5 to-accent/5 rounded-full blur-3xl"
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.6, 0.3],
-                x: [-10, 10, -10],
-                y: [-5, 5, -5]
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Additional ambient elements around header */}
-            <motion.div
-              className="absolute -top-20 -left-20 w-4 h-4 bg-primary/20 rounded-full blur-sm"
-              animate={{
-                scale: [0.5, 1.5, 0.5],
-                opacity: [0.2, 0.6, 0.2],
-                x: [0, 30, 0],
-                y: [0, -15, 0],
-                rotate: [0, 180, 360]
-              }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 2
-              }}
-            />
-
-            <motion.div
-              className="absolute -top-16 -right-16 w-3 h-3 bg-accent/25 rounded-full blur-sm"
-              animate={{
-                scale: [0.8, 1.3, 0.8],
-                opacity: [0.25, 0.55, 0.25],
-                x: [0, -25, 0],
-                y: [0, 20, 0],
-                rotate: [0, -120, -240, -360]
-              }}
-              transition={{
-                duration: 15,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 4
-              }}
-            />
-
-            <motion.div
-              className="absolute -bottom-8 left-1/4 w-2 h-2 bg-secondary/30 rounded-full blur-sm"
-              animate={{
-                scale: [1, 1.8, 1],
-                opacity: [0.3, 0.7, 0.3],
-                x: [0, 20, 0],
-                y: [0, -10, 0],
-                rotate: [0, 90, 180, 270, 360]
-              }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1
-              }}
-            />
-
-            {/* Badge with enhanced animation and improved styling */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{
-                duration: 0.6,
-                delay: 0.2,
-                type: "spring",
-                stiffness: 200,
-                damping: 10
-              }}
-              className="inline-block relative mb-12"
-            >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-full blur-md"
-                animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.3, 0.6, 0.3]
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-              <div className="relative px-6 py-3 bg-background/80 backdrop-blur-sm text-foreground text-sm font-medium rounded-full border border-border/30">
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                >
-                  {t('badge')}
-                </motion.span>
-              </div>
-            </motion.div>
-
-            {/* Enhanced Main Headline */}
-            <div className="space-y-8 mb-16">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.3,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                className="space-y-4"
-              >
-                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-foreground tracking-tight leading-tight">
-                  <motion.span
-                    className="block mb-3"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                  >
-                    {t('hero.headline')}
-                  </motion.span>
-                  <motion.span
-                    className="block bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 0.6 }}
-                  >
-                    {t('hero.highlight')}
-                  </motion.span>
-                </h1>
-
-                {/* Dynamic underline */}
-                <motion.div
-                  className="mx-auto h-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: "40%" }}
-                  transition={{ duration: 1.2, delay: 0.8 }}
-                />
-              </motion.div>
-
-              <motion.p
-                className="text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-              >
-                {t('hero.subheading')}
-              </motion.p>
-            </div>
+            <h1 className="text-5xl lg:text-6xl font-bold text-foreground">
+              {t('hero.title')}
+            </h1>
           </motion.div>
         </div>
       </section>
@@ -623,6 +467,7 @@ export default function TeamPageContent() {
           </div>
         </div>
       </section>
+
 
       {/* Enhanced Call to Action */}
       <section className="py-24 px-6 relative">
@@ -690,25 +535,6 @@ export default function TeamPageContent() {
                   <span className="relative z-10">{t('cta.button')}</span>
                 </motion.a>
 
-                <motion.a
-                  href="/zespol"
-                  className="group inline-flex items-center px-6 py-3 text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
-                  whileHover={{ x: 5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  Learn more about us
-                  <motion.svg
-                    className="w-4 h-4 ml-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    initial={{ x: 0 }}
-                    whileHover={{ x: 3 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </motion.svg>
-                </motion.a>
               </motion.div>
 
               {/* Floating decorative elements */}

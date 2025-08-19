@@ -159,6 +159,7 @@
   "Footer": {
     "forOrganizations": "Dla organizacji",
     "contact": "Kontakt",
+    "team": "Zespół",
     "privacyPolicy": "Polityka Prywatności",
     "copyright": "© {year} PWr Now. Twoje centrum wydarzeń na Politechnice Wrocławskiej. Zrobione z ❤️ dla społeczności akademickiej."
   },
@@ -285,17 +286,14 @@
   },
   "TeamPage": {
     "title": "Poznaj Nasz Zespół | PWr Now",
-    "description": "Poznaj pasjonatów stojących za PWr Now. Odkryj ludzi, którzy budują przyszłość wydarzeń studenckich na Politechnice Wrocławskiej.",
-    "badge": "� Poznaj Twórców",
+    "description": "Poznaj profesjonalistów stojących za PWr Now - doświadczonych deweloperów, designerów i marketerów budujących przyszłość doświadczenia studenckiego.",
     "hero": {
-      "headline": "Jesteśmy Twarzami za",
-      "highlight": "PWr Now",
-      "subheading": "Poznaj prawdziwych ludzi budujących waszą ulubioną platformę wydarzeń studenckich. Nie jesteśmy tylko programistami – jesteśmy członkami społeczności PWr, którzy chcą ulepszyć życie studenckie."
+      "title": "Poznaj Nasz Zespół"
     },
     "cta": {
-      "title": "Chcesz się z Nami Skontaktować?",
-      "subtitle": "Uwielbiamy słuchać społeczności PWr! Niezależnie od tego, czy masz opinie, pomysły, czy po prostu chcesz się przywitać – napisz do nas!",
-      "button": "Skontaktuj się z Nami"
+      "title": "Chcesz Dołączyć do Naszej Przygody? 🚀",
+      "subtitle": "Zawsze szukamy pasjonatów, którzy chcą realnie wpływać na życie studenckie! Nieważne czy kodzisz, projektujesz, zajmujesz się marketingiem, czy po prostu masz świetne pomysły - znajdziemy dla Ciebie miejsce w naszym zespole!",
+      "button": "Chcę Dołączyć!"
     }
   }
 }
