@@ -150,6 +150,10 @@ body {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-accent via-primary to-secondary;
 }
 
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
 .category-active {
   @apply bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 text-primary-foreground;
 }
@@ -369,6 +373,82 @@ body {
   @apply opacity-100;
 }
 
+/* Team Page Animations */
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes slide-diagonal {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px);
+  }
+  25% {
+    transform: translateX(20px) translateY(-20px);
+  }
+  50% {
+    transform: translateX(40px) translateY(0px);
+  }
+  75% {
+    transform: translateX(20px) translateY(20px);
+  }
+}
+
+/* Team Member Card Styles */
+.team-member-card {
+  @apply relative;
+}
+
+.team-member-card::before {
+  content: '';
+  @apply absolute -inset-0.5 bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 rounded-3xl opacity-0 transition-opacity duration-500 blur-sm;
+}
+
+.team-member-card:hover::before {
+  @apply opacity-100;
+}
+
+.team-member-card > div {
+  @apply relative z-10;
+}
+
+/* Animation Classes */
+.animate-float-gentle {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+.animate-slide-diagonal {
+  animation: slide-diagonal 30s ease-in-out infinite;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .contact-card:hover {
@@ -377,5 +457,13 @@ body {
 
   .faq-item:hover {
     @apply -translate-y-0.5;
+  }
+
+  .team-member-card:hover > div {
+    @apply -translate-y-1;
+  }
+
+  .team-member-card:hover::before {
+    @apply opacity-50;
   }
 }

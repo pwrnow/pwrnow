@@ -282,5 +282,20 @@
       "subtitle": "Dołącz do tysięcy studentów, którzy już korzystają z naszej platformy.",
       "button": "Skontaktuj się Teraz"
     }
+  },
+  "TeamPage": {
+    "title": "Poznaj Nasz Zespół | PWr Now",
+    "description": "Poznaj pasjonatów stojących za PWr Now. Odkryj ludzi, którzy budują przyszłość wydarzeń studenckich na Politechnice Wrocławskiej.",
+    "badge": "� Poznaj Twórców",
+    "hero": {
+      "headline": "Jesteśmy Twarzami za",
+      "highlight": "PWr Now",
+      "subheading": "Poznaj prawdziwych ludzi budujących waszą ulubioną platformę wydarzeń studenckich. Nie jesteśmy tylko programistami – jesteśmy członkami społeczności PWr, którzy chcą ulepszyć życie studenckie."
+    },
+    "cta": {
+      "title": "Chcesz się z Nami Skontaktować?",
+      "subtitle": "Uwielbiamy słuchać społeczności PWr! Niezależnie od tego, czy masz opinie, pomysły, czy po prostu chcesz się przywitać – napisz do nas!",
+      "button": "Skontaktuj się z Nami"
+    }
   }
 }

@@ -292,5 +292,20 @@
       "subtitle": "Join thousands of students who are already benefiting from our platform.",
       "button": "Contact Us Now"
     }
+  },
+  "TeamPage": {
+    "title": "Meet Our Team | PWr Now",
+    "description": "Get to know the passionate team behind PWr Now. Discover the people who are building the future of student events at Wrocław University of Technology.",
+    "badge": "� Meet the Creators",
+    "hero": {
+      "headline": "We Are the Faces Behind",
+      "highlight": "PWr Now",
+      "subheading": "Get to know the real people building your favorite student event platform. We're not just developers – we're your fellow PWr community members making student life better."
+    },
+    "cta": {
+      "title": "Want to Connect with Us?",
+      "subtitle": "We love hearing from the PWr community! Whether you have feedback, ideas, or just want to say hi – reach out anytime.",
+      "button": "Get in Touch"
+    }
   }
 }
