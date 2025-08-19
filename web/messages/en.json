@@ -6,7 +6,7 @@
   "EventsPage": {
     "title": "Your Events at PWr - Trips, Parties, Courses and More!",
     "description": "Find and discover the most interesting events at Wrocław University of Technology today! Sports, trips, parties, courses, development and lectures are waiting for you.",
-    "ogImageAlt": "PWrNow - Events at Wrocław University of Technology",
+    "ogImageAlt": "PWr Now - Events at Wrocław University of Technology",
     "keywords": {
       "findEvents": "find PWr events",
       "currentEvents": "current events Wrocław University of Technology",
@@ -19,7 +19,7 @@
       "lectures": "lectures PWr",
       "eventCalendar": "event calendar PWr",
       "whatsHappening": "what's happening at PWr",
-      "pwrNowEvents": "PWrNow events",
+      "pwrNowEvents": "PWr Now events",
       "wroclawStudentEvents": "Wrocław student events",
       "studentLife": "student life PWr today",
       "discoverEvents": "discover PWr events"
@@ -46,7 +46,7 @@
   "EventDetailPage": {
     "defaultDescription": "Event {title} organized by {organization}. Date: {date}{location, select, '' {} other {, Location: {location}}}.}",
     "ogDescription": "Event {title} - {date}",
-    "notFoundTitle": "Event not found | PWrNow",
+    "notFoundTitle": "Event not found | PWr Now",
     "notFoundDescription": "The requested event was not found. Check the list of all available events.",
     "backToEvents": "Back to events",
     "keywords": {
@@ -191,10 +191,10 @@
   },
   "ForOrganizationsPage": {
     "title": "For Organizations",
-    "description": "If you're an organization that wants to post on PWrNow, write us an email and join our vibrant community!",
-    "ogImageAlt": "For organizations - PWrNow",
+    "description": "If you're an organization that wants to post on PWr Now, write us an email and join our vibrant community!",
+    "ogImageAlt": "For organizations - PWr Now",
     "howToPostTitle": "How to post as an organization?",
-    "howToPostDescription": "If you represent an organization and want to post events on PWrNow, please contact us by email. We will provide the address soon.",
+    "howToPostDescription": "If you represent an organization and want to post events on PWr Now, please contact us by email. We will provide the address soon.",
     "contactTitle": "Contact",
     "contactDescription": "For any questions or partnership inquiries, reach out to us by email.",
     "benefitVisibilityTitle": "Boost Your Visibility",
@@ -205,16 +205,18 @@
     "benefitPromotionDesc": "Showcase your events on a modern, student-focused platform.",
     "benefitEasyTitle": "Easy & Fast",
     "benefitEasyDesc": "Posting is simple and support is always available.",
-    "ctaButton": "Apply to join PWrNow!"
+    "ctaButton": "Apply to join PWr Now!"
   },
   "PrivacyPolicy": {
-    "title": "Privacy Policy | PWrNow",
-    "description": "Learn about how PWrNow collects, uses, and protects your personal information.",
+    "title": "Privacy Policy | PWr Now",
+    "description": "Learn about how PWr Now collects, uses, and protects your personal information.",
     "backToHome": "Back to home"
   },
   "ContactPage": {
-    "title": "Contact | PWrNow",
-    "description": "Get in touch with the PWrNow team. We have answers to all your questions and we're here to help!",
+    "title": "Contact | PWr Now",
+    "description": "Get in touch with the PWr Now team. We have answers to all your questions and we're here to help!",
+    "pageTitle": "Get in touch",
+    "pageSubtitle": "Have questions about PWr Now? Want to report an issue? Or maybe you have an idea for improvement? We're here to help and improve your experience!",
     "hero": {
       "badge": "Get in Touch",
       "title": "Get in touch with us",
@@ -249,7 +251,7 @@
     },
     "faq": {
       "title": "❓ Frequently Asked Questions (FAQ)",
-      "subtitle": "Find answers to the most common questions about PWrNow",
+      "subtitle": "Find answers to the most common questions about PWr Now",
       "questions": {
         "1": {
           "question": "1. What is PWr Now?",

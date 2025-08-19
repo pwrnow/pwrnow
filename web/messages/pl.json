@@ -6,7 +6,7 @@
   "EventsPage": {
     "title": "Twoje Wydarzenia na PWr - Wyjazdy, Imprezy, Kursy i Więcej!",
     "description": "Znajdź i odkryj najciekawsze wydarzenia na Politechnice Wrocławskiej już dziś! Sport, wyjazdy, imprezy, kursy, rozwój i prelekcje czekają na Ciebie.",
-    "ogImageAlt": "PWrNow - Wydarzenia na Politechnice Wrocławskiej",
+    "ogImageAlt": "PWr Now - Wydarzenia na Politechnice Wrocławskiej",
     "keywords": {
       "findEvents": "znajdź wydarzenia PWr",
       "currentEvents": "aktualne wydarzenia Politechnika Wrocławska",
@@ -19,7 +19,7 @@
       "lectures": "prelekcje PWr",
       "eventCalendar": "kalendarz wydarzeń PWr",
       "whatsHappening": "co dzieje się na PWr",
-      "pwrNowEvents": "PWrNow wydarzenia",
+      "pwrNowEvents": "PWr Now wydarzenia",
       "wroclawStudentEvents": "Wrocław wydarzenia studenckie",
       "studentLife": "życie studenckie PWr dziś",
       "discoverEvents": "odkryj wydarzenia PWr"
@@ -46,7 +46,7 @@
   "EventDetailPage": {
     "defaultDescription": "Wydarzenie {title} organizowane przez {organization}. Data: {date}{location, select, '' {} other {, Miejsce: {location}}}.}",
     "ogDescription": "Wydarzenie {title} - {date}",
-    "notFoundTitle": "Wydarzenie nie znalezione | PWrNow",
+    "notFoundTitle": "Wydarzenie nie znalezione | PWr Now",
     "notFoundDescription": "Szukane wydarzenie nie zostało znalezione. Sprawdź listę wszystkich dostępnych wydarzeń.",
     "backToEvents": "Wróć do wydarzeń",
     "keywords": {
@@ -191,10 +191,10 @@
   },
   "ForOrganizationsPage": {
     "title": "Dla organizacji",
-    "description": "Jeśli jesteś organizacją i chcesz publikować na PWrNow, napisz do nas maila i dołącz do naszej społeczności!",
-    "ogImageAlt": "Dla organizacji - PWrNow",
+    "description": "Jeśli jesteś organizacją i chcesz publikować na PWr Now, napisz do nas maila i dołącz do naszej społeczności!",
+    "ogImageAlt": "Dla organizacji - PWr Now",
     "howToPostTitle": "Jak publikować jako organizacja?",
-    "howToPostDescription": "Jeśli reprezentujesz organizację i chcesz publikować wydarzenia na PWrNow, skontaktuj się z nami mailowo. Adres podamy wkrótce.",
+    "howToPostDescription": "Jeśli reprezentujesz organizację i chcesz publikować wydarzenia na PWr Now, skontaktuj się z nami mailowo. Adres podamy wkrótce.",
     "contactTitle": "Kontakt",
     "contactDescription": "W razie pytań lub chęci współpracy napisz do nas maila.",
     "benefitVisibilityTitle": "Zwiększ widoczność",
@@ -205,18 +205,18 @@
     "benefitPromotionDesc": "Pokaż swoje wydarzenia na nowoczesnej platformie skierowanej do studentów.",
     "benefitEasyTitle": "Łatwo i szybko",
     "benefitEasyDesc": "Publikacja jest prosta, a wsparcie zawsze dostępne.",
-    "ctaButton": "Aplikuj do PWrNow!"
+    "ctaButton": "Aplikuj do PWr Now!"
   },
   "PrivacyPolicy": {
-    "title": "Polityka Prywatności | PWrNow",
-    "description": "Dowiedz się, jak PWrNow zbiera, wykorzystuje i chroni Twoje dane osobowe.",
+    "title": "Polityka Prywatności | PWr Now",
+    "description": "Dowiedz się, jak PWr Now zbiera, wykorzystuje i chroni Twoje dane osobowe.",
     "backToHome": "Powrót do strony głównej"
   },
   "ContactPage": {
-    "title": "Kontakt | PWR Now",
-    "description": "Skontaktuj się z zespołem PWR Now. Mamy odpowiedzi na wszystkie Twoje pytania i jesteśmy tutaj, aby pomóc!",
+    "title": "Kontakt | PWr Now",
+    "description": "Skontaktuj się z zespołem PWr Now. Mamy odpowiedzi na wszystkie Twoje pytania i jesteśmy tutaj, aby pomóc!",
     "pageTitle": "Skontaktuj się",
-    "pageSubtitle": "Masz pytania o PWR Now? Chcesz zgłosić problem? A może masz pomysł na ulepszenie? Jesteśmy tutaj, aby pomóc i poprawić Twoje doświadczenie!",
+    "pageSubtitle": "Masz pytania o PWr Now? Chcesz zgłosić problem? A może masz pomysł na ulepszenie? Jesteśmy tutaj, aby pomóc i poprawić Twoje doświadczenie!",
     "contact": {
       "email": {
         "title": "E-mail",
@@ -241,7 +241,7 @@
     },
     "faq": {
       "title": "❓ Często Zadawane Pytania (FAQ)",
-      "subtitle": "Znajdź odpowiedzi na najczęściej zadawane pytania o PWrNow",
+      "subtitle": "Znajdź odpowiedzi na najczęściej zadawane pytania o PWr Now",
       "questions": {
         "1": {
           "question": "1. Czym jest PWr Now?",
