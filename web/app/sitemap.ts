@@ -12,12 +12,6 @@ export default async function sitemap() {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/wydarzenia`,
-      lastModified: new Date(),
-      changeFrequency: 'hourly' as const,
-      priority: 0.9,
-    },
-    {
       url: `${baseUrl}/dla-organizacji`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
