@@ -63,11 +63,5 @@
       }
     }
   },
-  "private": true,
-  "pnpm": {
-    "overrides": {
-      "@expo/config": "11.0.13",
-      "@expo/config-plugins": "10.1.2"
-    }
-  }
+  "private": true
 }

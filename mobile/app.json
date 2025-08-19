@@ -6,6 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#000000",
+    "primaryColor": "#000000",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -19,7 +21,9 @@
       "associatedDomains": ["applinks:pwrnow.pl"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleLocalizations": ["pl", "en"],
+        "CFBundleDevelopmentRegion": "pl"
       },
       "icon": {
         "light": "./assets/icon-light.png",
@@ -76,7 +80,7 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "The app needs to access your calendar."
+          "calendarPermission": "Aplikacja potrzebuje dostępu do kalendarza, aby dodać wydarzenie."
         }
       ],
       [
