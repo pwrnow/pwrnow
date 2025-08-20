@@ -15,6 +15,7 @@ export const SOCIAL_LINKS = {
   INSTAGRAM: 'https://www.instagram.com/pwr_now/',
   MESSENGER: 'https://m.me/pwrnow',
   TIKTOK: 'https://www.tiktok.com/@pwrnow', // Not for contact
+  LINKEDIN: 'https://www.linkedin.com/company/pwrnow',
 };
 
 // Helper to get full API URL

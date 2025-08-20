@@ -160,7 +160,7 @@ export default async function ContactPage() {
           })}
         </div>
       </section>
-{/*
+      {/*
       <section className='relative max-w-5xl mx-auto px-6 py-16'>
         <div
           className='relative overflow-hidden rounded-3xl p-8 text-center bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10 border border-border/40 shadow-xl animate-slide-up opacity-0'

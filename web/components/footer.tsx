@@ -11,6 +11,7 @@ export default function Footer() {
     { network: 'facebook', href: SOCIAL_LINKS.FACEBOOK, label: 'Facebook' },
     { network: 'instagram', href: SOCIAL_LINKS.INSTAGRAM, label: 'Instagram' },
     { network: 'tiktok', href: SOCIAL_LINKS.TIKTOK, label: 'TikTok' },
+    { network: 'linkedin', href: SOCIAL_LINKS.LINKEDIN, label: 'LinkedIn' },
   ];
 
   return (
