@@ -17,9 +17,7 @@ export const eventFormSchema = z
       .string()
       .max(200, 'Lokalizacja nie może być dłuższa niż 200 znaków')
       .optional(),
-    url: z
-      .string()
-      .url('Nieprawidłowy format URL')
+    url: z.url()
       .max(500, 'URL nie może być dłuższy niż 500 znaków')
       .optional()
       .or(z.literal('')),
@@ -33,8 +31,8 @@ export const eventFormSchema = z
       return data.endsAt > data.startsAt;
     },
     {
-      message: 'Data zakończenia musi być późniejsza niż data rozpoczęcia',
       path: ['endsAt'],
+        error: 'Data zakończenia musi być późniejsza niż data rozpoczęcia'
     }
   );
 
