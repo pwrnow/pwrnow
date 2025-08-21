@@ -2,8 +2,32 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { detectLocaleFromHeaders } from './lib/locale-detection';
 import { i18nConfig } from './i18n/config';
+import { trackServerEvent } from './lib/posthog-server';
 
 export function middleware(request: NextRequest) {
+  // Handle /wlepa redirect
+  if (request.nextUrl.pathname === '/wlepa') {
+    // Generate a unique identifier for the user (using IP + User-Agent hash for anonymity)
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    const forwardedFor = request.headers.get('x-forwarded-for') || 
+                        request.headers.get('x-real-ip') || 
+                        'unknown';
+    const distinctId = `anonymous-${Buffer.from(forwardedFor + userAgent).toString('base64').slice(0, 16)}`;
+    
+    // Track the click event
+    trackServerEvent(distinctId, 'Wlepa Link Click', {
+      pathname: '/wlepa',
+      user_agent: userAgent,
+      ip_address: forwardedFor,
+      timestamp: new Date().toISOString(),
+      redirect_target: '/', // Will be updated when you change the redirect target
+    });
+
+    // Redirect to home page (change this URL when you want to redirect to app store)
+    const redirectUrl = new URL('/', request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Skip middleware for static files and API routes
   const { pathname } = request.nextUrl;
 
@@ -13,12 +37,6 @@ export function middleware(request: NextRequest) {
     pathname.includes('.') // Static files
   ) {
     return NextResponse.next();
-  }
-
-  // Handle /wlepa redirect - redirect to home page for now
-  // TODO: In the future, redirect to appropriate app store (Google Play Store or Apple App Store)
-  if (pathname === '/wlepa') {
-    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // Check if the user has a locale preference in cookies
