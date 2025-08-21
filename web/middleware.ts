@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     const distinctId = `anonymous-${Buffer.from(forwardedFor + userAgent).toString('base64').slice(0, 16)}`;
 
     // Track the click event
-    trackServerEvent(distinctId, 'Wlepa Link Click', {
+    trackServerEvent(distinctId, 'wlepa_scanned', {
       pathname: '/wlepa',
       user_agent: userAgent,
       ip_address: forwardedFor,
