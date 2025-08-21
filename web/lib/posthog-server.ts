@@ -1,5 +1,9 @@
 import { PostHog } from 'posthog-node';
 
+// Define types for PostHog properties
+type PostHogPropertyValue = string | number | boolean | null | undefined;
+type PostHogProperties = Record<string, PostHogPropertyValue>;
+
 let posthogServer: PostHog | null = null;
 
 /**
@@ -29,10 +33,10 @@ function getPostHogServer(): PostHog | null {
 export function trackServerEvent(
   distinctId: string,
   event: string,
-  properties?: Record<string, any>
+  properties?: PostHogProperties
 ): void {
   const posthog = getPostHogServer();
-  
+
   if (!posthog) {
     console.warn('PostHog not initialized, skipping server-side event tracking');
     return;

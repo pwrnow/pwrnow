@@ -9,11 +9,11 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/wlepa') {
     // Generate a unique identifier for the user (using IP + User-Agent hash for anonymity)
     const userAgent = request.headers.get('user-agent') || 'unknown';
-    const forwardedFor = request.headers.get('x-forwarded-for') || 
-                        request.headers.get('x-real-ip') || 
+    const forwardedFor = request.headers.get('x-forwarded-for') ||
+                        request.headers.get('x-real-ip') ||
                         'unknown';
     const distinctId = `anonymous-${Buffer.from(forwardedFor + userAgent).toString('base64').slice(0, 16)}`;
-    
+
     // Track the click event
     trackServerEvent(distinctId, 'Wlepa Link Click', {
       pathname: '/wlepa',
