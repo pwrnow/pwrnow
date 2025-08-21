@@ -15,6 +15,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle /wlepa redirect - redirect to home page for now
+  // TODO: In the future, redirect to appropriate app store (Google Play Store or Apple App Store)
+  if (pathname === '/wlepa') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   // Check if the user has a locale preference in cookies
   const localeFromCookie = request.cookies.get(i18nConfig.COOKIE_NAME)?.value;
 
