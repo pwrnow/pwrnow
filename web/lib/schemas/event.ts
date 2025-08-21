@@ -6,12 +6,12 @@ export const eventFormSchema = z
       .string()
       .min(1, 'Tytuł jest wymagany')
       .max(100, 'Tytuł nie może być dłuższy niż 100 znaków'),
-    categorySlug: z.string().min(1, 'Kategoria jest wymagana'),
+    categorySlug: z.string().min(1, { error: 'Kategoria jest wymagana' }),
     startsAt: z.date({
-      required_error: 'Data rozpoczęcia jest wymagana',
+      error: (issue) => issue.input === undefined ? 'Data rozpoczęcia jest wymagana' : 'Nieprawidłowa data rozpoczęcia',
     }),
     endsAt: z.date({
-      required_error: 'Data zakończenia jest wymagana',
+      error: (issue) => issue.input === undefined ? 'Data zakończenia jest wymagana' : 'Nieprawidłowa data zakończenia',
     }),
     location: z
       .string()
