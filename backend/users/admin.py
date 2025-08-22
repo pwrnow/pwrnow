@@ -14,6 +14,8 @@ class UserAdmin(BaseUserAdmin):
     list_display = [
         'email',
         'get_full_name',
+        'auth_provider_display',
+        'google_verification_status',
         'is_staff',
         'is_superuser',
         'is_active',
@@ -22,6 +24,8 @@ class UserAdmin(BaseUserAdmin):
     ]
     
     list_filter = [
+        'auth_provider',
+        'is_google_verified',
         'is_staff',
         'is_superuser',
         'is_active',
@@ -29,9 +33,9 @@ class UserAdmin(BaseUserAdmin):
         'last_login'
     ]
     
-    search_fields = ['email', 'first_name', 'last_name']
+    search_fields = ['email', 'first_name', 'last_name', 'google_email']
     ordering = ['-date_joined']
-    readonly_fields = ['id', 'date_joined', 'last_login', 'login_status']
+    readonly_fields = ['id', 'date_joined', 'last_login', 'login_status', 'google_id', 'google_email']
     
     fieldsets = (
         ('Authentication', {
@@ -39,6 +43,10 @@ class UserAdmin(BaseUserAdmin):
         }),
         ('Personal Information', {
             'fields': ('first_name', 'last_name')
+        }),
+        ('Google OAuth', {
+            'fields': ('auth_provider', 'google_id', 'google_email', 'profile_picture_url', 'is_google_verified'),
+            'description': 'Google OAuth authentication information'
         }),
         ('Permissions', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
@@ -124,6 +132,50 @@ class UserAdmin(BaseUserAdmin):
         updated = queryset.update(is_active=True)
         self.message_user(request, f'{updated} users activated.')
     activate_users.short_description = "Activate selected users"
+    
+    @admin.display(description='Auth Provider', ordering='auth_provider')
+    def auth_provider_display(self, obj):
+        """Display authentication provider with styling."""
+        if obj.auth_provider == 'google':
+            color = '#4285f4'  # Google blue
+            icon = '🔗'
+        else:
+            color = '#6c757d'  # Gray
+            icon = '📧'
+        
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{} {}</span>',
+            color,
+            icon,
+            obj.get_auth_provider_display()
+        )
+    
+    @admin.display(description='Google Status', boolean=True)
+    def google_verification_status(self, obj):
+        """Display Google verification status."""
+        if obj.auth_provider == 'google':
+            return obj.is_google_verified
+        return None
+    
+    @admin.display(description='Profile Picture')
+    def profile_picture_display(self, obj):
+        """Display profile picture if available."""
+        if obj.profile_picture_url:
+            return format_html(
+                '<img src="{}" style="width: 32px; height: 32px; border-radius: 50%;" />',
+                obj.profile_picture_url
+            )
+        return '-'
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Make certain fields readonly based on authentication provider."""
+        readonly = list(self.readonly_fields)
+        
+        if obj and obj.auth_provider == 'google':
+            # Make password field readonly for Google users
+            readonly.extend(['password'])
+        
+        return readonly
     
     def deactivate_users(self, request, queryset):
         """Deactivate selected users."""

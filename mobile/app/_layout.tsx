@@ -11,6 +11,7 @@ import Logo from '../components/Logo';
 import * as Haptics from 'expo-haptics';
 import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
+import { AuthProvider } from '../lib/auth-context';
 import StartupAnimation from '../components/StartupAnimation';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -62,52 +63,54 @@ export default function StackLayout() {
   return (
     <QueryProvider>
       <PosthogProvider>
-        {/* Startup overlay animation shown briefly after splash */}
-        <StartupAnimation visible={showStartup} onEnd={handleStartupEnd} />
-        <StatusBar
-          style={isDark ? 'light' : 'dark'}
-          animated
-          translucent={false}
-          backgroundColor={isDark ? '#000000' : '#FFFFFF'}
-        />
-        <Stack
-          screenOptions={{
-            headerShown: true,
-            headerBackTitle: '',
-            headerBackButtonDisplayMode: 'minimal',
-            headerTitle: () => <Logo size='medium' />,
-            headerTitleAlign: 'left',
-            headerTransparent: false,
-            headerShadowVisible: true,
-            headerStyle: {
-              backgroundColor: isDark ? '#000000' : '#FFFFFF',
-            },
-            // Use a slightly off-white tint in dark mode so the back icon isn't pure white
-            headerTintColor: isDark ? '#E5E7EB' : '#000000',
+        <AuthProvider>
+          {/* Startup overlay animation shown briefly after splash */}
+          <StartupAnimation visible={showStartup} onEnd={handleStartupEnd} />
+          <StatusBar
+            style={isDark ? 'light' : 'dark'}
+            animated
+            translucent={false}
+            backgroundColor={isDark ? '#000000' : '#FFFFFF'}
+          />
+          <Stack
+            screenOptions={{
+              headerShown: true,
+              headerBackTitle: '',
+              headerBackButtonDisplayMode: 'minimal',
+              headerTitle: () => <Logo size='medium' />,
+              headerTitleAlign: 'left',
+              headerTransparent: false,
+              headerShadowVisible: true,
+              headerStyle: {
+                backgroundColor: isDark ? '#000000' : '#FFFFFF',
+              },
+              // Use a slightly off-white tint in dark mode so the back icon isn't pure white
+              headerTintColor: isDark ? '#E5E7EB' : '#000000',
 
-            // headerRight: () => (
-            //   <View
-            //     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            //   >
-            //     <TouchableOpacity
-            //       accessibilityLabel='Open profile'
-            //       onPressIn={() => {
-            //         Haptics.selectionAsync();
-            //       }}
-            //       onPress={() => {}}
-            //       style={{ padding: 6, borderRadius: 9999 }}
-            //     >
-            //       <Feather
-            //         name='user'
-            //         size={22}
-            //         color={isDark ? '#FFFFFF' : '#000000'}
-            //       />
-            //     </TouchableOpacity>
-            //   </View>
-            // ),
-            contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
-          }}
-        />
+              // headerRight: () => (
+              //   <View
+              //     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+              //   >
+              //     <TouchableOpacity
+              //       accessibilityLabel='Open profile'
+              //       onPressIn={() => {
+              //         Haptics.selectionAsync();
+              //       }}
+              //       onPress={() => {}}
+              //       style={{ padding: 6, borderRadius: 9999 }}
+              //     >
+              //       <Feather
+              //         name='user'
+              //         size={22}
+              //         color={isDark ? '#FFFFFF' : '#000000'}
+              //       />
+              //     </TouchableOpacity>
+              //   </View>
+              // ),
+              contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
+            }}
+          />
+        </AuthProvider>
       </PosthogProvider>
     </QueryProvider>
   );
