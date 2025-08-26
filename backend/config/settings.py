@@ -45,13 +45,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
     'corsheaders',
     'django_filters',
     'django_celery_beat',
     'core',
     'users',
     'notifications',
+
+    'rest_framework',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'dj_rest_auth.registration',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.apple',  # apple provider
+
+
 ]
 
 
@@ -65,7 +78,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',   # default
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 ROOT_URLCONF = 'config.urls'
 
@@ -250,6 +269,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
+    ),
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
     'DEFAULT_VERSION': 'v1',
     'ALLOWED_VERSIONS': ['v1'],
@@ -310,6 +332,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+SITE_ID = 1
 
 # Site URL for generating absolute URLs
 SITE_URL = env("SITE_URL", default="http://localhost:8000")
@@ -432,4 +456,69 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.cleanup_inactive_devices',
         'schedule': crontab(hour=3, minute=0),  # Daily at 3 AM
     },
+}
+
+# allauth
+# # Optional: adjust allauth behavior
+# # ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# # ACCOUNT_EMAIL_VERIFICATION = "none"
+# # ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+# # ACCOUNT_LOGIN_METHODS = {'email'}
+# # ACCOUNT_UNIQUE_EMAIL = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_USERNAME_FIELD = 'email'
+# # ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_LOGIN_METHODS = {"email"}
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
+
+# SOCIALACCOUNT_QUERY_EMAIL = True
+# SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+
+# GOOGLE_CALLBACK_URL = env("GOOGLE_CALLBACK_URL", default="http://localhost:8000/v1/users/auth/google/callback/")
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env("GOOGLE_CLIENT_ID"),
+            "secret": env("GOOGLE_CLIENT_SECRET"),
+        },
+    },
+    # "facebook": {
+    #     "APP": {
+    #         "client_id": env("FACEBOOK_CLIENT_ID"),
+    #         "secret": env("FACEBOOK_CLIENT_SECRET"),
+    #         "key": "",
+    #     },
+    #     "SCOPE": ["email"],
+    #     "AUTH_PARAMS": {"auth_type": "rerequest"},
+    # },
+    # "apple": {
+    #     "APP": {
+    #         "client_id": env("APPLE_CLIENT_ID"),  # Service ID
+    #         "secret": env("APPLE_CLIENT_SECRET"), # a JWT you generate from your Apple key (see below)
+    #         "key": env("APPLE_TEAM_ID", default=""),  # not required here but keep for clarity
+    #     },
+    # },
+}
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'auth_token',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+}
+# Standard simplejwt settings:
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
 }
