@@ -137,38 +137,38 @@ const DetailsScene: React.FC<{ detailsProps: DetailsSceneProps }> = ({
 };
 
 // Posts Scene Component
-const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = React.memo(({
-  postsProps,
-}) => {
-  const {
-    dummyPosts,
-    formatPostTime,
-    getInitials,
-    organizationImageUrl,
-    onImagePress,
-  } = postsProps;
+const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = React.memo(
+  ({ postsProps }) => {
+    const {
+      dummyPosts,
+      formatPostTime,
+      getInitials,
+      organizationImageUrl,
+      onImagePress,
+    } = postsProps;
 
-  return (
-    <Animated.ScrollView
-      entering={FadeIn.duration(200)}
-      showsVerticalScrollIndicator={false}
-      className='flex-1'
-      contentContainerStyle={{
-        paddingTop: 12,
-        paddingHorizontal: 16,
-        paddingBottom: 24,
-      }}
-    >
-      <PostsList
-        posts={dummyPosts}
-        formatPostTime={formatPostTime}
-        getInitials={getInitials}
-        organizationImageUrl={organizationImageUrl}
-        onImagePress={onImagePress}
-      />
-    </Animated.ScrollView>
-  );
-});
+    return (
+      <Animated.ScrollView
+        entering={FadeIn.duration(200)}
+        showsVerticalScrollIndicator={false}
+        className='flex-1'
+        contentContainerStyle={{
+          paddingTop: 12,
+          paddingHorizontal: 16,
+          paddingBottom: 24,
+        }}
+      >
+        <PostsList
+          posts={dummyPosts}
+          formatPostTime={formatPostTime}
+          getInitials={getInitials}
+          organizationImageUrl={organizationImageUrl}
+          onImagePress={onImagePress}
+        />
+      </Animated.ScrollView>
+    );
+  }
+);
 
 // Optimized Schedule List Component without animations on day change
 const OptimizedScheduleList: React.FC<{
@@ -463,125 +463,124 @@ const ScheduleScene: React.FC<{ scheduleProps: ScheduleSceneProps }> = ({
   );
 };
 
-export const NativeEventTabs: React.FC<Props> = React.memo(({
-  event,
-  detailsProps,
-  postsProps,
-  scheduleProps,
-}) => {
-  const layout = useWindowDimensions();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+export const NativeEventTabs: React.FC<Props> = React.memo(
+  ({ event, detailsProps, postsProps, scheduleProps }) => {
+    const layout = useWindowDimensions();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
 
-  const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(0);
 
-  // Create scene map
-  const renderScene = SceneMap({
-    details: () => <DetailsScene detailsProps={detailsProps} />,
-    posts: () => <PostsScene postsProps={postsProps} />,
-    schedule: () => <ScheduleScene scheduleProps={scheduleProps} />,
-  });
+    // Create scene map
+    const renderScene = SceneMap({
+      details: () => <DetailsScene detailsProps={detailsProps} />,
+      posts: () => <PostsScene postsProps={postsProps} />,
+      schedule: () => <ScheduleScene scheduleProps={scheduleProps} />,
+    });
 
-  // Custom Tab Bar Component with accent styling
-  const renderTabBar = (props: any) => (
-    <TabBar
-      {...props}
-      indicatorStyle={{
-        backgroundColor: '#2066DF', // accentBlue
-        height: 3,
-        borderRadius: 2,
-        marginBottom: 2,
-      }}
-      style={{
-        backgroundColor: isDark ? '#000000' : '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: isDark
-          ? 'rgba(255, 255, 255, 0.08)'
-          : 'rgba(0, 0, 0, 0.06)',
-        elevation: 0,
-        shadowOpacity: 0,
-        paddingHorizontal: 4,
-        // Add subtle shadow for depth
-        ...(isDark
-          ? {}
-          : {
-              shadowColor: '#2066DF',
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-            }),
-      }}
-      tabStyle={{
-        flex: 1,
-        paddingVertical: 14,
-        marginHorizontal: 2,
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}
-      renderLabel={({ route, focused }: { route: any; focused: boolean }) => {
-        const routeTyped = route as Route;
-        return (
-          <Animated.View
-            className={`flex-row items-center px-3 py-1.5 rounded-lg transition-all duration-200 ${
-              focused
-                ? 'bg-accentBlue/10 dark:bg-accentBlue/15'
-                : 'bg-transparent'
-            }`}
-            style={{
-              transform: [{ scale: focused ? 1.02 : 1 }],
-            }}
-          >
-            <Feather
-              name={routeTyped.icon}
-              size={16}
-              color={
-                focused
-                  ? '#2066DF' // accentBlue
-                  : isDark
-                  ? '#FFFFFF60'
-                  : '#00000060'
-              }
-            />
-            <Text
-              className={`ml-2 font-groteskMedium text-sm ${
-                focused ? 'text-accentBlue' : 'text-black/60 dark:text-white/60'
-              }`}
-            >
-              {routeTyped.title}
-            </Text>
-          </Animated.View>
-        );
-      }}
-      pressColor='#2066DF20' // accentBlue with opacity
-      onTabPress={({ route }) => {
-        Haptics.selectionAsync();
-      }}
-    />
-  );
-
-  return (
-    <View className='flex-1'>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        renderTabBar={renderTabBar}
-        onIndexChange={(newIndex) => {
-          if (newIndex !== index) {
-            Haptics.selectionAsync();
-          }
-          setIndex(newIndex);
+    // Custom Tab Bar Component with accent styling
+    const renderTabBar = (props: any) => (
+      <TabBar
+        {...props}
+        indicatorStyle={{
+          backgroundColor: '#2066DF', // accentBlue
+          height: 3,
+          borderRadius: 2,
+          marginBottom: 2,
         }}
-        initialLayout={{ width: layout.width }}
-        swipeEnabled={true}
-        animationEnabled={true}
-        lazy={true}
-        lazyPreloadDistance={1}
         style={{
           backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          borderBottomWidth: 1,
+          borderBottomColor: isDark
+            ? 'rgba(255, 255, 255, 0.08)'
+            : 'rgba(0, 0, 0, 0.06)',
+          elevation: 0,
+          shadowOpacity: 0,
+          paddingHorizontal: 4,
+          // Add subtle shadow for depth
+          ...(isDark
+            ? {}
+            : {
+                shadowColor: '#2066DF',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+              }),
+        }}
+        tabStyle={{
+          flex: 1,
+          paddingVertical: 14,
+          marginHorizontal: 2,
+          borderRadius: 12,
+          overflow: 'hidden',
+        }}
+        renderLabel={({ route, focused }: { route: any; focused: boolean }) => {
+          const routeTyped = route as Route;
+          return (
+            <Animated.View
+              className={`flex-row items-center px-3 py-1.5 rounded-lg transition-all duration-200 ${
+                focused
+                  ? 'bg-accentBlue/10 dark:bg-accentBlue/15'
+                  : 'bg-transparent'
+              }`}
+              style={{
+                transform: [{ scale: focused ? 1.02 : 1 }],
+              }}
+            >
+              <Feather
+                name={routeTyped.icon}
+                size={16}
+                color={
+                  focused
+                    ? '#2066DF' // accentBlue
+                    : isDark
+                    ? '#FFFFFF60'
+                    : '#00000060'
+                }
+              />
+              <Text
+                className={`ml-2 font-groteskMedium text-sm ${
+                  focused
+                    ? 'text-accentBlue'
+                    : 'text-black/60 dark:text-white/60'
+                }`}
+              >
+                {routeTyped.title}
+              </Text>
+            </Animated.View>
+          );
+        }}
+        pressColor='#2066DF20' // accentBlue with opacity
+        onTabPress={({ route }) => {
+          Haptics.selectionAsync();
         }}
       />
-    </View>
-  );
-});
+    );
+
+    return (
+      <View className='flex-1'>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          renderTabBar={renderTabBar}
+          onIndexChange={(newIndex) => {
+            if (newIndex !== index) {
+              Haptics.selectionAsync();
+            }
+            setIndex(newIndex);
+          }}
+          initialLayout={{ width: layout.width }}
+          swipeEnabled={true}
+          animationEnabled={true}
+          lazy={true}
+          lazyPreloadDistance={1}
+          style={{
+            backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          }}
+        />
+      </View>
+    );
+  }
+);
 
 export default NativeEventTabs;
