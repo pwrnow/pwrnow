@@ -9,8 +9,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
-  Dimensions,
   Linking,
 } from 'react-native';
 import Animated, {
@@ -24,280 +22,28 @@ import { Event } from '../../types';
 import { useAnalytics } from '../../lib/analytics';
 import { useEventBySlug } from '../../lib/queries';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import { config } from '../../lib/config';
 import { t } from '../../lib/i18n';
-import { deviceLocaleTag } from '../../lib/i18n';
 import { useAuth } from '../../contexts/AuthContext';
 import LikeButton from '../../components/LikeButton';
 import SignInRequiredModal from '../../components/SignInRequiredModal';
 import ImageView from 'react-native-image-viewing';
-import WeekDaySelector, {
-  generateEventDays,
-} from '../../components/WeekDaySelector';
+import { generateEventDays } from '../../components/WeekDaySelector';
 import { useCalendar } from '../../hooks/useCalendar';
-
-const { width: screenWidth } = Dimensions.get('window');
+import EventHeroImage from '../../components/EventHeroImage';
+import OrganizationHeader from '../../components/OrganizationHeader';
+import EventMetaCard from '../../components/EventMetaCard';
+import EventDescription from '../../components/EventDescription';
+import VisitPageButton from '../../components/VisitPageButton';
+import SegmentedTabs from '../../components/SegmentedTabs';
+import EventTabsContent from '../../components/EventTabsContent';
+import { formatPostTime, getInitials } from '../../lib/format';
 
 type TabType = 'details' | 'posts' | 'schedule';
 
 // Tab Content Components
-interface TabContentProps {
-  isActive: boolean;
-  event: Event;
-  isDark: boolean;
-  iconPrimary: string;
-}
-
-const PostsTabContent: React.FC<
-  TabContentProps & {
-    dummyPosts: any[];
-    formatPostTime: (timestamp: string) => string;
-    getInitials: (name: string) => string;
-    organizationImageUrl?: string;
-    onImagePress: (images: string[], initialIndex: number) => void;
-  }
-> = ({
-  isActive,
-  dummyPosts,
-  formatPostTime,
-  getInitials,
-  organizationImageUrl,
-  onImagePress,
-}) => {
-  if (!isActive) return null;
-
-  const renderImages = (images: string[]) => {
-    if (!images || images.length === 0) return null;
-
-    if (images.length === 1) {
-      return (
-        <TouchableOpacity
-          className='mt-3 rounded-lg overflow-hidden'
-          onPress={() => onImagePress(images, 0)}
-          activeOpacity={0.8}
-        >
-          <Image
-            source={{ uri: images[0] }}
-            className='w-full rounded-lg'
-            style={{ height: 200 }}
-            resizeMode='cover'
-          />
-        </TouchableOpacity>
-      );
-    }
-
-    if (images.length === 2) {
-      return (
-        <View className='mt-3 flex-row gap-2'>
-          {images.map((image, index) => (
-            <TouchableOpacity
-              key={index}
-              className='flex-1 rounded-lg overflow-hidden'
-              onPress={() => onImagePress(images, index)}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: image }}
-                className='w-full rounded-lg'
-                style={{ height: 150 }}
-                resizeMode='cover'
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-      );
-    }
-
-    // For 3+ images, show first 2 full size and remaining in a grid
-    if (images.length >= 3) {
-      return (
-        <View className='mt-3 gap-2'>
-          <View className='flex-row gap-2'>
-            <TouchableOpacity
-              className='flex-1 rounded-lg overflow-hidden'
-              onPress={() => onImagePress(images, 0)}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: images[0] }}
-                className='w-full rounded-lg'
-                style={{ height: 150 }}
-                resizeMode='cover'
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              className='flex-1 rounded-lg overflow-hidden'
-              onPress={() => onImagePress(images, 1)}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: images[1] }}
-                className='w-full rounded-lg'
-                style={{ height: 150 }}
-                resizeMode='cover'
-              />
-            </TouchableOpacity>
-          </View>
-          <View className='flex-row gap-2'>
-            <TouchableOpacity
-              className='flex-1 rounded-lg overflow-hidden'
-              onPress={() => onImagePress(images, 2)}
-              activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: images[2] }}
-                className='w-full rounded-lg'
-                style={{ height: 100 }}
-                resizeMode='cover'
-              />
-            </TouchableOpacity>
-            {images.length > 3 && (
-              <TouchableOpacity
-                className='flex-1 rounded-lg overflow-hidden relative'
-                onPress={() => onImagePress(images, 3)}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: images[3] }}
-                  className='w-full rounded-lg'
-                  style={{ height: 100 }}
-                  resizeMode='cover'
-                />
-                {images.length > 4 && (
-                  <View className='absolute inset-0 bg-black/50 rounded-lg items-center justify-center'>
-                    <Text className='text-white font-groteskSemibold text-sm'>
-                      +{images.length - 4}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      );
-    }
-  };
-
-  return (
-    <Animated.View
-      key='posts'
-      entering={FadeInDown.duration(300)}
-      exiting={FadeInDown.duration(150)}
-      className='space-y-4'
-    >
-      {dummyPosts.map((post, index) => (
-        <Animated.View
-          key={post.id}
-          entering={FadeInDown.duration(200).delay(index * 50)}
-          className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4 mb-3'
-        >
-          {/* Organization Header */}
-          <View className='flex-row items-center mb-3'>
-            <View className='w-8 h-8 rounded-full overflow-hidden bg-accentBlue/20 items-center justify-center mr-3'>
-              {organizationImageUrl ? (
-                <Image
-                  source={{ uri: organizationImageUrl }}
-                  className='w-full h-full'
-                  resizeMode='cover'
-                />
-              ) : (
-                <Text className='text-accentBlue font-groteskSemibold text-xs'>
-                  {getInitials(post.author)}
-                </Text>
-              )}
-            </View>
-            <View className='flex-1'>
-              <Text className='text-black dark:text-white font-groteskMedium text-sm'>
-                {post.author}
-              </Text>
-              <Text className='text-black/50 dark:text-white/50 font-grotesk text-xs'>
-                {formatPostTime(post.timestamp)}
-              </Text>
-            </View>
-          </View>
-
-          {/* Post Content */}
-          {post.content && (
-            <Text className='text-black/90 dark:text-white/90 font-grotesk text-sm leading-5'>
-              {post.content}
-            </Text>
-          )}
-
-          {/* Post Images */}
-          {renderImages(post.images)}
-        </Animated.View>
-      ))}
-    </Animated.View>
-  );
-};
-
-const ScheduleTabContent: React.FC<
-  TabContentProps & { dummySchedule: any[]; iconPrimary: string }
-> = ({ isActive, iconPrimary, dummySchedule }) => {
-  if (!isActive) return null;
-
-  return (
-    <Animated.View
-      key='schedule'
-      entering={FadeInDown.duration(300)}
-      exiting={FadeInDown.duration(150)}
-      className='space-y-2'
-    >
-      {dummySchedule.map((item, index) => (
-        <Animated.View
-          key={item.id}
-          entering={FadeInDown.duration(200).delay(index * 40)}
-          className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-3'
-        >
-          <View className='flex-row'>
-            <View className='w-14 mr-3'>
-              <View className='bg-accentBlue/15 border border-accentBlue/30 rounded-lg px-2 py-1'>
-                <Text className='text-accentBlue font-groteskSemibold text-xs text-center'>
-                  {item.time}
-                </Text>
-              </View>
-              <Text className='text-black/40 dark:text-white/40 font-grotesk text-xs text-center mt-1'>
-                {item.duration}
-              </Text>
-            </View>
-
-            <View className='flex-1'>
-              <Text className='text-black dark:text-white font-groteskSemibold text-sm mb-1'>
-                {item.title}
-              </Text>
-              <Text className='text-black/70 dark:text-white/70 font-grotesk text-xs leading-4 mb-1'>
-                {item.description}
-              </Text>
-              {item.speaker && (
-                <View className='flex-row items-center'>
-                  <Feather name='user' size={10} color={iconPrimary} />
-                  <Text className='text-black/60 dark:text-white/60 font-groteskMedium text-xs ml-1'>
-                    {item.speaker}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </Animated.View>
-      ))}
-
-      <View className='bg-accentPink/10 border border-accentPink/30 rounded-xl p-3 mt-3'>
-        <View className='flex-row items-center mb-1'>
-          <Feather name='info' size={14} color='#EC2E81' />
-          <Text className='text-accentPink font-groteskSemibold text-sm ml-1.5'>
-            {t('scheduleNote')}
-          </Text>
-        </View>
-        <Text className='text-accentPink/80 font-grotesk text-xs'>
-          {t('scheduleNoteDescription')}
-        </Text>
-      </View>
-    </Animated.View>
-  );
-};
 
 // Dummy data for demonstration - posts from organization only
 const getDummyPosts = (organizationName: string) => [
@@ -969,109 +715,7 @@ export default function EventDetailScreen() {
     }
   }, [error]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const locale = deviceLocaleTag;
-    return date.toLocaleDateString(locale, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const locale = deviceLocaleTag;
-    return date.toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatDateRangeShort = (startString: string, endString: string) => {
-    const startDate = new Date(startString);
-    const endDate = new Date(endString);
-    const now = new Date();
-
-    const sameDay =
-      startDate.getFullYear() === endDate.getFullYear() &&
-      startDate.getMonth() === endDate.getMonth() &&
-      startDate.getDate() === endDate.getDate();
-
-    const sameMonthAndYear =
-      startDate.getFullYear() === endDate.getFullYear() &&
-      startDate.getMonth() === endDate.getMonth();
-
-    const shouldShowYear =
-      startDate.getFullYear() !== now.getFullYear() ||
-      endDate.getFullYear() !== now.getFullYear() ||
-      startDate.getFullYear() !== endDate.getFullYear();
-
-    const locale = deviceLocaleTag;
-    const monthLong = (d: Date) =>
-      d.toLocaleDateString(locale, {
-        month: 'long',
-      });
-    const day = (d: Date) => d.getDate();
-
-    if (sameDay) {
-      return `${day(startDate)} ${monthLong(startDate)}${
-        shouldShowYear ? ` ${startDate.getFullYear()}` : ''
-      }`;
-    }
-
-    if (sameMonthAndYear) {
-      return `${day(startDate)}–${day(endDate)} ${monthLong(startDate)}${
-        shouldShowYear ? ` ${startDate.getFullYear()}` : ''
-      }`;
-    }
-
-    const startYearPart = shouldShowYear ? ` ${startDate.getFullYear()}` : '';
-    const endYearPart = shouldShowYear ? ` ${endDate.getFullYear()}` : '';
-    return `${day(startDate)} ${monthLong(startDate)}${startYearPart}–${day(
-      endDate
-    )} ${monthLong(endDate)}${endYearPart}`;
-  };
-
-  const formatTimeRangeShort = (startString: string, endString: string) => {
-    const startDate = new Date(startString);
-    const endDate = new Date(endString);
-
-    const locale = deviceLocaleTag;
-    const time = (d: Date) =>
-      d.toLocaleTimeString(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-
-    return `${time(startDate)}–${time(endDate)}`;
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((word) => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const formatPostTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours =
-      Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 1) {
-      return t('justNow');
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d`;
-    }
-  };
+  // formatting moved to lib/format
 
   // No description expand/collapse in redesigned details tab
 
@@ -1201,161 +845,9 @@ export default function EventDetailScreen() {
         </View>
       </Animated.View>
 
-      {/* Simple Tab Navigation - Moved to Top */}
-      <Animated.View
-        entering={FadeInDown.duration(400).delay(200)}
-        className='px-4 pt-4 pb-2 border-b border-black/10 dark:border-white/10'
-      >
-        <View className='bg-black/5 dark:bg-white/5 rounded-xl p-1 border border-black/10 dark:border-white/10'>
-          <View className='flex-row'>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveTab('details');
-              }}
-              className={`flex-1 py-3 px-4 rounded-lg items-center ${
-                activeTab === 'details'
-                  ? 'bg-white dark:bg-black border border-black/10 dark:border-white/20'
-                  : 'bg-transparent'
-              }`}
-              style={
-                activeTab === 'details' && !isDark
-                  ? {
-                      shadowColor: '#000',
-                      shadowOpacity: 0.08,
-                      shadowRadius: 4,
-                      shadowOffset: { width: 0, height: 1 },
-                      elevation: 2,
-                    }
-                  : undefined
-              }
-              activeOpacity={0.7}
-            >
-              <View className='flex-row items-center'>
-                <Feather
-                  name='info'
-                  size={16}
-                  color={
-                    activeTab === 'details'
-                      ? isDark
-                        ? '#FFFFFF'
-                        : '#000000'
-                      : isDark
-                      ? '#FFFFFF80'
-                      : '#00000080'
-                  }
-                />
-                <Text
-                  className={`ml-2 font-groteskMedium text-sm ${
-                    activeTab === 'details'
-                      ? 'text-black dark:text-white'
-                      : 'text-black/50 dark:text-white/50'
-                  }`}
-                >
-                  {t('details')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveTab('posts');
-              }}
-              className={`flex-1 py-3 px-4 rounded-lg items-center ${
-                activeTab === 'posts'
-                  ? 'bg-white dark:bg-black border border-black/10 dark:border-white/20'
-                  : 'bg-transparent'
-              }`}
-              style={
-                activeTab === 'posts' && !isDark
-                  ? {
-                      shadowColor: '#000',
-                      shadowOpacity: 0.08,
-                      shadowRadius: 4,
-                      shadowOffset: { width: 0, height: 1 },
-                      elevation: 2,
-                    }
-                  : undefined
-              }
-              activeOpacity={0.7}
-            >
-              <View className='flex-row items-center'>
-                <Feather
-                  name='message-circle'
-                  size={16}
-                  color={
-                    activeTab === 'posts'
-                      ? isDark
-                        ? '#FFFFFF'
-                        : '#000000'
-                      : isDark
-                      ? '#FFFFFF80'
-                      : '#00000080'
-                  }
-                />
-                <Text
-                  className={`ml-2 font-groteskMedium text-sm ${
-                    activeTab === 'posts'
-                      ? 'text-black dark:text-white'
-                      : 'text-black/50 dark:text-white/50'
-                  }`}
-                >
-                  {t('posts')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveTab('schedule');
-              }}
-              className={`flex-1 py-3 px-4 rounded-lg items-center ${
-                activeTab === 'schedule'
-                  ? 'bg-white dark:bg-black border border-black/10 dark:border-white/20'
-                  : 'bg-transparent'
-              }`}
-              style={
-                activeTab === 'schedule' && !isDark
-                  ? {
-                      shadowColor: '#000',
-                      shadowOpacity: 0.08,
-                      shadowRadius: 4,
-                      shadowOffset: { width: 0, height: 1 },
-                      elevation: 2,
-                    }
-                  : undefined
-              }
-              activeOpacity={0.7}
-            >
-              <View className='flex-row items-center'>
-                <Feather
-                  name='calendar'
-                  size={16}
-                  color={
-                    activeTab === 'schedule'
-                      ? isDark
-                        ? '#FFFFFF'
-                        : '#000000'
-                      : isDark
-                      ? '#FFFFFF80'
-                      : '#00000080'
-                  }
-                />
-                <Text
-                  className={`ml-2 font-groteskMedium text-sm ${
-                    activeTab === 'schedule'
-                      ? 'text-black dark:text-white'
-                      : 'text-black/50 dark:text-white/50'
-                  }`}
-                >
-                  {t('schedule')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
+      {/* Segmented Tabs */}
+      <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+        <SegmentedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       </Animated.View>
 
       <ScrollView
@@ -1374,407 +866,61 @@ export default function EventDetailScreen() {
               {/* Event Image */}
               {event.image_url && (
                 <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-                  <View className='relative mx-4 mt-2'>
-                    <Image
-                      source={{ uri: event.image_url }}
-                      className='w-full rounded-xl'
-                      style={{ height: screenWidth * 0.5 }}
-                      resizeMode='cover'
-                    />
-                    {/* Gradient overlay */}
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.6)']}
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 100,
-                        borderBottomLeftRadius: 12,
-                        borderBottomRightRadius: 12,
-                      }}
-                    />
-                  </View>
+                  <EventHeroImage imageUrl={event.image_url} />
                 </Animated.View>
               )}
 
               {/* Organization Header */}
-              <Animated.View
-                entering={FadeInDown.duration(400).delay(150)}
-                className='mx-4 mt-3'
-              >
-                <View className='flex-row items-center px-4 py-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl'>
-                  <View className='w-12 h-12 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center mr-3'>
-                    {event.organization.image_url ? (
-                      <Image
-                        source={{ uri: event.organization.image_url }}
-                        className='w-full h-full'
-                        resizeMode='cover'
-                      />
-                    ) : (
-                      <Text className='text-black dark:text-white font-groteskSemibold text-sm'>
-                        {getInitials(event.organization.name)}
-                      </Text>
-                    )}
-                  </View>
-                  <View className='flex-1'>
-                    <Text className='text-black dark:text-white font-groteskSemibold text-base leading-5'>
-                      {event.organization.name}
-                    </Text>
-                    <Text className='text-black/60 dark:text-white/60 text-sm font-grotesk'>
-                      {event.category.name}
-                    </Text>
-                  </View>
-                </View>
+              <Animated.View entering={FadeInDown.duration(400).delay(150)}>
+                <OrganizationHeader
+                  organization={event.organization}
+                  categoryName={event.category.name}
+                />
               </Animated.View>
 
               {/* Event Details Section */}
-              <View className='mx-4 mt-3 mb-3'>
-                <View className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4'>
-                  <Text className='text-black dark:text-white font-groteskSemibold text-lg mb-3'>
-                    {t('eventDetails')}
-                  </Text>
-
-                  <View className='space-y-2'>
-                    {/* Date Row - Clickable */}
-                    <TouchableOpacity
-                      onPress={handleAddToCalendar}
-                      className='flex-row items-center'
-                      activeOpacity={0.7}
-                    >
-                      <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
-                        <Feather name='calendar' size={14} color='#2066DF' />
-                      </View>
-                      <View className='flex-1'>
-                        <Text className='text-black dark:text-white font-groteskSemibold text-base'>
-                          {formatDateRangeShort(event.starts_at, event.ends_at)}
-                        </Text>
-                      </View>
-                      <Feather name='plus' size={16} color='#2066DF' />
-                    </TouchableOpacity>
-
-                    {/* Time Row - Clickable */}
-                    <TouchableOpacity
-                      onPress={handleAddToCalendar}
-                      className='flex-row items-center'
-                      activeOpacity={0.7}
-                    >
-                      <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
-                        <Feather name='clock' size={14} color='#2066DF' />
-                      </View>
-                      <View className='flex-1'>
-                        <Text className='text-black dark:text-white font-groteskSemibold text-base'>
-                          {formatTimeRangeShort(event.starts_at, event.ends_at)}
-                        </Text>
-                      </View>
-                      <Feather name='plus' size={16} color='#2066DF' />
-                    </TouchableOpacity>
-
-                    {/* Location */}
-                    {event.location && (
-                      <View className='flex-row items-center'>
-                        <View className='w-8 h-8 rounded-full bg-accentPink/15 items-center justify-center mr-3'>
-                          <Feather name='map-pin' size={14} color='#EC2E81' />
-                        </View>
-                        <View className='flex-1'>
-                          <Text
-                            className='text-black dark:text-white font-groteskSemibold text-base'
-                            numberOfLines={2}
-                          >
-                            {event.location}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={handleMapPress}
-                          className='p-1'
-                          activeOpacity={0.7}
-                        >
-                          <Feather
-                            name='external-link'
-                            size={14}
-                            color={iconPrimary}
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
+              <EventMetaCard
+                startsAt={event.starts_at}
+                endsAt={event.ends_at}
+                location={event.location}
+                onCalendarPress={handleAddToCalendar}
+                onMapPress={handleMapPress}
+              />
 
               {/* Event Description */}
-              {event.description && (
-                <View className='mx-4 mb-3'>
-                  <View className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4'>
-                    <Text className='text-black dark:text-white font-groteskSemibold text-lg mb-3'>
-                      {t('eventDescription')}
-                    </Text>
-
-                    <Text className='text-black/90 dark:text-white/90 text-sm leading-6 font-grotesk'>
-                      {event.description}
-                    </Text>
-                  </View>
-                </View>
-              )}
+              <EventDescription description={event.description} />
 
               {/* Visit Page Button - Old EventCard Design */}
               {event.url && (
-                <View className='mx-4 mb-3'>
-                  <TouchableOpacity
-                    onPress={handleExternalLink}
-                    activeOpacity={0.8}
-                  >
-                    <Animated.View style={ctaAnimatedStyle}>
-                      <LinearGradient
-                        colors={
-                          isDark
-                            ? [
-                                'rgba(32, 102, 223, 0.32)',
-                                'rgba(236, 46, 129, 0.32)',
-                              ]
-                            : [
-                                'rgba(32, 102, 223, 0.5)',
-                                'rgba(236, 46, 129, 0.5)',
-                              ]
-                        }
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={{
-                          borderRadius: 14,
-                          padding: 1,
-                        }}
-                      >
-                        <View
-                          className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
-                          style={
-                            isDark
-                              ? undefined
-                              : {
-                                  shadowColor: '#000',
-                                  shadowOpacity: 0.06,
-                                  shadowRadius: 8,
-                                  shadowOffset: { width: 0, height: 2 },
-                                  elevation: 2,
-                                }
-                          }
-                        >
-                          <View className='flex-row items-center gap-2.5'>
-                            <Feather
-                              name='arrow-right'
-                              size={18}
-                              color={iconPrimary}
-                            />
-                            <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
-                              {t('visitPage')}
-                            </Text>
-                          </View>
-                        </View>
-                      </LinearGradient>
-                    </Animated.View>
-                  </TouchableOpacity>
-                </View>
+                <VisitPageButton
+                  onPress={handleExternalLink}
+                  animatedStyle={ctaAnimatedStyle}
+                />
               )}
             </Animated.View>
           )}
 
-          {activeTab === 'posts' && (
-            <View className='mx-4 mt-3'>
-              <PostsTabContent
-                isActive={true}
-                event={event}
-                isDark={isDark}
-                iconPrimary={iconPrimary}
-                dummyPosts={getDummyPosts(event.organization.name)}
-                formatPostTime={formatPostTime}
-                getInitials={getInitials}
-                organizationImageUrl={event.organization.image_url || undefined}
-                onImagePress={handleImagePress}
-              />
-            </View>
-          )}
-
-          {activeTab === 'schedule' && (
-            <Animated.View
-              key='schedule'
-              entering={FadeInDown.duration(300)}
-              className='flex-1'
-            >
-              {/* Week Day Selector - Only show if more than one day */}
-              {eventDays.length > 1 && (
-                <View className='mx-4 mt-3'>
-                  <WeekDaySelector
-                    selectedDay={selectedDay}
-                    onDaySelect={setSelectedDay}
-                    days={eventDays}
-                  />
-                </View>
-              )}
-
-              {/* Schedule Items for Selected Day */}
-              <ScrollView
-                ref={scheduleScrollRef}
-                showsVerticalScrollIndicator={false}
-                className='flex-1'
-                contentContainerStyle={{
-                  paddingHorizontal: 16,
-                  paddingBottom: 24,
-                  paddingTop: eventDays.length > 1 ? 0 : 16,
-                }}
-              >
-                <View className='space-y-2'>
-                  {(
-                    dummyScheduleByDay[
-                      selectedDay as keyof typeof dummyScheduleByDay
-                    ] || []
-                  ).map((item, index) => {
-                    const isPast = isEventPast(
-                      selectedDay,
-                      item.time,
-                      item.endTime
-                    );
-                    const isCurrent = isEventCurrent(
-                      selectedDay,
-                      item.time,
-                      item.endTime
-                    );
-
-                    return (
-                      <Animated.View
-                        key={item.id}
-                        entering={FadeInDown.duration(200).delay(index * 40)}
-                        className={`rounded-xl mb-2 p-3 border relative ${
-                          isCurrent
-                            ? 'bg-accentBlue/10 border-accentBlue/30'
-                            : isPast
-                            ? 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10'
-                            : 'bg-white dark:bg-black border-black/10 dark:border-white/10'
-                        }`}
-                        style={
-                          !isCurrent && !isPast && !isDark
-                            ? {
-                                shadowColor: '#000',
-                                shadowOpacity: 0.04,
-                                shadowRadius: 4,
-                                shadowOffset: { width: 0, height: 1 },
-                                elevation: 2,
-                              }
-                            : undefined
-                        }
-                      >
-                        {/* Current event indicator */}
-                        {isCurrent && (
-                          <View className='absolute -left-0.5 top-4 w-1 h-6 bg-accentBlue rounded-full' />
-                        )}
-
-                        <View className='flex-row'>
-                          {/* Enhanced Time Display */}
-                          <View className='w-16 mr-3'>
-                            <View
-                              className={`rounded-lg px-2 py-1.5 border ${
-                                isCurrent
-                                  ? 'bg-accentBlue border-accentBlue'
-                                  : isPast
-                                  ? 'bg-black/10 dark:bg-white/10 border-black/20 dark:border-white/20'
-                                  : 'bg-accentBlue/15 border-accentBlue/30'
-                              }`}
-                            >
-                              <Text
-                                className={`font-groteskSemibold text-xs text-center ${
-                                  isCurrent
-                                    ? 'text-white'
-                                    : isPast
-                                    ? 'text-black/40 dark:text-white/40'
-                                    : 'text-accentBlue'
-                                }`}
-                              >
-                                {item.time}
-                              </Text>
-                            </View>
-                            <Text
-                              className={`font-grotesk text-xs text-center mt-1 ${
-                                isPast
-                                  ? 'text-black/30 dark:text-white/30'
-                                  : 'text-black/50 dark:text-white/50'
-                              }`}
-                            >
-                              {item.duration}
-                            </Text>
-                          </View>
-
-                          {/* Content */}
-                          <View className='flex-1'>
-                            <View className='flex-row items-start justify-between mb-1.5'>
-                              <Text
-                                className={`font-groteskSemibold text-sm flex-1 leading-5 ${
-                                  isCurrent
-                                    ? 'text-accentBlue'
-                                    : isPast
-                                    ? 'text-black/50 dark:text-white/50'
-                                    : 'text-black dark:text-white'
-                                }`}
-                              >
-                                {item.title}
-                              </Text>
-                              {isCurrent && (
-                                <View className='ml-2 px-2 py-0.5 bg-accentBlue rounded-full'>
-                                  <Text className='text-white text-xs font-groteskSemibold'>
-                                    {t('live')}
-                                  </Text>
-                                </View>
-                              )}
-                              {isPast && (
-                                <View className='ml-2'>
-                                  <Feather
-                                    name='check-circle'
-                                    size={14}
-                                    color='#10B981'
-                                  />
-                                </View>
-                              )}
-                            </View>
-                            <Text
-                              className={`font-grotesk text-xs leading-4 mb-1.5 ${
-                                isPast
-                                  ? 'text-black/40 dark:text-white/40'
-                                  : 'text-black/75 dark:text-white/75'
-                              }`}
-                            >
-                              {item.description}
-                            </Text>
-                            {item.speaker && (
-                              <View className='flex-row items-center'>
-                                <Feather
-                                  name='user'
-                                  size={10}
-                                  color={
-                                    isPast
-                                      ? isDark
-                                        ? '#FFFFFF40'
-                                        : '#00000040'
-                                      : isDark
-                                      ? '#FFFFFF80'
-                                      : '#00000080'
-                                  }
-                                />
-                                <Text
-                                  className={`font-groteskMedium text-xs ml-1.5 ${
-                                    isPast
-                                      ? 'text-black/40 dark:text-white/40'
-                                      : 'text-black/70 dark:text-white/70'
-                                  }`}
-                                >
-                                  {item.speaker}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-                        </View>
-                      </Animated.View>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </Animated.View>
-          )}
+          <EventTabsContent
+            activeTab={activeTab}
+            postsProps={{
+              event,
+              isDark,
+              iconPrimary,
+              dummyPosts: getDummyPosts(event.organization.name),
+              formatPostTime,
+              getInitials,
+              organizationImageUrl: event.organization.image_url || undefined,
+              onImagePress: handleImagePress,
+            }}
+            scheduleProps={{
+              selectedDay,
+              setSelectedDay,
+              eventDays,
+              itemsByDay: dummyScheduleByDay,
+              isDark,
+              scheduleScrollRef,
+            }}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
