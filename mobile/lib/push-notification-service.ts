@@ -42,10 +42,10 @@ class PushNotificationService {
    */
   async registerForPushNotifications(): Promise<string | null> {
     // Check if running on physical device
-    if (!Device.isDevice) {
-      console.log('Must use physical device for push notifications');
-      return null;
-    }
+    // if (!Device.isDevice) {
+    //   console.log('Must use physical device for push notifications');
+    //   return null;
+    // }
 
     // Check existing permissions
     const { status: existingStatus } =

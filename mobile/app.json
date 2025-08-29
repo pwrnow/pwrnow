@@ -99,7 +99,8 @@
             "android": ["en", "pl"]
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "scheme": "pwrnow",
     "extra": {

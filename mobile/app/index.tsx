@@ -6,6 +6,8 @@ import {
   RefreshControl,
   useColorScheme,
   Platform,
+  ActivityIndicator,
+  Text,
 } from 'react-native';
 import EventFeed from '../components/EventFeed';
 import { Event, Category } from '../types';
@@ -15,6 +17,8 @@ import { t } from '../lib/i18n';
 import { useCategories, useEvents } from '../lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
+import GoogleSignInButton from '../components/GoogleSignInButton';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -23,6 +27,8 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
   const queryClient = useQueryClient();
+  const { isLoading, isAuthenticated } = useAuth();
+  
   const {
     data: events = [],
     isFetching: isFetchingEvents,
@@ -57,6 +63,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className='flex-1'>
+      <GoogleSignInButton />
       <ScrollView
         className='bg-white dark:bg-black'
         contentContainerStyle={{

@@ -27,6 +27,28 @@ const translations: Record<string, TranslationMap> = {
     expand: 'Expand',
     visitPage: 'Visit page',
     newTag: 'NEW',
+    // Event detail page translations
+    eventDescription: 'Event description',
+    posts: 'Posts',
+    schedule: 'Schedule',
+    noPosts: 'No posts',
+    noSchedule: 'No schedule',
+    noPostsDescription: 'Posts about this event will appear here',
+    noScheduleDescription: 'Detailed event schedule will appear here',
+    backToHome: 'Back to home page',
+    failedToLoadEvent: 'Failed to load event',
+    visitEventPage: 'Visit event page',
+    ok: 'OK',
+    // Additional translations for event detail page
+    details: 'Details',
+    justNow: 'Just now',
+    loadMorePosts: 'Load more posts',
+    scheduleNote: 'Important note',
+    scheduleNoteDescription:
+      'The schedule may change. Please check for updates.',
+    eventDetails: 'Event details',
+    allEventDetailsDisplayed: 'All event information is displayed above.',
+    tryAgainLater: 'Please try again later.',
   },
   pl: {
     all: 'Wszystkie',
@@ -51,6 +73,30 @@ const translations: Record<string, TranslationMap> = {
     expand: 'Rozwiń',
     visitPage: 'Odwiedź stronę',
     newTag: 'NOWE',
+    // Event detail page translations
+    eventDescription: 'Opis wydarzenia',
+    posts: 'Posty',
+    schedule: 'Harmonogram',
+    noPosts: 'Brak postów',
+    noSchedule: 'Brak harmonogramu',
+    noPostsDescription: 'Posty dotyczące tego wydarzenia pojawią się tutaj',
+    noScheduleDescription:
+      'Szczegółowy harmonogram wydarzenia pojawi się tutaj',
+    backToHome: 'Wróć do strony głównej',
+    failedToLoadEvent: 'Nie udało się załadować wydarzenia',
+    visitEventPage: 'Odwiedź stronę wydarzenia',
+    ok: 'OK',
+    // Additional translations for event detail page
+    details: 'Szczegóły',
+    justNow: 'Teraz',
+    loadMorePosts: 'Załaduj więcej postów',
+    scheduleNote: 'Ważna informacja',
+    scheduleNoteDescription:
+      'Harmonogram może ulec zmianie. Sprawdzaj aktualizacje.',
+    eventDetails: 'Szczegóły wydarzenia',
+    allEventDetailsDisplayed:
+      'Wszystkie informacje o wydarzeniu są wyświetlone powyżej.',
+    tryAgainLater: 'Spróbuj ponownie później.',
   },
 };
 

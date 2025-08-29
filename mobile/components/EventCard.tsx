@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
   LinearTransition,
@@ -43,6 +44,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const analytics = useAnalytics();
+  const router = useRouter();
 
   // Animated fade for the description gradient overlay (keeps fade when collapsed)
   const gradientOpacity = useSharedValue(1);
@@ -174,15 +176,15 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   const handleEventLinkPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
-    await Linking.openURL(url);
+    // Navigate to local event detail page instead of external URL
+    router.push(`/wydarzenia/${event.slug}` as any);
     analytics.trackEventImageClicked(event as any);
   };
 
   // Dedicated CTA handler without extra haptics (we trigger haptics on press-in)
   const handleVisitPagePress = async () => {
-    const url = event.url || `${config.shareBaseUrl}/${event.slug}`;
-    await Linking.openURL(url);
+    // Navigate to local event detail page instead of external URL
+    router.push(`/wydarzenia/${event.slug}` as any);
     analytics.trackEventCtaClicked(event as any, 'card_cta');
   };
 

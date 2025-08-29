@@ -22,4 +22,5 @@ export const config = {
     process.env.EXPO_PUBLIC_SITE_URL || 'https://pwrnow.pl' + '/wydarzenia',
   posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
   posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 };

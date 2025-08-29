@@ -2,6 +2,48 @@ import { Event, Category, Organization } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 
+export type AuthProvider = 'google' | 'facebook' | 'apple';
+
+export async function authenticate(provider: AuthProvider, token: string) {
+  const url = `${getApiUrl()}/auth/${provider}/`;
+  const body = { access_token: token };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Social login failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+// Validate stored access token with backend
+export async function validateToken(
+  accessToken: string
+): Promise<{ user: any }> {
+  const url = `${getApiUrl()}/auth/token/verify/`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ token: accessToken }),
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error('Token expired or invalid');
+    }
+    const text = await res.text();
+    throw new Error(`Token validation failed: ${res.status} ${text}`);
+  }
+
+  return res.json();
+}
+
 // Helper function to make API requests with credentials and error handling
 async function fetchWithCredentials(
   url: string,

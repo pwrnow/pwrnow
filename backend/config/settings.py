@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.apple',  # apple provider
 
+    'rest_framework_simplejwt.token_blacklist',
 
 ]
 
@@ -399,7 +400,7 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "root": {"level": "INFO", "handlers": ["console"]},
+    "root": {"level": "DEBUG", "handlers": ["console"]},
     "loggers": {
         "django.db.backends": {
             "level": "ERROR",
@@ -479,10 +480,13 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
 
-# SOCIALACCOUNT_QUERY_EMAIL = True
-# SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ONLY = True
 
-# GOOGLE_CALLBACK_URL = env("GOOGLE_CALLBACK_URL", default="http://localhost:8000/v1/users/auth/google/callback/")
+GOOGLE_CALLBACK_URL = env("GOOGLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/google/")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
