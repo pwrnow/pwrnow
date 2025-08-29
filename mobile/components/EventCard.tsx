@@ -25,6 +25,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Feather } from '@expo/vector-icons';
+import LikeButton from './LikeButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Calendar from 'expo-calendar';
@@ -420,25 +421,13 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 {event.title}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={(e) => {
-                /* @ts-ignore */ e?.stopPropagation?.();
-                handleHeartPress();
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              activeOpacity={0.7}
-              className={`${
-                isLiked
-                  ? 'bg-accentPink'
-                  : 'bg-accentPink/12 border border-accentPink/25'
-              } rounded-lg p-2.5`}
-            >
-              <Feather
-                name='heart'
-                size={18}
-                color={isLiked ? '#FFFFFF' : '#EC2E81'}
-              />
-            </TouchableOpacity>
+            <LikeButton
+              isLiked={isLiked}
+              onPress={handleHeartPress}
+              size={18}
+              className='-mr-1'
+              stopPropagationOnPress
+            />
           </View>
 
           {/* Meta chips under title */}
