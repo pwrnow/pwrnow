@@ -16,7 +16,7 @@ interface Props {
   onImagePress: (images: string[], initialIndex: number) => void;
 }
 
-export const PostsList: React.FC<Props> = ({
+const PostsList: React.FC<Props> = ({
   posts,
   organizationImageUrl,
   formatPostTime,
@@ -135,12 +135,7 @@ export const PostsList: React.FC<Props> = ({
   };
 
   return (
-    <Animated.View
-      key='posts'
-      entering={FadeInDown.duration(300)}
-      exiting={FadeInDown.duration(150)}
-      className='space-y-4'
-    >
+    <View className='space-y-4'>
       {posts.map((post, index) => (
         <Animated.View
           key={post.id}
@@ -180,8 +175,9 @@ export const PostsList: React.FC<Props> = ({
           {renderImages(post.images)}
         </Animated.View>
       ))}
-    </Animated.View>
+    </View>
   );
 };
 
-export default PostsList;
+// Memoize the component to prevent unnecessary re-renders
+export default React.memo(PostsList);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -176,7 +176,8 @@ const getMultiDayScheduleData = () => {
         id: 'day2-1',
         time: '09:00',
         title: 'Poranjna kawa',
-        description: 'Rozpoczęcie drugiego dnia z kawą i croissantami',
+        description:
+          'Rozpoczęcie drugiego dnia z kawą i croissantami',
         speaker: null,
         duration: '30 min',
         endTime: '09:30',
@@ -259,7 +260,8 @@ const getMultiDayScheduleData = () => {
         id: 'day3-1',
         time: '09:00',
         title: 'Śniadanie networkingowe',
-        description: 'Rozpoczęcie ostatniego dnia z networking breakfast',
+        description:
+          'Rozpoczęcie ostatniego dnia z networking breakfast',
         speaker: null,
         duration: '60 min',
         endTime: '10:00',
@@ -324,8 +326,8 @@ const getMultiDayScheduleData = () => {
 
 export default function EventDetailScreen() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const iconPrimary = isDark ? '#FFFFFF' : '#000000';
+  const isDark = useMemo(() => colorScheme === 'dark', [colorScheme]);
+  const iconPrimary = useMemo(() => isDark ? '#FFFFFF' : '#000000', [isDark]);
   const { eventSlug } = useLocalSearchParams();
   const router = useRouter();
   const analytics = useAnalytics();
@@ -362,14 +364,17 @@ export default function EventDetailScreen() {
     : { handleAddToCalendar: undefined };
 
   // Generate days from event dates and initialize selected day
-  const eventDays = event
-    ? generateEventDays(event.starts_at, event.ends_at)
-    : [];
+  const eventDays = useMemo(() => {
+    return event
+      ? generateEventDays(event.starts_at, event.ends_at)
+      : [];
+  }, [event?.starts_at, event?.ends_at]);
 
   // Generate schedule data based on actual event days
-  const dummyScheduleByDay =
-    event && eventDays.length > 0
-      ? (() => {
+  const dummyScheduleByDay = useMemo(() => {
+    if (!event || eventDays.length === 0) return {};
+    
+    return (() => {
           const scheduleData: Record<string, any[]> = {};
 
           eventDays.forEach((day, index) => {
@@ -612,8 +617,8 @@ export default function EventDetailScreen() {
           });
 
           return scheduleData;
-        })()
-      : {};
+        })();
+  }, [event, eventDays]);
 
   useEffect(() => {
     if (eventDays.length > 0 && !selectedDay) {
@@ -684,7 +689,7 @@ export default function EventDetailScreen() {
 
   // No description expand/collapse in redesigned details tab
 
-  const handleHeartPress = async () => {
+  const handleHeartPress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -708,19 +713,19 @@ export default function EventDetailScreen() {
       setIsLiked(!nextLiked);
       console.error('Like/unlike failed:', e);
     }
-  };
+  }, [isAuthenticated, event?.slug, isLiked, analytics, likeMutation, unlikeMutation]);
 
-  const handleImagePress = async (images: string[], initialIndex: number) => {
+  const handleImagePress = useCallback(async (images: string[], initialIndex: number) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const formattedImages = images.map((uri) => ({ uri }));
     setImageViewerImages(formattedImages);
     setImageViewerInitialIndex(initialIndex);
     setImageViewerVisible(true);
-  };
+  }, []);
 
   // No Add to Calendar in redesigned details tab
 
-  const handleMapPress = async () => {
+  const handleMapPress = useCallback(async () => {
     if (!event || !event.location) return;
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -770,7 +775,7 @@ export default function EventDetailScreen() {
       ],
       { cancelable: true }
     );
-  };
+  }, [event?.location, t]);
 
   if (isLoading) {
     return (
@@ -813,7 +818,7 @@ export default function EventDetailScreen() {
 
   // Share functionality removed
 
-  const handleExternalLink = async () => {
+  const handleExternalLink = useCallback(async () => {
     try {
       ctaScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -825,7 +830,7 @@ export default function EventDetailScreen() {
       ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
       console.error('Error opening external link:', error);
     }
-  };
+  }, [event?.url]);
 
   return (
     <SafeAreaView className='flex-1 bg-white dark:bg-black'>
@@ -886,9 +891,9 @@ export default function EventDetailScreen() {
             event,
             isDark,
             iconPrimary,
-            dummyPosts: getDummyPosts(event.organization.name),
-            formatPostTime,
-            getInitials,
+            dummyPosts: useMemo(() => getDummyPosts(event.organization.name), [event.organization.name]),
+            formatPostTime: useCallback(formatPostTime, []),
+            getInitials: useCallback(getInitials, []),
             organizationImageUrl: event.organization.image_url || undefined,
             onImagePress: handleImagePress,
           }}

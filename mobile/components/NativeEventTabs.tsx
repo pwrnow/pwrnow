@@ -137,7 +137,7 @@ const DetailsScene: React.FC<{ detailsProps: DetailsSceneProps }> = ({
 };
 
 // Posts Scene Component
-const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = ({
+const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = React.memo(({
   postsProps,
 }) => {
   const {
@@ -168,7 +168,7 @@ const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = ({
       />
     </Animated.ScrollView>
   );
-};
+});
 
 // Optimized Schedule List Component without animations on day change
 const OptimizedScheduleList: React.FC<{
@@ -463,7 +463,7 @@ const ScheduleScene: React.FC<{ scheduleProps: ScheduleSceneProps }> = ({
   );
 };
 
-export const NativeEventTabs: React.FC<Props> = ({
+export const NativeEventTabs: React.FC<Props> = React.memo(({
   event,
   detailsProps,
   postsProps,
@@ -582,6 +582,6 @@ export const NativeEventTabs: React.FC<Props> = ({
       />
     </View>
   );
-};
+});
 
 export default NativeEventTabs;
