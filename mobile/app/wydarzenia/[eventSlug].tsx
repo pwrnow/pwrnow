@@ -33,6 +33,7 @@ import { deviceLocaleTag } from '../../lib/i18n';
 import { useAuth } from '../../contexts/AuthContext';
 import LikeButton from '../../components/LikeButton';
 import SignInRequiredModal from '../../components/SignInRequiredModal';
+import ImageView from 'react-native-image-viewing';
 import WeekDaySelector, {
   generateEventDays,
 } from '../../components/WeekDaySelector';
@@ -56,6 +57,7 @@ const PostsTabContent: React.FC<
     formatPostTime: (timestamp: string) => string;
     getInitials: (name: string) => string;
     organizationImageUrl?: string;
+    onImagePress: (images: string[], initialIndex: number) => void;
   }
 > = ({
   isActive,
@@ -63,6 +65,7 @@ const PostsTabContent: React.FC<
   formatPostTime,
   getInitials,
   organizationImageUrl,
+  onImagePress,
 }) => {
   if (!isActive) return null;
 
@@ -71,14 +74,18 @@ const PostsTabContent: React.FC<
 
     if (images.length === 1) {
       return (
-        <View className='mt-3 rounded-lg overflow-hidden'>
+        <TouchableOpacity
+          className='mt-3 rounded-lg overflow-hidden'
+          onPress={() => onImagePress(images, 0)}
+          activeOpacity={0.8}
+        >
           <Image
             source={{ uri: images[0] }}
             className='w-full rounded-lg'
             style={{ height: 200 }}
             resizeMode='cover'
           />
-        </View>
+        </TouchableOpacity>
       );
     }
 
@@ -86,14 +93,19 @@ const PostsTabContent: React.FC<
       return (
         <View className='mt-3 flex-row gap-2'>
           {images.map((image, index) => (
-            <View key={index} className='flex-1 rounded-lg overflow-hidden'>
+            <TouchableOpacity
+              key={index}
+              className='flex-1 rounded-lg overflow-hidden'
+              onPress={() => onImagePress(images, index)}
+              activeOpacity={0.8}
+            >
               <Image
                 source={{ uri: image }}
                 className='w-full rounded-lg'
                 style={{ height: 150 }}
                 resizeMode='cover'
               />
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       );
@@ -104,34 +116,50 @@ const PostsTabContent: React.FC<
       return (
         <View className='mt-3 gap-2'>
           <View className='flex-row gap-2'>
-            <View className='flex-1 rounded-lg overflow-hidden'>
+            <TouchableOpacity
+              className='flex-1 rounded-lg overflow-hidden'
+              onPress={() => onImagePress(images, 0)}
+              activeOpacity={0.8}
+            >
               <Image
                 source={{ uri: images[0] }}
                 className='w-full rounded-lg'
                 style={{ height: 150 }}
                 resizeMode='cover'
               />
-            </View>
-            <View className='flex-1 rounded-lg overflow-hidden'>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className='flex-1 rounded-lg overflow-hidden'
+              onPress={() => onImagePress(images, 1)}
+              activeOpacity={0.8}
+            >
               <Image
                 source={{ uri: images[1] }}
                 className='w-full rounded-lg'
                 style={{ height: 150 }}
                 resizeMode='cover'
               />
-            </View>
+            </TouchableOpacity>
           </View>
           <View className='flex-row gap-2'>
-            <View className='flex-1 rounded-lg overflow-hidden'>
+            <TouchableOpacity
+              className='flex-1 rounded-lg overflow-hidden'
+              onPress={() => onImagePress(images, 2)}
+              activeOpacity={0.8}
+            >
               <Image
                 source={{ uri: images[2] }}
                 className='w-full rounded-lg'
                 style={{ height: 100 }}
                 resizeMode='cover'
               />
-            </View>
+            </TouchableOpacity>
             {images.length > 3 && (
-              <View className='flex-1 rounded-lg overflow-hidden relative'>
+              <TouchableOpacity
+                className='flex-1 rounded-lg overflow-hidden relative'
+                onPress={() => onImagePress(images, 3)}
+                activeOpacity={0.8}
+              >
                 <Image
                   source={{ uri: images[3] }}
                   className='w-full rounded-lg'
@@ -145,7 +173,7 @@ const PostsTabContent: React.FC<
                     </Text>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -158,13 +186,13 @@ const PostsTabContent: React.FC<
       key='posts'
       entering={FadeInDown.duration(300)}
       exiting={FadeInDown.duration(150)}
-      className='space-y-3'
+      className='space-y-4'
     >
       {dummyPosts.map((post, index) => (
         <Animated.View
           key={post.id}
           entering={FadeInDown.duration(200).delay(index * 50)}
-          className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4'
+          className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4 mb-3'
         >
           {/* Organization Header */}
           <View className='flex-row items-center mb-3'>
@@ -430,6 +458,11 @@ export default function EventDetailScreen() {
   const { isAuthenticated } = useAuth();
   const scheduleScrollRef = useRef<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
+    []
+  );
+  const [imageViewerInitialIndex, setImageViewerInitialIndex] = useState(0);
 
   // Animation values
   const ctaScale = useSharedValue(1);
@@ -657,6 +690,14 @@ export default function EventDetailScreen() {
     analytics.trackEventFavoriteToggled(event as any, nextLiked);
   };
 
+  const handleImagePress = async (images: string[], initialIndex: number) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const formattedImages = images.map((uri) => ({ uri }));
+    setImageViewerImages(formattedImages);
+    setImageViewerInitialIndex(initialIndex);
+    setImageViewerVisible(true);
+  };
+
   // No Add to Calendar in redesigned details tab
 
   const handleMapPress = async () => {
@@ -733,6 +774,12 @@ export default function EventDetailScreen() {
           setShowAuthModal(false);
           router.push('/signin' as any);
         }}
+      />
+      <ImageView
+        images={imageViewerImages}
+        imageIndex={imageViewerInitialIndex}
+        visible={imageViewerVisible}
+        onRequestClose={() => setImageViewerVisible(false)}
       />
       {/* Custom Header */}
       <Animated.View
@@ -1130,7 +1177,7 @@ export default function EventDetailScreen() {
           )}
 
           {activeTab === 'posts' && (
-            <View className='mx-4'>
+            <View className='mx-4 mt-3'>
               <PostsTabContent
                 isActive={true}
                 event={event}
@@ -1140,6 +1187,7 @@ export default function EventDetailScreen() {
                 formatPostTime={formatPostTime}
                 getInitials={getInitials}
                 organizationImageUrl={event.organization.image_url || undefined}
+                onImagePress={handleImagePress}
               />
             </View>
           )}
