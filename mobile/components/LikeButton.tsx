@@ -23,7 +23,7 @@ export default function LikeButton({
 
   const handlePress = async (e?: any) => {
     if (stopPropagationOnPress) {
-      // @ts-ignore
+      // @ts-ignorepacing it
       e?.stopPropagation?.();
     }
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

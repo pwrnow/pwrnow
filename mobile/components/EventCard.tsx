@@ -28,10 +28,9 @@ import { Feather } from '@expo/vector-icons';
 import LikeButton from './LikeButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import * as Calendar from 'expo-calendar';
 import { Event } from '../types';
 import { useAnalytics } from '../lib/analytics';
-import { config } from '../lib/config';
+import { useCalendar } from '../hooks/useCalendar';
 import { t, deviceLocaleTag } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import SignInRequiredModal from './SignInRequiredModal';
@@ -52,6 +51,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const { isAuthenticated } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { handleAddToCalendar } = useCalendar({ event });
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const DOUBLE_TAP_DELAY_MS = 280;
@@ -130,61 +130,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     analytics.trackEventFavoriteToggled(event as any, nextLiked);
   };
 
-  const handleAddToCalendar = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      // Check/request permissions
-      let { status } = await Calendar.getCalendarPermissionsAsync();
-      if (status !== 'granted') {
-        const req = await Calendar.requestCalendarPermissionsAsync();
-        status = req.status;
-        if (status !== 'granted') {
-          await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Error
-          );
-          Alert.alert(
-            t('permissionDeniedTitle'),
-            t('permissionDeniedMessage'),
-            [
-              { text: t('cancel'), style: 'cancel' },
-              { text: t('settings'), onPress: () => Linking.openSettings() },
-            ]
-          );
-          return;
-        }
-      }
-
-      const startsAt = new Date(event.starts_at);
-      const endsAt = new Date(event.ends_at);
-
-      const result = await Calendar.createEventInCalendarAsync({
-        title: event.title,
-        startDate: startsAt,
-        endDate: endsAt,
-        location: event.location ?? '',
-        notes: event.description ?? '',
-        url: event.url || `${config.shareBaseUrl}/${event.slug}`,
-      });
-
-      if (result?.action === Calendar.CalendarDialogResultActions.saved) {
-        await Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success
-        );
-        Alert.alert(
-          t('successTitle'),
-          t('eventAddedToCalendar', { title: event.title })
-        );
-      } else if (
-        result?.action === Calendar.CalendarDialogResultActions.canceled
-      ) {
-        await Haptics.selectionAsync();
-      }
-    } catch (error) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(t('errorTitle'), t('calendarOpenFailed'));
-    }
-  };
+  // Calendar functionality moved to useCalendar hook
 
   const handleEventLinkPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

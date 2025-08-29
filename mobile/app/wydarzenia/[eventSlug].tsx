@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -12,18 +12,13 @@ import {
   Image,
   Dimensions,
   Linking,
-  Platform,
 } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeIn,
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   withSpring,
-  interpolate,
-  Extrapolation,
-  runOnJS,
 } from 'react-native-reanimated';
 import { Event } from '../../types';
 import { useAnalytics } from '../../lib/analytics';
@@ -32,7 +27,6 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
-import * as Calendar from 'expo-calendar';
 import { config } from '../../lib/config';
 import { t } from '../../lib/i18n';
 import { deviceLocaleTag } from '../../lib/i18n';
@@ -42,6 +36,7 @@ import SignInRequiredModal from '../../components/SignInRequiredModal';
 import WeekDaySelector, {
   generateEventDays,
 } from '../../components/WeekDaySelector';
+import { useCalendar } from '../../hooks/useCalendar';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -429,7 +424,7 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const analytics = useAnalytics();
   const [activeTab, setActiveTab] = useState<TabType>('details');
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  // Description is always fully shown in redesigned details tab
   const [isLiked, setIsLiked] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>('');
   const { isAuthenticated } = useAuth();
@@ -437,15 +432,19 @@ export default function EventDetailScreen() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Animation values
-  const shareScale = useSharedValue(1);
   const ctaScale = useSharedValue(1);
-  const gradientOpacity = useSharedValue(1);
+  // CTA animations
 
   const {
     data: event,
     isLoading,
     error,
   } = useEventBySlug(typeof eventSlug === 'string' ? eventSlug : undefined);
+
+  // Calendar hook
+  const { handleAddToCalendar } = event
+    ? useCalendar({ event })
+    : { handleAddToCalendar: undefined };
 
   // Generate days from event dates and initialize selected day
   const eventDays = event
@@ -510,20 +509,6 @@ export default function EventDetailScreen() {
       analytics.trackEventDetailViewed(event as any, 'navigation');
     }
   }, [event]);
-
-  useEffect(() => {
-    gradientOpacity.value = withTiming(isDescriptionExpanded ? 0 : 1, {
-      duration: 200,
-    });
-  }, [isDescriptionExpanded]);
-
-  const animatedGradientStyle = useAnimatedStyle(() => ({
-    opacity: gradientOpacity.value,
-  }));
-
-  const shareAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: shareScale.value }],
-  }));
 
   const ctaAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ctaScale.value }],
@@ -659,10 +644,7 @@ export default function EventDetailScreen() {
     }
   };
 
-  const handleDescriptionToggle = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsDescriptionExpanded(!isDescriptionExpanded);
-  };
+  // No description expand/collapse in redesigned details tab
 
   const handleHeartPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -675,63 +657,7 @@ export default function EventDetailScreen() {
     analytics.trackEventFavoriteToggled(event as any, nextLiked);
   };
 
-  const handleAddToCalendar = async () => {
-    if (!event) return;
-
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      // Check/request permissions
-      let { status } = await Calendar.getCalendarPermissionsAsync();
-      if (status !== 'granted') {
-        const req = await Calendar.requestCalendarPermissionsAsync();
-        status = req.status;
-        if (status !== 'granted') {
-          await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Error
-          );
-          Alert.alert(
-            t('permissionDeniedTitle'),
-            t('permissionDeniedMessage'),
-            [
-              { text: t('cancel'), style: 'cancel' },
-              { text: t('settings'), onPress: () => Linking.openSettings() },
-            ]
-          );
-          return;
-        }
-      }
-
-      const startsAt = new Date(event.starts_at);
-      const endsAt = new Date(event.ends_at);
-
-      const result = await Calendar.createEventInCalendarAsync({
-        title: event.title,
-        startDate: startsAt,
-        endDate: endsAt,
-        location: event.location ?? '',
-        notes: event.description ?? '',
-        url: event.url || `${config.shareBaseUrl}/${event.slug}`,
-      });
-
-      if (result?.action === Calendar.CalendarDialogResultActions.saved) {
-        await Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success
-        );
-        Alert.alert(
-          t('successTitle'),
-          t('eventAddedToCalendar', { title: event.title })
-        );
-      } else if (
-        result?.action === Calendar.CalendarDialogResultActions.canceled
-      ) {
-        await Haptics.selectionAsync();
-      }
-    } catch (error) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(t('errorTitle'), t('calendarOpenFailed'));
-    }
-  };
+  // No Add to Calendar in redesigned details tab
 
   const handleMapPress = async () => {
     if (!event) return;
@@ -782,31 +708,7 @@ export default function EventDetailScreen() {
     );
   }
 
-  const handleShare = async () => {
-    try {
-      shareScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-      const shareUrl = `${config.shareBaseUrl}/${event.slug}`;
-      const shareText = `${event.title}\n\n${event.description || ''}\n\n${t(
-        'moreInfo'
-      )}: ${shareUrl}`;
-
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(shareUrl, {
-          mimeType: 'text/plain',
-          dialogTitle: t('shareEvent'),
-        });
-      } else {
-        Alert.alert(t('share'), shareText);
-      }
-
-      shareScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-    } catch (error) {
-      shareScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-      console.error('Error sharing event:', error);
-    }
-  };
+  // Share functionality removed
 
   const handleExternalLink = async () => {
     try {
@@ -1025,7 +927,7 @@ export default function EventDetailScreen() {
               {/* Event Image */}
               {event.image_url && (
                 <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-                  <View className='relative mx-4'>
+                  <View className='relative mx-4 mt-2'>
                     <Image
                       source={{ uri: event.image_url }}
                       className='w-full rounded-xl'
@@ -1052,7 +954,7 @@ export default function EventDetailScreen() {
               {/* Organization Header */}
               <Animated.View
                 entering={FadeInDown.duration(400).delay(150)}
-                className='mx-4'
+                className='mx-4 mt-3'
               >
                 <View className='flex-row items-center px-4 py-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl'>
                   <View className='w-12 h-12 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center mr-3'>
@@ -1076,42 +978,50 @@ export default function EventDetailScreen() {
                       {event.category.name}
                     </Text>
                   </View>
-
-                  {/* Share Button */}
-                  <Animated.View style={shareAnimatedStyle}>
-                    <TouchableOpacity
-                      onPress={handleShare}
-                      activeOpacity={0.8}
-                      className='p-3 rounded-full bg-accentBlue'
-                    >
-                      <Feather name='share-2' size={18} color='white' />
-                    </TouchableOpacity>
-                  </Animated.View>
                 </View>
               </Animated.View>
 
-              {/* Simplified Event Details Section */}
-              <View className='mx-4'>
+              {/* Event Details Section */}
+              <View className='mx-4 mt-3 mb-3'>
                 <View className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4'>
-                  <Text className='text-black dark:text-white font-groteskSemibold text-lg mb-4'>
+                  <Text className='text-black dark:text-white font-groteskSemibold text-lg mb-3'>
                     {t('eventDetails')}
                   </Text>
 
-                  <View className='space-y-3'>
-                    {/* Date and Time */}
-                    <View className='flex-row items-center'>
+                  <View className='space-y-2'>
+                    {/* Date Row - Clickable */}
+                    <TouchableOpacity
+                      onPress={handleAddToCalendar}
+                      className='flex-row items-center'
+                      activeOpacity={0.7}
+                    >
                       <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
                         <Feather name='calendar' size={14} color='#2066DF' />
                       </View>
                       <View className='flex-1'>
-                        <Text className='text-black dark:text-white font-groteskSemibold text-sm'>
+                        <Text className='text-black dark:text-white font-groteskSemibold text-base'>
                           {formatDateRangeShort(event.starts_at, event.ends_at)}
                         </Text>
-                        <Text className='text-black/60 dark:text-white/60 text-xs'>
+                      </View>
+                      <Feather name='plus' size={16} color='#2066DF' />
+                    </TouchableOpacity>
+
+                    {/* Time Row - Clickable */}
+                    <TouchableOpacity
+                      onPress={handleAddToCalendar}
+                      className='flex-row items-center'
+                      activeOpacity={0.7}
+                    >
+                      <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
+                        <Feather name='clock' size={14} color='#2066DF' />
+                      </View>
+                      <View className='flex-1'>
+                        <Text className='text-black dark:text-white font-groteskSemibold text-base'>
                           {formatTimeRangeShort(event.starts_at, event.ends_at)}
                         </Text>
                       </View>
-                    </View>
+                      <Feather name='plus' size={16} color='#2066DF' />
+                    </TouchableOpacity>
 
                     {/* Location */}
                     {event.location && (
@@ -1121,7 +1031,7 @@ export default function EventDetailScreen() {
                         </View>
                         <View className='flex-1'>
                           <Text
-                            className='text-black dark:text-white font-groteskSemibold text-sm'
+                            className='text-black dark:text-white font-groteskSemibold text-base'
                             numberOfLines={2}
                           >
                             {event.location}
@@ -1140,142 +1050,80 @@ export default function EventDetailScreen() {
                         </TouchableOpacity>
                       </View>
                     )}
-
-                    {/* Category */}
-                    <View className='flex-row items-center'>
-                      <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
-                        <Feather name='tag' size={14} color='#2066DF' />
-                      </View>
-                      <View className='flex-1'>
-                        <Text className='text-black dark:text-white font-groteskSemibold text-sm'>
-                          {event.category.name}
-                        </Text>
-                      </View>
-                      {event.is_new && (
-                        <View className='px-2 py-1 rounded-full bg-accentPink'>
-                          <Text className='text-white text-xs font-groteskSemibold'>
-                            {t('newTag')}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Quick Actions */}
-                    <View className='flex-row gap-2 mt-2 pt-3 border-t border-black/10 dark:border-white/10'>
-                      <TouchableOpacity
-                        onPress={handleAddToCalendar}
-                        className='flex-1 bg-accentBlue/10 rounded-lg py-2 px-3 flex-row items-center justify-center'
-                        activeOpacity={0.7}
-                      >
-                        <Feather name='plus' size={14} color='#2066DF' />
-                        <Text className='text-accentBlue font-groteskMedium text-xs ml-1'>
-                          {t('addToCalendar')}
-                        </Text>
-                      </TouchableOpacity>
-
-                      {event.url && (
-                        <Animated.View
-                          style={ctaAnimatedStyle}
-                          className='flex-1'
-                        >
-                          <TouchableOpacity
-                            onPress={handleExternalLink}
-                            className='flex-1 bg-accentPink/10 rounded-lg py-2 px-3 flex-row items-center justify-center'
-                            activeOpacity={0.7}
-                          >
-                            <Feather
-                              name='external-link'
-                              size={14}
-                              color='#EC2E81'
-                            />
-                            <Text className='text-accentPink font-groteskMedium text-xs ml-1'>
-                              {t('visitPage')}
-                            </Text>
-                          </TouchableOpacity>
-                        </Animated.View>
-                      )}
-                    </View>
                   </View>
                 </View>
               </View>
 
               {/* Event Description */}
               {event.description && (
-                <View className='mx-4'>
+                <View className='mx-4 mb-3'>
                   <View className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4'>
                     <Text className='text-black dark:text-white font-groteskSemibold text-lg mb-3'>
                       {t('eventDescription')}
                     </Text>
 
-                    <View className='relative'>
-                      <Text className='text-black/90 dark:text-white/90 text-sm leading-6 font-grotesk'>
-                        {isDescriptionExpanded
-                          ? event.description
-                          : `${event.description.slice(0, 200)}${
-                              event.description.length > 200 ? '...' : ''
-                            }`}
-                      </Text>
-
-                      {event.description.length > 200 &&
-                        !isDescriptionExpanded && (
-                          <Animated.View
-                            pointerEvents='none'
-                            style={[
-                              {
-                                position: 'absolute',
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                height: 20,
-                              },
-                              animatedGradientStyle,
-                            ]}
-                          >
-                            <LinearGradient
-                              pointerEvents='none'
-                              colors={
-                                isDark
-                                  ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
-                                  : [
-                                      'rgba(255,255,255,0)',
-                                      'rgba(255,255,255,1)',
-                                    ]
-                              }
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 0, y: 1 }}
-                              style={{
-                                position: 'absolute',
-                                left: 0,
-                                right: 0,
-                                top: 0,
-                                bottom: 0,
-                              }}
-                            />
-                          </Animated.View>
-                        )}
-                    </View>
-
-                    {event.description.length > 200 && (
-                      <TouchableOpacity
-                        onPress={handleDescriptionToggle}
-                        activeOpacity={0.7}
-                        className='mt-3 self-start bg-accentBlue/10 rounded-lg py-2 px-3 flex-row items-center'
-                      >
-                        <Text className='text-accentBlue font-groteskMedium text-xs mr-1'>
-                          {isDescriptionExpanded ? t('collapse') : t('expand')}
-                        </Text>
-                        <Feather
-                          name={
-                            isDescriptionExpanded
-                              ? 'chevron-up'
-                              : 'chevron-down'
-                          }
-                          size={12}
-                          color='#2066DF'
-                        />
-                      </TouchableOpacity>
-                    )}
+                    <Text className='text-black/90 dark:text-white/90 text-sm leading-6 font-grotesk'>
+                      {event.description}
+                    </Text>
                   </View>
+                </View>
+              )}
+
+              {/* Visit Page Button - Old EventCard Design */}
+              {event.url && (
+                <View className='mx-4 mb-3'>
+                  <TouchableOpacity
+                    onPress={handleExternalLink}
+                    activeOpacity={0.8}
+                  >
+                    <Animated.View style={ctaAnimatedStyle}>
+                      <LinearGradient
+                        colors={
+                          isDark
+                            ? [
+                                'rgba(32, 102, 223, 0.32)',
+                                'rgba(236, 46, 129, 0.32)',
+                              ]
+                            : [
+                                'rgba(32, 102, 223, 0.5)',
+                                'rgba(236, 46, 129, 0.5)',
+                              ]
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={{
+                          borderRadius: 14,
+                          padding: 1,
+                        }}
+                      >
+                        <View
+                          className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
+                          style={
+                            isDark
+                              ? undefined
+                              : {
+                                  shadowColor: '#000',
+                                  shadowOpacity: 0.06,
+                                  shadowRadius: 8,
+                                  shadowOffset: { width: 0, height: 2 },
+                                  elevation: 2,
+                                }
+                          }
+                        >
+                          <View className='flex-row items-center gap-2.5'>
+                            <Feather
+                              name='arrow-right'
+                              size={18}
+                              color={iconPrimary}
+                            />
+                            <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
+                              {t('visitPage')}
+                            </Text>
+                          </View>
+                        </View>
+                      </LinearGradient>
+                    </Animated.View>
+                  </TouchableOpacity>
                 </View>
               )}
             </Animated.View>
