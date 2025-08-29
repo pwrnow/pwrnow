@@ -26,7 +26,6 @@ import Animated, {
 
 import { Feather } from '@expo/vector-icons';
 import LikeButton from './LikeButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Event } from '../types';
 import { useAnalytics } from '../lib/analytics';
@@ -66,17 +65,10 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const DOUBLE_TAP_DELAY_MS = 280;
 
-  // Animated fade for the description gradient overlay (keeps fade when collapsed)
-  const gradientOpacity = useSharedValue(1);
   // CTA button animations
   const ctaScale = useSharedValue(1);
   const ctaBreath = useSharedValue(0);
   const ringProgress = useSharedValue(0);
-  useEffect(() => {
-    gradientOpacity.value = withTiming(isDescriptionExpanded ? 0 : 1, {
-      duration: 200,
-    });
-  }, [isDescriptionExpanded, gradientOpacity]);
 
   // Subtle breathing animation for CTA to increase emotional engagement
   useEffect(() => {
@@ -89,10 +81,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       true
     );
   }, [ctaBreath]);
-
-  const animatedGradientStyle = useAnimatedStyle(() => ({
-    opacity: gradientOpacity.value,
-  }));
 
   const ctaAnimatedStyle = useAnimatedStyle(() => {
     const scale = ctaScale.value * (1 + 0.01 * ctaBreath.value);
@@ -434,53 +422,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           {/* Description (truncated, no expand in this redesign) */}
           {event.description ? (
             <View className='mb-2'>
-              <View className='relative'>
-                <Animated.View
-                  layout={LinearTransition.springify()
-                    .damping(22)
-                    .stiffness(200)}
-                >
-                  <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
-                    {`${event.description.slice(0, 150)}${
-                      event.description.length > 150 ? '...' : ''
-                    }`}
-                  </Text>
-                </Animated.View>
-
-                {event.description.length > 150 ? (
-                  <Animated.View
-                    pointerEvents='none'
-                    style={[
-                      {
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 24,
-                      },
-                      animatedGradientStyle,
-                    ]}
-                  >
-                    <LinearGradient
-                      pointerEvents='none'
-                      colors={
-                        isDark
-                          ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
-                          : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
-                      }
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                      }}
-                    />
-                  </Animated.View>
-                ) : null}
-              </View>
+              <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
+                {`${event.description.slice(0, 150)}${
+                  event.description.length > 150 ? '...' : ''
+                }`}
+              </Text>
             </View>
           ) : null}
 
