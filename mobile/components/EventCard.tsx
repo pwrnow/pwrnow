@@ -34,6 +34,7 @@ import { useAnalytics } from '../lib/analytics';
 import { config } from '../lib/config';
 import { t, deviceLocaleTag } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
+import SignInRequiredModal from './SignInRequiredModal';
 
 interface EventCardProps {
   event: Event;
@@ -514,55 +515,14 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             </View>
           ) : null}
 
-          {/* Auth modal for locked features */}
-          <Modal
+          <SignInRequiredModal
             visible={showAuthModal}
-            transparent
-            animationType='fade'
-            onRequestClose={() => setShowAuthModal(false)}
-          >
-            <View className='flex-1 bg-black/50 justify-center items-center px-6'>
-              <Animated.View
-                entering={FadeInDown.duration(250)}
-                className='w-full rounded-2xl bg-white dark:bg-black border border-black/10 dark:border-white/10 p-5'
-              >
-                <View className='items-center mb-3'>
-                  <View className='w-12 h-12 rounded-full bg-accentPink/15 items-center justify-center mb-2'>
-                    <Feather name='lock' size={22} color={'#EC2E81'} />
-                  </View>
-                  <Text className='text-black dark:text-white text-lg font-semibold text-center'>
-                    {t('signInRequiredTitle')}
-                  </Text>
-                  <Text className='text-black/70 dark:text-white/70 mt-1 text-center'>
-                    {t('signInRequiredMessage')}
-                  </Text>
-                </View>
-                <View className='flex-row gap-3 mt-2'>
-                  <TouchableOpacity
-                    onPress={() => setShowAuthModal(false)}
-                    className='flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10 items-center'
-                    activeOpacity={0.8}
-                  >
-                    <Text className='text-black dark:text-white font-semibold'>
-                      {t('cancel')}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowAuthModal(false);
-                      router.push('/signin' as any);
-                    }}
-                    className='flex-1 py-3 rounded-xl bg-accentBlue items-center'
-                    activeOpacity={0.85}
-                  >
-                    <Text className='text-white font-semibold'>
-                      {t('signIn')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </Animated.View>
-            </View>
-          </Modal>
+            onClose={() => setShowAuthModal(false)}
+            onSignIn={() => {
+              setShowAuthModal(false);
+              router.push('/signin' as any);
+            }}
+          />
         </Pressable>
       </Pressable>
     </Animated.View>

@@ -38,6 +38,7 @@ import { t } from '../../lib/i18n';
 import { deviceLocaleTag } from '../../lib/i18n';
 import { useAuth } from '../../contexts/AuthContext';
 import LikeButton from '../../components/LikeButton';
+import SignInRequiredModal from '../../components/SignInRequiredModal';
 import WeekDaySelector, {
   generateEventDays,
 } from '../../components/WeekDaySelector';
@@ -433,6 +434,7 @@ export default function EventDetailScreen() {
   const [selectedDay, setSelectedDay] = useState<string>('');
   const { isAuthenticated } = useAuth();
   const scheduleScrollRef = useRef<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Animation values
   const shareScale = useSharedValue(1);
@@ -665,10 +667,7 @@ export default function EventDetailScreen() {
   const handleHeartPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!isAuthenticated) {
-      Alert.alert(t('signInRequiredTitle'), t('signInRequiredMessage'), [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('signIn'), onPress: () => router.push('/signin' as any) },
-      ]);
+      setShowAuthModal(true);
       return;
     }
     const nextLiked = !isLiked;
@@ -825,6 +824,14 @@ export default function EventDetailScreen() {
 
   return (
     <SafeAreaView className='flex-1 bg-white dark:bg-black'>
+      <SignInRequiredModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSignIn={() => {
+          setShowAuthModal(false);
+          router.push('/signin' as any);
+        }}
+      />
       {/* Custom Header */}
       <Animated.View
         entering={FadeIn.duration(300)}
