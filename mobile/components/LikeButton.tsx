@@ -20,6 +20,7 @@ interface LikeButtonProps {
   size?: number;
   className?: string;
   stopPropagationOnPress?: boolean;
+  isAuthenticated?: boolean;
 }
 
 // Animated TouchableOpacity
@@ -32,6 +33,7 @@ export default function LikeButton({
   size = 30,
   className = '',
   stopPropagationOnPress = false,
+  isAuthenticated = true,
 }: LikeButtonProps) {
   const colorScheme = useColorScheme();
 
@@ -73,6 +75,14 @@ export default function LikeButton({
   const handlePress = async (e?: any) => {
     if (stopPropagationOnPress) {
       e?.stopPropagation?.();
+    }
+
+    // Call the onPress function first to handle authentication check
+    onPress();
+
+    // Only trigger haptics and animations if user is authenticated
+    if (!isAuthenticated) {
+      return;
     }
 
     // Trigger haptics
@@ -145,8 +155,6 @@ export default function LikeButton({
         withSpring(1, { damping: 10, stiffness: 200 })
       );
     }
-
-    onPress();
   };
 
   // Reset particles when unliked

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -339,7 +339,6 @@ export default function EventDetailScreen() {
   const likeMutation = useLikeEvent();
   const unlikeMutation = useUnlikeEvent();
 
-  const scheduleScrollRef = useRef<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
@@ -638,19 +637,6 @@ export default function EventDetailScreen() {
     return now >= startDateTime && now <= endDateTime;
   };
 
-  const findCurrentEventIndex = (scheduleItems: any[]) => {
-    const currentIndex = scheduleItems.findIndex((item) =>
-      isEventCurrent(selectedDay, item.time, item.endTime)
-    );
-    if (currentIndex !== -1) return currentIndex;
-
-    // If no current event, find the next upcoming event
-    const upcomingIndex = scheduleItems.findIndex(
-      (item) => !isEventPast(selectedDay, item.time, item.endTime)
-    );
-    return upcomingIndex !== -1 ? upcomingIndex : 0;
-  };
-
   useEffect(() => {
     if (event) {
       analytics.trackEventDetailViewed(event as any, 'navigation');
@@ -735,13 +721,55 @@ export default function EventDetailScreen() {
   // No Add to Calendar in redesigned details tab
 
   const handleMapPress = async () => {
-    if (!event) return;
+    if (!event || !event.location) return;
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const url = `https://maps.apple.com/?q=${encodeURIComponent(
-      event.location || ''
-    )}`;
-    await Linking.openURL(url);
+
+    Alert.alert(
+      t('openLocation'),
+      t('chooseMapApp'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: 'Google Maps',
+          onPress: async () => {
+            try {
+              const googleMapsUrl = `https://maps.google.com/?q=${encodeURIComponent(
+                event.location || ''
+              )}`;
+              const canOpen = await Linking.canOpenURL(googleMapsUrl);
+              if (canOpen) {
+                await Linking.openURL(googleMapsUrl);
+              } else {
+                // Fallback to web version
+                await Linking.openURL(googleMapsUrl);
+              }
+            } catch (error) {
+              console.error('Error opening Google Maps:', error);
+              Alert.alert(t('error'), t('failedToOpenMaps'));
+            }
+          },
+        },
+        {
+          text: 'Apple Maps',
+          onPress: async () => {
+            try {
+              const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(
+                event.location || ''
+              )}`;
+              await Linking.openURL(appleMapsUrl);
+            } catch (error) {
+              console.error('Error opening Apple Maps:', error);
+              Alert.alert(t('error'), t('failedToOpenMaps'));
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   if (isLoading) {
@@ -835,6 +863,7 @@ export default function EventDetailScreen() {
             onPress={handleHeartPress}
             size={20}
             className='mr-2'
+            isAuthenticated={isAuthenticated}
           />
         </View>
       </Animated.View>
@@ -869,7 +898,6 @@ export default function EventDetailScreen() {
             eventDays,
             itemsByDay: dummyScheduleByDay,
             isDark,
-            scheduleScrollRef,
           }}
         />
       </Animated.View>

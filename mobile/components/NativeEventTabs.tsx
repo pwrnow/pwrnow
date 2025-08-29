@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   useColorScheme,
   useWindowDimensions,
+  ScrollView,
 } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
@@ -67,7 +68,6 @@ interface ScheduleSceneProps {
   eventDays: any[];
   itemsByDay: Record<string, any[]>;
   isDark: boolean;
-  scheduleScrollRef: any;
 }
 
 interface Props {
@@ -149,7 +149,16 @@ const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = ({
   } = postsProps;
 
   return (
-    <Animated.View entering={FadeIn.duration(200)} className='flex-1 mt-3 px-4'>
+    <Animated.ScrollView
+      entering={FadeIn.duration(200)}
+      showsVerticalScrollIndicator={false}
+      className='flex-1'
+      contentContainerStyle={{
+        paddingTop: 12,
+        paddingHorizontal: 16,
+        paddingBottom: 24,
+      }}
+    >
       <PostsList
         posts={dummyPosts}
         formatPostTime={formatPostTime}
@@ -157,7 +166,7 @@ const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = ({
         organizationImageUrl={organizationImageUrl}
         onImagePress={onImagePress}
       />
-    </Animated.View>
+    </Animated.ScrollView>
   );
 };
 
@@ -421,14 +430,8 @@ const OptimizedWeekDaySelector: React.FC<{
 const ScheduleScene: React.FC<{ scheduleProps: ScheduleSceneProps }> = ({
   scheduleProps,
 }) => {
-  const {
-    selectedDay,
-    setSelectedDay,
-    eventDays,
-    itemsByDay,
-    isDark,
-    scheduleScrollRef,
-  } = scheduleProps;
+  const { selectedDay, setSelectedDay, eventDays, itemsByDay, isDark } =
+    scheduleProps;
 
   return (
     <View className='flex-1'>
@@ -443,7 +446,6 @@ const ScheduleScene: React.FC<{ scheduleProps: ScheduleSceneProps }> = ({
       )}
 
       <Animated.ScrollView
-        ref={scheduleScrollRef}
         showsVerticalScrollIndicator={false}
         className='flex-1'
         contentContainerStyle={{
@@ -480,59 +482,77 @@ export const NativeEventTabs: React.FC<Props> = ({
     schedule: () => <ScheduleScene scheduleProps={scheduleProps} />,
   });
 
-  // Custom Tab Bar Component
+  // Custom Tab Bar Component with accent styling
   const renderTabBar = (props: any) => (
     <TabBar
       {...props}
       indicatorStyle={{
-        backgroundColor: isDark ? '#FFFFFF' : '#000000',
+        backgroundColor: '#2066DF', // accentBlue
         height: 3,
-        borderRadius: 1.5,
-        marginBottom: 1,
+        borderRadius: 2,
+        marginBottom: 2,
       }}
       style={{
         backgroundColor: isDark ? '#000000' : '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: isDark
-          ? 'rgba(255, 255, 255, 0.1)'
-          : 'rgba(0, 0, 0, 0.1)',
+          ? 'rgba(255, 255, 255, 0.08)'
+          : 'rgba(0, 0, 0, 0.06)',
         elevation: 0,
         shadowOpacity: 0,
+        paddingHorizontal: 4,
+        // Add subtle shadow for depth
+        ...(isDark
+          ? {}
+          : {
+              shadowColor: '#2066DF',
+              shadowOpacity: 0.05,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 2 },
+            }),
       }}
       tabStyle={{
         flex: 1,
-        paddingVertical: 12,
+        paddingVertical: 14,
+        marginHorizontal: 2,
+        borderRadius: 12,
+        overflow: 'hidden',
       }}
       renderLabel={({ route, focused }: { route: any; focused: boolean }) => {
         const routeTyped = route as Route;
         return (
-          <View className='flex-row items-center'>
+          <Animated.View
+            className={`flex-row items-center px-3 py-1.5 rounded-lg transition-all duration-200 ${
+              focused
+                ? 'bg-accentBlue/10 dark:bg-accentBlue/15'
+                : 'bg-transparent'
+            }`}
+            style={{
+              transform: [{ scale: focused ? 1.02 : 1 }],
+            }}
+          >
             <Feather
               name={routeTyped.icon}
               size={16}
               color={
                 focused
-                  ? isDark
-                    ? '#FFFFFF'
-                    : '#000000'
+                  ? '#2066DF' // accentBlue
                   : isDark
-                  ? '#FFFFFF80'
-                  : '#00000080'
+                  ? '#FFFFFF60'
+                  : '#00000060'
               }
             />
             <Text
               className={`ml-2 font-groteskMedium text-sm ${
-                focused
-                  ? 'text-black dark:text-white'
-                  : 'text-black/50 dark:text-white/50'
+                focused ? 'text-accentBlue' : 'text-black/60 dark:text-white/60'
               }`}
             >
               {routeTyped.title}
             </Text>
-          </View>
+          </Animated.View>
         );
       }}
-      pressColor={isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'}
+      pressColor='#2066DF20' // accentBlue with opacity
       onTabPress={({ route }) => {
         Haptics.selectionAsync();
       }}

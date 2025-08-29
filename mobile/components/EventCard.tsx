@@ -385,6 +385,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               size={24}
               className='-mr-1'
               stopPropagationOnPress
+              isAuthenticated={isAuthenticated}
             />
           </View>
 

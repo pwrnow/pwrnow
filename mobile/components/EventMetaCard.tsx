@@ -60,7 +60,11 @@ export const EventMetaCard: React.FC<Props> = ({
           </TouchableOpacity>
 
           {location ? (
-            <View className='flex-row items-center'>
+            <TouchableOpacity
+              onPress={onMapPress}
+              className='flex-row items-center'
+              activeOpacity={0.7}
+            >
               <View className='w-8 h-8 rounded-full bg-accentPink/15 items-center justify-center mr-3'>
                 <Feather name='map-pin' size={14} color='#EC2E81' />
               </View>
@@ -72,14 +76,8 @@ export const EventMetaCard: React.FC<Props> = ({
                   {location}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={onMapPress}
-                className='p-1'
-                activeOpacity={0.7}
-              >
-                <Feather name='external-link' size={14} color={'#000000'} />
-              </TouchableOpacity>
-            </View>
+              <Feather name='external-link' size={16} color='#EC2E81' />
+            </TouchableOpacity>
           ) : null}
         </View>
       </View>

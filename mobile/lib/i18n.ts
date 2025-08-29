@@ -107,6 +107,10 @@ const translations: Record<string, TranslationMap> = {
     greatOrganization:
       'Great organization! I recommend it to everyone interested in the topic.',
     live: 'LIVE',
+    // Maps integration translations
+    openLocation: 'Open Location',
+    chooseMapApp: 'Choose which app to open the location with:',
+    failedToOpenMaps: 'Failed to open maps. Please try again.',
   },
   pl: {
     all: 'Wszystkie',
@@ -214,6 +218,10 @@ const translations: Record<string, TranslationMap> = {
     greatOrganization:
       'Świetna organizacja! Polecam ją każdemu zainteresowanemu tematem.',
     live: 'NA ŻYWO',
+    // Maps integration translations
+    openLocation: 'Otwórz Lokalizację',
+    chooseMapApp: 'Wybierz aplikację do otwarcia lokalizacji:',
+    failedToOpenMaps: 'Nie udało się otworzyć map. Spróbuj ponownie.',
   },
 };
 
