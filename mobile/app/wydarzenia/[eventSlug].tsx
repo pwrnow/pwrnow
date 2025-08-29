@@ -37,12 +37,9 @@ import OrganizationHeader from '../../components/OrganizationHeader';
 import EventMetaCard from '../../components/EventMetaCard';
 import EventDescription from '../../components/EventDescription';
 import VisitPageButton from '../../components/VisitPageButton';
-import SegmentedTabs from '../../components/SegmentedTabs';
-import EventTabsContent from '../../components/EventTabsContent';
+import NativeEventTabs from '../../components/NativeEventTabs';
 import { formatPostTime, getInitials } from '../../lib/format';
 import { useLikeEvent, useUnlikeEvent } from '../../lib/queries';
-
-type TabType = 'details' | 'posts' | 'schedule';
 
 // Tab Content Components
 
@@ -332,7 +329,7 @@ export default function EventDetailScreen() {
   const { eventSlug } = useLocalSearchParams();
   const router = useRouter();
   const analytics = useAnalytics();
-  const [activeTab, setActiveTab] = useState<TabType>('details');
+
   // Description is always fully shown in redesigned details tab
   const [isLiked, setIsLiked] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>('');
@@ -343,7 +340,6 @@ export default function EventDetailScreen() {
   const unlikeMutation = useUnlikeEvent();
 
   const scheduleScrollRef = useRef<any>(null);
-  const mainScrollRef = useRef<ScrollView>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
@@ -655,36 +651,6 @@ export default function EventDetailScreen() {
     return upcomingIndex !== -1 ? upcomingIndex : 0;
   };
 
-  // Auto-scroll to current event when tab becomes active or day changes
-  useEffect(() => {
-    if (activeTab === 'schedule' && selectedDay && scheduleScrollRef.current) {
-      const scheduleItems =
-        dummyScheduleByDay[selectedDay as keyof typeof dummyScheduleByDay] ||
-        [];
-      if (scheduleItems.length > 0) {
-        const currentEventIndex = findCurrentEventIndex(scheduleItems);
-
-        // Scroll to current event with a slight delay to ensure layout is complete
-        setTimeout(() => {
-          scheduleScrollRef.current?.scrollTo({
-            y: currentEventIndex * 120, // Approximate height of each schedule item
-            animated: true,
-          });
-        }, 300);
-      }
-    }
-  }, [activeTab, selectedDay]);
-
-  // Scroll to top when tab changes
-  useEffect(() => {
-    if (mainScrollRef.current) {
-      mainScrollRef.current.scrollTo({
-        y: 0,
-        animated: true,
-      });
-    }
-  }, [activeTab]);
-
   useEffect(() => {
     if (event) {
       analytics.trackEventDetailViewed(event as any, 'navigation');
@@ -873,84 +839,40 @@ export default function EventDetailScreen() {
         </View>
       </Animated.View>
 
-      {/* Segmented Tabs */}
-      <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-        <SegmentedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-      </Animated.View>
-
-      <ScrollView
-        ref={mainScrollRef}
-        showsVerticalScrollIndicator={false}
+      {/* Native Event Tabs */}
+      <Animated.View
+        entering={FadeInDown.duration(400).delay(200)}
         className='flex-1'
       >
-        {/* Tab Content */}
-        <View className='flex-1 pb-8'>
-          {activeTab === 'details' && (
-            <Animated.View
-              key='details'
-              entering={FadeInDown.duration(300)}
-              className='space-y-4'
-            >
-              {/* Event Image */}
-              {event.image_url && (
-                <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-                  <EventHeroImage imageUrl={event.image_url} />
-                </Animated.View>
-              )}
-
-              {/* Organization Header */}
-              <Animated.View entering={FadeInDown.duration(400).delay(150)}>
-                <OrganizationHeader
-                  organization={event.organization}
-                  categoryName={event.category.name}
-                />
-              </Animated.View>
-
-              {/* Event Details Section */}
-              <EventMetaCard
-                startsAt={event.starts_at}
-                endsAt={event.ends_at}
-                location={event.location}
-                onCalendarPress={handleAddToCalendar}
-                onMapPress={handleMapPress}
-              />
-
-              {/* Event Description */}
-              <EventDescription description={event.description} />
-
-              {/* Visit Page Button - Old EventCard Design */}
-              {event.url && (
-                <VisitPageButton
-                  onPress={handleExternalLink}
-                  animatedStyle={ctaAnimatedStyle}
-                />
-              )}
-            </Animated.View>
-          )}
-
-          <EventTabsContent
-            activeTab={activeTab}
-            postsProps={{
-              event,
-              isDark,
-              iconPrimary,
-              dummyPosts: getDummyPosts(event.organization.name),
-              formatPostTime,
-              getInitials,
-              organizationImageUrl: event.organization.image_url || undefined,
-              onImagePress: handleImagePress,
-            }}
-            scheduleProps={{
-              selectedDay,
-              setSelectedDay,
-              eventDays,
-              itemsByDay: dummyScheduleByDay,
-              isDark,
-              scheduleScrollRef,
-            }}
-          />
-        </View>
-      </ScrollView>
+        <NativeEventTabs
+          event={event}
+          detailsProps={{
+            event,
+            onCalendarPress: handleAddToCalendar,
+            onMapPress: handleMapPress,
+            onExternalLink: handleExternalLink,
+            ctaAnimatedStyle: ctaAnimatedStyle,
+          }}
+          postsProps={{
+            event,
+            isDark,
+            iconPrimary,
+            dummyPosts: getDummyPosts(event.organization.name),
+            formatPostTime,
+            getInitials,
+            organizationImageUrl: event.organization.image_url || undefined,
+            onImagePress: handleImagePress,
+          }}
+          scheduleProps={{
+            selectedDay,
+            setSelectedDay,
+            eventDays,
+            itemsByDay: dummyScheduleByDay,
+            isDark,
+            scheduleScrollRef,
+          }}
+        />
+      </Animated.View>
     </SafeAreaView>
   );
 }
