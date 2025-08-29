@@ -34,6 +34,7 @@ import { useCalendar } from '../hooks/useCalendar';
 import { t, deviceLocaleTag } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import SignInRequiredModal from './SignInRequiredModal';
+import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 
 interface EventCardProps {
   event: Event;
@@ -49,9 +50,18 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const analytics = useAnalytics();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(!!event.liked);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { handleAddToCalendar } = useCalendar({ event });
+
+  // React Query mutations for like/unlike
+  const likeMutation = useLikeEvent();
+  const unlikeMutation = useUnlikeEvent();
+
+  // Sync local liked state from backend when event data updates
+  useEffect(() => {
+    setIsLiked(!!event.liked);
+  }, [event.liked]);
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const DOUBLE_TAP_DELAY_MS = 280;
@@ -125,9 +135,22 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       setShowAuthModal(true);
       return;
     }
+
     const nextLiked = !isLiked;
-    setIsLiked(nextLiked);
+    setIsLiked(nextLiked); // Optimistic update
     analytics.trackEventFavoriteToggled(event as any, nextLiked);
+
+    try {
+      if (nextLiked) {
+        await likeMutation.mutateAsync(event.slug);
+      } else {
+        await unlikeMutation.mutateAsync(event.slug);
+      }
+    } catch (e) {
+      // Revert optimistic update on error
+      setIsLiked(!nextLiked);
+      console.error('Like/unlike failed:', e);
+    }
   };
 
   // Calendar functionality moved to useCalendar hook
@@ -371,7 +394,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             <LikeButton
               isLiked={isLiked}
               onPress={handleHeartPress}
-              size={18}
+              size={24}
               className='-mr-1'
               stopPropagationOnPress
             />

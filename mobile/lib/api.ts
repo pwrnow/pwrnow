@@ -1,6 +1,8 @@
 import { Event, Category, Organization } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
+import * as SecureStore from 'expo-secure-store';
+import { ACCESS_TOKEN_KEY } from '../contexts/AuthContext';
 
 export type AuthProvider = 'google' | 'facebook' | 'apple';
 
@@ -64,11 +66,21 @@ async function fetchWithCredentials(
     url = `${baseUrl}?${searchParams.toString()}`;
   }
 
+  // Add Authorization header if we have an access token
+  let authHeaders: Record<string, string> = {};
+  try {
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    if (token) {
+      authHeaders['Authorization'] = `Bearer ${token}`;
+    }
+  } catch {}
+
   const response = await fetch(`${getApiUrl()}${url}`, {
     ...options,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options.headers,
     },
   });
@@ -136,6 +148,22 @@ export const eventsApi = {
   async getEventBySlug(slug: string): Promise<Event> {
     const response = await fetchWithCredentials(`/events/${slug}/`);
     return await response.json();
+  },
+
+  // Like an event by slug
+  async like(slug: string): Promise<{ liked: boolean }> {
+    const response = await fetchWithCredentials(`/events/${slug}/likes/`, {
+      method: 'POST',
+    });
+    console.log('response', response);
+    return await response.json();
+  },
+
+  // Unlike an event by slug
+  async unlike(slug: string): Promise<void> {
+    await fetchWithCredentials(`/events/${slug}/likes/`, {
+      method: 'DELETE',
+    });
   },
 };
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -32,19 +32,24 @@ export default function HomeScreen() {
     data: events = [],
     isFetching: isFetchingEvents,
     isRefetching: isRefetchingEvents,
+    status: eventsStatus,
+    fetchStatus,
   } = useEvents();
   const { data: fetchedCategories = [] } = useCategories();
 
+  console.log('fetchStatus', fetchStatus);
+
   // Compose categories with the localized "All"
-  const categories: Category[] = useMemo(() => {
-    return [{ name: t('all'), slug: 'wszystkie' }, ...fetchedCategories];
-  }, [fetchedCategories]);
+  const categories: Category[] = [
+    { name: t('all'), slug: 'wszystkie' },
+    ...fetchedCategories,
+  ];
 
   // Compute filtered events based on selected category
-  const filteredEvents = useMemo(() => {
-    if (selectedCategory === 'wszystkie') return events;
-    return events.filter((event) => event.category.slug === selectedCategory);
-  }, [events, selectedCategory]);
+  const filteredEvents =
+    selectedCategory === 'wszystkie'
+      ? events
+      : events.filter((event) => event.category.slug === selectedCategory);
 
   // Handle refresh events
   const handleRefresh = async () => {
@@ -69,7 +74,7 @@ export default function HomeScreen() {
         }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing || isFetchingEvents || isRefetchingEvents}
+            refreshing={refreshing}
             onRefresh={handleRefresh}
             // iOS supports only a single color; Android supports an array (spins through colors)
             tintColor={Platform.OS === 'ios' ? subtleSpinnerColor : undefined}

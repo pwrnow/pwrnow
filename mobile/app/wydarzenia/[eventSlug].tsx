@@ -40,6 +40,7 @@ import VisitPageButton from '../../components/VisitPageButton';
 import SegmentedTabs from '../../components/SegmentedTabs';
 import EventTabsContent from '../../components/EventTabsContent';
 import { formatPostTime, getInitials } from '../../lib/format';
+import { useLikeEvent, useUnlikeEvent } from '../../lib/queries';
 
 type TabType = 'details' | 'posts' | 'schedule';
 
@@ -336,6 +337,11 @@ export default function EventDetailScreen() {
   const [isLiked, setIsLiked] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>('');
   const { isAuthenticated } = useAuth();
+
+  // React Query mutations for like/unlike
+  const likeMutation = useLikeEvent();
+  const unlikeMutation = useUnlikeEvent();
+
   const scheduleScrollRef = useRef<any>(null);
   const mainScrollRef = useRef<ScrollView>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -685,6 +691,13 @@ export default function EventDetailScreen() {
     }
   }, [event]);
 
+  // Sync local liked state from backend once event loads/updates
+  useEffect(() => {
+    if (event) {
+      setIsLiked(!!event.liked);
+    }
+  }, [event?.liked]);
+
   const ctaAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ctaScale.value }],
   }));
@@ -725,9 +738,24 @@ export default function EventDetailScreen() {
       setShowAuthModal(true);
       return;
     }
+
+    if (!event) return;
+
     const nextLiked = !isLiked;
-    setIsLiked(nextLiked);
+    setIsLiked(nextLiked); // Optimistic update
     analytics.trackEventFavoriteToggled(event as any, nextLiked);
+
+    try {
+      if (nextLiked) {
+        await likeMutation.mutateAsync(event.slug);
+      } else {
+        await unlikeMutation.mutateAsync(event.slug);
+      }
+    } catch (e) {
+      // Revert optimistic update on error
+      setIsLiked(!nextLiked);
+      console.error('Like/unlike failed:', e);
+    }
   };
 
   const handleImagePress = async (images: string[], initialIndex: number) => {

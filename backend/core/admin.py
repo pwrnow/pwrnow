@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -321,3 +321,11 @@ class EventAdmin(TranslationAdmin):
 admin.site.site_header = "PWr Now Admin"
 admin.site.site_title = "PWr Now Admin Portal"
 admin.site.index_title = "Welcome to PWr Now Administration"
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'event', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__email', 'event__title']
+    autocomplete_fields = ['user', 'event']

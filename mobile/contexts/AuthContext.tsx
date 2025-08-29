@@ -16,9 +16,9 @@ type AuthState = {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 // Keys for secure storage
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
-const USER_KEY = 'user';
+export const ACCESS_TOKEN_KEY = 'access_token';
+export const REFRESH_TOKEN_KEY = 'refresh_token';
+export const USER_KEY = 'user';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,

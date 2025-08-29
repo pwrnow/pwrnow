@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, Category, Organization, Tag, OrganizationCode
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like
 from .translation_utils import get_language_from_request, get_translated_field
 
 
@@ -68,13 +68,14 @@ class EventSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     is_new = serializers.SerializerMethodField()
+    liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'aspect_ratio',
-            'organization', 'category', 'is_new'
+            'organization', 'category', 'is_new', 'liked'
         ]
 
     def get_title(self, obj):
@@ -105,6 +106,14 @@ class EventSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'is_new'):
             return obj.is_new
         return obj.check_is_new()
+
+    def get_liked(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        # Efficient existence check
+        return Like.objects.filter(user_id=user.id, event_id=obj.id).exists()
 
 
 class EventCreateSerializer(serializers.ModelSerializer):

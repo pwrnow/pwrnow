@@ -12,4 +12,5 @@ router.register(r'tags', views.TagViewSet, basename='tag')
 # The API URLs are now determined automatically by the router
 urlpatterns = [
     path('', include(router.urls)),
+    path('events/<slug:slug>/likes/', views.event_like, name='event-like'),
 ]

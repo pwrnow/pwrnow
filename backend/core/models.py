@@ -7,6 +7,7 @@ from django.utils.text import slugify
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.conf import settings
 from sqids import Sqids
 
 
@@ -271,3 +272,30 @@ class Event(models.Model):
     def duration(self):
         """Get event duration as timedelta."""
         return self.ends_at - self.starts_at
+
+
+class Like(models.Model):
+    """User likes for events."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='likes'
+    )
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='likes'
+    )
+
+    class Meta:
+        unique_together = (('user', 'event'),)
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'event']),
+            models.Index(fields=['event', 'user']),
+        ]
+
+    def __str__(self):
+        return f"Like(user={self.user_id}, event={self.event_id})"

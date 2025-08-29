@@ -22,6 +22,7 @@ export interface Event {
   verified?: boolean;
   is_new?: boolean;
   aspect_ratio?: string | null;
+  liked?: boolean;
   organization: Organization;
   category: Category;
 }

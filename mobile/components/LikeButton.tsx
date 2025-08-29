@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, useColorScheme } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 interface LikeButtonProps {
@@ -14,7 +14,7 @@ interface LikeButtonProps {
 export default function LikeButton({
   isLiked,
   onPress,
-  size = 18,
+  size = 30,
   className = '',
   stopPropagationOnPress = false,
 }: LikeButtonProps) {
@@ -37,7 +37,11 @@ export default function LikeButton({
       activeOpacity={0.7}
       className={`p-2 ${className}`}
     >
-      <Feather name='heart' size={size} color={'#EC2E81'} />
+      <AntDesign
+        name={isLiked ? 'heart' : 'hearto'}
+        size={size}
+        color={'#EC2E81'}
+      />
     </TouchableOpacity>
   );
 }
