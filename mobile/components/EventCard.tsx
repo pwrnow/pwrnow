@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
+  Modal,
   Linking,
   Image,
   Alert,
@@ -25,12 +27,12 @@ import Animated, {
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import * as Sharing from 'expo-sharing';
 import * as Calendar from 'expo-calendar';
 import { Event } from '../types';
 import { useAnalytics } from '../lib/analytics';
 import { config } from '../lib/config';
 import { t, deviceLocaleTag } from '../lib/i18n';
+import { useAuth } from '../contexts/AuthContext';
 
 interface EventCardProps {
   event: Event;
@@ -41,10 +43,16 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const iconPrimary = isDark ? '#FFFFFF' : '#000000';
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const analytics = useAnalytics();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const [isLiked, setIsLiked] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const lastTapRef = useRef<number>(0);
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const DOUBLE_TAP_DELAY_MS = 280;
 
   // Animated fade for the description gradient overlay (keeps fade when collapsed)
   const gradientOpacity = useSharedValue(1);
@@ -109,13 +117,15 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   const imageAspectRatio = getAspectRatio(event.aspect_ratio);
 
-  const handleDescriptionToggle = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsDescriptionExpanded(!isDescriptionExpanded);
-    analytics.trackEventDescriptionToggled(
-      event as any,
-      !isDescriptionExpanded
-    );
+  const handleHeartPress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    const nextLiked = !isLiked;
+    setIsLiked(nextLiked);
+    analytics.trackEventFavoriteToggled(event as any, nextLiked);
   };
 
   const handleAddToCalendar = async () => {
@@ -181,11 +191,23 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     analytics.trackEventImageClicked(event as any);
   };
 
-  // Dedicated CTA handler without extra haptics (we trigger haptics on press-in)
-  const handleVisitPagePress = async () => {
-    // Navigate to local event detail page instead of external URL
-    router.push(`/wydarzenia/${event.slug}` as any);
-    analytics.trackEventCtaClicked(event as any, 'card_cta');
+  // Handle double-tap on image only; single tap navigates
+  const handleImagePress = () => {
+    const now = Date.now();
+    if (now - (lastTapRef.current || 0) < DOUBLE_TAP_DELAY_MS) {
+      if (tapTimeoutRef.current) {
+        clearTimeout(tapTimeoutRef.current);
+        tapTimeoutRef.current = null;
+      }
+      lastTapRef.current = 0;
+      handleHeartPress();
+      return;
+    }
+    lastTapRef.current = now;
+    tapTimeoutRef.current = setTimeout(() => {
+      handleEventLinkPress();
+      tapTimeoutRef.current = null;
+    }, DOUBLE_TAP_DELAY_MS);
   };
 
   const handleCtaPressIn = async () => {
@@ -208,23 +230,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     analytics.trackEventPillClicked(event as any, 'location');
   };
 
-  const handleShare = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const shareUrl = `${config.shareBaseUrl}/${event.slug}`;
-    const shareText = `${event.title}\n\n${event.description || ''}\n\n${t(
-      'moreInfo'
-    )}: ${shareUrl}`;
-
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(shareUrl, {
-        mimeType: 'text/plain',
-        dialogTitle: t('shareEvent'),
-      });
-    } else {
-      Alert.alert(t('share'), shareText);
-    }
-    analytics.trackEventShareClicked(event as any);
-  };
+  // Share removed from card in this redesign
 
   const handleDatePillPress = async () => {
     await handleAddToCalendar();
@@ -344,265 +350,232 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       layout={LinearTransition.springify().damping(20).stiffness(180)}
       className='mb-0 bg-white dark:bg-black'
     >
-      {/* Header: org + category */}
-      <View className='px-3 pt-4 pb-3'>
-        <View className='flex-row items-center gap-3'>
-          <View className='w-10 h-10 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center'>
-            {event.organization.image_url ? (
-              <Image
-                source={{ uri: event.organization.image_url }}
-                className='w-full h-full'
-                resizeMode='cover'
-              />
-            ) : (
-              <Text className='text-black dark:text-white font-semibold text-sm'>
-                {getInitials(event.organization.name)}
-              </Text>
-            )}
-          </View>
-          <View className='flex-1'>
-            <Text
-              className='text-black dark:text-white font-semibold text-base leading-5'
-              numberOfLines={1}
-            >
-              {event.organization.name}
-            </Text>
-            <Text className='text-black/65 dark:text-white/65 text-xs leading-4 mt-[1px]'>
-              {event.category.name}
-            </Text>
-          </View>
-          {event.is_new ? (
-            <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
-              <Text className='text-accentPink text-xs font-semibold tracking-[0.5px]'>
-                {t('newTag')}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
-
-      {/* Image */}
-      {event.image_url ? (
-        <View>
-          <TouchableOpacity onPress={handleEventLinkPress} activeOpacity={0.92}>
-            <View
-              className='w-full overflow-hidden bg-black/5 dark:bg-muted'
-              style={{ aspectRatio: imageAspectRatio }}
-            >
-              <Image
-                source={{ uri: event.image_url }}
-                onLoadStart={() => setIsImageLoading(true)}
-                onLoadEnd={() => setIsImageLoading(false)}
-                className='w-full h-full'
-                resizeMode='cover'
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      {/* Content */}
-      <View className='px-3 pt-4 pb-5'>
-        {/* Title and Share */}
-        <View className='flex-row items-start'>
-          <Text
-            className='text-black dark:text-white font-semibold text-2xl leading-7 flex-1 mr-3 mb-2'
-            numberOfLines={3}
-          >
-            {event.title}
-          </Text>
-          <TouchableOpacity
-            onPress={handleShare}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            activeOpacity={0.7}
-            className='bg-accentPink/12 border border-accentPink/25 rounded-lg p-2.5'
-          >
-            <Feather name='share-2' size={18} color={'#EC2E81'} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Meta chips under title */}
-        <View className='gap-2 mb-1.5'>
-          <View className='flex-row gap-2'>
-            {/* Date range chip */}
-            <TouchableOpacity
-              onPress={handleDatePillPress}
-              activeOpacity={0.7}
-              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
-            >
-              <Feather name='calendar' size={12} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
-                {formatDateRangeShort(event.starts_at, event.ends_at)}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Time chip */}
-            <TouchableOpacity
-              onPress={handleTimePillPress}
-              activeOpacity={0.7}
-              className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
-            >
-              <Feather name='clock' size={12} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
-                {formatTimeRangeShort(event.starts_at, event.ends_at)}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Location chip on its own row */}
-          {event.location ? (
-            <TouchableOpacity
-              onPress={handleMapPress}
-              activeOpacity={0.7}
-              className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'
-            >
-              <Feather name='map-pin' size={12} color={iconPrimary} />
-              <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
-                {event.location}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-
-        {/* Description (truncated with expand/collapse + fade) */}
-        {event.description ? (
-          <View className='mb-2'>
-            <View className='relative'>
-              <Animated.View
-                layout={LinearTransition.springify().damping(22).stiffness(200)}
-              >
-                <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
-                  {isDescriptionExpanded
-                    ? event.description
-                    : `${event.description.slice(0, 150)}${
-                        event.description.length > 150 ? '...' : ''
-                      }`}
+      <Pressable onPress={handleEventLinkPress}>
+        {/* Header: org + category */}
+        <View className='px-3 pt-4 pb-3'>
+          <View className='flex-row items-center gap-3'>
+            <View className='w-10 h-10 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center'>
+              {event.organization.image_url ? (
+                <Image
+                  source={{ uri: event.organization.image_url }}
+                  className='w-full h-full'
+                  resizeMode='cover'
+                />
+              ) : (
+                <Text className='text-black dark:text-white font-semibold text-sm'>
+                  {getInitials(event.organization.name)}
                 </Text>
-              </Animated.View>
-
-              {event.description.length > 150 ? (
-                <Animated.View
-                  pointerEvents='none'
-                  style={[
-                    {
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: 24,
-                    },
-                    animatedGradientStyle,
-                  ]}
-                >
-                  <LinearGradient
-                    pointerEvents='none'
-                    colors={
-                      isDark
-                        ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
-                        : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
-                    }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                    }}
-                  />
-                </Animated.View>
-              ) : null}
+              )}
             </View>
-
-            {event.description.length > 150 ? (
-              <TouchableOpacity
-                onPress={handleDescriptionToggle}
-                activeOpacity={0.7}
-                className='mt-1 self-start py-1 px-1.5 rounded-lg'
+            <View className='flex-1'>
+              <Text
+                className='text-black dark:text-white font-semibold text-base leading-5'
+                numberOfLines={1}
               >
-                <View className='flex-row items-center'>
-                  <Text className='text-accentBlue font-semibold text-sm mr-1'>
-                    {isDescriptionExpanded ? t('collapse') : t('expand')}
-                  </Text>
-                  <Feather
-                    name={isDescriptionExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={'#2066DF'}
-                  />
-                </View>
-              </TouchableOpacity>
+                {event.organization.name}
+              </Text>
+              <Text className='text-black/65 dark:text-white/65 text-xs leading-4 mt-[1px]'>
+                {event.category.name}
+              </Text>
+            </View>
+            {event.is_new ? (
+              <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
+                <Text className='text-accentPink text-xs font-semibold tracking-[0.5px]'>
+                  {t('newTag')}
+                </Text>
+              </View>
             ) : null}
+          </View>
+        </View>
+
+        {/* Image */}
+        {event.image_url ? (
+          <View>
+            <Pressable onPress={handleImagePress}>
+              <View
+                className='w-full overflow-hidden bg-black/5 dark:bg-muted'
+                style={{ aspectRatio: imageAspectRatio }}
+              >
+                <Image
+                  source={{ uri: event.image_url }}
+                  onLoadStart={() => setIsImageLoading(true)}
+                  onLoadEnd={() => setIsImageLoading(false)}
+                  className='w-full h-full'
+                  resizeMode='cover'
+                />
+              </View>
+            </Pressable>
           </View>
         ) : null}
 
-        {/* Improved CTA Button */}
-        <TouchableOpacity
-          onPress={handleVisitPagePress}
-          onPressIn={handleCtaPressIn}
-          onPressOut={handleCtaPressOut}
-          activeOpacity={0.8}
-          className='relative mt-1'
-        >
-          {/* Pulsing glow ring on tap */}
-          <Animated.View
-            pointerEvents='none'
-            style={[
-              {
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                borderRadius: 16,
-                zIndex: 1,
-                backgroundColor: isDark
-                  ? 'rgba(32, 102, 223, 0.20)'
-                  : 'rgba(236, 46, 129, 0.20)',
-              },
-              pulseRingStyle,
-            ]}
-          />
-
-          <Animated.View style={ctaAnimatedStyle}>
-            <LinearGradient
-              colors={
-                isDark
-                  ? ['rgba(32, 102, 223, 0.32)', 'rgba(236, 46, 129, 0.32)']
-                  : ['rgba(32, 102, 223, 0.5)', 'rgba(236, 46, 129, 0.5)']
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{
-                borderRadius: 14,
-                padding: 1,
-              }}
-            >
-              <View
-                className='rounded-[13px] py-2.5 px-4 items-center justify-center border border-transparent dark:border-white/10 bg-white dark:bg-black/40'
-                style={
-                  isDark
-                    ? undefined
-                    : {
-                        shadowColor: '#000',
-                        shadowOpacity: 0.06,
-                        shadowRadius: 8,
-                        shadowOffset: { width: 0, height: 2 },
-                        elevation: 2,
-                      }
-                }
+        {/* Content */}
+        <Pressable onPress={handleEventLinkPress} className='px-3 pt-4 pb-5'>
+          {/* Title and Share */}
+          <View className='flex-row items-start'>
+            <View className='flex-1 mr-3'>
+              <Text
+                className='text-black dark:text-white font-semibold text-2xl leading-7 mb-2'
+                numberOfLines={3}
               >
-                <View className='flex-row items-center gap-2.5'>
-                  <Feather name='arrow-right' size={18} color={iconPrimary} />
-                  <Text className='text-black dark:text-white font-semibold text-base tracking-[0.5px]'>
-                    {t('visitPage')}
+                {event.title}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={(e) => {
+                /* @ts-ignore */ e?.stopPropagation?.();
+                handleHeartPress();
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.7}
+              className={`${
+                isLiked
+                  ? 'bg-accentPink'
+                  : 'bg-accentPink/12 border border-accentPink/25'
+              } rounded-lg p-2.5`}
+            >
+              <Feather
+                name='heart'
+                size={18}
+                color={isLiked ? '#FFFFFF' : '#EC2E81'}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Meta chips under title */}
+          <View className='gap-2 mb-1.5'>
+            <View className='flex-row gap-2'>
+              {/* Date range chip */}
+              <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+                <Feather name='calendar' size={12} color={iconPrimary} />
+                <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                  {formatDateRangeShort(event.starts_at, event.ends_at)}
+                </Text>
+              </View>
+
+              {/* Time chip */}
+              <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+                <Feather name='clock' size={12} color={iconPrimary} />
+                <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                  {formatTimeRangeShort(event.starts_at, event.ends_at)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Location chip on its own row */}
+            {event.location ? (
+              <View className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'>
+                <Feather name='map-pin' size={12} color={iconPrimary} />
+                <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                  {event.location}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Description (truncated, no expand in this redesign) */}
+          {event.description ? (
+            <View className='mb-2'>
+              <View className='relative'>
+                <Animated.View
+                  layout={LinearTransition.springify()
+                    .damping(22)
+                    .stiffness(200)}
+                >
+                  <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
+                    {`${event.description.slice(0, 150)}${
+                      event.description.length > 150 ? '...' : ''
+                    }`}
+                  </Text>
+                </Animated.View>
+
+                {event.description.length > 150 ? (
+                  <Animated.View
+                    pointerEvents='none'
+                    style={[
+                      {
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 24,
+                      },
+                      animatedGradientStyle,
+                    ]}
+                  >
+                    <LinearGradient
+                      pointerEvents='none'
+                      colors={
+                        isDark
+                          ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)']
+                          : ['rgba(255,255,255,0)', 'rgba(255,255,255,1)']
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                      }}
+                    />
+                  </Animated.View>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Auth modal for locked features */}
+          <Modal
+            visible={showAuthModal}
+            transparent
+            animationType='fade'
+            onRequestClose={() => setShowAuthModal(false)}
+          >
+            <View className='flex-1 bg-black/50 justify-center items-center px-6'>
+              <Animated.View
+                entering={FadeInDown.duration(250)}
+                className='w-full rounded-2xl bg-white dark:bg-black border border-black/10 dark:border-white/10 p-5'
+              >
+                <View className='items-center mb-3'>
+                  <View className='w-12 h-12 rounded-full bg-accentPink/15 items-center justify-center mb-2'>
+                    <Feather name='lock' size={22} color={'#EC2E81'} />
+                  </View>
+                  <Text className='text-black dark:text-white text-lg font-semibold text-center'>
+                    {t('signInRequiredTitle')}
+                  </Text>
+                  <Text className='text-black/70 dark:text-white/70 mt-1 text-center'>
+                    {t('signInRequiredMessage')}
                   </Text>
                 </View>
-              </View>
-            </LinearGradient>
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
+                <View className='flex-row gap-3 mt-2'>
+                  <TouchableOpacity
+                    onPress={() => setShowAuthModal(false)}
+                    className='flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10 items-center'
+                    activeOpacity={0.8}
+                  >
+                    <Text className='text-black dark:text-white font-semibold'>
+                      {t('cancel')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowAuthModal(false);
+                      router.push('/signin' as any);
+                    }}
+                    className='flex-1 py-3 rounded-xl bg-accentBlue items-center'
+                    activeOpacity={0.85}
+                  >
+                    <Text className='text-white font-semibold'>
+                      {t('signIn')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </View>
+          </Modal>
+        </Pressable>
+      </Pressable>
     </Animated.View>
   );
 }

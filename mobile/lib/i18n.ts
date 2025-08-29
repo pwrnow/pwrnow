@@ -75,6 +75,10 @@ const translations: Record<string, TranslationMap> = {
     signInDescription:
       'Sign in to access exclusive features and personalize your PWr Now experience',
     loading: 'Loading...',
+    // Authentication modal translations
+    signInRequiredTitle: 'Sign in to unlock',
+    signInRequiredMessage: 'Sign in to use favorites and other features.',
+    signIn: 'Sign In',
   },
   pl: {
     all: 'Wszystkie',
@@ -149,6 +153,11 @@ const translations: Record<string, TranslationMap> = {
     signInDescription:
       'Zaloguj się, aby uzyskać dostęp do ekskluzywnych funkcji i spersonalizować swoje doświadczenie PWr Now',
     loading: 'Ładowanie...',
+    // Authentication modal translations
+    signInRequiredTitle: 'Zaloguj się, aby odblokować',
+    signInRequiredMessage:
+      'Zaloguj się, aby korzystać z ulubionych i innych funkcji.',
+    signIn: 'Zaloguj się',
   },
 };
 

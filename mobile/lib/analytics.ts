@@ -105,5 +105,11 @@ export function useAnalytics() {
 
     trackEventShareClicked: (event: EventIdentity) =>
       safeCapture('event_share_clicked', buildEventProps(event)),
+
+    trackEventFavoriteToggled: (event: EventIdentity, favorited: boolean) =>
+      safeCapture('event_favorite_toggled', {
+        ...buildEventProps(event),
+        favorited,
+      }),
   } as const;
 }
