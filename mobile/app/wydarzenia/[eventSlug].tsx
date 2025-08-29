@@ -341,108 +341,242 @@ const getDummyPosts = (organizationName: string) => [
   },
 ];
 
-// Generate realistic schedule data based on current time for demo
-const getCurrentTimeBasedSchedule = () => {
+// Generate realistic multi-day schedule data based on current time for demo
+const getMultiDayScheduleData = () => {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   return {
-    [today]: [
+    [yesterdayStr]: [
       {
-        id: '1',
-        time: '08:00',
+        id: 'day1-1',
+        time: '09:00',
         title: 'Rejestracja uczestników',
         description: 'Odbiór identyfikatorów i materiałów konferencyjnych',
         speaker: null,
         duration: '60 min',
-        endTime: '09:00',
+        endTime: '10:00',
       },
       {
-        id: '2',
-        time: '09:00',
+        id: 'day1-2',
+        time: '10:00',
         title: 'Ceremonia otwarcia',
-        description: 'Powitanie uczestników i wprowadzenie do wydarzenia',
-        speaker: 'Maria Kowalska',
+        description: 'Uroczyste otwarcie wydarzenia i powitanie uczestników',
+        speaker: 'Prof. Jan Kowalski',
+        duration: '30 min',
+        endTime: '10:30',
+      },
+      {
+        id: 'day1-3',
+        time: '10:30',
+        title: 'Keynote: Digitalna transformacja',
+        description: 'Jak technologia zmienia nasze życie zawodowe i prywatne',
+        speaker: 'Dr Anna Nowak',
+        duration: '45 min',
+        endTime: '11:15',
+      },
+      {
+        id: 'day1-4',
+        time: '11:15',
+        title: 'Przerwa kawowa',
+        description: 'Networking i refreshment w holu głównym',
+        speaker: null,
+        duration: '15 min',
+        endTime: '11:30',
+      },
+      {
+        id: 'day1-5',
+        time: '11:30',
+        title: 'Panel: Przyszłość pracy',
+        description: 'Dyskusja o remote work i nowych formach zatrudnienia',
+        speaker: 'Panel ekspertów HR',
+        duration: '60 min',
+        endTime: '12:30',
+      },
+      {
+        id: 'day1-6',
+        time: '12:30',
+        title: 'Lunch break',
+        description: 'Wspólny obiad i networking',
+        speaker: null,
+        duration: '90 min',
+        endTime: '14:00',
+      },
+      {
+        id: 'day1-7',
+        time: '14:00',
+        title: 'Warsztaty: Design Thinking',
+        description: 'Praktyczne zastosowanie metodyki design thinking',
+        speaker: 'Maria Kowalczyk',
+        duration: '120 min',
+        endTime: '16:00',
+      },
+      {
+        id: 'day1-8',
+        time: '16:00',
+        title: 'Networking session',
+        description: 'Nieformalne rozmowy i wymiana kontaktów',
+        speaker: null,
+        duration: '60 min',
+        endTime: '17:00',
+      },
+    ],
+    [today]: [
+      {
+        id: 'day2-1',
+        time: '09:00',
+        title: 'Poranjna kawa',
+        description: 'Rozpoczęcie drugiego dnia z kawą i croissantami',
+        speaker: null,
         duration: '30 min',
         endTime: '09:30',
       },
       {
-        id: '3',
+        id: 'day2-2',
         time: '09:30',
-        title: 'Keynote: Przyszłość technologii',
-        description: 'Najnowsze trendy w AI i machine learning',
-        speaker: 'Dr Piotr Nowak',
+        title: 'Keynote: AI w biznesie',
+        description: 'Praktyczne zastosowania sztucznej inteligencji',
+        speaker: 'Dr Piotr Wiśniewski',
         duration: '45 min',
         endTime: '10:15',
       },
       {
-        id: '4',
+        id: 'day2-3',
         time: '10:15',
-        title: 'Przerwa kawowa',
-        description: 'Networking i refreshment',
+        title: 'Przerwa',
+        description: 'Krótka przerwa na rozciągnięcie',
         speaker: null,
         duration: '15 min',
         endTime: '10:30',
       },
       {
-        id: '5',
+        id: 'day2-4',
         time: '10:30',
-        title: 'Panel: Startup ecosystem',
-        description: 'Dyskusja o ekosystemie startupowym w Polsce',
-        speaker: 'Panel ekspertów',
-        duration: '60 min',
-        endTime: '11:30',
+        title: 'Warsztaty: Machine Learning',
+        description: 'Wprowadzenie do algorytmów uczenia maszynowego',
+        speaker: 'Zespół Data Science',
+        duration: '90 min',
+        endTime: '12:00',
       },
       {
-        id: '6',
-        time: '11:30',
-        title: 'Warsztaty: Product Management',
-        description: 'Praktyczne podejście do zarządzania produktem',
-        speaker: 'Anna Kowalska',
-        duration: '90 min',
+        id: 'day2-5',
+        time: '12:00',
+        title: 'Panel: Startup ecosystem',
+        description: 'Dyskusja o ekosystemie startupowym w Polsce',
+        speaker: 'Założyciele startupów',
+        duration: '60 min',
         endTime: '13:00',
       },
       {
-        id: '7',
+        id: 'day2-6',
         time: '13:00',
         title: 'Lunch break',
-        description: 'Wspólny posiłek i networking',
+        description: 'Wspólny posiłek w restauracji hotelowej',
         speaker: null,
         duration: '60 min',
         endTime: '14:00',
       },
       {
-        id: '8',
+        id: 'day2-7',
         time: '14:00',
-        title: 'Tech talk: DevOps w praktyce',
+        title: 'Tech talk: DevOps',
         description: 'Automatyzacja procesów i best practices',
-        speaker: 'Michał Wiśniewski',
+        speaker: 'Michał Kowalski',
         duration: '45 min',
         endTime: '14:45',
       },
       {
-        id: '9',
+        id: 'day2-8',
         time: '14:45',
         title: 'Q&A Session',
-        description: 'Pytania i odpowiedzi z prelegentami',
+        description: 'Pytania i odpowiedzi z wszystkimi prelegentami',
         speaker: 'Wszyscy prelegenci',
         duration: '30 min',
         endTime: '15:15',
       },
       {
-        id: '10',
+        id: 'day2-9',
         time: '15:15',
         title: 'Ceremonia zamknięcia',
-        description: 'Podsumowanie i plany na przyszłość',
+        description: 'Podsumowanie wydarzenia i plany na przyszłość',
         speaker: 'Organizatorzy',
+        duration: '30 min',
+        endTime: '15:45',
+      },
+    ],
+    [tomorrowStr]: [
+      {
+        id: 'day3-1',
+        time: '09:00',
+        title: 'Śniadanie networkingowe',
+        description: 'Rozpoczęcie ostatniego dnia z networking breakfast',
+        speaker: null,
+        duration: '60 min',
+        endTime: '10:00',
+      },
+      {
+        id: 'day3-2',
+        time: '10:00',
+        title: 'Keynote: Zrównoważony rozwój',
+        description: 'Technologia w służbie zrównoważonego rozwoju',
+        speaker: 'Prof. Barbara Zielińska',
+        duration: '45 min',
+        endTime: '10:45',
+      },
+      {
+        id: 'day3-3',
+        time: '10:45',
+        title: 'Przerwa kawowa',
+        description: 'Ostatnia przerwa kawowa wydarzenia',
+        speaker: null,
         duration: '15 min',
-        endTime: '15:30',
+        endTime: '11:00',
+      },
+      {
+        id: 'day3-4',
+        time: '11:00',
+        title: 'Warsztaty: Liderstwo',
+        description: 'Rozwój umiejętności przywódczych w zespole',
+        speaker: 'Katarzyna Nowak',
+        duration: '90 min',
+        endTime: '12:30',
+      },
+      {
+        id: 'day3-5',
+        time: '12:30',
+        title: 'Panel podsumowujący',
+        description: 'Podsumowanie trzech dni konferencji',
+        speaker: 'Główni prelegenci',
+        duration: '60 min',
+        endTime: '13:30',
+      },
+      {
+        id: 'day3-6',
+        time: '13:30',
+        title: 'Lunch pożegnalny',
+        description: 'Ostatni wspólny posiłek i pożegnania',
+        speaker: null,
+        duration: '90 min',
+        endTime: '15:00',
+      },
+      {
+        id: 'day3-7',
+        time: '15:00',
+        title: 'Zakończenie wydarzenia',
+        description: 'Oficjalne zakończenie i dziękczynienie',
+        speaker: 'Dyrektor konferencji',
+        duration: '15 min',
+        endTime: '15:15',
       },
     ],
   };
 };
-
-const dummyScheduleByDay = getCurrentTimeBasedSchedule();
 
 export default function EventDetailScreen() {
   const colorScheme = useColorScheme();
@@ -457,6 +591,7 @@ export default function EventDetailScreen() {
   const [selectedDay, setSelectedDay] = useState<string>('');
   const { isAuthenticated } = useAuth();
   const scheduleScrollRef = useRef<any>(null);
+  const mainScrollRef = useRef<ScrollView>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
@@ -484,9 +619,260 @@ export default function EventDetailScreen() {
     ? generateEventDays(event.starts_at, event.ends_at)
     : [];
 
+  // Generate schedule data based on actual event days
+  const dummyScheduleByDay =
+    event && eventDays.length > 0
+      ? (() => {
+          const scheduleData: Record<string, any[]> = {};
+
+          eventDays.forEach((day, index) => {
+            if (index === 0) {
+              // First day
+              scheduleData[day.id] = [
+                {
+                  id: 'day1-1',
+                  time: '09:00',
+                  title: 'Rejestracja uczestników',
+                  description:
+                    'Odbiór identyfikatorów i materiałów konferencyjnych',
+                  speaker: null,
+                  duration: '60 min',
+                  endTime: '10:00',
+                },
+                {
+                  id: 'day1-2',
+                  time: '10:00',
+                  title: 'Ceremonia otwarcia',
+                  description:
+                    'Uroczyste otwarcie wydarzenia i powitanie uczestników',
+                  speaker: 'Prof. Jan Kowalski',
+                  duration: '30 min',
+                  endTime: '10:30',
+                },
+                {
+                  id: 'day1-3',
+                  time: '10:30',
+                  title: 'Keynote: Digitalna transformacja',
+                  description:
+                    'Jak technologia zmienia nasze życie zawodowe i prywatne',
+                  speaker: 'Dr Anna Nowak',
+                  duration: '45 min',
+                  endTime: '11:15',
+                },
+                {
+                  id: 'day1-4',
+                  time: '11:15',
+                  title: 'Przerwa kawowa',
+                  description: 'Networking i refreshment w holu głównym',
+                  speaker: null,
+                  duration: '15 min',
+                  endTime: '11:30',
+                },
+                {
+                  id: 'day1-5',
+                  time: '11:30',
+                  title: 'Panel: Przyszłość pracy',
+                  description:
+                    'Dyskusja o remote work i nowych formach zatrudnienia',
+                  speaker: 'Panel ekspertów HR',
+                  duration: '60 min',
+                  endTime: '12:30',
+                },
+                {
+                  id: 'day1-6',
+                  time: '12:30',
+                  title: 'Lunch break',
+                  description: 'Wspólny obiad i networking',
+                  speaker: null,
+                  duration: '90 min',
+                  endTime: '14:00',
+                },
+                {
+                  id: 'day1-7',
+                  time: '14:00',
+                  title: 'Warsztaty: Design Thinking',
+                  description:
+                    'Praktyczne zastosowanie metodyki design thinking',
+                  speaker: 'Maria Kowalczyk',
+                  duration: '120 min',
+                  endTime: '16:00',
+                },
+                {
+                  id: 'day1-8',
+                  time: '16:00',
+                  title: 'Networking session',
+                  description: 'Nieformalne rozmowy i wymiana kontaktów',
+                  speaker: null,
+                  duration: '60 min',
+                  endTime: '17:00',
+                },
+              ];
+            } else if (index === 1) {
+              // Second day
+              scheduleData[day.id] = [
+                {
+                  id: 'day2-1',
+                  time: '09:00',
+                  title: 'Porannja kawa',
+                  description:
+                    'Rozpoczęcie drugiego dnia z kawą i croissantami',
+                  speaker: null,
+                  duration: '30 min',
+                  endTime: '09:30',
+                },
+                {
+                  id: 'day2-2',
+                  time: '09:30',
+                  title: 'Keynote: AI w biznesie',
+                  description: 'Praktyczne zastosowania sztucznej inteligencji',
+                  speaker: 'Dr Piotr Wiśniewski',
+                  duration: '45 min',
+                  endTime: '10:15',
+                },
+                {
+                  id: 'day2-3',
+                  time: '10:15',
+                  title: 'Przerwa',
+                  description: 'Krótka przerwa na rozciągnięcie',
+                  speaker: null,
+                  duration: '15 min',
+                  endTime: '10:30',
+                },
+                {
+                  id: 'day2-4',
+                  time: '10:30',
+                  title: 'Warsztaty: Machine Learning',
+                  description: 'Wprowadzenie do algorytmów uczenia maszynowego',
+                  speaker: 'Zespół Data Science',
+                  duration: '90 min',
+                  endTime: '12:00',
+                },
+                {
+                  id: 'day2-5',
+                  time: '12:00',
+                  title: 'Panel: Startup ecosystem',
+                  description: 'Dyskusja o ekosystemie startupowym w Polsce',
+                  speaker: 'Założyciele startupów',
+                  duration: '60 min',
+                  endTime: '13:00',
+                },
+                {
+                  id: 'day2-6',
+                  time: '13:00',
+                  title: 'Lunch break',
+                  description: 'Wspólny posiłek w restauracji hotelowej',
+                  speaker: null,
+                  duration: '60 min',
+                  endTime: '14:00',
+                },
+                {
+                  id: 'day2-7',
+                  time: '14:00',
+                  title: 'Tech talk: DevOps',
+                  description: 'Automatyzacja procesów i best practices',
+                  speaker: 'Michał Kowalski',
+                  duration: '45 min',
+                  endTime: '14:45',
+                },
+                {
+                  id: 'day2-8',
+                  time: '14:45',
+                  title: 'Q&A Session',
+                  description: 'Pytania i odpowiedzi z wszystkimi prelegentami',
+                  speaker: 'Wszyscy prelegenci',
+                  duration: '30 min',
+                  endTime: '15:15',
+                },
+                {
+                  id: 'day2-9',
+                  time: '15:15',
+                  title: 'Ceremonia zamknięcia',
+                  description: 'Podsumowanie wydarzenia i plany na przyszłość',
+                  speaker: 'Organizatorzy',
+                  duration: '30 min',
+                  endTime: '15:45',
+                },
+              ];
+            } else {
+              // Third day and beyond
+              scheduleData[day.id] = [
+                {
+                  id: `day${index + 1}-1`,
+                  time: '09:00',
+                  title: 'Śniadanie networkingowe',
+                  description:
+                    'Rozpoczęcie ostatniego dnia z networking breakfast',
+                  speaker: null,
+                  duration: '60 min',
+                  endTime: '10:00',
+                },
+                {
+                  id: `day${index + 1}-2`,
+                  time: '10:00',
+                  title: 'Keynote: Zrównoważony rozwój',
+                  description: 'Technologia w służbie zrównoważonego rozwoju',
+                  speaker: 'Prof. Barbara Zielińska',
+                  duration: '45 min',
+                  endTime: '10:45',
+                },
+                {
+                  id: `day${index + 1}-3`,
+                  time: '10:45',
+                  title: 'Przerwa kawowa',
+                  description: 'Ostatnia przerwa kawowa wydarzenia',
+                  speaker: null,
+                  duration: '15 min',
+                  endTime: '11:00',
+                },
+                {
+                  id: `day${index + 1}-4`,
+                  time: '11:00',
+                  title: 'Warsztaty: Liderstwo',
+                  description: 'Rozwój umiejętności przywódczych w zespole',
+                  speaker: 'Katarzyna Nowak',
+                  duration: '90 min',
+                  endTime: '12:30',
+                },
+                {
+                  id: `day${index + 1}-5`,
+                  time: '12:30',
+                  title: 'Panel podsumowujący',
+                  description: 'Podsumowanie trzech dni konferencji',
+                  speaker: 'Główni prelegenci',
+                  duration: '60 min',
+                  endTime: '13:30',
+                },
+                {
+                  id: `day${index + 1}-6`,
+                  time: '13:30',
+                  title: 'Lunch pożegnalny',
+                  description: 'Ostatni wspólny posiłek i pożegnania',
+                  speaker: null,
+                  duration: '90 min',
+                  endTime: '15:00',
+                },
+                {
+                  id: `day${index + 1}-7`,
+                  time: '15:00',
+                  title: 'Zakończenie wydarzenia',
+                  description: 'Oficjalne zakończenie i dziękczynienie',
+                  speaker: 'Dyrektor konferencji',
+                  duration: '15 min',
+                  endTime: '15:15',
+                },
+              ];
+            }
+          });
+
+          return scheduleData;
+        })()
+      : {};
+
   useEffect(() => {
     if (eventDays.length > 0 && !selectedDay) {
-      setSelectedDay(eventDays[0].id);
+      // Try to select today if it's within the event dates, otherwise select the first day
+      const todayOption = eventDays.find((day) => day.isToday);
+      setSelectedDay(todayOption ? todayOption.id : eventDays[0].id);
     }
   }, [eventDays, selectedDay]);
 
@@ -536,6 +922,16 @@ export default function EventDetailScreen() {
       }
     }
   }, [activeTab, selectedDay]);
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo({
+        y: 0,
+        animated: true,
+      });
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (event) {
@@ -962,7 +1358,11 @@ export default function EventDetailScreen() {
         </View>
       </Animated.View>
 
-      <ScrollView showsVerticalScrollIndicator={false} className='flex-1'>
+      <ScrollView
+        ref={mainScrollRef}
+        showsVerticalScrollIndicator={false}
+        className='flex-1'
+      >
         {/* Tab Content */}
         <View className='flex-1 pb-8'>
           {activeTab === 'details' && (
@@ -1196,15 +1596,17 @@ export default function EventDetailScreen() {
             <Animated.View
               key='schedule'
               entering={FadeInDown.duration(300)}
-              className='flex-1 mx-4'
+              className='flex-1'
             >
-              {/* Week Day Selector */}
+              {/* Week Day Selector - Only show if more than one day */}
               {eventDays.length > 1 && (
-                <WeekDaySelector
-                  selectedDay={selectedDay}
-                  onDaySelect={setSelectedDay}
-                  days={eventDays}
-                />
+                <View className='mx-4 mt-3'>
+                  <WeekDaySelector
+                    selectedDay={selectedDay}
+                    onDaySelect={setSelectedDay}
+                    days={eventDays}
+                  />
+                </View>
               )}
 
               {/* Schedule Items for Selected Day */}
@@ -1212,7 +1614,11 @@ export default function EventDetailScreen() {
                 ref={scheduleScrollRef}
                 showsVerticalScrollIndicator={false}
                 className='flex-1'
-                contentContainerStyle={{ paddingBottom: 20 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingBottom: 24,
+                  paddingTop: eventDays.length > 1 ? 0 : 16,
+                }}
               >
                 <View className='space-y-2'>
                   {(
@@ -1235,24 +1641,35 @@ export default function EventDetailScreen() {
                       <Animated.View
                         key={item.id}
                         entering={FadeInDown.duration(200).delay(index * 40)}
-                        className={`rounded-xl p-3 border ${
+                        className={`rounded-xl mb-2 p-3 border relative ${
                           isCurrent
                             ? 'bg-accentBlue/10 border-accentBlue/30'
                             : isPast
-                            ? 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5'
+                            ? 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10'
                             : 'bg-white dark:bg-black border-black/10 dark:border-white/10'
                         }`}
+                        style={
+                          !isCurrent && !isPast && !isDark
+                            ? {
+                                shadowColor: '#000',
+                                shadowOpacity: 0.04,
+                                shadowRadius: 4,
+                                shadowOffset: { width: 0, height: 1 },
+                                elevation: 2,
+                              }
+                            : undefined
+                        }
                       >
                         {/* Current event indicator */}
                         {isCurrent && (
-                          <View className='absolute -left-1 top-4 w-1 h-6 bg-accentBlue rounded-full' />
+                          <View className='absolute -left-0.5 top-4 w-1 h-6 bg-accentBlue rounded-full' />
                         )}
 
                         <View className='flex-row'>
-                          {/* Compact Time */}
+                          {/* Enhanced Time Display */}
                           <View className='w-16 mr-3'>
                             <View
-                              className={`rounded-lg px-2 py-1 border ${
+                              className={`rounded-lg px-2 py-1.5 border ${
                                 isCurrent
                                   ? 'bg-accentBlue border-accentBlue'
                                   : isPast
@@ -1276,7 +1693,7 @@ export default function EventDetailScreen() {
                               className={`font-grotesk text-xs text-center mt-1 ${
                                 isPast
                                   ? 'text-black/30 dark:text-white/30'
-                                  : 'text-black/40 dark:text-white/40'
+                                  : 'text-black/50 dark:text-white/50'
                               }`}
                             >
                               {item.duration}
@@ -1285,9 +1702,9 @@ export default function EventDetailScreen() {
 
                           {/* Content */}
                           <View className='flex-1'>
-                            <View className='flex-row items-start justify-between mb-1'>
+                            <View className='flex-row items-start justify-between mb-1.5'>
                               <Text
-                                className={`font-groteskSemibold text-sm flex-1 ${
+                                className={`font-groteskSemibold text-sm flex-1 leading-5 ${
                                   isCurrent
                                     ? 'text-accentBlue'
                                     : isPast
@@ -1305,18 +1722,20 @@ export default function EventDetailScreen() {
                                 </View>
                               )}
                               {isPast && (
-                                <Feather
-                                  name='check-circle'
-                                  size={14}
-                                  color='#10B981'
-                                />
+                                <View className='ml-2'>
+                                  <Feather
+                                    name='check-circle'
+                                    size={14}
+                                    color='#10B981'
+                                  />
+                                </View>
                               )}
                             </View>
                             <Text
-                              className={`font-grotesk text-xs leading-4 mb-1 ${
+                              className={`font-grotesk text-xs leading-4 mb-1.5 ${
                                 isPast
                                   ? 'text-black/40 dark:text-white/40'
-                                  : 'text-black/70 dark:text-white/70'
+                                  : 'text-black/75 dark:text-white/75'
                               }`}
                             >
                               {item.description}
@@ -1331,14 +1750,16 @@ export default function EventDetailScreen() {
                                       ? isDark
                                         ? '#FFFFFF40'
                                         : '#00000040'
-                                      : iconPrimary
+                                      : isDark
+                                      ? '#FFFFFF80'
+                                      : '#00000080'
                                   }
                                 />
                                 <Text
-                                  className={`font-groteskMedium text-xs ml-1 ${
+                                  className={`font-groteskMedium text-xs ml-1.5 ${
                                     isPast
                                       ? 'text-black/40 dark:text-white/40'
-                                      : 'text-black/60 dark:text-white/60'
+                                      : 'text-black/70 dark:text-white/70'
                                   }`}
                                 >
                                   {item.speaker}
@@ -1352,18 +1773,6 @@ export default function EventDetailScreen() {
                   })}
                 </View>
               </ScrollView>
-
-              <View className='bg-accentPink/10 border border-accentPink/30 rounded-xl p-3 mt-3'>
-                <View className='flex-row items-center mb-1'>
-                  <Feather name='info' size={14} color='#EC2E81' />
-                  <Text className='text-accentPink font-groteskSemibold text-sm ml-1.5'>
-                    {t('scheduleNote')}
-                  </Text>
-                </View>
-                <Text className='text-accentPink/80 font-grotesk text-xs'>
-                  {t('scheduleNoteDescription')}
-                </Text>
-              </View>
             </Animated.View>
           )}
         </View>

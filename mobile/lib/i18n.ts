@@ -96,12 +96,17 @@ const translations: Record<string, TranslationMap> = {
     welcomeParticipants: 'Welcome participants and event introduction',
     latestTrends: 'Latest industry trends and future development',
     networking: 'Networking and refreshments',
-    challengesOpportunities: 'Challenges and opportunities in current market situation',
+    challengesOpportunities:
+      'Challenges and opportunities in current market situation',
     expertPanel: 'Panel of experts',
     sharedMeal: 'Shared meal and continued networking',
-    welcomeAllParticipants: 'Welcome all participants! We cannot wait for the amazing event. We have prepared many surprises for you!',
-    excitedToParticipate: 'I am very excited to participate in this event! Who else will be there?',
-    greatOrganization: 'Great organization! I recommend it to everyone interested in the topic.',
+    welcomeAllParticipants:
+      'Welcome all participants! We cannot wait for the amazing event. We have prepared many surprises for you!',
+    excitedToParticipate:
+      'I am very excited to participate in this event! Who else will be there?',
+    greatOrganization:
+      'Great organization! I recommend it to everyone interested in the topic.',
+    live: 'LIVE',
   },
   pl: {
     all: 'Wszystkie',
@@ -198,12 +203,17 @@ const translations: Record<string, TranslationMap> = {
     welcomeParticipants: 'Witajcie uczestnicy i wprowadzenie do wydarzenia',
     latestTrends: 'Najnowsze trendy w branży i przyszłe rozwój',
     networking: 'Networking i przekąski',
-    challengesOpportunities: 'Wyzwania i możliwości w obecnej sytuacji rynkowej',
+    challengesOpportunities:
+      'Wyzwania i możliwości w obecnej sytuacji rynkowej',
     expertPanel: 'Panel ekspertów',
     sharedMeal: 'Obiad wspólny i kontynuacja networkingu',
-    welcomeAllParticipants: 'Witajcie wszystkie uczestnicy! Nie możemy się doczekać niesamowitego wydarzenia. Przygotowaliśmy wiele niespodzianek dla was!',
-    excitedToParticipate: 'Jestem bardzo podekscytowany, aby wziąć udział w tym wydarzeniu! Kto jeszcze tam będzie?',
-    greatOrganization: 'Świetna organizacja! Polecam ją każdemu zainteresowanemu tematem.',
+    welcomeAllParticipants:
+      'Witajcie wszystkie uczestnicy! Nie możemy się doczekać niesamowitego wydarzenia. Przygotowaliśmy wiele niespodzianek dla was!',
+    excitedToParticipate:
+      'Jestem bardzo podekscytowany, aby wziąć udział w tym wydarzeniu! Kto jeszcze tam będzie?',
+    greatOrganization:
+      'Świetna organizacja! Polecam ją każdemu zainteresowanemu tematem.',
+    live: 'NA ŻYWO',
   },
 };
 
