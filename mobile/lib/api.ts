@@ -2,7 +2,7 @@ import { Event, Category, Organization } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
-import { ACCESS_TOKEN_KEY } from '../contexts/AuthContext';
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from './authStorage';
 
 export type AuthProvider = 'google' | 'facebook' | 'apple';
 
@@ -46,6 +46,54 @@ export async function validateToken(
   return res.json();
 }
 
+// Refresh access token using refresh token from secure storage
+let refreshingPromise: Promise<string | null> | null = null;
+
+async function performTokenRefresh(): Promise<string | null> {
+  try {
+    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    if (!refreshToken) return null;
+
+    const url = `${getApiUrl()}/auth/token/refresh/`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+
+    if (!res.ok) {
+      // Clear tokens if refresh fails
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      return null;
+    }
+
+    const data = await res.json();
+    const newAccess: string | undefined = data?.access || data?.access_token;
+    const newRefresh: string | undefined = data?.refresh || data?.refresh_token;
+
+    if (newAccess) {
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccess);
+    }
+    if (newRefresh) {
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefresh);
+    }
+
+    return newAccess || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function refreshAccessToken(): Promise<string | null> {
+  if (!refreshingPromise) {
+    refreshingPromise = performTokenRefresh().finally(() => {
+      refreshingPromise = null;
+    });
+  }
+  return refreshingPromise;
+}
+
 // Helper function to make API requests with credentials and error handling
 async function fetchWithCredentials(
   url: string,
@@ -75,19 +123,41 @@ async function fetchWithCredentials(
     }
   } catch {}
 
-  const response = await fetch(`${getApiUrl()}${url}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
+  const makeRequest = async (overrideAuth?: string): Promise<Response> => {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...authHeaders,
       ...options.headers,
-    },
-  });
+    } as any;
+    if (overrideAuth) headers['Authorization'] = `Bearer ${overrideAuth}`;
+
+    return fetch(`${getApiUrl()}${url}`, {
+      ...options,
+      credentials: 'include',
+      headers,
+    });
+  };
+
+  let response = await makeRequest();
+
+  // Attempt refresh on unauthorized once, except when calling auth endpoints
+  if (
+    response.status === 401 &&
+    typeof url === 'string' &&
+    !url.includes('/auth/token/refresh') &&
+    !url.includes('/auth/token/verify')
+  ) {
+    const newAccess = await refreshAccessToken();
+    if (newAccess) {
+      response = await makeRequest(newAccess);
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error || 'An error occurred';
+    const errorMessage =
+      (errorData && (errorData.error || errorData.detail)) ||
+      'An error occurred';
     throw new Error(`${response.status}: ${errorMessage}`);
   }
 

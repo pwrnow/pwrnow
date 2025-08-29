@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { validateToken } from '../lib/api';
+import { validateToken, refreshAccessToken } from '../lib/api';
+import {
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  USER_KEY,
+} from '../lib/authStorage';
 
 type AuthState = {
   accessToken: string | null;
@@ -16,9 +21,7 @@ type AuthState = {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 // Keys for secure storage
-export const ACCESS_TOKEN_KEY = 'access_token';
-export const REFRESH_TOKEN_KEY = 'refresh_token';
-export const USER_KEY = 'user';
+// Storage keys moved to lib/authStorage to avoid cyclic deps
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -39,16 +42,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (a && u) {
         // We have stored credentials, validate them with backend
         try {
-          const validationResult = await validateToken(a);
-          // Token is valid, set authenticated state
+          await validateToken(a);
           setAccessToken(a);
           setRefreshToken(r);
           setUser(JSON.parse(u));
           setIsAuthenticated(true);
         } catch (error) {
-          console.log('Stored credentials are invalid, clearing them:', error);
-          // Token is invalid, clear stored credentials
-          await signOut();
+          // Try refresh once if we have a refresh token
+          if (r) {
+            const newAccess = await refreshAccessToken();
+            if (newAccess) {
+              try {
+                await validateToken(newAccess);
+                setAccessToken(newAccess);
+                setRefreshToken(r);
+                setUser(JSON.parse(u!));
+                setIsAuthenticated(true);
+              } catch (_e) {
+                await signOut();
+              }
+            } else {
+              await signOut();
+            }
+          } else {
+            await signOut();
+          }
         }
       } else {
         // No stored credentials, user is not authenticated
