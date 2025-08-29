@@ -1,5 +1,5 @@
 import '../global.css';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState, useCallback } from 'react';
@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
 import StartupAnimation from '../components/StartupAnimation';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -72,53 +72,100 @@ export default function StackLayout() {
             translucent={false}
             backgroundColor={isDark ? '#000000' : '#FFFFFF'}
           />
-          <Stack
-            screenOptions={{
-              headerShown: true,
-              headerBackTitle: '',
-              headerBackButtonDisplayMode: 'minimal',
-              headerTitle: () => <Logo size='medium' />,
-              headerTitleAlign: 'left',
-              headerTransparent: false,
-              headerShadowVisible: true,
-              headerStyle: {
-                backgroundColor: isDark ? '#000000' : '#FFFFFF',
-              },
-              // Use a slightly off-white tint in dark mode so the back icon isn't pure white
-              headerTintColor: isDark ? '#E5E7EB' : '#000000',
-
-              // headerRight: () => (
-              //   <View
-              //     style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-              //   >
-              //     <TouchableOpacity
-              //       accessibilityLabel='Open profile'
-              //       onPressIn={() => {
-              //         Haptics.selectionAsync();
-              //       }}
-              //       onPress={() => {}}
-              //       style={{ padding: 6, borderRadius: 9999 }}
-              //     >
-              //       <Feather
-              //         name='user'
-              //         size={22}
-              //         color={isDark ? '#FFFFFF' : '#000000'}
-              //       />
-              //     </TouchableOpacity>
-              //   </View>
-              // ),
-              contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
-            }}
-          >
-            <Stack.Screen
-              name='wydarzenia/[eventSlug]'
-              options={{
-                headerShown: false,
-              }}
-            />
-          </Stack>
+          <RootNavigator />
         </PosthogProvider>
       </QueryProvider>
     </AuthProvider>
+  );
+}
+
+// Separate this into a new component so it can access the AuthContext
+function RootNavigator() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: true,
+        headerBackTitle: '',
+        headerBackButtonDisplayMode: 'minimal',
+        headerTitle: () => <Logo size='medium' />,
+        headerTitleAlign: 'left',
+        headerTransparent: false,
+        headerShadowVisible: true,
+        headerStyle: {
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+        },
+        // Use a slightly off-white tint in dark mode so the back icon isn't pure white
+        headerTintColor: isDark ? '#E5E7EB' : '#000000',
+        contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
+      }}
+    >
+      {/* Protected Routes - Only for authenticated users */}
+      <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen
+          name='profile'
+          options={{
+            title: 'Profile',
+            headerShown: true,
+          }}
+        />
+      </Stack.Protected>
+
+      {/* Public Routes - Always accessible */}
+      <Stack.Screen
+        name='index'
+        options={{
+          headerShown: true,
+          headerRight: () => <ProfileHeaderButton />,
+        }}
+      />
+      <Stack.Screen
+        name='signin'
+        options={{
+          title: 'Sign In',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name='wydarzenia/[eventSlug]'
+        options={{
+          headerShown: false,
+        }}
+      />
+    </Stack>
+  );
+}
+
+// Profile button component for header
+function ProfileHeaderButton() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { isAuthenticated } = useAuth();
+
+  const handlePress = () => {
+    Haptics.selectionAsync();
+    if (isAuthenticated) {
+      router.push('/profile');
+    } else {
+      router.replace('/signin');
+    }
+  };
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <TouchableOpacity
+        accessibilityLabel={isAuthenticated ? 'Open profile' : 'Sign in'}
+        onPressIn={() => {
+          Haptics.selectionAsync();
+        }}
+        onPress={handlePress}
+        style={{ padding: 6, borderRadius: 9999 }}
+      >
+        <Feather name='user' size={22} color={isDark ? '#FFFFFF' : '#000000'} />
+      </TouchableOpacity>
+    </View>
   );
 }
