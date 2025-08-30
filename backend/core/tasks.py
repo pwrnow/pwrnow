@@ -1,13 +1,60 @@
 import requests
 from celery import shared_task
 from django.conf import settings
-from django.utils import timezone
-from datetime import datetime
 import logging
 from PIL import Image
-import io
 
 logger = logging.getLogger(__name__)
+
+
+def detect_image_aspect_ratio(width, height):
+    """
+    Unified function to detect the most appropriate aspect ratio category for an image.
+
+    Args:
+        width (int): Image width in pixels
+        height (int): Image height in pixels
+
+    Returns:
+        str: The most appropriate aspect ratio category ('1:1', '16:9', '4:3', '3:2')
+    """
+    if width <= 0 or height <= 0:
+        return '16:9'  # Default fallback
+
+    # Calculate actual ratio
+    ratio = width / height
+
+    # Define standard ratios with their numeric values and tolerance
+    standard_ratios = [
+        ('1:1', 1.0, 0.1),
+        ('4:3', 4/3, 0.1),
+        ('3:2', 3/2, 0.1),
+        ('16:9', 16/9, 0.1),
+    ]
+
+    # Find the closest matching standard ratio
+    best_match = None
+    min_difference = float('inf')
+
+    for ratio_name, ratio_value, tolerance in standard_ratios:
+        difference = abs(ratio - ratio_value)
+        if difference <= tolerance and difference < min_difference:
+            best_match = ratio_name
+            min_difference = difference
+
+    # If we found a match within tolerance, return it
+    if best_match:
+        return best_match
+
+    # If no match within tolerance, find the closest one
+    for ratio_name, ratio_value, _ in standard_ratios:
+        difference = abs(ratio - ratio_value)
+        if difference < min_difference:
+            best_match = ratio_name
+            min_difference = difference
+
+    # Fallback to 16:9 if something goes wrong
+    return best_match or '16:9'
 
 
 @shared_task
@@ -235,21 +282,8 @@ def detect_event_image_aspect_ratio(event_id):
                 img = Image.open(img_file)
                 width, height = img.size
 
-                # Calculate aspect ratio
-                ratio = width / height
-
-                # Determine aspect ratio category
-                if abs(ratio - 1) <= 0.1:
-                    aspect_ratio = '1:1'
-                elif abs(ratio - 16/9) <= 0.1:
-                    aspect_ratio = '16:9'
-                elif abs(ratio - 4/3) <= 0.1:
-                    aspect_ratio = '4:3'
-                elif abs(ratio - 3/2) <= 0.1:
-                    aspect_ratio = '3:2'
-                else:
-                    # For other ratios, store the actual ratio as a string
-                    aspect_ratio = f"{width}:{height}"
+                # Determine aspect ratio using unified function
+                aspect_ratio = detect_image_aspect_ratio(width, height)
 
                 # Update the event with the detected aspect ratio
                 event.aspect_ratio = aspect_ratio
@@ -319,21 +353,8 @@ def detect_post_image_aspect_ratio(post_image_id):
                 img = Image.open(img_file)
                 width, height = img.size
 
-                # Calculate aspect ratio
-                ratio = width / height
-
-                # Determine aspect ratio category (same logic as events)
-                if abs(ratio - 1) <= 0.1:
-                    aspect_ratio = '1:1'
-                elif abs(ratio - 16/9) <= 0.1:
-                    aspect_ratio = '16:9'
-                elif abs(ratio - 4/3) <= 0.1:
-                    aspect_ratio = '4:3'
-                elif abs(ratio - 3/2) <= 0.1:
-                    aspect_ratio = '3:2'
-                else:
-                    # For other ratios, store the actual ratio as a string
-                    aspect_ratio = f"{width}:{height}"
+                # Determine aspect ratio using unified function
+                aspect_ratio = detect_image_aspect_ratio(width, height)
 
                 # Update the post image with the detected aspect ratio
                 post_image.aspect_ratio = aspect_ratio

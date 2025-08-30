@@ -103,11 +103,11 @@ const PostsList: React.FC<Props> = ({
     const orientation = getImageOrientation(image.aspect_ratio);
 
     // Limit extreme aspect ratios for better UX
-    const displayRatio = Math.min(Math.max(aspectRatio, 0.5), 3);
+    const displayRatio = Math.min(Math.max(aspectRatio, 0.6), 2);
 
     return (
       <TouchableOpacity
-        className='mt-3 rounded-lg overflow-hidden'
+        className='mt-2 rounded-lg overflow-hidden'
         onPress={() => onImagePress([image.url], index)}
         activeOpacity={0.8}
       >
@@ -125,7 +125,7 @@ const PostsList: React.FC<Props> = ({
     images: { url: string; aspect_ratio?: string | null }[]
   ) => {
     return (
-      <View className='mt-3 gap-2'>
+      <View className='mt-2 gap-1.5'>
         {images.slice(0, 2).map((image, index) => (
           <TouchableOpacity
             key={index}
@@ -143,8 +143,8 @@ const PostsList: React.FC<Props> = ({
               className='w-full rounded-lg'
               style={{
                 aspectRatio: Math.min(
-                  Math.max(parseAspectRatio(image.aspect_ratio), 0.7),
-                  1.5
+                  Math.max(parseAspectRatio(image.aspect_ratio), 0.8),
+                  1.3
                 ),
               }}
               resizeMode='cover'
@@ -159,7 +159,7 @@ const PostsList: React.FC<Props> = ({
     images: { url: string; aspect_ratio?: string | null }[]
   ) => {
     return (
-      <View className='mt-3 flex-row gap-2'>
+      <View className='mt-2 flex-row gap-1.5'>
         {images.slice(0, 2).map((image, index) => {
           const aspectRatio = parseAspectRatio(image.aspect_ratio);
           const orientation = getImageOrientation(image.aspect_ratio);
@@ -180,7 +180,7 @@ const PostsList: React.FC<Props> = ({
                 source={{ uri: image.url }}
                 className='w-full rounded-lg'
                 style={{
-                  aspectRatio: orientation === 'portrait' ? 0.75 : 1.2,
+                  aspectRatio: orientation === 'portrait' ? 0.85 : 1.1,
                 }}
                 resizeMode='cover'
               />
@@ -197,7 +197,7 @@ const PostsList: React.FC<Props> = ({
     const displayImages = images.slice(0, 4);
 
     return (
-      <View className='mt-3 gap-2'>
+      <View className='mt-2 gap-1.5'>
         {/* First image full width */}
         <TouchableOpacity
           className='rounded-lg overflow-hidden'
@@ -215,7 +215,7 @@ const PostsList: React.FC<Props> = ({
             style={{
               aspectRatio: Math.min(
                 Math.max(parseAspectRatio(displayImages[0].aspect_ratio), 0.8),
-                2
+                1.6
               ),
             }}
             resizeMode='cover'
@@ -224,7 +224,7 @@ const PostsList: React.FC<Props> = ({
 
         {/* Remaining images in a row */}
         {displayImages.length > 1 && (
-          <View className='flex-row gap-2'>
+          <View className='flex-row gap-1.5'>
             {displayImages.slice(1).map((image, index) => (
               <TouchableOpacity
                 key={index + 1}
@@ -264,8 +264,8 @@ const PostsList: React.FC<Props> = ({
     const displayImages = images.slice(0, 4);
 
     return (
-      <View className='mt-3 gap-2'>
-        <View className='flex-row gap-2'>
+      <View className='mt-2 gap-1.5'>
+        <View className='flex-row gap-1.5'>
           {displayImages.slice(0, 2).map((image, index) => (
             <TouchableOpacity
               key={index}
@@ -281,7 +281,7 @@ const PostsList: React.FC<Props> = ({
               <Image
                 source={{ uri: image.url }}
                 className='w-full rounded-lg'
-                style={{ aspectRatio: 1.2 }}
+                style={{ aspectRatio: 1.1 }}
                 resizeMode='cover'
               />
             </TouchableOpacity>
@@ -289,7 +289,7 @@ const PostsList: React.FC<Props> = ({
         </View>
 
         {displayImages.length > 2 && (
-          <View className='flex-row gap-2'>
+          <View className='flex-row gap-1.5'>
             {displayImages.slice(2).map((image, index) => (
               <TouchableOpacity
                 key={index + 2}
@@ -324,7 +324,7 @@ const PostsList: React.FC<Props> = ({
   };
 
   return (
-    <View className='space-y-4'>
+    <View className='space-y-3'>
       {posts.map((post, index) => {
         const images = post.images || [];
         const authorName = post.organization?.name || '';
@@ -334,9 +334,9 @@ const PostsList: React.FC<Props> = ({
           <Animated.View
             key={post.id}
             entering={FadeInDown.duration(200).delay(index * 50)}
-            className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4 mb-3'
+            className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-3 mb-2'
           >
-            <View className='flex-row items-center mb-3'>
+            <View className='flex-row items-center mb-2'>
               <View className='w-8 h-8 rounded-full overflow-hidden bg-accentBlue/20 items-center justify-center mr-3'>
                 {organizationImageUrl ? (
                   <Image

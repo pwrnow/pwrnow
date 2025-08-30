@@ -4,11 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 interface Props {
   imageUrl: string;
+  aspectRatio?: string | null;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
 
-export const EventHeroImage: React.FC<Props> = ({ imageUrl }) => {
+export const EventHeroImage: React.FC<Props> = ({ imageUrl, aspectRatio }) => {
   if (!imageUrl) return null as any;
 
   return (

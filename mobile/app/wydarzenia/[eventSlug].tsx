@@ -616,6 +616,21 @@ export default function EventDetailScreen() {
     transform: [{ scale: ctaScale.value }],
   }));
 
+  // Define external link handler before any early returns to keep hook order consistent
+  const handleExternalLink = useCallback(async () => {
+    try {
+      ctaScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (event?.url) {
+        await Linking.openURL(event.url);
+      }
+      ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+    } catch (error) {
+      ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+      console.error('Error opening external link:', error);
+    }
+  }, [event?.url, ctaScale]);
+
   // Ensure a back target exists when opening this screen from a universal link
   // by injecting the home route before the event route on first mount.
   useEffect(() => {
@@ -784,20 +799,6 @@ export default function EventDetailScreen() {
   }
 
   // Share functionality removed
-
-  const handleExternalLink = useCallback(async () => {
-    try {
-      ctaScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      if (event.url) {
-        await Linking.openURL(event.url);
-      }
-      ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-    } catch (error) {
-      ctaScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-      console.error('Error opening external link:', error);
-    }
-  }, [event?.url]);
 
   return (
     <SafeAreaView className='flex-1 bg-white dark:bg-black'>
