@@ -102,7 +102,8 @@
     "pendingVerification": "Oczekuje na weryfikację",
     "openInMaps": "Otwórz w aplikacji map",
     "showMore": "Pokaż więcej",
-    "visitEventPage": "Odwiedź stronę wydarzenia"
+    "visitEventPage": "Odwiedź stronę wydarzenia",
+    "manageEvent": "Zarządzaj Wydarzeniem"
   },
   "Layout": {
     "title": "PWr Now",
@@ -295,5 +296,68 @@
       "subtitle": "Zawsze szukamy pasjonatów, którzy chcą realnie wpływać na życie studenckie! Nieważne czy kodzisz, projektujesz, zajmujesz się marketingiem, czy po prostu masz świetne pomysły - znajdziemy dla Ciebie miejsce w naszym zespole!",
       "button": "Chcę Dołączyć!"
     }
+  },
+  "EventDetailsPage": {
+    "accessDenied": "Nie masz dostępu do tej organizacji",
+    "eventNotFound": "Wydarzenie nie znalezione lub nie masz do niego dostępu",
+    "loadError": "Nie udało się załadować danych wydarzenia",
+    "error": "Błąd",
+    "backToOrganization": "Powrót do organizacji",
+    "backToEvents": "Powrót do wydarzeń",
+    "verified": "Zweryfikowane",
+    "pending": "Oczekuje na weryfikację",
+    "visitEventPage": "Odwiedź stronę wydarzenia",
+    "details": "Szczegóły",
+    "posts": "Posty",
+    "eventDescription": "Opis Wydarzenia",
+    "noDescription": "Brak opisu dla tego wydarzenia.",
+    "eventPosts": "Posty Wydarzenia",
+    "createPost": "Utwórz Post",
+    "noPosts": "Jeszcze brak postów",
+    "noPostsDescription": "Bądź pierwszą osobą, która utworzy post dla tego wydarzenia.",
+    "createFirstPost": "Utwórz pierwszy post",
+    "organizationBy": "Organizowane przez",
+    "eventOrganizer": "Organizator Wydarzenia",
+    "eventDate": "Data",
+    "eventTime": "Godzina",
+    "eventLocation": "Lokalizacja",
+    "share": "Udostępnij",
+    "copied": "Skopiowano!",
+    "copyLink": "Skopiuj link",
+    "linkCopied": "Link do wydarzenia skopiowany do schowka",
+    "copyFailed": "Nie udało się skopiować linku"
+  },
+  "PostsList": {
+    "justNow": "Przed chwilą",
+    "minutesAgo": "{count, plural, one {# minutę temu} few {# minuty temu} other {# minut temu}}",
+    "hoursAgo": "{count, plural, one {# godzinę temu} few {# godziny temu} other {# godzin temu}}",
+    "daysAgo": "{count, plural, one {# dzień temu} few {# dni temu} other {# dni temu}}",
+    "deletePost": "Usuń post",
+    "deletePostTitle": "Usunąć post?",
+    "deletePostDescription": "Ta operacja jest nieodwracalna. Post zostanie trwale usunięty.",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "deleting": "Usuwanie...",
+    "postDeleted": "Post został usunięty",
+    "deleteError": "Nie udało się usunąć postu",
+    "verified": "Zweryfikowany",
+    "pending": "Oczekuje"
+  },
+  "CreatePostModal": {
+    "createNewPost": "Utwórz Nowy Post",
+    "postContent": "Treść Postu",
+    "postContentPlaceholder": "Podziel się tym co się dzieje...",
+    "images": "Zdjęcia",
+    "optional": "opcjonalne",
+    "dropImages": "Upuść zdjęcia tutaj",
+    "dragImagesOrClick": "Dodaj zdjęcia",
+    "supportedFormats": "Obsługiwane: PNG, JPG, JPEG, GIF, WEBP (max 10 zdjęć)",
+    "imagePreview": "Podgląd Zdjęć",
+    "dragToReorder": "Przeciągnij aby zmienić kolejność zdjęć",
+    "cancel": "Anuluj",
+    "createPost": "Utwórz Post",
+    "creating": "Tworzenie...",
+    "postCreated": "Post został utworzony",
+    "createError": "Nie udało się utworzyć postu"
   }
 }

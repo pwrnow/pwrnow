@@ -64,3 +64,25 @@ export interface CreateEventData {
   category_slug?: string;
   image?: File;
 }
+
+export interface PostImage {
+  id: string;
+  url: string;
+  aspect_ratio?: string | null;
+  order_index: number;
+}
+
+export interface Post {
+  id: string;
+  created_at: string;
+  text: string | null;
+  organization: Organization;
+  images: PostImage[];
+  verified: boolean;
+}
+
+export interface CreatePostData {
+  event_slug: string;
+  text?: string;
+  images?: File[];
+}

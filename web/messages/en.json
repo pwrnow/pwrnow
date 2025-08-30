@@ -102,7 +102,8 @@
     "pendingVerification": "Pending verification",
     "openInMaps": "Open in maps app",
     "showMore": "Show more",
-    "visitEventPage": "Visit event page"
+    "visitEventPage": "Visit event page",
+    "manageEvent": "Manage Event"
   },
   "Layout": {
     "title": "PWr Now",
@@ -305,5 +306,68 @@
       "subtitle": "We're always looking for passionate students who want to make a real impact! Whether you're into coding, design, marketing, or just have cool ideas - there's a place for you in our team. Let's build something amazing together!",
       "button": "I Want to Join!"
     }
+  },
+  "EventDetailsPage": {
+    "accessDenied": "You don't have access to this organization",
+    "eventNotFound": "Event not found or you don't have access to it",
+    "loadError": "Failed to load event data",
+    "error": "Error",
+    "backToOrganization": "Back to organization",
+    "backToEvents": "Back to events",
+    "verified": "Verified",
+    "pending": "Pending verification",
+    "visitEventPage": "Visit event page",
+    "details": "Details",
+    "posts": "Posts",
+    "eventDescription": "Event Description",
+    "noDescription": "No description provided for this event.",
+    "eventPosts": "Event Posts",
+    "createPost": "Create Post",
+    "noPosts": "No posts yet",
+    "noPostsDescription": "Be the first to create a post for this event.",
+    "createFirstPost": "Create first post",
+    "organizationBy": "Organized by",
+    "eventOrganizer": "Event Organizer",
+    "eventDate": "Date",
+    "eventTime": "Time",
+    "eventLocation": "Location",
+    "share": "Share",
+    "copied": "Copied!",
+    "copyLink": "Copy link",
+    "linkCopied": "Event link copied to clipboard",
+    "copyFailed": "Failed to copy link"
+  },
+  "PostsList": {
+    "justNow": "Just now",
+    "minutesAgo": "{count, plural, one {# minute ago} other {# minutes ago}}",
+    "hoursAgo": "{count, plural, one {# hour ago} other {# hours ago}}",
+    "daysAgo": "{count, plural, one {# day ago} other {# days ago}}",
+    "deletePost": "Delete post",
+    "deletePostTitle": "Delete post?",
+    "deletePostDescription": "This action cannot be undone. The post will be permanently deleted.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "postDeleted": "Post has been deleted",
+    "deleteError": "Failed to delete post",
+    "verified": "Verified",
+    "pending": "Pending"
+  },
+  "CreatePostModal": {
+    "createNewPost": "Create New Post",
+    "postContent": "Post Content",
+    "postContentPlaceholder": "Share what's happening...",
+    "images": "Images",
+    "optional": "optional",
+    "dropImages": "Drop images here",
+    "dragImagesOrClick": "Add images",
+    "supportedFormats": "Supported: PNG, JPG, JPEG, GIF, WEBP (max 10 images)",
+    "imagePreview": "Image Preview",
+    "dragToReorder": "Drag to reorder images",
+    "cancel": "Cancel",
+    "createPost": "Create Post",
+    "creating": "Creating...",
+    "postCreated": "Post has been created",
+    "createError": "Failed to create post"
   }
 }

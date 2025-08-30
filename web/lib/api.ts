@@ -7,6 +7,8 @@ import {
   AuthenticateRequest,
   ApiError,
   CreateEventData,
+  Post,
+  CreatePostData,
 } from './types';
 import { getApiUrl } from './config';
 import { getUserLocale } from './locale';
@@ -340,6 +342,69 @@ export async function uploadOrganizationImage(
     return organization;
   } catch (error) {
     console.error('❌ Failed to upload organization image:', error);
+    throw error;
+  }
+}
+
+// Post endpoints
+export async function getEventPosts(eventSlug: string): Promise<Post[]> {
+  console.log('📝 Loading posts for event:', eventSlug);
+
+  try {
+    const response = await fetchWithCredentials(`/events/${eventSlug}/posts/`);
+    const posts = await response.json();
+    console.log('✅ Posts loaded:', posts.length, 'posts');
+
+    return posts;
+  } catch (error) {
+    console.error('❌ Failed to load posts:', error);
+    throw error;
+  }
+}
+
+export async function createPost(data: CreatePostData): Promise<Post> {
+  console.log('📝 Creating post:', data);
+
+  try {
+    const formData = new FormData();
+    formData.append('event_slug', data.event_slug);
+
+    if (data.text) {
+      formData.append('text', data.text);
+    }
+
+    if (data.images && data.images.length > 0) {
+      data.images.forEach((image, index) => {
+        formData.append(`images`, image);
+        formData.append(`image_order_${index}`, index.toString());
+      });
+    }
+
+    const response = await fetchWithCredentials('/posts/', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const post = await response.json();
+    console.log('✅ Post created successfully:', post.id);
+
+    return post;
+  } catch (error) {
+    console.error('❌ Failed to create post:', error);
+    throw error;
+  }
+}
+
+export async function deletePost(postId: string): Promise<void> {
+  console.log('🗑️ Deleting post:', postId);
+
+  try {
+    await fetchWithCredentials(`/posts/${postId}/`, {
+      method: 'DELETE',
+    });
+    console.log('✅ Post deleted successfully');
+  } catch (error) {
+    console.error('❌ Failed to delete post:', error);
     throw error;
   }
 }

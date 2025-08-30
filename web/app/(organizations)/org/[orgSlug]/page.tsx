@@ -164,37 +164,35 @@ export default function OrganizationPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-background'>
-        <div className='w-full mx-auto max-w-7xl px-4 py-6'>
-          {/* Header Skeleton */}
-          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 space-y-4 lg:space-y-0'>
-            <div className='flex items-center space-x-4'>
-              <Skeleton className='w-16 h-16 rounded-full' />
-              <div>
-                <Skeleton className='h-8 w-48 mb-2' />
-                <Skeleton className='h-4 w-32' />
-              </div>
-            </div>
-            <div className='flex space-x-3'>
-              <Skeleton className='h-10 w-32' />
-              <Skeleton className='h-10 w-36' />
-              <Skeleton className='h-10 w-10' />
+      <div className='w-full mx-auto max-w-7xl px-4 py-6'>
+        {/* Header Skeleton */}
+        <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 space-y-4 lg:space-y-0'>
+          <div className='flex items-center space-x-4'>
+            <Skeleton className='w-16 h-16 rounded-full' />
+            <div>
+              <Skeleton className='h-8 w-48 mb-2' />
+              <Skeleton className='h-4 w-32' />
             </div>
           </div>
+          <div className='flex space-x-3'>
+            <Skeleton className='h-10 w-32' />
+            <Skeleton className='h-10 w-36' />
+            <Skeleton className='h-10 w-10' />
+          </div>
+        </div>
 
-          {/* Events Skeleton */}
-          <div className='grid gap-4 md:gap-6'>
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className='p-6'>
-                <div className='flex justify-between items-start mb-4'>
-                  <Skeleton className='h-6 w-3/4' />
-                  <Skeleton className='h-6 w-20' />
-                </div>
-                <Skeleton className='h-4 w-full mb-2' />
-                <Skeleton className='h-4 w-1/2' />
-              </Card>
-            ))}
-          </div>
+        {/* Events Skeleton */}
+        <div className='grid gap-4 md:gap-6'>
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className='p-6'>
+              <div className='flex justify-between items-start mb-4'>
+                <Skeleton className='h-6 w-3/4' />
+                <Skeleton className='h-6 w-20' />
+              </div>
+              <Skeleton className='h-4 w-full mb-2' />
+              <Skeleton className='h-4 w-1/2' />
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -202,7 +200,7 @@ export default function OrganizationPage() {
 
   if (error) {
     return (
-      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
+      <div className='flex items-center justify-center p-4 min-h-[60vh]'>
         <Card className='w-full max-w-md p-8 text-center shadow-xl'>
           <div className='mb-4'>
             <div className='w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4'>
@@ -230,7 +228,7 @@ export default function OrganizationPage() {
   }
 
   return (
-    <>
+    <div className='w-full mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-8'>
       {/* Header */}
       <div className='mb-8 bg-card rounded-lg border overflow-hidden'>
         <div className='bg-gradient-to-r from-primary/10 to-secondary/10 p-6'>
@@ -559,9 +557,21 @@ export default function OrganizationPage() {
                         </div>
                       )}
 
-                      {/* External Link Button */}
-                      {event.url && (
-                        <div className='mt-3'>
+                      {/* Action Buttons */}
+                      <div className='mt-3 space-y-2'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() =>
+                            router.push(`/org/${orgSlug}/events/${event.slug}`)
+                          }
+                          className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
+                        >
+                          <Settings className='h-4 w-4' />
+                          {t('manageEvent')}
+                        </Button>
+
+                        {event.url && (
                           <a
                             href={event.url}
                             target='_blank'
@@ -576,8 +586,8 @@ export default function OrganizationPage() {
                               {t('visitEventPage')}
                             </Button>
                           </a>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -601,6 +611,6 @@ export default function OrganizationPage() {
           }
         }
       `}</style>
-    </>
+    </div>
   );
 }
