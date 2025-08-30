@@ -86,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   async function setAuthFromBackend(res: any) {
     // expected backend response: { access, refresh, user }
+    console.log('setAuthFromBackend', res);
     const { access, refresh, user } = res;
     if (!access) throw new Error('backend did not return access token');
 

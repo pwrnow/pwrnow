@@ -516,6 +516,7 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'auth_token',
     'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'JWT_AUTH_HTTPONLY': False
 }
 # Standard simplejwt settings:
 from datetime import timedelta
