@@ -20,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Event } from '../../types';
 import { useAnalytics } from '../../lib/analytics';
-import { useEventBySlug } from '../../lib/queries';
+import { useEventBySlug, useEventPosts } from '../../lib/queries';
 import { Feather } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
@@ -42,48 +42,6 @@ import { formatPostTime, getInitials } from '../../lib/format';
 import { useLikeEvent, useUnlikeEvent } from '../../lib/queries';
 
 // Tab Content Components
-
-// Dummy data for demonstration - posts from organization only
-const getDummyPosts = (organizationName: string) => [
-  {
-    id: '1',
-    author: organizationName,
-    content:
-      'Witamy wszystkich uczestników! Nie możemy się doczekać wspaniałego wydarzenia. Przygotowaliśmy dla Was wiele niespodzianek!',
-    timestamp: '2024-03-15T10:30:00Z',
-    images: [
-      'https://picsum.photos/400/300?random=1',
-      'https://picsum.photos/400/300?random=2',
-    ],
-  },
-  {
-    id: '2',
-    author: organizationName,
-    content:
-      'Sprawdźcie nasz plan wydarzenia! Będzie dużo interesujących prezentacji i warsztatów.',
-    timestamp: '2024-03-15T09:15:00Z',
-    images: ['https://picsum.photos/400/300?random=3'],
-  },
-  {
-    id: '3',
-    author: organizationName,
-    content: null, // Post with only images
-    timestamp: '2024-03-14T16:45:00Z',
-    images: [
-      'https://picsum.photos/400/300?random=4',
-      'https://picsum.photos/400/300?random=5',
-      'https://picsum.photos/400/300?random=6',
-    ],
-  },
-  {
-    id: '4',
-    author: organizationName,
-    content:
-      'Dziękujemy za rejestrację! Zobacz lokalizację wydarzenia na mapie.',
-    timestamp: '2024-03-13T14:20:00Z',
-    images: [],
-  },
-];
 
 // Generate realistic multi-day schedule data based on current time for demo
 const getMultiDayScheduleData = () => {
@@ -323,22 +281,18 @@ const getMultiDayScheduleData = () => {
 };
 
 export default function EventDetailScreen() {
+  // All hooks must be called in the same order on every render
   const colorScheme = useColorScheme();
   const isDark = useMemo(() => colorScheme === 'dark', [colorScheme]);
   const iconPrimary = useMemo(() => (isDark ? '#FFFFFF' : '#000000'), [isDark]);
   const { eventSlug } = useLocalSearchParams();
   const router = useRouter();
   const analytics = useAnalytics();
-
-  // Description is always fully shown in redesigned details tab
-  const [isLiked, setIsLiked] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<string>('');
   const { isAuthenticated } = useAuth();
 
-  // React Query mutations for like/unlike
-  const likeMutation = useLikeEvent();
-  const unlikeMutation = useUnlikeEvent();
-
+  // State hooks - always call in the same order
+  const [isLiked, setIsLiked] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string>('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
@@ -348,18 +302,28 @@ export default function EventDetailScreen() {
 
   // Animation values
   const ctaScale = useSharedValue(1);
-  // CTA animations
 
+  // Ensure eventSlug is always a string or undefined consistently
+  const eventSlugString = typeof eventSlug === 'string' ? eventSlug : undefined;
+
+  // Query hooks - always call in the same order
+  const { data: event, isLoading, error } = useEventBySlug(eventSlugString);
   const {
-    data: event,
-    isLoading,
-    error,
-  } = useEventBySlug(typeof eventSlug === 'string' ? eventSlug : undefined);
+    data: posts = [],
+    isLoading: isLoadingPosts,
+    error: postsError,
+  } = useEventPosts(eventSlugString);
 
-  // Calendar hook
-  const { handleAddToCalendar } = event
-    ? useCalendar({ event })
-    : { handleAddToCalendar: undefined };
+  // React Query mutations for like/unlike
+  const likeMutation = useLikeEvent();
+  const unlikeMutation = useUnlikeEvent();
+
+  // Calendar hook - always call with consistent parameters
+  const { handleAddToCalendar } = useCalendar({ event: event || null });
+
+  // Callback hooks - define these at the top level to maintain hook order
+  const formatPostTimeCallback = useCallback(formatPostTime, []);
+  const getInitialsCallback = useCallback(getInitials, []);
 
   // Generate days from event dates and initialize selected day
   const eventDays = useMemo(() => {
@@ -655,8 +619,8 @@ export default function EventDetailScreen() {
   // Ensure a back target exists when opening this screen from a universal link
   // by injecting the home route before the event route on first mount.
   useEffect(() => {
-    if (!router.canGoBack() && typeof eventSlug === 'string') {
-      const eventPath = `/wydarzenia/${eventSlug}`;
+    if (!router.canGoBack() && eventSlugString) {
+      const eventPath = `/wydarzenia/${eventSlugString}`;
       // Replace current (deep-linked) route with home, then push the event.
       // Using timeouts to sequence navigation and avoid race conditions.
       setTimeout(() => {
@@ -894,12 +858,11 @@ export default function EventDetailScreen() {
             event,
             isDark,
             iconPrimary,
-            dummyPosts: useMemo(
-              () => getDummyPosts(event.organization.name),
-              [event.organization.name]
-            ),
-            formatPostTime: useCallback(formatPostTime, []),
-            getInitials: useCallback(getInitials, []),
+            posts,
+            isLoadingPosts,
+            postsError,
+            formatPostTime: formatPostTimeCallback,
+            getInitials: getInitialsCallback,
             organizationImageUrl: event.organization.image_url || undefined,
             onImagePress: handleImagePress,
           }}

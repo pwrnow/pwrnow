@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { queryKeys } from './queryKeys';
-import type { Event, Category } from '../types';
+import type { Event, Category, Post } from '../types';
 
 export function useEvents() {
   return useQuery<Event[]>({
@@ -21,6 +21,16 @@ export function useEventBySlug(slug?: string) {
   return useQuery<Event>({
     queryKey: slug ? queryKeys.eventBySlug(slug) : ['event', ''],
     queryFn: () => api.events.getEventBySlug(slug as string),
+    enabled: typeof slug === 'string' && slug.length > 0,
+  });
+}
+
+export function useEventPosts(slug?: string) {
+  return useQuery<Post[]>({
+    queryKey: slug
+      ? [...queryKeys.eventBySlug(slug), 'posts']
+      : ['event', '', 'posts'],
+    queryFn: () => api.events.getEventPosts(slug as string),
     enabled: typeof slug === 'string' && slug.length > 0,
   });
 }

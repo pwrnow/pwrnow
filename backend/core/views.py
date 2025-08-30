@@ -1,18 +1,21 @@
 from django.utils import timezone
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag, Like
+from .models import Event, Category, Organization, Tag, Like, Post
 from .serializers import (
     EventSerializer,
+    EventDetailSerializer,
     CategorySerializer,
     OrganizationSerializer,
     OrganizationAuthSerializer,
     TagSerializer,
-    EventCreateSerializer
+    EventCreateSerializer,
+    PostSerializer,
+    PostCreateSerializer
 )
 from .authentication import (
     authenticate_organization,
@@ -26,6 +29,7 @@ from .cache import cache_categories, cache_public_events
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from django.utils.translation import gettext as _
 
 
 class CategoryViewSet(viewsets.GenericViewSet):
@@ -44,18 +48,18 @@ class CategoryViewSet(viewsets.GenericViewSet):
         queryset = self.get_queryset()
 
         # Extract filter parameters for cache key generation
-        filters = {}
+        filter_params = {}
         if hasattr(request, 'query_params'):
             # Include language parameter in cache key
             if 'lang' in request.query_params:
-                filters['lang'] = request.query_params['lang']
+                filter_params['lang'] = request.query_params['lang']
 
         # Cache the categories list
         data = cache_categories(
             queryset=queryset,
             serializer_class=self.get_serializer_class(),
             context={'request': request},
-            **filters
+            **filter_params
         )
 
         return Response(data)
@@ -113,7 +117,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         """
         clear_organization_session(request)
         return Response({
-            'message': 'Successfully logged out'
+            'message': _('Successfully logged out')
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
@@ -125,7 +129,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         organization = get_current_organization(request)
         if not organization:
             return Response(
-                {'error': 'No organization authenticated'},
+                {'error': _('No organization authenticated')},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -142,7 +146,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         current_org = get_current_organization(request)
         if not current_org:
             return Response(
-                {'error': 'No organization authenticated'},
+                {'error': _('No organization authenticated')},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -151,13 +155,13 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         # Verify the authenticated org matches the requested org
         if str(organization.id) != str(current_org.id):
             return Response(
-                {'error': 'Access denied'},
+                {'error': _('Access denied')},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         if 'image' not in request.FILES:
             return Response(
-                {'error': 'No image file provided'},
+                {'error': _('No image file provided')},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -166,7 +170,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         # Validate image size (5MB limit)
         if image_file.size > 5 * 1024 * 1024:
             return Response(
-                {'error': 'Image size cannot exceed 5MB'},
+                {'error': _('Image size cannot exceed 5MB')},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -206,6 +210,8 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return EventCreateSerializer
+        if self.action == 'retrieve':
+            return EventDetailSerializer
         return EventSerializer
 
 
@@ -249,19 +255,19 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             queryset = self.filter_queryset(self.get_queryset())
 
             # Extract filter parameters for cache key generation
-            filters = {}
+            filter_params = {}
             if hasattr(request, 'query_params'):
                 # Include relevant filter parameters in cache key
                 for param in ['category__slug', 'organization__slug', 'verified', 'search', 'ordering', 'lang']:
                     if param in request.query_params:
-                        filters[param] = request.query_params[param]
+                        filter_params[param] = request.query_params[param]
 
             # Cache the public events list
             data = cache_public_events(
                 queryset=queryset,
                 serializer_class=self.get_serializer_class(),
                 context={'request': request},
-                **filters
+                **filter_params
             )
 
             return Response(data)
@@ -305,6 +311,59 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         if not event.organization or event.organization.id != organization.id:
             return Response({'detail': 'You do not have permission to delete this event.'}, status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(event)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='posts', permission_classes=[AllowAny])
+    def list_posts(self, request, slug=None):
+        """
+        List posts for a given event by slug.
+        Public: returns only verified posts.
+        If an organization is authenticated and owns the event, include unverified as well.
+        """
+        event = self.get_object()
+        current_org = self.get_current_organization()
+
+        queryset = event.posts.select_related('organization').prefetch_related('images').order_by('-created_at')
+        if not (current_org and str(current_org.id) == str(event.organization_id)):
+            queryset = queryset.filter(verified=True)
+
+        page = self.paginate_queryset(queryset)
+        serializer = PostSerializer(page or queryset, many=True, context={'request': request})
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+
+class PostViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewSet):
+    """
+    Web-only endpoints for creating and deleting posts.
+    Requires organization authentication.
+    """
+    queryset = Post.objects.all().select_related('event', 'organization').prefetch_related('images')
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PostCreateSerializer
+        return PostSerializer
+
+    def create(self, request, *args, **kwargs):
+        self.check_organization_authentication()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        post = serializer.save()
+        read_serializer = PostSerializer(post, context={'request': request})
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        organization = self.get_current_organization()
+        if not organization:
+            return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
+        post = self.get_object()
+        if not post.organization or str(post.organization_id) != str(organization.id):
+            return Response({'detail': _('You do not have permission to delete this post.')}, status=status.HTTP_403_FORBIDDEN)
+        post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

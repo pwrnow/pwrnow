@@ -25,4 +25,20 @@ export interface Event {
   liked?: boolean;
   organization: Organization;
   category: Category;
+  posts?: Post[];
+}
+
+export interface PostImage {
+  id: string;
+  url: string;
+  aspect_ratio?: string | null;
+  order_index: number;
+}
+
+export interface Post {
+  id: string;
+  created_at: string;
+  text: string | null;
+  organization: Organization;
+  images: PostImage[];
 }

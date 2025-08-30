@@ -6,11 +6,15 @@ import { config } from '../lib/config';
 import { t } from '../lib/i18n';
 
 interface UseCalendarProps {
-  event: Event;
+  event: Event | null | undefined;
 }
 
 export const useCalendar = ({ event }: UseCalendarProps) => {
   const handleAddToCalendar = async () => {
+    if (!event) {
+      return;
+    }
+
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 

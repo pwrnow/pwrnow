@@ -1,4 +1,4 @@
-import { Event, Category, Organization } from '../types';
+import { Event, Category, Organization, Post } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -217,6 +217,11 @@ export const eventsApi = {
   // Get single event by slug
   async getEventBySlug(slug: string): Promise<Event> {
     const response = await fetchWithCredentials(`/events/${slug}/`);
+    return await response.json();
+  },
+
+  async getEventPosts(slug: string): Promise<Post[]> {
+    const response = await fetchWithCredentials(`/events/${slug}/posts/`);
     return await response.json();
   },
 

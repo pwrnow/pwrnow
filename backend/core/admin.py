@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -271,7 +271,7 @@ class EventAdmin(TranslationAdmin):
             'category', 'organization'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications', 'detect_aspect_ratios']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -282,6 +282,37 @@ class EventAdmin(TranslationAdmin):
         updated = queryset.update(verified=False)
         self.message_user(request, f'{updated} events marked as unverified.')
     mark_as_unverified.short_description = "Mark selected events as unverified"
+
+    def detect_aspect_ratios(self, request, queryset):
+        """Trigger aspect ratio detection for selected events."""
+        queued_count = 0
+        skipped_count = 0
+        
+        for event in queryset:
+            if not event.image:
+                skipped_count += 1
+                continue
+                
+            # Trigger the aspect ratio detection task
+            try:
+                from .tasks import detect_event_image_aspect_ratio
+                detect_event_image_aspect_ratio.delay(str(event.id))
+                queued_count += 1
+            except Exception as e:
+                # Fallback to synchronous processing if Celery is unavailable
+                try:
+                    from .tasks import detect_event_image_aspect_ratio
+                    detect_event_image_aspect_ratio(str(event.id))
+                    queued_count += 1
+                except Exception:
+                    skipped_count += 1
+        
+        if queued_count:
+            self.message_user(request, f'Aspect ratio detection queued for {queued_count} events.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} events (no image).', level=level)
+    detect_aspect_ratios.short_description = "Detect aspect ratios for selected events"
 
     def resend_push_notifications(self, request, queryset):
         """Resend the "new event" push notification for selected, verified events."""
@@ -329,3 +360,165 @@ class LikeAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
     search_fields = ['user__email', 'event__title']
     autocomplete_fields = ['user', 'event']
+
+
+class PostImageInline(admin.TabularInline):
+    model = PostImage
+    extra = 0
+    fields = ['image', 'aspect_ratio', 'order_index', 'image_preview', 'created_at']
+    readonly_fields = ['image_preview', 'created_at']
+
+    @admin.display(description='Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit: cover;" />', obj.image.url)
+        return "-"
+
+
+@admin.register(PostImage)
+class PostImageAdmin(admin.ModelAdmin):
+    list_display = ['post', 'image_preview', 'aspect_ratio_display', 'order_index', 'created_at']
+    list_filter = ['created_at', 'post__event', 'post__organization']
+    search_fields = ['post__event__title', 'post__organization__name']
+    readonly_fields = ['id', 'created_at', 'image_preview', 'aspect_ratio_display']
+    list_editable = ['order_index']
+    autocomplete_fields = ['post']
+    ordering = ['post', 'order_index']
+
+    fieldsets = (
+        ('Post Information', {
+            'fields': ('post',)
+        }),
+        ('Image Details', {
+            'fields': ('image', 'image_preview', 'aspect_ratio', 'aspect_ratio_display', 'order_index'),
+            'description': 'Upload an image and set its display order. Aspect ratio is automatically detected.'
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="80" height="80" style="object-fit: cover; border-radius: 4px;" />', obj.image.url)
+        return "No image"
+
+    @admin.display(description='Aspect Ratio')
+    def aspect_ratio_display(self, obj):
+        if obj.aspect_ratio:
+            return format_html(
+                '<span style="background-color: #e8f5e8; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; color: #2e7d32;">{}</span>',
+                obj.aspect_ratio
+            )
+        return format_html('<span style="color: #999; font-style: italic;">Auto-detect</span>')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'post__event', 'post__organization'
+        )
+
+    actions = ['detect_aspect_ratios']
+
+    def detect_aspect_ratios(self, request, queryset):
+        """Trigger aspect ratio detection for selected post images."""
+        queued_count = 0
+        skipped_count = 0
+        
+        for post_image in queryset:
+            if not post_image.image:
+                skipped_count += 1
+                continue
+                
+            # Trigger the aspect ratio detection task
+            try:
+                from .tasks import detect_post_image_aspect_ratio
+                detect_post_image_aspect_ratio.delay(str(post_image.id))
+                queued_count += 1
+            except Exception as e:
+                # Fallback to synchronous processing if Celery is unavailable
+                try:
+                    from .tasks import detect_post_image_aspect_ratio
+                    detect_post_image_aspect_ratio(str(post_image.id))
+                    queued_count += 1
+                except Exception:
+                    skipped_count += 1
+        
+        if queued_count:
+            self.message_user(request, f'Aspect ratio detection queued for {queued_count} post images.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} post images (no image).', level=level)
+    detect_aspect_ratios.short_description = "Detect aspect ratios for selected post images"
+
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['event', 'organization', 'text_preview', 'images_count', 'verified', 'created_at']
+    list_filter = ['verified', 'event', 'organization', 'created_at']
+    search_fields = ['event__title', 'organization__name', 'text']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'verified_at']
+    list_editable = ['verified']
+    inlines = [PostImageInline]
+    autocomplete_fields = ['event', 'organization']
+
+    fieldsets = (
+        ('Content', {
+            'fields': ('event', 'organization', 'text')
+        }),
+        ('Verification', {
+            'fields': ('verified', 'verified_at')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Text')
+    def text_preview(self, obj):
+        if obj.text:
+            return Truncator(obj.text).chars(60)
+        return "-"
+
+    @admin.display(description='Images')
+    def images_count(self, obj):
+        cnt = obj.images.count()
+        url = reverse('admin:core_postimage_changelist') + f'?post__id__exact={obj.id}'
+        return format_html('<a href="{}">{} images</a>', url, cnt)
+
+    actions = ['detect_post_images_aspect_ratios']
+
+    def detect_post_images_aspect_ratios(self, request, queryset):
+        """Trigger aspect ratio detection for all images in selected posts."""
+        queued_count = 0
+        skipped_count = 0
+        
+        for post in queryset:
+            post_images = post.images.filter(image__isnull=False)
+            if not post_images.exists():
+                skipped_count += 1
+                continue
+                
+            for post_image in post_images:
+                # Trigger the aspect ratio detection task
+                try:
+                    from .tasks import detect_post_image_aspect_ratio
+                    detect_post_image_aspect_ratio.delay(str(post_image.id))
+                    queued_count += 1
+                except Exception as e:
+                    # Fallback to synchronous processing if Celery is unavailable
+                    try:
+                        from .tasks import detect_post_image_aspect_ratio
+                        detect_post_image_aspect_ratio(str(post_image.id))
+                        queued_count += 1
+                    except Exception:
+                        pass
+        
+        if queued_count:
+            self.message_user(request, f'Aspect ratio detection queued for {queued_count} post images across selected posts.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} posts (no images).', level=level)
+    detect_post_images_aspect_ratios.short_description = "Detect aspect ratios for all images in selected posts"

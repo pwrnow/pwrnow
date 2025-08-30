@@ -55,7 +55,9 @@ interface PostsSceneProps {
   event: Event;
   isDark: boolean;
   iconPrimary: string;
-  dummyPosts: any[];
+  posts: any[];
+  isLoadingPosts: boolean;
+  postsError: any;
   formatPostTime: (timestamp: string) => string;
   getInitials: (name: string) => string;
   organizationImageUrl?: string;
@@ -104,7 +106,12 @@ const DetailsScene: React.FC<{ detailsProps: DetailsSceneProps }> = ({
     >
       <View className='space-y-4'>
         {/* Event Image */}
-        {event.image_url && <EventHeroImage imageUrl={event.image_url} />}
+        {event.image_url && (
+          <EventHeroImage
+            imageUrl={event.image_url}
+            aspectRatio={event.aspect_ratio}
+          />
+        )}
 
         {/* Organization Header */}
         <OrganizationHeader
@@ -140,12 +147,44 @@ const DetailsScene: React.FC<{ detailsProps: DetailsSceneProps }> = ({
 const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = React.memo(
   ({ postsProps }) => {
     const {
-      dummyPosts,
+      posts,
+      isLoadingPosts,
+      postsError,
       formatPostTime,
       getInitials,
       organizationImageUrl,
       onImagePress,
     } = postsProps;
+
+    if (isLoadingPosts) {
+      return (
+        <View className='flex-1 justify-center items-center'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm'>
+            {t('loadingPosts')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (postsError) {
+      return (
+        <View className='flex-1 justify-center items-center px-6'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+            {t('failedToLoadPosts')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (!posts || posts.length === 0) {
+      return (
+        <View className='flex-1 justify-center items-center px-6'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+            {t('noPosts')}
+          </Text>
+        </View>
+      );
+    }
 
     return (
       <Animated.ScrollView
@@ -159,7 +198,7 @@ const PostsScene: React.FC<{ postsProps: PostsSceneProps }> = React.memo(
         }}
       >
         <PostsList
-          posts={dummyPosts}
+          posts={posts}
           formatPostTime={formatPostTime}
           getInitials={getInitials}
           organizationImageUrl={organizationImageUrl}

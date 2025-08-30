@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like
+from django.utils.translation import gettext_lazy as _
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage
 from .translation_utils import get_language_from_request, get_translated_field
 
 
@@ -48,7 +49,7 @@ class OrganizationAuthSerializer(serializers.Serializer):
             self.organization = org_code.organization
             return value
         except OrganizationCode.DoesNotExist:
-            raise serializers.ValidationError("Invalid authentication code")
+            raise serializers.ValidationError(_("Invalid authentication code"))
 
     def get_organization(self):
         """Return the organization after validation"""
@@ -138,28 +139,28 @@ class EventCreateSerializer(serializers.ModelSerializer):
         if data.get('starts_at') and data.get('ends_at'):
             if data['ends_at'] <= data['starts_at']:
                 raise serializers.ValidationError({
-                    'ends_at': 'End time must be after start time.'
+                    'ends_at': _('End time must be after start time.')
                 })
         return data
 
     def validate_image(self, value):
         """Validate image size"""
         if value and value.size > 5 * 1024 * 1024:  # 5MB
-            raise serializers.ValidationError('Image size cannot exceed 5MB.')
+            raise serializers.ValidationError(_('Image size cannot exceed 5MB.'))
         return value
 
     def create(self, validated_data):
         # Get the authenticated organization from the new authentication system
         request = self.context.get('request')
         if not request:
-            raise serializers.ValidationError('No request context found.')
+            raise serializers.ValidationError(_('No request context found.'))
 
         # Use the new session-based authentication
         from .authentication import get_current_organization
         organization = get_current_organization(request)
 
         if not organization:
-            raise serializers.ValidationError('No authenticated organization found.')
+            raise serializers.ValidationError(_('No authenticated organization found.'))
 
         # Get category if provided
         category = None
@@ -168,7 +169,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
             try:
                 category = Category.objects.get(slug=category_slug)
             except Category.DoesNotExist:
-                raise serializers.ValidationError({'category_slug': 'Invalid category slug.'})
+                raise serializers.ValidationError({'category_slug': _('Invalid category slug.')})
 
         # Clean empty strings to None for nullable fields
         for field in ['description', 'location', 'url']:
@@ -184,3 +185,105 @@ class EventCreateSerializer(serializers.ModelSerializer):
         )
 
         return event
+
+
+class PostImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PostImage
+        fields = ['id', 'url', 'aspect_ratio', 'order_index']
+
+    def get_url(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
+
+
+class PostSerializer(serializers.ModelSerializer):
+    images = PostImageSerializer(many=True, read_only=True)
+    organization = OrganizationSerializer(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            'id', 'created_at', 'text', 'organization', 'images'
+        ]
+
+
+class PostCreateSerializer(serializers.Serializer):
+    event_slug = serializers.SlugField(required=True)
+    text = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    # Accept multiple images in multipart under key "images"
+    images = serializers.ListField(
+        child=serializers.ImageField(), required=False, allow_empty=True
+    )
+
+    def validate(self, attrs):
+        text = attrs.get('text')
+        images = attrs.get('images') or []
+        text_present = bool(text and text.strip())
+        images_present = len(images) > 0
+        if not text_present and not images_present:
+            raise serializers.ValidationError(_('Post must include text or at least one image.'))
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError(_('No request context found.'))
+
+        from .authentication import get_current_organization
+        organization = get_current_organization(request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        event_slug = validated_data['event_slug']
+        try:
+            event = Event.objects.get(slug=event_slug)
+        except Event.DoesNotExist:
+            raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+        # Only allow posting to own event
+        if str(event.organization_id) != str(organization.id):
+            raise serializers.ValidationError(_('You do not have permission to post to this event.'))
+
+        text = validated_data.get('text')
+        if text == '':
+            text = None
+
+        post = Post.objects.create(
+            event=event,
+            organization=organization,
+            text=text,
+            verified=False,
+        )
+
+        images = validated_data.get('images') or []
+        for index, image in enumerate(images):
+            PostImage.objects.create(post=post, image=image, order_index=index)
+
+        return post
+
+
+class EventDetailSerializer(EventSerializer):
+    posts = serializers.SerializerMethodField()
+
+    class Meta(EventSerializer.Meta):
+        fields = EventSerializer.Meta.fields + ['posts']
+
+    def get_posts(self, obj):
+        request = self.context.get('request')
+        # Determine if current org owns the event
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(request)
+        except Exception:
+            current_org = None
+
+        queryset = obj.posts.all().select_related('organization').prefetch_related('images').order_by('-created_at')
+        if not (current_org and str(current_org.id) == str(obj.organization_id)):
+            queryset = queryset.filter(verified=True)
+
+        return PostSerializer(queryset, many=True, context={'request': request}).data

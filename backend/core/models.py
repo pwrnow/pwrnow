@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.conf import settings
 from sqids import Sqids
+from django.utils.translation import gettext_lazy as _
 
 
 def generate_organization_code():
@@ -299,3 +300,97 @@ class Like(models.Model):
 
     def __str__(self):
         return f"Like(user={self.user_id}, event={self.event_id})"
+
+
+class Post(models.Model):
+    """Posts attached to events, created by organizations with verification support."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='posts'
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='posts'
+    )
+
+    text = models.TextField(blank=True, null=True, help_text=_('Optional text content'))
+
+    # Verification flags mirroring Event
+    verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_('Timestamp of when the post was verified')
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event', '-created_at']),
+            models.Index(fields=['organization', '-created_at']),
+            models.Index(fields=['verified', '-created_at']),
+        ]
+
+    def __str__(self):
+        preview = (self.text or '').strip()[:40]
+        return f"Post for {self.event.title}: {preview}"
+
+    def clean(self):
+        # Ensure at least text or one image exists; allow initial create to pass
+        # so that admin inlines can attach images after the parent saves.
+        if self._state.adding:
+            return
+        if not (self.text and self.text.strip()) and not self.images.exists():
+            raise ValidationError(_('Post must include text or at least one image.'))
+
+    def save(self, *args, **kwargs):
+        is_new_instance = self._state.adding
+        if not is_new_instance:
+            try:
+                original = Post.objects.get(pk=self.pk)
+                if self.verified and not original.verified:
+                    self.verified_at = timezone.now()
+                elif not self.verified:
+                    self.verified_at = None
+            except Post.DoesNotExist:
+                if self.verified:
+                    self.verified_at = timezone.now()
+        else:
+            if self.verified:
+                self.verified_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class PostImage(models.Model):
+    """Image attachments for posts."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(upload_to='posts/', help_text=_('Image file'))
+    aspect_ratio = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text=_("Detected aspect ratio of the post image (e.g., '16:9', '1:1')")
+    )
+    order_index = models.PositiveIntegerField(default=0, db_index=True)
+
+    class Meta:
+        ordering = ['order_index', 'created_at']
+        indexes = [
+            models.Index(fields=['post', 'order_index']),
+        ]
+
+    def __str__(self):
+        return f"PostImage(post={self.post_id})"
