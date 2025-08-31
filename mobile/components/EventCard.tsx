@@ -49,7 +49,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const analytics = useAnalytics();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const [isLiked, setIsLiked] = useState(!!event.liked);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { handleAddToCalendar } = useCalendar({ event });
 
@@ -57,10 +56,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const likeMutation = useLikeEvent();
   const unlikeMutation = useUnlikeEvent();
 
-  // Sync local liked state from backend when event data updates
-  useEffect(() => {
-    setIsLiked(!!event.liked);
-  }, [event.liked]);
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const DOUBLE_TAP_DELAY_MS = 280;
@@ -124,8 +119,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
       return;
     }
 
-    const nextLiked = !isLiked;
-    setIsLiked(nextLiked); // Optimistic update
+    const nextLiked = !event.liked;
     analytics.trackEventFavoriteToggled(event as any, nextLiked);
 
     try {
@@ -135,8 +129,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         await unlikeMutation.mutateAsync(event.slug);
       }
     } catch (e) {
-      // Revert optimistic update on error
-      setIsLiked(!nextLiked);
       console.error('Like/unlike failed:', e);
     }
   };
@@ -299,6 +291,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     return `${time(startDate)}–${time(endDate)}`;
   };
 
+  console.log('eventcard');
+
   return (
     <Animated.View
       entering={FadeInDown.duration(420)
@@ -380,7 +374,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               </Text>
             </View>
             <LikeButton
-              isLiked={isLiked}
+              isLiked={event.liked || false}
               onPress={handleHeartPress}
               size={24}
               className='-mr-1'

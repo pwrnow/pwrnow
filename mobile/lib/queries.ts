@@ -35,23 +35,64 @@ export function useEventPosts(slug?: string) {
   });
 }
 
-// Like/Unlike mutations
 export function useLikeEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (slug: string) => api.events.like(slug),
-    onSuccess: (_, slug) => {
-      // Invalidate and refetch events list - force refetch even if not active
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.events,
-        refetchType: 'all', // Refetch both active and inactive queries
-      });
-      // Invalidate and refetch specific event details
-      queryClient.invalidateQueries({
+    onMutate: async (slug: string) => {
+      // Cancel outgoing refetches so they don't overwrite optimistic update
+      await queryClient.cancelQueries({ queryKey: queryKeys.events });
+      await queryClient.cancelQueries({
         queryKey: queryKeys.eventBySlug(slug),
-        refetchType: 'all',
       });
+
+      // Snapshot the previous values
+      const previousEvents = queryClient.getQueryData<Event[]>(
+        queryKeys.events
+      );
+      const previousEvent = queryClient.getQueryData<Event>(
+        queryKeys.eventBySlug(slug)
+      );
+
+      // Optimistically update events list
+      if (previousEvents) {
+        queryClient.setQueryData<Event[]>(
+          queryKeys.events,
+          (old) =>
+            old?.map((event) =>
+              event.slug === slug
+                ? {
+                    ...event,
+                    liked: true,
+                  }
+                : event
+            ) || []
+        );
+      }
+
+      // Optimistically update specific event
+      if (previousEvent) {
+        queryClient.setQueryData<Event>(queryKeys.eventBySlug(slug), {
+          ...previousEvent,
+          liked: true,
+        });
+      }
+
+      // Return context for rollback
+      return { previousEvents, previousEvent };
+    },
+    onError: (err, slug, context) => {
+      // Rollback on error
+      if (context?.previousEvents) {
+        queryClient.setQueryData(queryKeys.events, context.previousEvents);
+      }
+      if (context?.previousEvent) {
+        queryClient.setQueryData(
+          queryKeys.eventBySlug(slug),
+          context.previousEvent
+        );
+      }
     },
   });
 }
@@ -61,17 +102,54 @@ export function useUnlikeEvent() {
 
   return useMutation({
     mutationFn: (slug: string) => api.events.unlike(slug),
-    onSuccess: (_, slug) => {
-      // Invalidate and refetch events list - force refetch even if not active
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.events,
-        refetchType: 'all', // Refetch both active and inactive queries
-      });
-      // Invalidate and refetch specific event details
-      queryClient.invalidateQueries({
+    onMutate: async (slug: string) => {
+      // Cancel outgoing refetches so they don't overwrite optimistic update
+      await queryClient.cancelQueries({ queryKey: queryKeys.events });
+      await queryClient.cancelQueries({
         queryKey: queryKeys.eventBySlug(slug),
-        refetchType: 'all',
       });
+
+      // Snapshot the previous values
+      const previousEvents = queryClient.getQueryData<Event[]>(
+        queryKeys.events
+      );
+      const previousEvent = queryClient.getQueryData<Event>(
+        queryKeys.eventBySlug(slug)
+      );
+
+      // Optimistically update events list
+      if (previousEvents) {
+        queryClient.setQueryData<Event[]>(
+          queryKeys.events,
+          (old) =>
+            old?.map((event) =>
+              event.slug === slug ? { ...event, liked: false } : event
+            ) || []
+        );
+      }
+
+      // Optimistically update specific event
+      if (previousEvent) {
+        queryClient.setQueryData<Event>(queryKeys.eventBySlug(slug), {
+          ...previousEvent,
+          liked: false,
+        });
+      }
+
+      // Return context for rollback
+      return { previousEvents, previousEvent };
+    },
+    onError: (err, slug, context) => {
+      // Rollback on error
+      if (context?.previousEvents) {
+        queryClient.setQueryData(queryKeys.events, context.previousEvents);
+      }
+      if (context?.previousEvent) {
+        queryClient.setQueryData(
+          queryKeys.eventBySlug(slug),
+          context.previousEvent
+        );
+      }
     },
   });
 }

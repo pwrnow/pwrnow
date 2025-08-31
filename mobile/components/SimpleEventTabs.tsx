@@ -1,0 +1,358 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  useColorScheme,
+  useWindowDimensions,
+  ScrollView,
+} from 'react-native';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { t } from '../lib/i18n';
+import { useEventBySlug } from '../lib/queries';
+import { formatPostTime, getInitials } from '../lib/format';
+
+// Import existing components
+import PostsList from './PostsList';
+import ScheduleList from './ScheduleList';
+import WeekDaySelector from './WeekDaySelector';
+import EventHeroImage from './EventHeroImage';
+import OrganizationHeader from './OrganizationHeader';
+import EventMetaCard from './EventMetaCard';
+import EventDescription from './EventDescription';
+import VisitPageButton from './VisitPageButton';
+
+type TabType = 'details' | 'posts' | 'schedule';
+
+interface Route {
+  key: TabType;
+  title: string;
+  icon: keyof typeof Feather.glyphMap;
+}
+
+interface Props {
+  eventSlug: string;
+  posts?: any[];
+  isLoadingPosts?: boolean;
+  postsError?: any;
+  selectedDay: string;
+  setSelectedDay: (dayId: string) => void;
+  eventDays: any[];
+  itemsByDay: Record<string, any[]>;
+  onMapPress?: () => void;
+  onExternalLink?: () => void;
+  onImagePress: (images: string[], initialIndex: number) => void;
+  ctaAnimatedStyle?: any;
+}
+
+const routes: Route[] = [
+  { key: 'details', title: t('details'), icon: 'info' },
+  { key: 'posts', title: t('posts'), icon: 'message-circle' },
+  { key: 'schedule', title: t('schedule'), icon: 'calendar' },
+];
+
+// Details Scene Component
+const DetailsScene: React.FC<{
+  eventSlug: string;
+  onMapPress?: () => void;
+  onExternalLink?: () => void;
+  ctaAnimatedStyle?: any;
+}> = React.memo(
+  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle }) => {
+    const { data: event, isLoading, error } = useEventBySlug(eventSlug);
+
+    if (isLoading) {
+      return (
+        <View className='flex-1 justify-center items-center'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm'>
+            {t('loadingEvent')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (error || !event) {
+      return (
+        <View className='flex-1 justify-center items-center px-6'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+            {t('failedToLoadEvent')}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className='flex-1'
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
+        <View className='space-y-4'>
+          {/* Event Image */}
+          {event.image_url && (
+            <EventHeroImage
+              imageUrl={event.image_url}
+              aspectRatio={event.aspect_ratio}
+            />
+          )}
+
+          {/* Organization Header */}
+          <OrganizationHeader
+            organization={event.organization}
+            categoryName={event.category.name}
+          />
+
+          {/* Event Details Section */}
+          <EventMetaCard
+            startsAt={event.starts_at}
+            endsAt={event.ends_at}
+            location={event.location}
+            onCalendarPress={onMapPress}
+            onMapPress={onMapPress}
+          />
+
+          {/* Event Description */}
+          <EventDescription description={event.description} />
+
+          {/* Visit Page Button */}
+          {event.url && onExternalLink && (
+            <VisitPageButton
+              onPress={onExternalLink}
+              animatedStyle={ctaAnimatedStyle}
+            />
+          )}
+        </View>
+      </ScrollView>
+    );
+  }
+);
+
+// Posts Scene Component
+const PostsScene: React.FC<{
+  eventSlug: string;
+  posts?: any[];
+  isLoadingPosts?: boolean;
+  postsError?: any;
+  onImagePress: (images: string[], initialIndex: number) => void;
+}> = React.memo(
+  ({ eventSlug, posts, isLoadingPosts, postsError, onImagePress }) => {
+    const { data: event } = useEventBySlug(eventSlug);
+
+    if (isLoadingPosts) {
+      return (
+        <View className='flex-1 justify-center items-center'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm'>
+            {t('loadingPosts')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (postsError) {
+      return (
+        <View className='flex-1 justify-center items-center px-6'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+            {t('failedToLoadPosts')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (!posts || posts.length === 0) {
+      return (
+        <View className='flex-1 justify-center items-center px-6'>
+          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+            {t('noPosts')}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className='flex-1'
+        contentContainerStyle={{
+          paddingTop: 12,
+          paddingHorizontal: 16,
+          paddingBottom: 24,
+        }}
+      >
+        <PostsList
+          posts={posts}
+          formatPostTime={formatPostTime}
+          getInitials={getInitials}
+          organizationImageUrl={event?.organization.image_url || undefined}
+          onImagePress={onImagePress}
+        />
+      </ScrollView>
+    );
+  }
+);
+
+// Schedule Scene Component
+const ScheduleScene: React.FC<{
+  selectedDay: string;
+  setSelectedDay: (dayId: string) => void;
+  eventDays: any[];
+  itemsByDay: Record<string, any[]>;
+}> = React.memo(({ selectedDay, setSelectedDay, eventDays, itemsByDay }) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  return (
+    <View className='flex-1'>
+      {eventDays.length > 1 && (
+        <View className='mt-3 px-4'>
+          <WeekDaySelector
+            selectedDay={selectedDay}
+            onDaySelect={setSelectedDay}
+            days={eventDays}
+          />
+        </View>
+      )}
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className='flex-1'
+        contentContainerStyle={{
+          paddingBottom: 24,
+          paddingTop: eventDays.length > 1 ? 0 : 16,
+        }}
+      >
+        <ScheduleList
+          dayId={selectedDay}
+          items={itemsByDay[selectedDay] || []}
+          isDark={isDark}
+        />
+      </ScrollView>
+    </View>
+  );
+});
+
+export const SimpleEventTabs: React.FC<Props> = React.memo(
+  ({
+    eventSlug,
+    posts,
+    isLoadingPosts,
+    postsError,
+    selectedDay,
+    setSelectedDay,
+    eventDays,
+    itemsByDay,
+    onMapPress,
+    onExternalLink,
+    onImagePress,
+    ctaAnimatedStyle,
+  }) => {
+    const layout = useWindowDimensions();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
+
+    const [index, setIndex] = useState(0);
+
+    // Create scene map
+    const renderScene = SceneMap({
+      details: () => (
+        <DetailsScene
+          eventSlug={eventSlug}
+          onMapPress={onMapPress}
+          onExternalLink={onExternalLink}
+          ctaAnimatedStyle={ctaAnimatedStyle}
+        />
+      ),
+      posts: () => (
+        <PostsScene
+          eventSlug={eventSlug}
+          posts={posts}
+          isLoadingPosts={isLoadingPosts}
+          postsError={postsError}
+          onImagePress={onImagePress}
+        />
+      ),
+      schedule: () => (
+        <ScheduleScene
+          selectedDay={selectedDay}
+          setSelectedDay={setSelectedDay}
+          eventDays={eventDays}
+          itemsByDay={itemsByDay}
+        />
+      ),
+    });
+
+    // Tab Bar Component
+    const renderTabBar = (props: any) => (
+      <TabBar
+        {...props}
+        indicatorStyle={{
+          backgroundColor: '#2066DF',
+          height: 2,
+        }}
+        style={{
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          borderBottomWidth: 1,
+          borderBottomColor: isDark
+            ? 'rgba(255, 255, 255, 0.1)'
+            : 'rgba(0, 0, 0, 0.1)',
+          elevation: 0,
+          shadowOpacity: 0,
+        }}
+        tabStyle={{
+          flex: 1,
+          paddingVertical: 16,
+        }}
+        renderLabel={({ route, focused }: { route: any; focused: boolean }) => {
+          const routeTyped = route as Route;
+          return (
+            <View className='flex-row items-center justify-center'>
+              <Feather
+                name={routeTyped.icon}
+                size={18}
+                color={focused ? '#2066DF' : isDark ? '#FFFFFF80' : '#00000080'}
+              />
+              <Text
+                className={`ml-2 font-groteskMedium text-sm ${
+                  focused
+                    ? 'text-accentBlue'
+                    : 'text-black/70 dark:text-white/70'
+                }`}
+              >
+                {routeTyped.title}
+              </Text>
+            </View>
+          );
+        }}
+        pressColor='#2066DF20'
+        onTabPress={() => {
+          Haptics.selectionAsync();
+        }}
+      />
+    );
+
+    return (
+      <View className='flex-1'>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          renderTabBar={renderTabBar}
+          onIndexChange={(newIndex) => {
+            if (newIndex !== index) {
+              Haptics.selectionAsync();
+            }
+            setIndex(newIndex);
+          }}
+          initialLayout={{ width: layout.width }}
+          swipeEnabled={true}
+          animationEnabled={true}
+          lazy={true}
+          style={{
+            backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          }}
+        />
+      </View>
+    );
+  }
+);
+
+export default SimpleEventTabs;
