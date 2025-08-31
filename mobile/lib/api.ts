@@ -147,6 +147,8 @@ async function fetchWithCredentials(
     }
   } catch {}
 
+  console.log('authHeaders', authHeaders);
+
   const makeRequest = async (overrideAuth?: string): Promise<Response> => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

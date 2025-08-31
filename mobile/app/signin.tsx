@@ -105,14 +105,14 @@ export default function SignInScreen() {
 
       // Check if we're on iOS
       if (Platform.OS !== 'ios') {
-        Alert.alert('Error', 'Apple Sign In is only available on iOS devices');
+        Alert.alert(t('error'), t('appleSignInIOSOnly'));
         return;
       }
 
       // Check if Apple authentication is available
       const isAvailable = await AppleAuthentication.isAvailableAsync();
       if (!isAvailable) {
-        Alert.alert('Error', 'Apple Sign In is not available on this device');
+        Alert.alert(t('error'), t('appleSignInNotAvailable'));
         return;
       }
 
@@ -154,29 +154,9 @@ export default function SignInScreen() {
 
       if (error.code === 'ERR_REQUEST_CANCELED') {
         // User canceled the sign-in flow - no need to show an alert
-        console.log('Apple sign-in was canceled by user');
-      } else if (error.code === 'ERR_REQUEST_FAILED') {
-        Alert.alert(
-          'Sign In Failed',
-          'Apple authentication failed. Please try again.'
-        );
-      } else if (error.code === 'ERR_REQUEST_NOT_HANDLED') {
-        Alert.alert(
-          'Sign In Error',
-          'Apple authentication request was not handled properly.'
-        );
-      } else if (error.code === 'ERR_INVALID_RESPONSE') {
-        Alert.alert(
-          'Sign In Error',
-          'Invalid response from Apple. Please try again.'
-        );
-      } else if (error.code === 'ERR_INVALID_SCOPE') {
-        Alert.alert('Sign In Error', 'Invalid authentication scope requested.');
+        console.log(t('appleSignInCanceled'));
       } else {
-        Alert.alert(
-          'Sign In Error',
-          error.message || 'An unexpected error occurred during Apple sign-in.'
-        );
+        Alert.alert(t('appleSignInFailed'), t('appleSignInGenericError'));
       }
     } finally {
       setIsAuthenticating(false);

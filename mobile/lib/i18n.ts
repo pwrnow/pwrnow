@@ -61,6 +61,20 @@ const translations: Record<string, TranslationMap> = {
     areYouSureSignOut: 'Are you sure you want to sign out?',
     signOutError: 'Failed to sign out. Please try again.',
     error: 'Error',
+    // Apple sign-in specific translations
+    appleSignInError: 'Apple Sign In Error',
+    appleSignInFailed: 'Apple Sign In Failed',
+    appleSignInGenericError: 'Please try again later.',
+    appleSignInNotAvailable: 'Apple Sign In is not available on this device',
+    appleSignInIOSOnly: 'Apple Sign In is only available on iOS devices',
+    appleAuthenticationFailed: 'Apple authentication failed. Please try again.',
+    appleAuthenticationRequestNotHandled:
+      'Apple authentication request was not handled properly.',
+    appleInvalidResponse: 'Invalid response from Apple. Please try again.',
+    appleInvalidScope: 'Invalid authentication scope requested.',
+    appleUnexpectedError: 'An unexpected error occurred during Apple sign-in.',
+    appleSignInCanceled: 'Apple sign-in was canceled by user',
+    signInError: 'Sign In Error',
     user: 'User',
     profileInformation: 'Profile Information',
     name: 'Name',
@@ -173,6 +187,24 @@ const translations: Record<string, TranslationMap> = {
     areYouSureSignOut: 'Czy na pewno chcesz się wylogować?',
     signOutError: 'Nie udało się wylogować. Spróbuj ponownie.',
     error: 'Błąd',
+    // Apple sign-in specific translations
+    appleSignInError: 'Błąd logowania Apple',
+    appleSignInFailed: 'Logowanie Apple nie powiodło się',
+    appleSignInGenericError: 'Spróbuj ponownie później.',
+    appleSignInNotAvailable:
+      'Logowanie Apple jest niedostępne na tym urządzeniu',
+    appleSignInIOSOnly:
+      'Logowanie Apple jest dostępne tylko na urządzeniach iOS',
+    appleAuthenticationFailed:
+      'Uwierzytelnienie Apple nie powiodło się. Spróbuj ponownie.',
+    appleAuthenticationRequestNotHandled:
+      'Żądanie uwierzytelnienia Apple nie zostało obsłużone poprawnie.',
+    appleInvalidResponse: 'Nieprawidłowa odpowiedź od Apple. Spróbuj ponownie.',
+    appleInvalidScope: 'Żądano nieprawidłowego zakresu uwierzytelnienia.',
+    appleUnexpectedError:
+      'Wystąpił nieoczekiwany błąd podczas logowania Apple.',
+    appleSignInCanceled: 'Logowanie Apple zostało anulowane przez użytkownika',
+    signInError: 'Błąd logowania',
     user: 'Użytkownik',
     profileInformation: 'Informacje o profilu',
     name: 'Imię',
