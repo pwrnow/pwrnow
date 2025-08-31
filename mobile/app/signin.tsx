@@ -60,6 +60,8 @@ export default function SignInScreen() {
     if (!isLoading && isAuthenticated && !isAuthenticating) {
       // Reset the navigation stack to the home screen
       router.replace('/');
+      // Reset the entire navigation stack to prevent back navigation
+      router.dismissAll();
     }
   }, [isLoading, isAuthenticated, isAuthenticating]);
 
@@ -87,6 +89,12 @@ export default function SignInScreen() {
           await setAuthFromBackend(backendResult);
           // Reset navigation stack to home screen after successful login
           router.replace('/');
+          // Reset the entire navigation stack to prevent back navigation
+          try {
+            router.dismissAll();
+          } catch (err: any) {
+            console.error('Error dismissing all navigation stacks', err);
+          }
         } catch (err: any) {
           console.error('Social login error', err);
           Alert.alert('Login failed', err.message || 'Unknown error');
@@ -149,6 +157,8 @@ export default function SignInScreen() {
 
       // Reset navigation stack to home screen after successful login
       router.replace('/');
+      // Reset the entire navigation stack to prevent back navigation
+      router.dismissAll();
     } catch (error: any) {
       console.error('Apple sign-in error:', error);
 
@@ -166,6 +176,8 @@ export default function SignInScreen() {
   const handleGoBack = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.replace('/');
+    // Reset the entire navigation stack to prevent back navigation
+    router.dismissAll();
   };
 
   const handleGooglePress = async () => {
@@ -317,22 +329,22 @@ export default function SignInScreen() {
                 borderWidth: 1.5,
                 borderColor: isDark ? '#374151' : '#E5E7EB',
                 borderRadius: 14,
-                paddingVertical: 16,
+                paddingVertical: 14,
                 paddingHorizontal: 24,
                 shadowColor: '#000000',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.08,
                 shadowRadius: 8,
                 elevation: 3,
-                minHeight: 52,
+                minHeight: 48,
                 opacity: isAuthenticating ? 0.6 : 1,
               }}
               activeOpacity={0.8}
             >
               {/* Google G Logo SVG */}
               <Svg
-                width={22}
-                height={22}
+                width={20}
+                height={20}
                 viewBox='0 0 24 24'
                 style={{ marginRight: 16 }}
               >
@@ -355,7 +367,7 @@ export default function SignInScreen() {
               </Svg>
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: '500',
                   color: '#1F1F1F',
                   fontFamily: 'SpaceGrotesk-Medium',
@@ -367,7 +379,7 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             {/* Apple Sign-In Button */}
-            {Platform.OS === 'ios' ? (
+            {Platform.OS === 'ios' && (
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={
                   AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
@@ -380,52 +392,10 @@ export default function SignInScreen() {
                 cornerRadius={14}
                 style={{
                   width: '100%',
-                  height: 52,
+                  height: 48,
                 }}
                 onPress={handleApplePress}
               />
-            ) : (
-              <TouchableOpacity
-                onPress={handleApplePress}
-                disabled={isAuthenticating}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: isDark ? '#FFFFFF' : '#000000',
-                  borderWidth: 1.5,
-                  borderColor: isDark ? '#374151' : '#000000',
-                  borderRadius: 14,
-                  paddingVertical: 16,
-                  paddingHorizontal: 24,
-                  shadowColor: '#000000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 8,
-                  elevation: 3,
-                  minHeight: 52,
-                  opacity: isAuthenticating ? 0.6 : 1,
-                }}
-                activeOpacity={0.8}
-              >
-                <Feather
-                  name='smartphone'
-                  size={20}
-                  color={isDark ? '#000000' : '#FFFFFF'}
-                  style={{ marginRight: 16 }}
-                />
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '500',
-                    color: isDark ? '#000000' : '#FFFFFF',
-                    fontFamily: 'SpaceGrotesk-Medium',
-                    letterSpacing: 0.1,
-                  }}
-                >
-                  {t('continueWithApple')}
-                </Text>
-              </TouchableOpacity>
             )}
           </View>
 
