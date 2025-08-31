@@ -1,11 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useEventBySlug, useEventPosts } from '../lib/queries';
 import { generateEventDays } from '../components/WeekDaySelector';
 import { generateScheduleData } from '../lib/scheduleDataGenerator';
 
 export const useEventData = (eventSlug?: string) => {
-  const [selectedDay, setSelectedDay] = useState<string>('');
-
   // Query hooks
   const {
     data: event,
@@ -28,15 +26,6 @@ export const useEventData = (eventSlug?: string) => {
     return generateScheduleData(eventDays);
   }, [eventDays]);
 
-  // Initialize selected day when event days are available
-  useEffect(() => {
-    if (eventDays.length > 0 && !selectedDay) {
-      // Try to select today if it's within the event dates, otherwise select the first day
-      const todayOption = eventDays.find((day) => day.isToday);
-      setSelectedDay(todayOption ? todayOption.id : eventDays[0].id);
-    }
-  }, [eventDays, selectedDay]);
-
   // Combined loading state
   const isLoading = isLoadingEvent || isLoadingPosts;
 
@@ -46,7 +35,6 @@ export const useEventData = (eventSlug?: string) => {
     posts,
     eventDays,
     scheduleByDay,
-    selectedDay,
 
     // Loading states
     isLoading,
@@ -56,8 +44,5 @@ export const useEventData = (eventSlug?: string) => {
     // Errors
     eventError,
     postsError,
-
-    // Actions
-    setSelectedDay,
   };
 };

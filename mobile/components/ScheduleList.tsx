@@ -33,7 +33,7 @@ const isEventCurrent = (dayId: string, time: string, endTime: string) => {
   return now >= startDateTime && now <= endDateTime;
 };
 
-export const ScheduleList: React.FC<Props> = ({ dayId, items, isDark }) => {
+const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
   return (
     <View className='space-y-2'>
       {items.map((item, index) => {
@@ -170,5 +170,7 @@ export const ScheduleList: React.FC<Props> = ({ dayId, items, isDark }) => {
     </View>
   );
 };
+
+export const ScheduleList = React.memo(ScheduleListComponent);
 
 export default ScheduleList;

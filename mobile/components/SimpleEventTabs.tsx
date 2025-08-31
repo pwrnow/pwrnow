@@ -15,8 +15,7 @@ import { formatPostTime, getInitials } from '../lib/format';
 
 // Import existing components
 import PostsList from './PostsList';
-import ScheduleList from './ScheduleList';
-import WeekDaySelector from './WeekDaySelector';
+import EventScheduleTab from './EventScheduleTab';
 import EventHeroImage from './EventHeroImage';
 import OrganizationHeader from './OrganizationHeader';
 import EventMetaCard from './EventMetaCard';
@@ -36,8 +35,6 @@ interface Props {
   posts?: any[];
   isLoadingPosts?: boolean;
   postsError?: any;
-  selectedDay: string;
-  setSelectedDay: (dayId: string) => void;
   eventDays: any[];
   itemsByDay: Record<string, any[]>;
   onMapPress?: () => void;
@@ -193,42 +190,10 @@ const PostsScene: React.FC<{
 
 // Schedule Scene Component
 const ScheduleScene: React.FC<{
-  selectedDay: string;
-  setSelectedDay: (dayId: string) => void;
   eventDays: any[];
   itemsByDay: Record<string, any[]>;
-}> = React.memo(({ selectedDay, setSelectedDay, eventDays, itemsByDay }) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  return (
-    <View className='flex-1'>
-      {eventDays.length > 1 && (
-        <View className='mt-3 px-4'>
-          <WeekDaySelector
-            selectedDay={selectedDay}
-            onDaySelect={setSelectedDay}
-            days={eventDays}
-          />
-        </View>
-      )}
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        className='flex-1'
-        contentContainerStyle={{
-          paddingBottom: 24,
-          paddingTop: eventDays.length > 1 ? 0 : 16,
-        }}
-      >
-        <ScheduleList
-          dayId={selectedDay}
-          items={itemsByDay[selectedDay] || []}
-          isDark={isDark}
-        />
-      </ScrollView>
-    </View>
-  );
+}> = React.memo(({ eventDays, itemsByDay }) => {
+  return <EventScheduleTab eventDays={eventDays} itemsByDay={itemsByDay} />;
 });
 
 export const SimpleEventTabs: React.FC<Props> = React.memo(
@@ -237,8 +202,6 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     posts,
     isLoadingPosts,
     postsError,
-    selectedDay,
-    setSelectedDay,
     eventDays,
     itemsByDay,
     onMapPress,
@@ -272,12 +235,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
         />
       ),
       schedule: () => (
-        <ScheduleScene
-          selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay}
-          eventDays={eventDays}
-          itemsByDay={itemsByDay}
-        />
+        <ScheduleScene eventDays={eventDays} itemsByDay={itemsByDay} />
       ),
     });
 

@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useColorScheme } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { t, deviceLocaleTag } from '../lib/i18n';
+import { deviceLocaleTag } from '../lib/i18n';
 
 interface DayOption {
   id: string;
@@ -21,24 +20,24 @@ interface WeekDaySelectorProps {
   days: DayOption[];
 }
 
-export default function WeekDaySelector({
+const WeekDaySelectorComponent: React.FC<WeekDaySelectorProps> = ({
   selectedDay,
   onDaySelect,
   days,
-}: WeekDaySelectorProps) {
+}) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const handleDayPress = async (dayId: string) => {
-    await Haptics.selectionAsync();
-    onDaySelect(dayId);
-  };
+  const handleDayPress = useCallback(
+    async (dayId: string) => {
+      await Haptics.selectionAsync();
+      onDaySelect(dayId);
+    },
+    [onDaySelect]
+  );
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(300).delay(100)}
-      className='mb-4'
-    >
+    <View className='mb-4'>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -116,9 +115,11 @@ export default function WeekDaySelector({
           );
         })}
       </ScrollView>
-    </Animated.View>
+    </View>
   );
-}
+};
+
+export default React.memo(WeekDaySelectorComponent);
 
 // Helper function to generate days from an event
 export const generateEventDays = (

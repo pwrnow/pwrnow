@@ -51,11 +51,9 @@ export default function EventDetailScreen() {
     posts,
     eventDays,
     scheduleByDay,
-    selectedDay,
     isLoading,
     eventError,
     postsError,
-    setSelectedDay,
   } = useEventData(eventSlugString);
 
   const { handleHeartPress, handleMapPress, handleExternalLink } =
@@ -186,8 +184,6 @@ export default function EventDetailScreen() {
           posts={posts}
           isLoadingPosts={false} // We handle loading at the top level
           postsError={postsError}
-          selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay}
           eventDays={eventDays}
           itemsByDay={scheduleByDay}
           onMapPress={handleMapPress}

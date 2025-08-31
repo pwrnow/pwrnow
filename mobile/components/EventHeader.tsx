@@ -26,8 +26,14 @@ export const EventHeader: React.FC<EventHeaderProps> = React.memo(
           <Feather name='arrow-left' size={24} color={iconPrimary} />
         </TouchableOpacity>
         <Text
-          className='flex-1 text-center text-lg font-groteskSemibold text-black dark:text-white mx-4'
-          numberOfLines={1}
+          className='flex-1 text-center font-groteskSemibold text-black dark:text-white mx-4'
+          numberOfLines={2}
+          adjustsFontSizeToFit={true}
+          minimumFontScale={0.7}
+          style={{
+            fontSize: 16,
+            lineHeight: 20,
+          }}
         >
           {title}
         </Text>
