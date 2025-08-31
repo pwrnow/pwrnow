@@ -145,6 +145,10 @@ class Event(models.Model):
     # Timing
     starts_at = models.DateTimeField(db_index=True)
     ends_at = models.DateTimeField(db_index=True)
+    publication_date = models.DateField(
+        db_index=True,
+        help_text="Date when the event will be published and appear on the website. Notifications are sent on this date at 9 AM."
+    )
 
     # Media and external links
     image = models.ImageField(
@@ -264,15 +268,21 @@ class Event(models.Model):
         return timezone.now() < self.starts_at
 
     def check_is_new(self):
-        """Check if the event was verified in the last 24 hours."""
-        if not self.verified_at:
+        """Check if the event was published in the last 24 hours."""
+        if not self.publication_date:
             return False
-        return timezone.now() - self.verified_at < timezone.timedelta(days=1)
+        today = timezone.now().date()
+        return (today - self.publication_date).days < 1
 
     @property
     def duration(self):
         """Get event duration as timedelta."""
         return self.ends_at - self.starts_at
+
+    @property
+    def likes_count(self):
+        """Get the total number of likes for this event."""
+        return self.likes.count()
 
 
 class Like(models.Model):

@@ -124,7 +124,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            'title', 'description', 'starts_at', 'ends_at',
+            'title', 'description', 'starts_at', 'ends_at', 'publication_date',
             'location', 'url', 'category_slug', 'image'
         ]
         extra_kwargs = {
@@ -135,12 +135,22 @@ class EventCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        """Validate that end time is after start time"""
+        """Validate that end time is after start time and publication date is in future"""
         if data.get('starts_at') and data.get('ends_at'):
             if data['ends_at'] <= data['starts_at']:
                 raise serializers.ValidationError({
                     'ends_at': _('End time must be after start time.')
                 })
+
+        # Validate publication date is in the future (not today or past)
+        if data.get('publication_date'):
+            from django.utils import timezone
+            today = timezone.now().date()
+            if data['publication_date'] <= today:
+                raise serializers.ValidationError({
+                    'publication_date': _('Publication date must be in the future (not today or earlier).')
+                })
+
         return data
 
     def validate_image(self, value):

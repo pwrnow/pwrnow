@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
+from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage
 from .forms import OrganizationAdminForm, EventAdminForm
@@ -174,24 +175,28 @@ class EventAdmin(TranslationAdmin):
         'image_preview',
         'starts_at',
         'ends_at',
+        'publication_date',
         'category',
         'organization',
         'verified',
-        'status_display'
+        'status_display',
+        'likes_count_display',
+        'notification_status_display'
     ]
     list_filter = [
         'verified',
         'category',
         'organization',
         'starts_at',
-        'created_at'
+        'created_at',
+        'publication_date'
     ]
     search_fields = ['title', 'description', 'location', 'slug']
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['verified']
     date_hierarchy = 'starts_at'
     ordering = ['starts_at']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'likes_count_display']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
 
@@ -203,7 +208,7 @@ class EventAdmin(TranslationAdmin):
             'fields': ('title', 'slug', 'description', 'category')
         }),
         ('Timing', {
-            'fields': ('starts_at', 'ends_at', 'duration_display')
+            'fields': ('starts_at', 'ends_at', 'publication_date', 'duration_display')
         }),
         ('Location & Links', {
             'fields': ('location', 'url', 'image', 'aspect_ratio')
@@ -266,12 +271,40 @@ class EventAdmin(TranslationAdmin):
             return f"{int(hours)}h {int(minutes)}m"
         return "-"
 
+    @admin.display(description='Likes')
+    def likes_count_display(self, obj):
+        count = obj.likes_count
+        return format_html('<span style="color: #10b981;">❤️ {}</span>', count)
+    likes_count_display.short_description = 'Likes'
+
+    @admin.display(description='Notification Status')
+    def notification_status_display(self, obj):
+        """Show notification eligibility status for the event."""
+        if not obj.verified:
+            return format_html('<span style="color: #dc3545;">✗ Not verified</span>')
+
+        if not obj.publication_date:
+            return format_html('<span style="color: #ffc107;">⚠ No publication date</span>')
+
+        today = timezone.now().date()
+        if obj.publication_date > today:
+            return format_html(
+                '<span style="color: #17a2b8;">📅 Publishes {}</span>',
+                obj.publication_date.strftime('%Y-%m-%d')
+            )
+        elif obj.publication_date == today:
+            return format_html('<span style="color: #ffc107;">⚠ Invalid: Cannot publish today</span>')
+        else:
+            return format_html('<span style="color: #dc3545;">✗ Invalid: Published in past ({})</span>',
+                            obj.publication_date.strftime('%Y-%m-%d'))
+    notification_status_display.short_description = 'Notification Status'
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'category', 'organization'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications', 'detect_aspect_ratios']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications', 'detect_aspect_ratios', 'send_publication_notifications', 'force_send_notifications']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -287,12 +320,12 @@ class EventAdmin(TranslationAdmin):
         """Trigger aspect ratio detection for selected events."""
         queued_count = 0
         skipped_count = 0
-        
+
         for event in queryset:
             if not event.image:
                 skipped_count += 1
                 continue
-                
+
             # Trigger the aspect ratio detection task
             try:
                 from .tasks import detect_event_image_aspect_ratio
@@ -306,13 +339,99 @@ class EventAdmin(TranslationAdmin):
                     queued_count += 1
                 except Exception:
                     skipped_count += 1
-        
+
         if queued_count:
             self.message_user(request, f'Aspect ratio detection queued for {queued_count} events.')
         if skipped_count:
             level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
             self.message_user(request, f'Skipped {skipped_count} events (no image).', level=level)
     detect_aspect_ratios.short_description = "Detect aspect ratios for selected events"
+
+    def send_publication_notifications(self, request, queryset):
+        """Forcefully send publication notifications for selected events."""
+        queued_count = 0
+        skipped_count = 0
+
+        for event in queryset:
+            if not event.verified:
+                skipped_count += 1
+                continue
+
+
+
+            # Trigger the publication notification task
+            try:
+                from notifications.tasks import send_daily_publication_notifications
+                # Create a custom task for single event
+                from notifications.services import push_service
+                count = push_service.send_event_publication_notification(event)
+                queued_count += 1
+                self.message_user(
+                    request,
+                    f'Publication notification sent for event "{event.title}" to {count} devices.'
+                )
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f'Failed to send publication notification for event "{event.title}": {str(e)}',
+                    level=messages.ERROR
+                )
+                skipped_count += 1
+
+        if queued_count:
+            self.message_user(
+                request,
+                f'Successfully sent publication notifications for {queued_count} events.'
+            )
+        if skipped_count:
+            level = messages.WARNING if queued_count == 0 else messages.INFO
+            self.message_user(
+                request,
+                f'Skipped {skipped_count} events (not verified).',
+                level=level
+            )
+    send_publication_notifications.short_description = "Send publication notifications for selected events"
+
+    def force_send_notifications(self, request, queryset):
+        """Forcefully send notifications for selected events regardless of publication date."""
+        queued_count = 0
+        skipped_count = 0
+
+        for event in queryset:
+            if not event.verified:
+                skipped_count += 1
+                continue
+
+            # Force send notification regardless of publication date
+            try:
+                from notifications.services import push_service
+                count = push_service.send_event_publication_notification(event)
+                queued_count += 1
+                self.message_user(
+                    request,
+                    f'Force notification sent for event "{event.title}" to {count} devices.'
+                )
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f'Failed to send force notification for event "{event.title}": {str(e)}',
+                    level=messages.ERROR
+                )
+                skipped_count += 1
+
+        if queued_count:
+            self.message_user(
+                request,
+                f'Successfully sent force notifications for {queued_count} events.'
+            )
+        if skipped_count:
+            level = messages.WARNING if queued_count == 0 else messages.INFO
+            self.message_user(
+                request,
+                f'Skipped {skipped_count} events (not verified).',
+                level=level
+            )
+    force_send_notifications.short_description = "Force send notifications for selected events (ignore publication date)"
 
     def resend_push_notifications(self, request, queryset):
         """Resend the "new event" push notification for selected, verified events."""
@@ -425,12 +544,12 @@ class PostImageAdmin(admin.ModelAdmin):
         """Trigger aspect ratio detection for selected post images."""
         queued_count = 0
         skipped_count = 0
-        
+
         for post_image in queryset:
             if not post_image.image:
                 skipped_count += 1
                 continue
-                
+
             # Trigger the aspect ratio detection task
             try:
                 from .tasks import detect_post_image_aspect_ratio
@@ -444,7 +563,7 @@ class PostImageAdmin(admin.ModelAdmin):
                     queued_count += 1
                 except Exception:
                     skipped_count += 1
-        
+
         if queued_count:
             self.message_user(request, f'Aspect ratio detection queued for {queued_count} post images.')
         if skipped_count:
@@ -494,13 +613,13 @@ class PostAdmin(admin.ModelAdmin):
         """Trigger aspect ratio detection for all images in selected posts."""
         queued_count = 0
         skipped_count = 0
-        
+
         for post in queryset:
             post_images = post.images.filter(image__isnull=False)
             if not post_images.exists():
                 skipped_count += 1
                 continue
-                
+
             for post_image in post_images:
                 # Trigger the aspect ratio detection task
                 try:
@@ -515,7 +634,7 @@ class PostAdmin(admin.ModelAdmin):
                         queued_count += 1
                     except Exception:
                         pass
-        
+
         if queued_count:
             self.message_user(request, f'Aspect ratio detection queued for {queued_count} post images across selected posts.')
         if skipped_count:

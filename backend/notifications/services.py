@@ -122,43 +122,124 @@ class ExpoPushNotificationService:
             return False
 
     def send_event_verification_notification(self, event: Event) -> int:
-        """Send verification notification for an event to all eligible devices."""
+        """Send push notification when an event is verified."""
+        try:
+            # Get all active devices
+            devices = Device.objects.filter(
+                notifications_enabled=True
+            )
 
-        # Get all active devices with notifications enabled
-        devices = Device.objects.filter(
-            notifications_enabled=True,
-            last_active_at__gte=timezone.now() - timezone.timedelta(days=30)
-        )
+            if not devices.exists():
+                logger.info("No active devices found for notifications")
+                return 0
 
-        # All devices get notifications
-        eligible_devices = list(devices)
+            # Prepare notification content
+            title = _("New Event Verified! 🎉")
+            body = _("Event '{event_title}' has been verified and is now live!").format(
+                event_title=event.title
+            )
 
-        if not eligible_devices:
-            logger.info(f"No eligible devices for event {event.id}")
+            # Send notifications to all devices
+            sent_count = 0
+            for device in devices:
+                try:
+                    success = self.send_notification_to_device(
+                        device=device,
+                        title=title,
+                        body=body,
+                        data={
+                            'type': 'event_verified',
+                            'event_id': str(event.id),
+                            'event_slug': event.slug,
+                            'organization_slug': event.organization.slug
+                        }
+                    )
+
+                    if success:
+                        # Create notification record
+                        PushNotification.objects.create(
+                            device=device,
+                            title=title,
+                            body=body,
+                            data={
+                                'type': 'event_verified',
+                                'event_id': str(event.id),
+                                'event_slug': event.slug,
+                                'organization_slug': event.organization.slug
+                            }
+                        )
+                        sent_count += 1
+
+                except Exception as e:
+                    logger.error(f"Error sending notification to device {device.id}: {str(e)}")
+                    continue
+
+            logger.info(f"Sent verification notifications to {sent_count} devices for event {event.title}")
+            return sent_count
+
+        except Exception as e:
+            logger.error(f"Error sending event verification notifications: {str(e)}")
             return 0
 
-        # Prepare base data
-        data = {
-            'type': 'event_verified',
-            'event_id': str(event.id),
-            'event_slug': event.slug,
-            'category_slug': event.category.slug if event.category else None,
-            'organization_slug': event.organization.slug if event.organization else None,
-        }
+    def send_event_publication_notification(self, event: Event) -> int:
+        """Send push notification when an event is published (on publication_date)."""
+        try:
+            # Get all active devices
+            devices = Device.objects.filter(
+                notifications_enabled=True
+            )
 
-        # Send notifications per-device with localized content
-        success_count = 0
-        for device in eligible_devices:
-            lang = (getattr(device, 'preferred_language', None) or settings.LANGUAGE_CODE).split('-')[0]
+            if not devices.exists():
+                logger.info("No active devices found for publication notifications")
+                return 0
 
-            # Build localized, concise content
-            title, body, subtitle = self._build_notification_content(event, lang)
+            # Prepare notification content
+            title = _("New Event Published! 🚀")
+            body = _("Event '{event_title}' is now live on the website!").format(
+                event_title=event.title
+            )
 
-            if self.send_notification_to_device(device, title, body, data, subtitle=subtitle):
-                success_count += 1
+            # Send notifications to all devices
+            sent_count = 0
+            for device in devices:
+                try:
+                    success = self.send_notification_to_device(
+                        device=device,
+                        title=title,
+                        body=body,
+                        data={
+                            'type': 'event_published',
+                            'event_id': str(event.id),
+                            'event_slug': event.slug,
+                            'organization_slug': event.organization.slug
+                        }
+                    )
 
-        logger.info(f"Sent {success_count}/{len(eligible_devices)} notifications for event {event.id}")
-        return success_count
+                    if success:
+                        # Create notification record
+                        PushNotification.objects.create(
+                            device=device,
+                            title=title,
+                            body=body,
+                            data={
+                                'type': 'event_published',
+                                'event_id': str(event.id),
+                                'event_slug': event.slug,
+                                'organization_slug': event.organization.slug
+                            }
+                        )
+                        sent_count += 1
+
+                except Exception as e:
+                    logger.error(f"Error sending publication notification to device {device.id}: {str(e)}")
+                    continue
+
+            logger.info(f"Sent publication notifications to {sent_count} devices for event {event.title}")
+            return sent_count
+
+        except Exception as e:
+            logger.error(f"Error sending event publication notifications: {str(e)}")
+            return 0
 
     # --- Helpers ---------------------------------------------------------
 
@@ -277,22 +358,27 @@ class ExpoPushNotificationService:
         )
 
         if not pending_notifications:
-            return
+            return 0
 
         ticket_ids = [n.expo_ticket_id for n in pending_notifications]
         receipts = self.check_delivery_receipts(ticket_ids)
 
+        updated_count = 0
         for notification in pending_notifications:
             receipt = receipts.get(notification.expo_ticket_id)
             if receipt:
                 if receipt.get('status') == 'ok':
                     notification.status = 'delivered'
                     notification.delivered_at = timezone.now()
+                    updated_count += 1
                 elif receipt.get('status') == 'error':
                     notification.status = 'failed'
                     notification.error_message = receipt.get('message', 'Delivery failed')
+                    updated_count += 1
 
                 notification.save()
+
+        return updated_count
 
 
 # Singleton instance

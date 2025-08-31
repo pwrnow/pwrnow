@@ -570,6 +570,54 @@ export default function AddEventForm({
           />
         </div>
 
+        {/* Publication Date Field */}
+        <FormField
+          control={form.control}
+          name='publicationDate'
+          render={({ field }) => (
+            <FormItem className='flex flex-col'>
+              <FormLabel>{t('publicationDate')}</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full pl-3 text-left font-normal',
+                        !field.value && 'text-muted-foreground'
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, 'PPP')
+                      ) : (
+                        <span>{t('pickPublicationDate')}</span>
+                      )}
+                      <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className='w-auto p-0' align='start'>
+                  <Calendar
+                    mode='single'
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date <= today;
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className='text-sm text-muted-foreground'>
+                {t('publicationDateHelp')}
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormItem>
           <FormLabel>{t('image')}</FormLabel>
           <Dropzone

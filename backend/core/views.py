@@ -230,15 +230,21 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             queryset = queryset.filter(organization__id=current_org.id)
         else:
             # Apply filters first, then annotations
-            queryset = queryset.filter(verified=True, ends_at__gte=now)
+            # Only show events that are published today or in the past
+            today = timezone.now().date()
+            queryset = queryset.filter(
+                verified=True,
+                ends_at__gte=now,
+                publication_date__lte=today
+            )
 
         # Simpler ordering - avoid complex CASE statements
         return queryset.extra(
             select={
                 'is_today': "DATE(starts_at) = %s",
-                'is_new': "verified_at >= %s"
+                'is_new': "publication_date = %s"
             },
-            select_params=[today, twenty_four_hours_ago],
+            select_params=[today, today],
             order_by=['-is_today', '-is_new', 'starts_at']
         )
 

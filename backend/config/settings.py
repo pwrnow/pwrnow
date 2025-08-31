@@ -450,6 +450,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.update_notification_delivery_status',
         'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
+    'send-daily-publication-notifications': {
+        'task': 'notifications.tasks.send_daily_publication_notifications',
+        'schedule': crontab(hour=9, minute=0),  # Daily at 9 AM
+    },
     'cleanup-old-notifications': {
         'task': 'notifications.tasks.cleanup_old_notifications',
         'schedule': crontab(hour=2, minute=0),  # Daily at 2 AM

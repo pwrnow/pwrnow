@@ -14,6 +14,7 @@ export interface Event {
   description?: string;
   starts_at: string;
   ends_at: string;
+  publication_date?: string;
   location?: string;
   image_url?: string;
   url?: string;

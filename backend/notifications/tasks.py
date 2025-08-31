@@ -35,12 +35,48 @@ def send_event_verification_notifications(event_id):
 @shared_task
 def update_notification_delivery_status():
     """Periodically update delivery status of sent notifications."""
-
     try:
-        push_service.update_delivery_status()
-        logger.info("Updated notification delivery status")
+        count = push_service.update_delivery_status()
+        logger.info(f"Updated delivery status for {count} notifications")
+        return count
     except Exception as e:
-        logger.error(f"Error updating delivery status: {str(e)}")
+        logger.error(f"Error updating notification delivery status: {str(e)}")
+        return 0
+
+
+@shared_task
+def send_daily_publication_notifications():
+    """Send notifications for all events published today at 9 AM."""
+    try:
+        today = timezone.now().date()
+
+        # Get all events published today that are verified
+        events = Event.objects.filter(
+            publication_date=today,
+            verified=True
+        ).select_related('organization', 'category')
+
+        if not events.exists():
+            logger.info(f"No events published today ({today})")
+            return 0
+
+        total_notifications = 0
+
+        for event in events:
+            try:
+                count = push_service.send_event_publication_notification(event)
+                total_notifications += count
+                logger.info(f"Sent {count} publication notifications for event {event.title}")
+            except Exception as e:
+                logger.error(f"Error sending publication notifications for event {event.id}: {str(e)}")
+                continue
+
+        logger.info(f"Sent total of {total_notifications} publication notifications for {events.count()} events")
+        return total_notifications
+
+    except Exception as e:
+        logger.error(f"Error in daily publication notifications task: {str(e)}")
+        return 0
 
 
 @shared_task
