@@ -61,7 +61,11 @@ export default function SignInScreen() {
       // Reset the navigation stack to the home screen
       router.replace('/');
       // Reset the entire navigation stack to prevent back navigation
-      router.dismissAll();
+      try {
+        router.dismissAll();
+      } catch (err: any) {
+        console.error('Error dismissing all navigation stacks', err);
+      }
     }
   }, [isLoading, isAuthenticated, isAuthenticating]);
 
@@ -157,8 +161,6 @@ export default function SignInScreen() {
 
       // Reset navigation stack to home screen after successful login
       router.replace('/');
-      // Reset the entire navigation stack to prevent back navigation
-      router.dismissAll();
     } catch (error: any) {
       console.error('Apple sign-in error:', error);
 
@@ -175,9 +177,7 @@ export default function SignInScreen() {
 
   const handleGoBack = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.replace('/');
-    // Reset the entire navigation stack to prevent back navigation
-    router.dismissAll();
+    router.back();
   };
 
   const handleGooglePress = async () => {

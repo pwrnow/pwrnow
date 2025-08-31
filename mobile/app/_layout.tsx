@@ -150,7 +150,7 @@ function ProfileHeaderButton() {
     if (isAuthenticated) {
       router.push('/profile');
     } else {
-      router.replace('/signin');
+      router.push('/signin');
     }
   };
 
