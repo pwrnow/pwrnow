@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import environ
 import ssl
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -487,6 +488,27 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_ONLY = True
 
 GOOGLE_CALLBACK_URL = env("GOOGLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/google/")
+APPLE_CALLBACK_URL = env("APPLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/apple/")
+# Helper function to read Apple private key from file
+def get_apple_private_key():
+    """Read Apple private key from file path specified in environment variable."""
+    private_key_path = env("APPLE_PRIVATE_KEY_PATH")
+    if not private_key_path:
+        return ""
+
+    # If it's an absolute path, use it directly
+    if os.path.isabs(private_key_path):
+        key_path = private_key_path
+    else:
+        # If it's a relative path, make it relative to the backend directory
+        key_path = BASE_DIR / private_key_path
+
+    try:
+        with open(key_path, 'r') as f:
+            return f.read().strip()
+    except (FileNotFoundError, IOError) as e:
+        print(f"Warning: Could not read Apple private key from {key_path}: {e}")
+        return ""
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -504,13 +526,18 @@ SOCIALACCOUNT_PROVIDERS = {
     #     "SCOPE": ["email"],
     #     "AUTH_PARAMS": {"auth_type": "rerequest"},
     # },
-    # "apple": {
-    #     "APP": {
-    #         "client_id": env("APPLE_CLIENT_ID"),  # Service ID
-    #         "secret": env("APPLE_CLIENT_SECRET"), # a JWT you generate from your Apple key (see below)
-    #         "key": env("APPLE_TEAM_ID", default=""),  # not required here but keep for clarity
-    #     },
-    # },
+    "apple": {
+        "APP": {
+            "client_id": env("APPLE_CLIENT_ID"),  # Service ID
+            "secret": env("APPLE_KEY_ID"),
+            "key": env("APPLE_TEAM_ID"),  # Apple Team ID
+            "settings": {
+                "certificate_key": get_apple_private_key(),
+            },
+        },
+        # "SCOPE": ["email", "name"],
+        # "AUTH_PARAMS": {"access_type": "online"},
+    },
 }
 REST_AUTH = {
     'USE_JWT': True,

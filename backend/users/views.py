@@ -4,7 +4,9 @@ from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
 # Apple often uses a special client, but the adapter can handle it in many setups
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client as AllAuthOAuth2Client
+from allauth.socialaccount.providers.apple.client import AppleOAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings
 
 
 class OAuth2Error(Exception):
@@ -38,5 +40,4 @@ class FacebookLogin(SocialLoginView):
 
 class AppleLogin(SocialLoginView):
     adapter_class = AppleOAuth2Adapter
-    client_class = OAuth2Client  # or Apple-specific client if required
-    # callback_url = settings.APPLE_CALLBACK_URL
+    client_class = AppleOAuth2Client

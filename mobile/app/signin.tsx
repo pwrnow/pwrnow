@@ -101,9 +101,85 @@ export default function SignInScreen() {
 
   const handleAppleSignIn = async () => {
     try {
-      Alert.alert('Apple Sign-In', 'Apple sign-in not implemented yet');
+      setIsAuthenticating(true);
+
+      // Check if we're on iOS
+      if (Platform.OS !== 'ios') {
+        Alert.alert('Error', 'Apple Sign In is only available on iOS devices');
+        return;
+      }
+
+      // Check if Apple authentication is available
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Error', 'Apple Sign In is not available on this device');
+        return;
+      }
+
+      // Perform Apple authentication
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      console.log('Apple authentication credential:', credential);
+
+      // Extract the authorization code from the credential
+      const { identityToken, user, fullName, email } = credential;
+
+      console.log('Apple authentication successful:', {
+        user: user,
+        hasFullName: !!fullName,
+        hasEmail: !!email,
+      });
+
+      if (!identityToken) {
+        throw new Error('No identity token received from Apple');
+      }
+
+      // Send the authorization code to your backend
+      const backendResult = await authenticate('apple', identityToken, {
+        lastName: fullName?.familyName,
+        firstName: fullName?.givenName,
+        email: email,
+      });
+      await setAuthFromBackend(backendResult);
+
+      // Reset navigation stack to home screen after successful login
+      router.replace('/');
     } catch (error: any) {
-      Alert.alert('Apple sign-in error', error.message);
+      console.error('Apple sign-in error:', error);
+
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        // User canceled the sign-in flow - no need to show an alert
+        console.log('Apple sign-in was canceled by user');
+      } else if (error.code === 'ERR_REQUEST_FAILED') {
+        Alert.alert(
+          'Sign In Failed',
+          'Apple authentication failed. Please try again.'
+        );
+      } else if (error.code === 'ERR_REQUEST_NOT_HANDLED') {
+        Alert.alert(
+          'Sign In Error',
+          'Apple authentication request was not handled properly.'
+        );
+      } else if (error.code === 'ERR_INVALID_RESPONSE') {
+        Alert.alert(
+          'Sign In Error',
+          'Invalid response from Apple. Please try again.'
+        );
+      } else if (error.code === 'ERR_INVALID_SCOPE') {
+        Alert.alert('Sign In Error', 'Invalid authentication scope requested.');
+      } else {
+        Alert.alert(
+          'Sign In Error',
+          error.message || 'An unexpected error occurred during Apple sign-in.'
+        );
+      }
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
@@ -252,7 +328,7 @@ export default function SignInScreen() {
             {/* Google Sign-In Button */}
             <TouchableOpacity
               onPress={handleGooglePress}
-              disabled={!googleRequest}
+              disabled={!googleRequest || isAuthenticating}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -269,6 +345,7 @@ export default function SignInScreen() {
                 shadowRadius: 8,
                 elevation: 3,
                 minHeight: 52,
+                opacity: isAuthenticating ? 0.6 : 1,
               }}
               activeOpacity={0.8}
             >
@@ -313,7 +390,7 @@ export default function SignInScreen() {
             {Platform.OS === 'ios' ? (
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={
-                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                  AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
                 }
                 buttonStyle={
                   isDark
@@ -330,6 +407,7 @@ export default function SignInScreen() {
             ) : (
               <TouchableOpacity
                 onPress={handleApplePress}
+                disabled={isAuthenticating}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -346,6 +424,7 @@ export default function SignInScreen() {
                   shadowRadius: 8,
                   elevation: 3,
                   minHeight: 52,
+                  opacity: isAuthenticating ? 0.6 : 1,
                 }}
                 activeOpacity={0.8}
               >

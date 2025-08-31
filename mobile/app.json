@@ -34,7 +34,8 @@
         "dark": {
           "backgroundColor": "#000000"
         }
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "pl.pwrnow.app",
@@ -100,7 +101,8 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-apple-authentication"
     ],
     "scheme": "pwrnow",
     "extra": {

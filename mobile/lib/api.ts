@@ -6,9 +6,32 @@ import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from './authStorage';
 
 export type AuthProvider = 'google' | 'facebook' | 'apple';
 
-export async function authenticate(provider: AuthProvider, token: string) {
+export async function authenticate(
+  provider: AuthProvider,
+  token: string,
+  userData?: any
+) {
   const url = `${getApiUrl()}/auth/${provider}/`;
-  const body = { access_token: token };
+
+  // Provider-specific token key mapping
+  const tokenKeyMap: Record<AuthProvider, string> = {
+    google: 'access_token',
+    facebook: 'access_token',
+    apple: 'access_token',
+  };
+
+  const tokenKey = tokenKeyMap[provider];
+  let body: any = { [tokenKey]: token, ...userData };
+
+  // For Apple, send both access_token and id_token with the same value
+  if (provider === 'apple') {
+    body = {
+      access_token: token,
+      id_token: token,
+      ...userData,
+    };
+  }
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -16,7 +39,8 @@ export async function authenticate(provider: AuthProvider, token: string) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Social login failed: ${res.status} ${text}`);
+    // console.log('Social login failed:', text);
+    throw new Error(`Social login failed: ${res.status} ${res.statusText}`);
   }
   return res.json();
 }
