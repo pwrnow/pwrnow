@@ -12,6 +12,7 @@ import {
 import EventFeed from '../../components/EventFeed';
 import { Event, Category } from '../../types';
 import CategorySelector from '../../components/CategorySelector';
+import { OfflineIndicator } from '../../components/OfflineIndicator';
 import * as Haptics from 'expo-haptics';
 import { t } from '../../lib/i18n';
 import { useCategories, useEvents } from '../../lib/queries';
@@ -101,6 +102,11 @@ export default function HomeScreen() {
             onCategoryChange={setSelectedCategory}
           />
         </View>
+        {/* Offline indicator */}
+        <View className='px-4 py-2'>
+          <OfflineIndicator className='bg-gray-50 dark:bg-gray-900' />
+        </View>
+
         <EventFeed
           events={filteredEvents}
           selectedCategory={selectedCategory}

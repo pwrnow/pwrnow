@@ -17,6 +17,7 @@ import SimpleEventTabs from '../../components/SimpleEventTabs';
 import EventHeader from '../../components/EventHeader';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import { OfflineIndicator } from '../../components/OfflineIndicator';
 
 // Custom hooks
 import { useEventData } from '../../hooks/useEventData';
@@ -173,6 +174,11 @@ export default function EventDetailScreen() {
         isAuthenticated={isAuthenticated}
         iconPrimary={iconPrimary}
       />
+
+      {/* Offline indicator */}
+      <View className='px-4 py-2'>
+        <OfflineIndicator className='bg-gray-50 dark:bg-gray-900' />
+      </View>
 
       {/* Event Tabs */}
       <Animated.View

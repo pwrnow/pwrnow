@@ -3,6 +3,7 @@ import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from './authStorage';
+import { shouldAttemptNetworkRequest, isOffline } from './network';
 
 export type AuthProvider = 'google' | 'facebook' | 'apple';
 
@@ -124,6 +125,11 @@ async function fetchWithCredentials(
   options: RequestInit = {},
   useLocale: boolean = true
 ): Promise<Response> {
+  // Check if we should attempt network requests
+  if (!shouldAttemptNetworkRequest()) {
+    throw new Error('No internet connection available');
+  }
+
   // Append language parameter similarly to web to get translated content
   if (useLocale) {
     const locale = (i18n?.locale || 'pl').toLowerCase();
