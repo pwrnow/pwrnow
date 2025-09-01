@@ -29,18 +29,21 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
   function navigateFromNotificationData(data: NotificationData | undefined) {
     if (!data) return;
 
-    // Handle different notification types
-    if (
-      (data.type === 'event_verified' || data.type === 'test') &&
-      data.event_slug
-    ) {
-      const targetPath = `/wydarzenia/${data.event_slug}` as const;
-      console.log('[Notifications] Navigating to event:', targetPath);
+    console.log('[Notifications] Processing notification data:', data);
+
+    // If URL is provided, navigate to it
+    if (data.url) {
+      // Strip domain and keep only the path
+      const url = new URL(data.url);
+      const path = url.pathname;
+      console.log('[Notifications] Navigating to path:', path);
       try {
-        router.push(targetPath as any);
+        router.push(path as any);
       } catch (err) {
         console.warn('[Notifications] Navigation failed:', err);
       }
+    } else {
+      console.log('[Notifications] No URL provided in notification data');
     }
   }
 
@@ -102,6 +105,7 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
         const data = lastResponse.notification.request.content
           .data as NotificationData;
         console.log('Last notification response found on mount:', data);
+        console.log('[Notifications] Attempting cold start navigation');
         navigateFromNotificationData(data);
       }
     });

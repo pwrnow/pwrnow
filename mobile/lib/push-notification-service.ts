@@ -31,6 +31,7 @@ export interface NotificationData {
   event_slug?: string;
   category_slug?: string;
   organization_slug?: string;
+  url?: string;
   [key: string]: any;
 }
 
