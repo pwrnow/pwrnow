@@ -13,7 +13,6 @@ import { SimpleEventTabs } from '../../components/SimpleEventTabs';
 import { LoadingState } from '../../components/LoadingState';
 import { ErrorState } from '../../components/ErrorState';
 import SignInRequiredModal from '../../components/SignInRequiredModal';
-import { OfflineIndicator } from '../../components/OfflineIndicator';
 import ImageView from 'react-native-image-viewing';
 import { useAnalytics } from '../../lib/analytics';
 import { useAuth } from '../../contexts/AuthContext';
@@ -172,11 +171,6 @@ export default function EventDetailScreen() {
         isAuthenticated={isAuthenticated}
         iconPrimary={iconPrimary}
       />
-
-      {/* Offline indicator */}
-      <View className='px-4 py-2'>
-        <OfflineIndicator className='bg-gray-50 dark:bg-gray-900' />
-      </View>
 
       {/* Event Tabs */}
       <Animated.View
