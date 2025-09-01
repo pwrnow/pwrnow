@@ -33,7 +33,7 @@ export const EventMetaCard: React.FC<Props> = ({
         <View className='space-y-4'>
           <TouchableOpacity
             onPress={handleAddToCalendar}
-            className='flex-row items-center'
+            className='flex-row items-center mb-2'
             activeOpacity={0.7}
           >
             <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
@@ -49,7 +49,7 @@ export const EventMetaCard: React.FC<Props> = ({
 
           <TouchableOpacity
             onPress={handleAddToCalendar}
-            className='flex-row items-center'
+            className='flex-row items-center mb-2'
             activeOpacity={0.7}
           >
             <View className='w-8 h-8 rounded-full bg-accentBlue/15 items-center justify-center mr-3'>
