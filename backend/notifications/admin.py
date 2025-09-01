@@ -8,6 +8,7 @@ from .models import Device, PushNotification
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
     list_display = [
+        'user',
         'device_name',
         'platform',
         'preferred_language',
@@ -24,10 +25,14 @@ class DeviceAdmin(admin.ModelAdmin):
         'last_active_at',
     ]
     search_fields = [
+        'user__email',
+        'user__username',
         'device_name',
         'expo_push_token',
         'app_version',
     ]
+    list_select_related = ['user']
+    raw_id_fields = ['user']
     readonly_fields = [
         'id',
         'created_at',
@@ -40,6 +45,7 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Basic Information', {
             'fields': (
                 'id',
+                'user',
                 'expo_push_token',
                 'device_name',
                 'platform',

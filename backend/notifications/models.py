@@ -42,6 +42,16 @@ class Device(models.Model):
         help_text="Version of the app"
     )
 
+    # Owner
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='devices',
+        help_text="User who owns this device"
+    )
+
     # Notification preferences
     notifications_enabled = models.BooleanField(
         default=True,
@@ -69,6 +79,7 @@ class Device(models.Model):
             models.Index(fields=['platform']),
             models.Index(fields=['notifications_enabled']),
             models.Index(fields=['last_active_at']),
+            models.Index(fields=['user'], name='device_user_idx'),
             models.Index(fields=['notifications_enabled', 'last_active_at'], name='device_enabled_last_active_idx'),
         ]
 

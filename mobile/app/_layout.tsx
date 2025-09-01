@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, View, TouchableOpacity } from 'react-native';
-import { usePushNotifications } from '../hooks/usePushNotifications';
+import { NotificationsProvider } from '../providers/notifications';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 import * as Haptics from 'expo-haptics';
@@ -32,10 +32,7 @@ export default function StackLayout() {
     'SpaceGrotesk-SemiBold': require('../assets/fonts/SpaceGrotesk-SemiBold.ttf'),
   });
 
-  // Initialize push notifications only after startup animation finishes
-  const { expoPushToken, isLoading: pushLoading } = usePushNotifications({
-    enabled: !showStartup,
-  });
+  // Push notifications handled via NotificationsProvider now
 
   useEffect(() => {
     if (loaded || error) {
@@ -45,11 +42,7 @@ export default function StackLayout() {
     }
   }, [loaded, error]);
 
-  useEffect(() => {
-    if (expoPushToken) {
-      console.log('Push notifications initialized with token:', expoPushToken);
-    }
-  }, [expoPushToken]);
+  // Token logging moved inside NotificationsProvider if needed
 
   const handleStartupEnd = useCallback(() => {
     hasShownStartupOnce = true;
@@ -62,19 +55,21 @@ export default function StackLayout() {
 
   return (
     <AuthProvider>
-      <QueryProvider>
-        <PosthogProvider>
-          {/* Startup overlay animation shown briefly after splash */}
-          <StartupAnimation visible={showStartup} onEnd={handleStartupEnd} />
-          <StatusBar
-            style={isDark ? 'light' : 'dark'}
-            animated
-            translucent={false}
-            backgroundColor={isDark ? '#000000' : '#FFFFFF'}
-          />
-          <RootNavigator />
-        </PosthogProvider>
-      </QueryProvider>
+      <NotificationsProvider enabled={!showStartup}>
+        <QueryProvider>
+          <PosthogProvider>
+            {/* Startup overlay animation shown briefly after splash */}
+            <StartupAnimation visible={showStartup} onEnd={handleStartupEnd} />
+            <StatusBar
+              style={isDark ? 'light' : 'dark'}
+              animated
+              translucent={false}
+              backgroundColor={isDark ? '#000000' : '#FFFFFF'}
+            />
+            <RootNavigator />
+          </PosthogProvider>
+        </QueryProvider>
+      </NotificationsProvider>
     </AuthProvider>
   );
 }

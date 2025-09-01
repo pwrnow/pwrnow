@@ -6,12 +6,14 @@ import {
   type NotificationData,
 } from '../lib/push-notification-service';
 import { deviceLocaleTag } from '../lib/i18n';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * React hook for managing push notifications
  */
 export function usePushNotifications(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true;
+  const { isAuthenticated } = useAuth();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<
     Notifications.Notification | undefined
@@ -113,6 +115,28 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
       }
     };
   }, [enabled]);
+
+  // After user signs in, re-register device to attach it to the user
+  useEffect(() => {
+    if (!enabled) return;
+    if (!isAuthenticated) return;
+    if (!expoPushToken) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const registered = await pushNotificationService.registerDevice(
+          expoPushToken,
+          { preferredLanguage: deviceLocaleTag }
+        );
+        if (isMounted) setIsRegistered(registered);
+      } catch (_e) {}
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, expoPushToken, enabled]);
 
   return {
     expoPushToken,
