@@ -506,7 +506,33 @@ class PostAdmin(admin.ModelAdmin):
         url = reverse('admin:core_postimage_changelist') + f'?post__id__exact={obj.id}'
         return format_html('<a href="{}">{} images</a>', url, cnt)
 
-    actions = ['detect_post_images_aspect_ratios']
+    actions = ['detect_post_images_aspect_ratios', 'send_post_notifications']
+
+    def send_post_notifications(self, request, queryset):
+        """Manually trigger post notifications for selected posts."""
+        from notifications.tasks import send_post_verification_notifications
+
+        queued_count = 0
+        skipped_count = 0
+
+        for post in queryset:
+            if not post.verified:
+                skipped_count += 1
+                continue
+
+            try:
+                # Trigger the notification task
+                send_post_verification_notifications.delay(str(post.id))
+                queued_count += 1
+            except Exception as e:
+                skipped_count += 1
+
+        if queued_count:
+            self.message_user(request, f'Post notifications queued for {queued_count} verified posts.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} posts (not verified).', level=level)
+    send_post_notifications.short_description = "Send post notifications to users who liked the event"
 
     def detect_post_images_aspect_ratios(self, request, queryset):
         """Trigger aspect ratio detection for all images in selected posts."""

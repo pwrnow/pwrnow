@@ -366,6 +366,11 @@ class Post(models.Model):
         if not (self.text and self.text.strip()) and not self.images.exists():
             raise ValidationError(_('Post must include text or at least one image.'))
 
+    @property
+    def public_url(self):
+        """Get the public-facing URL for this post, suitable for notifications and sharing."""
+        return f"{self.event.public_url}/posts/{self.id}"
+
     def save(self, *args, **kwargs):
         is_new_instance = self._state.adding
         if not is_new_instance:

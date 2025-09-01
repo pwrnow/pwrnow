@@ -146,31 +146,53 @@ def send_test_notification(device_id, title="Test Notification", body="This is a
 @shared_task
 def send_batch_notifications(notifications_data):
     """
-    Send multiple notifications in batches using the new batch functionality.
+    Send a batch of notifications using the push service.
 
     Args:
-        notifications_data: List of notification data dictionaries, each containing:
-            - to: Push token(s) - can be string or list of strings
-            - title: Notification title
-            - body: Notification body
-            - data: Optional notification data
-            - sound: Optional sound (default: 'default')
-            - badge: Optional badge count
-            - subtitle: Optional subtitle (iOS only)
-            - priority: Optional priority (default: 'high')
-            - channelId: Optional channel ID (default: 'default')
+        notifications_data: List of notification data dictionaries
 
     Returns:
         Dict with counts: {'sent': int, 'failed': int, 'total': int}
     """
     try:
-        from .services import push_service
-
         result = push_service.send_multiple_notifications(notifications_data)
+        logger.info(f"Batch notifications completed: {result['sent']} sent, {result['failed']} failed out of {result['total']} total")
+        return result
+    except Exception as e:
+        logger.error(f"Error sending batch notifications: {str(e)}")
+        return {'sent': 0, 'failed': 0, 'total': 0}
 
-        logger.info(f"Batch notification task completed: {result['sent']} sent, {result['failed']} failed out of {result['total']} total")
+
+@shared_task
+def send_post_verification_notifications(post_id):
+    """
+    Send notifications to users who liked the event when a post is verified.
+
+    Args:
+        post_id: The UUID of the verified post
+
+    Returns:
+        Dict with counts: {'sent': int, 'failed': int, 'total': int}
+    """
+    try:
+        from core.models import Post
+
+        # Get the post instance
+        post = Post.objects.select_related('event', 'organization').get(id=post_id)
+
+        if not post.verified:
+            logger.warning(f"Post {post_id} is not verified, skipping notifications")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
+        # Send notifications using the push service
+        result = push_service.send_post_verification_notifications(post)
+
+        logger.info(f"Post verification notifications for post {post_id}: {result['sent']} sent, {result['failed']} failed out of {result['total']} total")
         return result
 
+    except Post.DoesNotExist:
+        logger.error(f"Post {post_id} not found")
+        return {'sent': 0, 'failed': 0, 'total': 0}
     except Exception as e:
-        logger.error(f"Error in batch notification task: {str(e)}")
-        return {'sent': 0, 'failed': 0, 'total': 0, 'error': str(e)}
+        logger.error(f"Error sending post verification notifications for post {post_id}: {str(e)}")
+        return {'sent': 0, 'failed': 0, 'total': 0}

@@ -347,7 +347,111 @@ class ExpoPushNotificationService:
             logger.error(f"Error sending batch publication notifications: {str(e)}")
             return {'sent': 0, 'failed': 0, 'total': 0}
 
+    def send_post_verification_notifications(self, post):
+        """
+        Send notifications to users who liked the event when a post is verified.
 
+        Args:
+            post: Post instance that was just verified
+
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int, 'total': int}
+        """
+        try:
+            # Get users who liked the event associated with this post
+            from core.models import Like
+            liked_users = Like.objects.filter(event=post.event).values_list('user_id', flat=True)
+
+            if not liked_users.exists():
+                logger.info(f"No users liked event {post.event.id}, no notifications to send")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            # Get active devices for users who liked the event
+            devices = Device.objects.filter(
+                user_id__in=liked_users,
+                notifications_enabled=True
+            ).select_related('user')
+
+            if not devices.exists():
+                logger.info(f"No active devices found for users who liked event {post.event.id}")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            # Collect all notifications
+            all_notifications_data = []
+            notification_records = []
+
+            for device in devices:
+                try:
+                    # Determine language preference (default to Polish)
+                    lang = getattr(device, 'preferred_language', 'pl') or 'pl'
+
+                    # Build notification content
+                    title, body, subtitle = self._build_post_verification_content(post, lang)
+
+                    # Create notification data
+                    notification_data = {
+                        'to': device.expo_push_token,
+                        'title': title,
+                        'body': body,
+                        'data': {
+                            'type': 'post_verified',
+                            'post_id': str(post.id),
+                            'event_id': str(post.event.id),
+                            'event_slug': post.event.slug,
+                            'organization_slug': post.organization.slug if post.organization else None,
+                            'url': post.public_url,
+                        },
+                        'priority': 'high',
+                        'channelId': 'posts',
+                        'sound': 'default'
+                    }
+
+                    # Add subtitle for iOS devices
+                    if subtitle and device.platform == 'ios':
+                        notification_data['subtitle'] = subtitle
+
+                    all_notifications_data.append(notification_data)
+
+                    # Store notification record data
+                    notification_records.append({
+                        'title': title,
+                        'body': body,
+                        'data': notification_data['data'],
+                        'device': device,
+                        'post': post
+                    })
+
+                except Exception as e:
+                    logger.error(f"Error preparing notification for device {device.id}: {str(e)}")
+                    continue
+
+            if not all_notifications_data:
+                logger.info("No notifications to send")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            # Send all notifications in a single batch
+            result = self.send_multiple_notifications(all_notifications_data)
+
+            # Create notification records for successful sends
+            if result['sent'] > 0:
+                for record_data in notification_records:
+                    try:
+                        PushNotification.objects.create(
+                            title=record_data['title'],
+                            body=record_data['body'],
+                            data=record_data['data'],
+                            device=record_data['device'],
+                            status='sent'
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating notification record: {str(e)}")
+
+            logger.info(f"Post verification notifications completed: {result['sent']} sent, {result['failed']} failed out of {len(all_notifications_data)} total")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error sending post verification notifications: {str(e)}")
+            return {'sent': 0, 'failed': 0, 'total': 0}
 
     # --- Helpers ---------------------------------------------------------
 
@@ -430,6 +534,26 @@ class ExpoPushNotificationService:
             if event_time:
                 body_lines.append(event_time)
             body = self._truncate("\n".join(body_lines), 140)
+
+            return title, body, subtitle
+
+    def _build_post_verification_content(self, post, lang: str) -> Tuple[str, str, Optional[str]]:
+        with override(lang):
+            # Title: "New post" (always)
+            title_text = _("New post")
+            title = self._truncate(f"📝 {title_text}", 100)
+
+            # Subtitle: event title (localized)
+            localized_event_title = get_translated_field(post.event, 'title', lang) or post.event.title
+            subtitle = self._truncate(localized_event_title, 100)
+
+            # Body: either truncated text or empty
+            if post.text and post.text.strip():
+                # Show truncated description
+                body = self._truncate(post.text.strip(), 140)
+            else:
+                # No text available, body is empty
+                body = ""
 
             return title, body, subtitle
 

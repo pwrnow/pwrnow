@@ -31,6 +31,10 @@ msgstr "Angielski"
 msgid "New event available"
 msgstr "Nowe wydarzenie dostępne"
 
+#: notifications/services.py:450
+msgid "New post"
+msgstr "Nowy post"
+
 #: users/models.py:13
 msgid "email address"
 msgstr "adres e-mail"
