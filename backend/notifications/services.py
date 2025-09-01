@@ -290,6 +290,7 @@ class ExpoPushNotificationService:
                                 'event_slug': event.slug,
                                 'organization_slug': event.organization.slug if event.organization else None,
                                 'category_slug': event.category.slug if event.category else None,
+                                'url': event.public_url,
                             },
                             'priority': 'high',
                             'channelId': 'events',

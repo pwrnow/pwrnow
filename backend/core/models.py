@@ -252,6 +252,12 @@ class Event(models.Model):
         return reverse('event-detail', kwargs={'slug': self.slug})
 
     @property
+    def public_url(self):
+        """Get the public-facing URL for this event, suitable for notifications and sharing."""
+        from django.conf import settings
+        return f"{settings.SITE_URL}/wydarzenia/{self.slug}"
+
+    @property
     def is_past(self):
         """Check if event has ended."""
         return timezone.now() > self.ends_at
