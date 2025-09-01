@@ -260,28 +260,9 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           flex: 1,
           paddingVertical: 16,
         }}
-        renderLabel={({ route, focused }: { route: any; focused: boolean }) => {
-          const routeTyped = route as Route;
-          return (
-            <View className='flex-row items-center justify-center'>
-              <Feather
-                name={routeTyped.icon}
-                size={18}
-                color={focused ? '#2066DF' : isDark ? '#FFFFFF80' : '#00000080'}
-              />
-              <Text
-                className={`ml-2 font-groteskMedium text-sm ${
-                  focused
-                    ? 'text-accentBlue'
-                    : 'text-black/70 dark:text-white/70'
-                }`}
-              >
-                {routeTyped.title}
-              </Text>
-            </View>
-          );
-        }}
         pressColor='#2066DF20'
+        activeColor={isDark ? '#FFFFFF' : '#000000'}
+        inactiveColor={isDark ? '#FFFFFF80' : '#00000080'}
         onTabPress={() => {
           Haptics.selectionAsync();
         }}
@@ -303,7 +284,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           initialLayout={{ width: layout.width }}
           swipeEnabled={true}
           animationEnabled={true}
-          lazy={true}
+          lazy={false}
           style={{
             backgroundColor: isDark ? '#000000' : '#FFFFFF',
           }}
