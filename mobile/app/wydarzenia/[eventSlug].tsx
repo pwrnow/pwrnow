@@ -1,27 +1,25 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { View, Alert, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView, useColorScheme, View, Alert } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
+import { useColorScheme } from 'react-native';
+import Animated, {
+  FadeInDown,
   useSharedValue,
-  useAnimatedStyle,
   withSpring,
+  useAnimatedStyle,
 } from 'react-native-reanimated';
-
-import { useAnalytics } from '../../lib/analytics';
-import { t } from '../../lib/i18n';
-import { useAuth } from '../../contexts/AuthContext';
+import { EventHeader } from '../../components/EventHeader';
+import { SimpleEventTabs } from '../../components/SimpleEventTabs';
+import { LoadingState } from '../../components/LoadingState';
+import { ErrorState } from '../../components/ErrorState';
 import SignInRequiredModal from '../../components/SignInRequiredModal';
-import ImageView from 'react-native-image-viewing';
-import SimpleEventTabs from '../../components/SimpleEventTabs';
-import EventHeader from '../../components/EventHeader';
-import LoadingState from '../../components/LoadingState';
-import ErrorState from '../../components/ErrorState';
 import { OfflineIndicator } from '../../components/OfflineIndicator';
-
-// Custom hooks
+import ImageView from 'react-native-image-viewing';
+import { useAnalytics } from '../../lib/analytics';
+import { useAuth } from '../../contexts/AuthContext';
 import { useEventData } from '../../hooks/useEventData';
 import { useEventActions } from '../../hooks/useEventActions';
+import { t } from '../../lib/i18n';
 
 export default function EventDetailScreen() {
   const colorScheme = useColorScheme();

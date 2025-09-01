@@ -3,22 +3,26 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { t } from '../lib/i18n';
 import { formatDateRangeShort, formatTimeRangeShort } from '../lib/format';
+import { useCalendar } from '../hooks/useCalendar';
+import { Event } from '../types';
 
 interface Props {
   startsAt: string;
   endsAt: string;
   location?: string | null;
-  onCalendarPress?: () => void;
   onMapPress?: () => void;
+  event?: Event | null;
 }
 
 export const EventMetaCard: React.FC<Props> = ({
   startsAt,
   endsAt,
   location,
-  onCalendarPress,
   onMapPress,
+  event,
 }) => {
+  const { handleAddToCalendar } = useCalendar({ event });
+
   return (
     <View className='mx-4 mt-3 mb-3'>
       <View className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-4'>
@@ -26,9 +30,9 @@ export const EventMetaCard: React.FC<Props> = ({
           {t('eventDetails')}
         </Text>
 
-        <View className='space-y-2'>
+        <View className='space-y-4'>
           <TouchableOpacity
-            onPress={onCalendarPress}
+            onPress={handleAddToCalendar}
             className='flex-row items-center'
             activeOpacity={0.7}
           >
@@ -44,7 +48,7 @@ export const EventMetaCard: React.FC<Props> = ({
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={onCalendarPress}
+            onPress={handleAddToCalendar}
             className='flex-row items-center'
             activeOpacity={0.7}
           >

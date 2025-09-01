@@ -106,8 +106,8 @@ const DetailsScene: React.FC<{
             startsAt={event.starts_at}
             endsAt={event.ends_at}
             location={event.location}
-            onCalendarPress={onMapPress}
             onMapPress={onMapPress}
+            event={event}
           />
 
           {/* Event Description */}
