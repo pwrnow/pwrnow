@@ -121,125 +121,232 @@ class ExpoPushNotificationService:
             logger.error(f"Exception sending notification to device {device.id}: {str(e)}")
             return False
 
-    def send_event_verification_notification(self, event: Event) -> int:
-        """Send push notification when an event is verified."""
+    def send_multiple_notifications(self, notifications_data, max_batch_size=100):
+        """
+        Send multiple notifications in batches up to 100 (Expo API limit).
+
+        Args:
+            notifications_data: List of notification data dictionaries, each containing:
+                - to: Push token(s) - can be string or list of strings
+                - title: Notification title
+                - body: Notification body
+                - data: Optional notification data
+                - sound: Optional sound (default: 'default')
+                - badge: Optional badge count
+                - subtitle: Optional subtitle (iOS only)
+                - priority: Optional priority (default: 'high')
+                - channelId: Optional channel ID (default: 'default')
+            max_batch_size: Maximum notifications per batch (default 100, Expo limit)
+
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int, 'total': int}
+        """
+        if not notifications_data:
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
+        total_count = len(notifications_data)
+        total_sent = 0
+        total_failed = 0
+
+        logger.info(f"Starting batch notification sending for {total_count} notifications")
+
+        # Process in batches
+        for i in range(0, total_count, max_batch_size):
+            batch = notifications_data[i:i + max_batch_size]
+            batch_result = self._send_notification_batch(batch)
+            total_sent += batch_result['sent']
+            total_failed += batch_result['failed']
+
+        logger.info(f"Batch notification completed: {total_sent} sent, {total_failed} failed out of {total_count} total")
+        return {
+            'sent': total_sent,
+            'failed': total_failed,
+            'total': total_count
+        }
+
+    def _send_notification_batch(self, notifications_batch):
+        """
+        Send a batch of notifications to Expo API.
+
+        Args:
+            notifications_batch: List of notification data (max 100)
+
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int}
+        """
+        if not notifications_batch:
+            return {'sent': 0, 'failed': 0}
+
         try:
-            # Get all active devices
-            devices = Device.objects.filter(
-                notifications_enabled=True
-            )
-
-            if not devices.exists():
-                logger.info("No active devices found for notifications")
-                return 0
-
-            # Prepare notification content
-            title = _("New Event Verified! 🎉")
-            body = _("Event '{event_title}' has been verified and is now live!").format(
-                event_title=event.title
-            )
-
-            # Send notifications to all devices
-            sent_count = 0
-            for device in devices:
-                try:
-                    success = self.send_notification_to_device(
-                        device=device,
-                        title=title,
-                        body=body,
-                        data={
-                            'type': 'event_verified',
-                            'event_id': str(event.id),
-                            'event_slug': event.slug,
-                            'organization_slug': event.organization.slug
-                        }
-                    )
-
-                    if success:
-                        # Create notification record
-                        PushNotification.objects.create(
-                            device=device,
-                            title=title,
-                            body=body,
-                            data={
-                                'type': 'event_verified',
-                                'event_id': str(event.id),
-                                'event_slug': event.slug,
-                                'organization_slug': event.organization.slug
-                            }
-                        )
-                        sent_count += 1
-
-                except Exception as e:
-                    logger.error(f"Error sending notification to device {device.id}: {str(e)}")
+            # Prepare batch payload for Expo API
+            messages = []
+            for notification_data in notifications_batch:
+                # Ensure required fields are present
+                if 'to' not in notification_data or 'body' not in notification_data:
+                    logger.warning(f"Skipping notification missing required fields: {notification_data}")
                     continue
 
-            logger.info(f"Sent verification notifications to {sent_count} devices for event {event.title}")
-            return sent_count
+                # Build message with defaults
+                message = {
+                    'to': notification_data['to'],
+                    'body': notification_data['body'],
+                    'sound': notification_data.get('sound', 'default'),
+                    'priority': notification_data.get('priority', 'high'),
+                    'channelId': notification_data.get('channelId', 'default'),
+                }
+
+                # Add optional fields if present
+                if 'title' in notification_data:
+                    message['title'] = notification_data['title']
+                if 'data' in notification_data:
+                    message['data'] = notification_data['data']
+                if 'badge' in notification_data:
+                    message['badge'] = notification_data['badge']
+                if 'subtitle' in notification_data:
+                    message['subtitle'] = notification_data['subtitle']
+
+                messages.append(message)
+
+            if not messages:
+                return {'sent': 0, 'failed': 0}
+
+            # Send batch to Expo API
+            response = self.session.post(
+                self.EXPO_PUSH_URL,
+                data=json.dumps(messages),
+                timeout=10  # Reduced timeout for batch requests
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                tickets = result.get('data', [])
+
+                # Count successful and failed notifications
+                sent_count = 0
+                failed_count = 0
+
+                for ticket in tickets:
+                    if ticket.get('status') == 'ok':
+                        sent_count += 1
+                    else:
+                        failed_count += 1
+                        error_details = ticket.get('details', {})
+                        error_message = error_details.get('error', 'Unknown Expo error')
+                        logger.warning(f"Expo notification failed: {error_message}")
+
+                logger.info(f"Batch notification result: {sent_count} sent, {failed_count} failed")
+                return {'sent': sent_count, 'failed': failed_count}
+
+            else:
+                logger.error(f"Failed to send batch notifications: HTTP {response.status_code} - {response.text}")
+                return {'sent': 0, 'failed': len(messages)}
 
         except Exception as e:
-            logger.error(f"Error sending event verification notifications: {str(e)}")
-            return 0
+            logger.error(f"Exception sending batch notifications: {str(e)}")
+            return {'sent': 0, 'failed': len(notifications_batch)}
 
-    def send_event_publication_notification(self, event: Event) -> int:
-        """Send push notification when an event is published (on publication_date)."""
+
+
+    def send_publication_notifications_for_events(self, events):
+        """
+        Send publication notifications for multiple events in a single batch.
+
+        Args:
+            events: QuerySet or list of Event objects to send notifications for
+
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int, 'total': int}
+        """
         try:
             # Get all active devices
-            devices = Device.objects.filter(
-                notifications_enabled=True
-            )
+            devices = Device.objects.filter(notifications_enabled=True)
 
             if not devices.exists():
                 logger.info("No active devices found for publication notifications")
-                return 0
+                return {'sent': 0, 'failed': 0, 'total': 0}
 
-            # Prepare notification content
-            title = _("New Event Published! 🚀")
-            body = _("Event '{event_title}' is now live on the website!").format(
-                event_title=event.title
-            )
+            # Collect all notifications for all events and devices
+            all_notifications_data = []
+            notification_records = []  # Store notification data with device info for record creation
 
-            # Send notifications to all devices
-            sent_count = 0
-            for device in devices:
+            for i, event in enumerate(events):
                 try:
-                    success = self.send_notification_to_device(
-                        device=device,
-                        title=title,
-                        body=body,
-                        data={
-                            'type': 'event_published',
-                            'event_id': str(event.id),
-                            'event_slug': event.slug,
-                            'organization_slug': event.organization.slug
-                        }
-                    )
+                    # Build notifications for this event
+                    for device in devices:
+                        # Determine language preference (default to Polish)
+                        lang = getattr(device, 'preferred_language', 'pl') or 'pl'
 
-                    if success:
-                        # Create notification record
-                        PushNotification.objects.create(
-                            device=device,
-                            title=title,
-                            body=body,
-                            data={
+                        # Build notification content using enhanced formatting
+                        title, body, subtitle = self._build_notification_content(event, lang)
+
+                        # Create notification data
+                        notification_data = {
+                            'to': device.expo_push_token,
+                            'title': title,
+                            'body': body,
+                            'data': {
                                 'type': 'event_published',
                                 'event_id': str(event.id),
                                 'event_slug': event.slug,
-                                'organization_slug': event.organization.slug
-                            }
-                        )
-                        sent_count += 1
+                                'organization_slug': event.organization.slug if event.organization else None,
+                                'category_slug': event.category.slug if event.category else None,
+                            },
+                            'priority': 'high',
+                            'channelId': 'events',
+                            'sound': 'default' if i == 0 else None  # Only first event has sound
+                        }
+
+                        # Add subtitle for iOS devices
+                        if subtitle and device.platform == 'ios':
+                            notification_data['subtitle'] = subtitle
+
+                        all_notifications_data.append(notification_data)
+
+                        # Store notification record data with device info
+                        notification_records.append({
+                            'title': title,
+                            'body': body,
+                            'data': notification_data['data'],
+                            'device': device,
+                            'event': event
+                        })
+
+                    logger.info(f"Prepared {devices.count()} notifications for event {event.title}")
 
                 except Exception as e:
-                    logger.error(f"Error sending publication notification to device {device.id}: {str(e)}")
+                    logger.error(f"Error preparing notifications for event {event.id}: {str(e)}")
                     continue
 
-            logger.info(f"Sent publication notifications to {sent_count} devices for event {event.title}")
-            return sent_count
+            if not all_notifications_data:
+                logger.info("No notifications to send")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            # Send ALL notifications in a single batch
+            result = self.send_multiple_notifications(all_notifications_data)
+
+            # Create notification records for successful sends
+            if result['sent'] > 0:
+                # Create notification records for all notifications
+                for record_data in notification_records:
+                    try:
+                        PushNotification.objects.create(
+                            title=record_data['title'],
+                            body=record_data['body'],
+                            data=record_data['data'],
+                            device=record_data['device'],
+                            status='sent'
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating notification record: {str(e)}")
+
+            logger.info(f"Batch publication notifications completed: {result['sent']} sent, {result['failed']} failed out of {len(all_notifications_data)} total")
+            return result
 
         except Exception as e:
-            logger.error(f"Error sending event publication notifications: {str(e)}")
-            return 0
+            logger.error(f"Error sending batch publication notifications: {str(e)}")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
+
 
     # --- Helpers ---------------------------------------------------------
 

@@ -180,8 +180,7 @@ class EventAdmin(TranslationAdmin):
         'organization',
         'verified',
         'status_display',
-        'likes_count_display',
-        'notification_status_display'
+        'likes_count_display'
     ]
     list_filter = [
         'verified',
@@ -268,8 +267,15 @@ class EventAdmin(TranslationAdmin):
             duration = obj.duration
             hours = duration.total_seconds() // 3600
             minutes = (duration.total_seconds() % 3600) // 60
-            return f"{int(hours)}h {int(minutes)}m"
-        return "-"
+
+            if hours > 0:
+                if minutes > 0:
+                    return f"{hours}h {minutes}m"
+                else:
+                    return f"{hours}h"
+            else:
+                return f"{minutes}m"
+        return "N/A"
 
     @admin.display(description='Likes')
     def likes_count_display(self, obj):
@@ -277,34 +283,12 @@ class EventAdmin(TranslationAdmin):
         return format_html('<span style="color: #10b981;">❤️ {}</span>', count)
     likes_count_display.short_description = 'Likes'
 
-    @admin.display(description='Notification Status')
-    def notification_status_display(self, obj):
-        """Show notification eligibility status for the event."""
-        if not obj.verified:
-            return format_html('<span style="color: #dc3545;">✗ Not verified</span>')
-
-        if not obj.publication_date:
-            return format_html('<span style="color: #ffc107;">⚠ No publication date</span>')
-
-        today = timezone.now().date()
-        if obj.publication_date > today:
-            return format_html(
-                '<span style="color: #17a2b8;">📅 Publishes {}</span>',
-                obj.publication_date.strftime('%Y-%m-%d')
-            )
-        elif obj.publication_date == today:
-            return format_html('<span style="color: #ffc107;">⚠ Invalid: Cannot publish today</span>')
-        else:
-            return format_html('<span style="color: #dc3545;">✗ Invalid: Published in past ({})</span>',
-                            obj.publication_date.strftime('%Y-%m-%d'))
-    notification_status_display.short_description = 'Notification Status'
-
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'category', 'organization'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications', 'detect_aspect_ratios', 'send_publication_notifications', 'force_send_notifications']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -347,125 +331,40 @@ class EventAdmin(TranslationAdmin):
             self.message_user(request, f'Skipped {skipped_count} events (no image).', level=level)
     detect_aspect_ratios.short_description = "Detect aspect ratios for selected events"
 
-    def send_publication_notifications(self, request, queryset):
-        """Forcefully send publication notifications for selected events."""
-        queued_count = 0
-        skipped_count = 0
+    def send_event_publication_notifications(self, request, queryset):
+        """Send publication notifications for selected events regardless of publication date."""
+        # Filter only verified events
+        verified_events = queryset.filter(verified=True)
+        if not verified_events.exists():
+            self.message_user(
+                request,
+                'No verified events selected. Please select verified events only.',
+                level=messages.WARNING
+            )
+            return
 
-        for event in queryset:
-            if not event.verified:
-                skipped_count += 1
-                continue
+        try:
+            from notifications.services import push_service
+            result = push_service.send_publication_notifications_for_events(verified_events)
 
-
-
-            # Trigger the publication notification task
-            try:
-                from notifications.tasks import send_daily_publication_notifications
-                # Create a custom task for single event
-                from notifications.services import push_service
-                count = push_service.send_event_publication_notification(event)
-                queued_count += 1
+            if result['sent'] > 0:
                 self.message_user(
                     request,
-                    f'Publication notification sent for event "{event.title}" to {count} devices.'
+                    f'Successfully sent publication notifications for {len(verified_events)} events: {result["sent"]} sent, {result["failed"]} failed.'
                 )
-            except Exception as e:
+            else:
                 self.message_user(
                     request,
-                    f'Failed to send publication notification for event "{event.title}": {str(e)}',
+                    f'Failed to send publication notifications: {result["failed"]} failed.',
                     level=messages.ERROR
                 )
-                skipped_count += 1
-
-        if queued_count:
+        except Exception as e:
             self.message_user(
                 request,
-                f'Successfully sent publication notifications for {queued_count} events.'
+                f'Error sending publication notifications: {str(e)}',
+                level=messages.ERROR
             )
-        if skipped_count:
-            level = messages.WARNING if queued_count == 0 else messages.INFO
-            self.message_user(
-                request,
-                f'Skipped {skipped_count} events (not verified).',
-                level=level
-            )
-    send_publication_notifications.short_description = "Send publication notifications for selected events"
-
-    def force_send_notifications(self, request, queryset):
-        """Forcefully send notifications for selected events regardless of publication date."""
-        queued_count = 0
-        skipped_count = 0
-
-        for event in queryset:
-            if not event.verified:
-                skipped_count += 1
-                continue
-
-            # Force send notification regardless of publication date
-            try:
-                from notifications.services import push_service
-                count = push_service.send_event_publication_notification(event)
-                queued_count += 1
-                self.message_user(
-                    request,
-                    f'Force notification sent for event "{event.title}" to {count} devices.'
-                )
-            except Exception as e:
-                self.message_user(
-                    request,
-                    f'Failed to send force notification for event "{event.title}": {str(e)}',
-                    level=messages.ERROR
-                )
-                skipped_count += 1
-
-        if queued_count:
-            self.message_user(
-                request,
-                f'Successfully sent force notifications for {queued_count} events.'
-            )
-        if skipped_count:
-            level = messages.WARNING if queued_count == 0 else messages.INFO
-            self.message_user(
-                request,
-                f'Skipped {skipped_count} events (not verified).',
-                level=level
-            )
-    force_send_notifications.short_description = "Force send notifications for selected events (ignore publication date)"
-
-    def resend_push_notifications(self, request, queryset):
-        """Resend the "new event" push notification for selected, verified events."""
-        queued_count = 0
-        sent_sync_count = 0
-        skipped_count = 0
-
-        for event in queryset:
-            if not event.verified:
-                skipped_count += 1
-                continue
-
-            # Prefer async via Celery; fall back to sync if Celery is unavailable
-            try:
-                from notifications.tasks import send_event_verification_notifications
-                send_event_verification_notifications.delay(str(event.id))
-                queued_count += 1
-            except Exception:
-                from notifications.services import push_service
-                push_service.send_event_verification_notification(event)
-                sent_sync_count += 1
-
-        if queued_count or sent_sync_count:
-            parts = []
-            if queued_count:
-                parts.append(f"queued {queued_count}")
-            if sent_sync_count:
-                parts.append(f"sent synchronously {sent_sync_count}")
-            if skipped_count:
-                parts.append(f"skipped {skipped_count} not verified")
-            self.message_user(request, f"Resend triggered: {', '.join(parts)}.")
-        else:
-            self.message_user(request, "No verified events selected.", level=messages.WARNING)
-    resend_push_notifications.short_description = "Resend push notification (verified events only)"
+    send_event_publication_notifications.short_description = "Send event publication notifications"
 
 
 admin.site.site_header = "PWr Now Admin"

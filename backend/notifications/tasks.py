@@ -8,28 +8,7 @@ from core.models import Event
 logger = logging.getLogger(__name__)
 
 
-@shared_task
-def send_event_verification_notifications(event_id):
-    """Send push notifications for a newly verified event."""
 
-    try:
-        event = Event.objects.get(id=event_id)
-
-        if not event.verified:
-            logger.warning(f"Event {event_id} is not verified, skipping notifications")
-            return
-
-        count = push_service.send_event_verification_notification(event)
-        logger.info(f"Sent {count} notifications for verified event {event.title}")
-
-        return count
-
-    except Event.DoesNotExist:
-        logger.error(f"Event {event_id} not found")
-        return 0
-    except Exception as e:
-        logger.error(f"Error sending notifications for event {event_id}: {str(e)}")
-        return 0
 
 
 @shared_task
@@ -60,19 +39,18 @@ def send_daily_publication_notifications():
             logger.info(f"No events published today ({today})")
             return 0
 
-        total_notifications = 0
+        # Send all publication notifications in a single batch using the push service
+        try:
+            result = push_service.send_publication_notifications_for_events(events)
+            total_sent = result['sent']
+            total_failed = result['failed']
 
-        for event in events:
-            try:
-                count = push_service.send_event_publication_notification(event)
-                total_notifications += count
-                logger.info(f"Sent {count} publication notifications for event {event.title}")
-            except Exception as e:
-                logger.error(f"Error sending publication notifications for event {event.id}: {str(e)}")
-                continue
+            logger.info(f"Batch publication notifications completed: {total_sent} sent, {total_failed} failed out of {result['total']} total")
+            return total_sent
 
-        logger.info(f"Sent total of {total_notifications} publication notifications for {events.count()} events")
-        return total_notifications
+        except Exception as e:
+            logger.error(f"Error sending batch publication notifications: {str(e)}")
+            return 0
 
     except Exception as e:
         logger.error(f"Error in daily publication notifications task: {str(e)}")
@@ -163,3 +141,36 @@ def send_test_notification(device_id, title="Test Notification", body="This is a
     except Exception as e:
         logger.error(f"Error sending test notification: {str(e)}")
         return False
+
+
+@shared_task
+def send_batch_notifications(notifications_data):
+    """
+    Send multiple notifications in batches using the new batch functionality.
+
+    Args:
+        notifications_data: List of notification data dictionaries, each containing:
+            - to: Push token(s) - can be string or list of strings
+            - title: Notification title
+            - body: Notification body
+            - data: Optional notification data
+            - sound: Optional sound (default: 'default')
+            - badge: Optional badge count
+            - subtitle: Optional subtitle (iOS only)
+            - priority: Optional priority (default: 'high')
+            - channelId: Optional channel ID (default: 'default')
+
+    Returns:
+        Dict with counts: {'sent': int, 'failed': int, 'total': int}
+    """
+    try:
+        from .services import push_service
+
+        result = push_service.send_multiple_notifications(notifications_data)
+
+        logger.info(f"Batch notification task completed: {result['sent']} sent, {result['failed']} failed out of {result['total']} total")
+        return result
+
+    except Exception as e:
+        logger.error(f"Error in batch notification task: {str(e)}")
+        return {'sent': 0, 'failed': 0, 'total': 0, 'error': str(e)}
