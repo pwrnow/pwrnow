@@ -3,9 +3,7 @@ const resolveBaseUrl = (): string => {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL?.trim();
   const sanitizedEnv = fromEnv?.replace(/\/+$/u, '');
   if (sanitizedEnv) return sanitizedEnv;
-  const fallback = __DEV__
-    ? 'https://fc3839f93067.ngrok-free.app'
-    : 'https://api.pwrnow.pl';
+  const fallback = __DEV__ ? 'http://localhost:8000' : 'https://api.pwrnow.pl';
   return fallback;
 };
 
