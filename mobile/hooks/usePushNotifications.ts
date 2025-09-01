@@ -37,6 +37,31 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
       const url = new URL(data.url);
       const path = url.pathname;
       console.log('[Notifications] Navigating to path:', path);
+      console.log(url);
+
+      // Check if this is a post-specific URL structure
+      const postUrlMatch = path.match(
+        /^\/wydarzenia\/([^\/]+)\/posts\/([^\/]+)$/
+      );
+      if (postUrlMatch) {
+        const [, eventSlug, postId] = postUrlMatch;
+        console.log(
+          '[Notifications] Post URL detected, building query-based URL'
+        );
+
+        // Build new URL with query parameters
+        const newPath = `/wydarzenia/${eventSlug}?postId=${postId}&tab=posts`;
+        console.log('[Notifications] Navigating to:', newPath);
+
+        try {
+          router.push(newPath as any);
+          return;
+        } catch (err) {
+          console.warn('[Notifications] Post navigation failed:', err);
+        }
+      }
+
+      // For other URLs, navigate normally
       try {
         router.push(path as any);
       } catch (err) {

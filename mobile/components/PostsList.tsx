@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { Post } from '../types';
 
@@ -9,6 +9,7 @@ interface Props {
   formatPostTime: (timestamp: string) => string;
   getInitials: (name: string) => string;
   onImagePress: (images: string[], initialIndex: number) => void;
+  focusPostId?: string;
 }
 
 const PostsList: React.FC<Props> = ({
@@ -17,7 +18,28 @@ const PostsList: React.FC<Props> = ({
   formatPostTime,
   getInitials,
   onImagePress,
+  focusPostId,
 }) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const postRefs = useRef<{ [key: string]: View | null }>({});
+
+  // Scroll to focused post when focusPostId changes
+  useEffect(() => {
+    if (focusPostId && posts && posts.length > 0) {
+      // Find the index of the focused post
+      const postIndex = posts.findIndex((post) => post.id === focusPostId);
+      if (postIndex !== -1) {
+        // Wait for the next frame to ensure the post is rendered
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            y: postIndex * 200, // Approximate height per post
+            animated: true,
+          });
+        }, 100);
+      }
+    }
+  }, [focusPostId, posts]);
+
   // Parse aspect ratio string to number
   const parseAspectRatio = (ratio?: string | null): number => {
     if (!ratio) return 16 / 9;
@@ -324,53 +346,63 @@ const PostsList: React.FC<Props> = ({
   };
 
   return (
-    <View className='space-y-3'>
-      {posts.map((post, index) => {
-        const images = post.images || [];
-        const authorName = post.organization?.name || '';
-        const timestamp = post.created_at;
-        const content = post.text;
-        return (
-          <Animated.View
-            key={post.id}
-            entering={FadeInDown.duration(200).delay(index * 50)}
-            className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-3 mb-2'
-          >
-            <View className='flex-row items-center mb-2'>
-              <View className='w-8 h-8 rounded-full overflow-hidden bg-accentBlue/20 items-center justify-center mr-3'>
-                {organizationImageUrl ? (
-                  <Image
-                    source={{ uri: organizationImageUrl }}
-                    className='w-full h-full'
-                    resizeMode='cover'
-                  />
-                ) : (
-                  <Text className='text-accentBlue font-groteskSemibold text-xs'>
-                    {getInitials(authorName)}
+    <ScrollView
+      ref={scrollViewRef}
+      showsVerticalScrollIndicator={false}
+      className='flex-1'
+      contentContainerStyle={{ paddingBottom: 24 }}
+    >
+      <View className='space-y-3'>
+        {posts.map((post, index) => {
+          const images = post.images || [];
+          const authorName = post.organization?.name || '';
+          const timestamp = post.created_at;
+          const content = post.text;
+          return (
+            <Animated.View
+              key={post.id}
+              ref={(ref) => {
+                postRefs.current[post.id] = ref;
+              }}
+              entering={FadeInDown.duration(200).delay(index * 50)}
+              className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-3 mb-2'
+            >
+              <View className='flex-row items-center mb-2'>
+                <View className='w-8 h-8 rounded-full overflow-hidden bg-accentBlue/20 items-center justify-center mr-3'>
+                  {organizationImageUrl ? (
+                    <Image
+                      source={{ uri: organizationImageUrl }}
+                      className='w-full h-full'
+                      resizeMode='cover'
+                    />
+                  ) : (
+                    <Text className='text-accentBlue font-groteskSemibold text-xs'>
+                      {getInitials(authorName)}
+                    </Text>
+                  )}
+                </View>
+                <View className='flex-1'>
+                  <Text className='text-black dark:text-white font-groteskMedium text-sm'>
+                    {authorName}
                   </Text>
-                )}
+                  <Text className='text-black/50 dark:text-white/50 font-grotesk text-xs'>
+                    {formatPostTime(timestamp)}
+                  </Text>
+                </View>
               </View>
-              <View className='flex-1'>
-                <Text className='text-black dark:text-white font-groteskMedium text-sm'>
-                  {authorName}
-                </Text>
-                <Text className='text-black/50 dark:text-white/50 font-grotesk text-xs'>
-                  {formatPostTime(timestamp)}
-                </Text>
-              </View>
-            </View>
 
-            {content && (
-              <Text className='text-black/90 dark:text-white/90 font-grotesk text-sm leading-5'>
-                {content}
-              </Text>
-            )}
+              {content && (
+                <Text className='text-black/90 dark:text-white/90 font-grotesk text-sm leading-5'>
+                  {content}
+                </Text>
+              )}
 
-            {renderImages(images)}
-          </Animated.View>
-        );
-      })}
-    </View>
+              {renderImages(images)}
+            </Animated.View>
+          );
+        })}
+      </View>
+    </ScrollView>
   );
 };
 

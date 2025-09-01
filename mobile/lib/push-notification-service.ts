@@ -26,7 +26,8 @@ export interface DeviceRegistration {
 }
 
 export interface NotificationData {
-  type: string;
+  type: 'new_post' | 'event_published' | string;
+  post_id?: string;
   event_id?: string;
   event_slug?: string;
   category_slug?: string;

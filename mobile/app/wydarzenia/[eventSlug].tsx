@@ -26,7 +26,7 @@ export default function EventDetailScreen() {
   const colorScheme = useColorScheme();
   const isDark = useMemo(() => colorScheme === 'dark', [colorScheme]);
   const iconPrimary = useMemo(() => (isDark ? '#FFFFFF' : '#000000'), [isDark]);
-  const { eventSlug } = useLocalSearchParams();
+  const { eventSlug, postId } = useLocalSearchParams();
   const router = useRouter();
   const analytics = useAnalytics();
   const { isAuthenticated } = useAuth();

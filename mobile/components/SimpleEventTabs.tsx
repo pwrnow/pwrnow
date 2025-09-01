@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useLocalSearchParams } from 'expo-router';
 import { t } from '../lib/i18n';
 import { useEventBySlug } from '../lib/queries';
 import { formatPostTime, getInitials } from '../lib/format';
@@ -135,6 +136,7 @@ const PostsScene: React.FC<{
 }> = React.memo(
   ({ eventSlug, posts, isLoadingPosts, postsError, onImagePress }) => {
     const { data: event } = useEventBySlug(eventSlug);
+    const { postId } = useLocalSearchParams();
 
     if (isLoadingPosts) {
       return (
@@ -182,6 +184,7 @@ const PostsScene: React.FC<{
           getInitials={getInitials}
           organizationImageUrl={event?.organization.image_url || undefined}
           onImagePress={onImagePress}
+          focusPostId={typeof postId === 'string' ? postId : undefined}
         />
       </ScrollView>
     );
@@ -212,8 +215,21 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     const layout = useWindowDimensions();
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
+    const { tab } = useLocalSearchParams();
 
-    const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(() => {
+      // Initialize based on URL tab parameter
+      if (tab === 'posts') return 1;
+      if (tab === 'schedule') return 2;
+      return 0;
+    });
+
+    // Sync index with URL tab parameter changes
+    useEffect(() => {
+      if (tab === 'posts') setIndex(1);
+      else if (tab === 'schedule') setIndex(2);
+      else setIndex(0);
+    }, [tab]);
 
     // Create scene map
     const renderScene = SceneMap({

@@ -394,7 +394,7 @@ class ExpoPushNotificationService:
                         'title': title,
                         'body': body,
                         'data': {
-                            'type': 'post_verified',
+                            'type': 'new_post',
                             'post_id': str(post.id),
                             'event_id': str(post.event.id),
                             'event_slug': post.event.slug,
