@@ -462,6 +462,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.cleanup_inactive_devices',
         'schedule': crontab(hour=3, minute=0),  # Daily at 3 AM
     },
+    'send-event-reminder-24h': {
+        'task': 'notifications.tasks.send_event_reminder_24h',
+        'schedule': crontab(minute='*/10'),  # Every 10 minutes
+    },
 }
 
 # allauth

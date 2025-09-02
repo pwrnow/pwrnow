@@ -290,7 +290,7 @@ class EventAdmin(TranslationAdmin):
             'category', 'organization'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -367,6 +367,40 @@ class EventAdmin(TranslationAdmin):
                 level=messages.ERROR
             )
     send_event_publication_notifications.short_description = "Send event publication notifications"
+
+    def send_event_reminder_24h(self, request, queryset):
+        """Manually trigger 24h reminder notifications for selected verified events (ignores time window)."""
+        verified_events = queryset.filter(verified=True)
+        if not verified_events.exists():
+            self.message_user(
+                request,
+                'No verified events selected. Please select verified events only.',
+                level=messages.WARNING
+            )
+            return
+
+        try:
+            from notifications.services import push_service
+            result = push_service.send_event_reminders_for_events(verified_events)
+
+            if result['sent'] > 0:
+                self.message_user(
+                    request,
+                    f'Successfully sent reminder notifications: {result["sent"]} sent, {result["failed"]} failed.'
+                )
+            else:
+                self.message_user(
+                    request,
+                    f'Failed to send reminders: {result["failed"]} failed.',
+                    level=messages.ERROR
+                )
+        except Exception as e:
+            self.message_user(
+                request,
+                f'Error sending reminders: {str(e)}',
+                level=messages.ERROR
+            )
+    send_event_reminder_24h.short_description = "Send 24h reminder notifications (manual)"
 
 
 admin.site.site_header = "PWr Now Admin"

@@ -1,5 +1,11 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Alert, SafeAreaView } from 'react-native';
+import {
+  View,
+  Alert,
+  SafeAreaView,
+  Platform,
+  ToastAndroid,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import Animated, {
@@ -109,12 +115,26 @@ export default function EventDetailScreen() {
     }
   }, [event, analytics]);
 
-  // Error handling
+  // Error handling: navigate back and show quick message
   useEffect(() => {
     if (eventError) {
-      Alert.alert(t('errorTitle'), t('failedToLoadEvent'), [
-        { text: t('ok'), onPress: () => router.replace('/') },
-      ]);
+      // Navigate back to main immediately
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/');
+      }
+
+      // Show short auto-dismissing message
+      const message = t('failedToLoadEvent');
+      if (Platform.OS === 'android') {
+        try {
+          ToastAndroid.show(message, ToastAndroid.SHORT);
+        } catch {}
+      } else {
+        // Fallback for iOS: simple alert (requires dismissal)
+        Alert.alert(t('errorTitle'), message);
+      }
     }
   }, [eventError, router]);
 
@@ -133,16 +153,9 @@ export default function EventDetailScreen() {
     );
   }
 
-  // Error state
+  // Error state handled via navigation + toast above
   if (eventError || !event) {
-    return (
-      <SafeAreaView className='flex-1 bg-white dark:bg-black'>
-        <ErrorState
-          title={t('failedToLoadEvent')}
-          message={t('tryAgainLater')}
-        />
-      </SafeAreaView>
-    );
+    return null;
   }
 
   return (

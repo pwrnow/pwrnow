@@ -1,4 +1,5 @@
 import requests
+import hashlib
 import json
 import logging
 from typing import List, Dict, Optional, Tuple
@@ -347,6 +348,94 @@ class ExpoPushNotificationService:
             logger.error(f"Error sending batch publication notifications: {str(e)}")
             return {'sent': 0, 'failed': 0, 'total': 0}
 
+    def send_event_reminders_for_events(self, events):
+        """
+        Send 24h-before reminders to users who liked the events.
+
+        Returns dict: {'sent': int, 'failed': int, 'total': int}
+        """
+        try:
+            from core.models import Like
+
+            # Users who liked any of the events
+            event_ids = [e.id for e in events]
+            liked_users = Like.objects.filter(event_id__in=event_ids).values_list('user_id', flat=True)
+
+            if not liked_users.exists():
+                logger.info("No liked users to notify for reminders")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            devices = Device.objects.filter(
+                user_id__in=liked_users,
+                notifications_enabled=True
+            )
+
+            if not devices.exists():
+                logger.info("No active devices found for reminder notifications")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            all_notifications_data = []
+            notification_records = []
+
+            for event in events:
+                for device in devices:
+                    try:
+                        lang = getattr(device, 'preferred_language', 'pl') or 'pl'
+                        title, body, subtitle = self._build_event_reminder_content(event, lang)
+                        notification_data = {
+                            'to': device.expo_push_token,
+                            'title': title,
+                            'body': body,
+                            'data': {
+                                'type': 'event_reminder_24h',
+                                'event_id': str(event.id),
+                                'event_slug': event.slug,
+                                'organization_slug': event.organization.slug if event.organization else None,
+                                'category_slug': event.category.slug if event.category else None,
+                                'url': event.public_url,
+                            },
+                            'priority': 'high',
+                            'channelId': 'events',
+                            'sound': 'default'
+                        }
+                        if subtitle and device.platform == 'ios':
+                            notification_data['subtitle'] = subtitle
+
+                        all_notifications_data.append(notification_data)
+                        notification_records.append({
+                            'title': title,
+                            'body': body,
+                            'data': notification_data['data'],
+                            'device': device,
+                        })
+                    except Exception as e:
+                        logger.error(f"Error preparing reminder for device {device.id}: {str(e)}")
+                        continue
+
+            if not all_notifications_data:
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            result = self.send_multiple_notifications(all_notifications_data)
+
+            if result['sent'] > 0:
+                for record_data in notification_records:
+                    try:
+                        PushNotification.objects.create(
+                            title=record_data['title'],
+                            body=record_data['body'],
+                            data=record_data['data'],
+                            device=record_data['device'],
+                            status='sent'
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating reminder notification record: {str(e)}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error sending event reminder notifications: {str(e)}")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
     def send_post_verification_notifications(self, post):
         """
         Send notifications to users who liked the event when a post is verified.
@@ -535,6 +624,38 @@ class ExpoPushNotificationService:
                 body_lines.append(event_time)
             body = self._truncate("\n".join(body_lines), 140)
 
+            return title, body, subtitle
+
+    def _build_event_reminder_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
+        """Playful 24h reminder with when/where/what details."""
+        with override(lang):
+            localized_event_title = get_translated_field(event, 'title', lang) or event.title
+            # Keep title minimal after the dash with a fun, localized snippet
+            phrases = [
+                _("tomorrow"),
+                _("it's tomorrow!"),
+                _("24h to go"),
+                _("see you tomorrow"),
+                _("tomorrow — ready?")
+            ]
+            # Deterministic pick per event
+            idx = int(hashlib.sha256(str(event.id).encode('utf-8')).hexdigest(), 16) % len(phrases)
+            short = phrases[idx]
+            title = self._truncate(f"⏰ {_( 'Reminder' )} — {short}", 100)
+
+            # When
+            when_line = self._format_event_range(event.starts_at, event.ends_at, lang)
+            # Where
+            where_text = (get_translated_field(event, 'location', lang) or event.location or "")
+            where_line = f"📍 {where_text}" if where_text else ""
+            # Fun body: include lines that exist
+            body_lines: List[str] = []
+            if when_line:
+                body_lines.append(when_line)
+            if where_line:
+                body_lines.append(where_line)
+            body = "\n".join([l for l in body_lines if l])
+            subtitle = localized_event_title
             return title, body, subtitle
 
     def _build_post_verification_content(self, post, lang: str) -> Tuple[str, str, Optional[str]]:

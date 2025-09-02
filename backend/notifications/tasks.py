@@ -58,6 +58,42 @@ def send_daily_publication_notifications():
 
 
 @shared_task
+def send_event_reminder_24h():
+    """Send reminders for events starting in ~24 hours.
+
+    Window: events with starts_at between (now + 24h) and (now + 25h) to be resilient to scheduler drift.
+    """
+    try:
+        now = timezone.now()
+        start_window = now + timezone.timedelta(hours=24)
+        end_window = now + timezone.timedelta(hours=25)
+
+        events = (
+            Event.objects
+            .filter(
+                verified=True,
+                starts_at__gte=start_window,
+                starts_at__lt=end_window,
+                publication_date__lte=timezone.localdate()
+            )
+            .select_related('organization', 'category')
+        )
+
+        if not events.exists():
+            logger.info("No events starting ~24h from now for reminders")
+            return 0
+
+        result = push_service.send_event_reminders_for_events(events)
+        logger.info(
+            f"Event reminder 24h notifications: {result['sent']} sent, {result['failed']} failed out of {result['total']} total"
+        )
+        return result['sent']
+    except Exception as e:
+        logger.error(f"Error in send_event_reminder_24h: {str(e)}")
+        return 0
+
+
+@shared_task
 def cleanup_old_notifications():
     """Clean up old notification records (older than 90 days)."""
 
