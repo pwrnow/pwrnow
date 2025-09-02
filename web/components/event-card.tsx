@@ -13,6 +13,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Calendar,
   MapPin,
   ExternalLink,
@@ -21,10 +31,13 @@ import {
   ShieldCheck,
   Clock3,
   MoreHorizontal,
+  Trash2,
 } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { EventBadge } from '@/components/event-badge';
 import { useTranslations } from 'next-intl';
+import { deleteEvent } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface EventCardProps {
   event: Event;
@@ -33,6 +46,7 @@ interface EventCardProps {
   handleMapLinkClick: (location: string) => void;
   truncateDescription: (text: string, maxLength: number) => string;
   isUpcoming: (dateString: string) => boolean;
+  onEventDeleted?: (eventSlug: string) => void;
 }
 
 export default function EventCard({
@@ -42,9 +56,13 @@ export default function EventCard({
   handleMapLinkClick,
   truncateDescription,
   isUpcoming,
+  onEventDeleted,
 }: EventCardProps) {
   const router = useRouter();
   const t = useTranslations('OrganizationPage');
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isEventToday =
     new Date(event.starts_at).toDateString() === new Date().toDateString();
@@ -67,8 +85,27 @@ export default function EventCard({
   });
   const timeString = `${startTimeString} - ${endTimeString}`;
 
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setDeleting(true);
+      await deleteEvent(event.slug);
+      toast.success(t('eventDeletedSuccessfully'));
+      onEventDeleted?.(event.slug);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+      toast.error(t('failedToDeleteEvent'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card'>
+    <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card flex flex-col h-full'>
       {/* Verification Status Bar */}
       <div
         className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
@@ -90,7 +127,7 @@ export default function EventCard({
         )}
       </div>
 
-      <div className='flex flex-col'>
+      <div className='flex flex-col flex-1'>
         {/* Organization Header */}
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
           <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
@@ -129,7 +166,7 @@ export default function EventCard({
         </div>
 
         {/* Event Content */}
-        <div className='px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6'>
+        <div className='px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6 flex flex-col flex-1'>
           <h2 className='text-lg sm:text-xl font-bold display-font mb-2 sm:mb-3 break-words leading-tight'>
             {event.title}
           </h2>
@@ -202,26 +239,38 @@ export default function EventCard({
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className='mt-3 space-y-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() =>
-                router.push(`/org/${orgSlug}/events/${event.slug}`)
-              }
-              className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
-            >
-              <Settings className='h-4 w-4' />
-              {t('manageEvent')}
-            </Button>
+          {/* Action Buttons - Pushed to bottom */}
+          <div className='mt-auto pt-4 space-y-2'>
+            <div className='flex gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() =>
+                  router.push(`/org/${orgSlug}/events/${event.slug}`)
+                }
+                className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
+              >
+                <Settings className='h-4 w-4' />
+                {t('manageEvent')}
+              </Button>
+
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleDeleteClick}
+                className='text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30'
+                title={t('deleteEvent')}
+              >
+                <Trash2 className='h-4 w-4' />
+              </Button>
+            </div>
 
             {event.url && (
               <a href={event.url} target='_blank' rel='noopener noreferrer'>
                 <Button
                   variant='default'
                   size='sm'
-                  className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
+                  className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/90'
                 >
                   <ExternalLink className='h-4 w-4' />
                   {t('visitEventPage')}
@@ -233,6 +282,30 @@ export default function EventCard({
       </div>
 
       <div className='h-px bg-border sm:hidden mt-2 mb-2'></div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteEvent')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteEventConfirmation', { title: event.title })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleting ? t('deleting') : t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

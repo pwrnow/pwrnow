@@ -106,7 +106,14 @@
     "openInMaps": "Open in maps app",
     "showMore": "Show more",
     "visitEventPage": "Visit event page",
-    "manageEvent": "Manage Event"
+    "manageEvent": "Manage Event",
+    "deleteEvent": "Delete Event",
+    "deleteEventConfirmation": "Are you sure you want to delete the event \"{title}\"? This action cannot be undone.",
+    "eventDeletedSuccessfully": "Event has been deleted successfully",
+    "failedToDeleteEvent": "Failed to delete event",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting..."
   },
   "Layout": {
     "title": "PWr Now",

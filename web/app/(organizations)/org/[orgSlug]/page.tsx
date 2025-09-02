@@ -96,6 +96,10 @@ export default function OrganizationPage() {
   const pastEvents = events.filter((event) => !isUpcoming(event.starts_at));
   const sortedEvents = [...upcomingEvents.reverse(), ...pastEvents.reverse()];
 
+  const handleEventDeleted = (eventSlug: string) => {
+    setEvents(events.filter((event) => event.slug !== eventSlug));
+  };
+
   if (loading) {
     return <OrganizationPageSkeleton />;
   }
@@ -157,6 +161,7 @@ export default function OrganizationPage() {
                 handleMapLinkClick={handleMapLinkClick}
                 truncateDescription={truncateDescription}
                 isUpcoming={isUpcoming}
+                onEventDeleted={handleEventDeleted}
               />
             ))}
           </div>

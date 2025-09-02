@@ -106,7 +106,14 @@
     "openInMaps": "Otwórz w aplikacji map",
     "showMore": "Pokaż więcej",
     "visitEventPage": "Odwiedź stronę wydarzenia",
-    "manageEvent": "Zarządzaj Wydarzeniem"
+    "manageEvent": "Zarządzaj Wydarzeniem",
+    "deleteEvent": "Usuń Wydarzenie",
+    "deleteEventConfirmation": "Czy na pewno chcesz usunąć wydarzenie \"{title}\"? Ta operacja jest nieodwracalna.",
+    "eventDeletedSuccessfully": "Wydarzenie zostało pomyślnie usunięte",
+    "failedToDeleteEvent": "Nie udało się usunąć wydarzenia",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "deleting": "Usuwanie..."
   },
   "Layout": {
     "title": "PWr Now",

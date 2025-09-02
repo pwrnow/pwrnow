@@ -461,3 +461,16 @@ export async function deleteScheduleItem(itemId: string): Promise<void> {
     throw error;
   }
 }
+
+export async function deleteEvent(eventSlug: string): Promise<void> {
+  console.log('🗑️ Deleting event:', eventSlug);
+  try {
+    await fetchWithCredentials(`/events/${eventSlug}/`, {
+      method: 'DELETE',
+    });
+    console.log('✅ Event deleted successfully');
+  } catch (error) {
+    console.error('❌ Failed to delete event:', error);
+    throw error;
+  }
+}
