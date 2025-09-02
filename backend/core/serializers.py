@@ -119,7 +119,8 @@ class EventSerializer(serializers.ModelSerializer):
 
 class EventCreateSerializer(serializers.ModelSerializer):
     category_slug = serializers.SlugField(write_only=True, required=False, allow_null=True, allow_blank=True)
-    image = serializers.ImageField(write_only=True, required=False, allow_null=True)
+    image = serializers.ImageField(write_only=True, required=True)
+    publication_date = serializers.DateField(required=True)
 
     class Meta:
         model = Event
@@ -149,6 +150,15 @@ class EventCreateSerializer(serializers.ModelSerializer):
             if data['publication_date'] <= today:
                 raise serializers.ValidationError({
                     'publication_date': _('Publication date must be in the future (not today or earlier).')
+                })
+
+        # Validate publication date is not later than start date
+        if data.get('publication_date') and data.get('starts_at'):
+            publication_date = data['publication_date']
+            start_date = data['starts_at'].date()
+            if publication_date > start_date:
+                raise serializers.ValidationError({
+                    'publication_date': _('Publication date cannot be later than the event start date.')
                 })
 
         return data

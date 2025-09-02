@@ -123,6 +123,12 @@ export default function OrgEventDetailsPage() {
     loadPosts();
   }, [activeTab, event, posts.length]);
 
+  // Reset schedule when event changes
+  useEffect(() => {
+    setSchedule(null);
+    setSelectedDay('');
+  }, [event?.slug]);
+
   useEffect(() => {
     async function loadSchedule() {
       if (
@@ -144,7 +150,7 @@ export default function OrgEventDetailsPage() {
       }
     }
     loadSchedule();
-  }, [activeTab, event, schedule, scheduleLoading]);
+  }, [activeTab, event]);
 
   const getInitials = (name: string) =>
     name
@@ -596,13 +602,6 @@ export default function OrgEventDetailsPage() {
                 <p className='text-muted-foreground mb-6'>
                   {t('noPostsDescription')}
                 </p>
-                <Button
-                  onClick={() => setIsCreatePostModalOpen(true)}
-                  className='cursor-pointer'
-                >
-                  <Plus className='h-4 w-4 mr-2' />
-                  {t('createFirstPost')}
-                </Button>
               </div>
             </Card>
           )}

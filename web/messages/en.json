@@ -68,7 +68,7 @@
     "endDate": "End date and time",
     "publicationDate": "Publication date",
     "pickPublicationDate": "Pick publication date",
-    "publicationDateHelp": "Date when the event will appear on the website and notification will be sent. Date must be in the future (not today or earlier).",
+    "publicationDateHelp": "Date from which the event will appear on the website and a notification will be sent.",
     "selectDateAndTime": "Select date and time",
     "selectTime": "Select time",
     "image": "Image",

@@ -63,6 +63,14 @@ export default function AddEventForm({
   const storageKey = `add-event-form-${organizationCode}`;
   const imageStorageKey = `add-event-image-${organizationCode}`;
 
+  // Helper function to get tomorrow's date
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow;
+  };
+
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -71,6 +79,7 @@ export default function AddEventForm({
       location: '',
       description: '',
       url: '',
+      publicationDate: getTomorrowDate(),
     },
   });
 
@@ -189,6 +198,12 @@ export default function AddEventForm({
 
   async function onSubmit(data: EventFormValues) {
     try {
+      // Validate that image is required
+      if (!imageFile) {
+        setImageError('Zdjęcie jest wymagane');
+        return;
+      }
+
       // Validate image size if an image is uploaded
       if (imageFile && imageFile.size > 5 * 1024 * 1024) {
         setImageError(t('imageSizeError'));
@@ -574,52 +589,76 @@ export default function AddEventForm({
         <FormField
           control={form.control}
           name='publicationDate'
-          render={({ field }) => (
-            <FormItem className='flex flex-col'>
-              <FormLabel>{t('publicationDate')}</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-full pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, 'PPP')
-                      ) : (
-                        <span>{t('pickPublicationDate')}</span>
-                      )}
-                      <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0' align='start'>
-                  <Calendar
-                    mode='single'
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      return date <= today;
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <p className='text-sm text-muted-foreground'>
-                {t('publicationDateHelp')}
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            // Ensure we always have a valid date
+            const selectedDate =
+              field.value ||
+              (() => {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(0, 0, 0, 0);
+                return tomorrow;
+              })();
+
+            return (
+              <FormItem className='flex flex-col'>
+                <FormLabel className='text-sm font-medium'>
+                  {t('publicationDate')} <span className='text-red-500'>*</span>
+                </FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'w-full pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                        type='button'
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>{t('pickPublicationDate')}</span>
+                        )}
+                        <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className='w-auto p-0' align='start'>
+                    <Calendar
+                      mode='single'
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          // Ensure the date is set to midnight to avoid timezone issues
+                          const normalizedDate = new Date(date);
+                          normalizedDate.setHours(0, 0, 0, 0);
+                          field.onChange(normalizedDate);
+                        }
+                      }}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date <= today;
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className='text-sm text-muted-foreground'>
+                  {t('publicationDateHelp')}
+                </p>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         <FormItem>
-          <FormLabel>{t('image')}</FormLabel>
+          <FormLabel>
+            {t('image')} <span className='text-red-500'>*</span>
+          </FormLabel>
           <Dropzone
             className='mt-2'
             onDrop={async (acceptedFiles) => {

@@ -300,6 +300,7 @@ export async function createEvent(eventData: CreateEventData): Promise<Event> {
     formData.append('description', eventData.description);
   formData.append('starts_at', eventData.starts_at);
   formData.append('ends_at', eventData.ends_at);
+  formData.append('publication_date', eventData.publication_date);
   if (eventData.location) formData.append('location', eventData.location);
   if (eventData.url) formData.append('url', eventData.url);
   if (eventData.category_slug)

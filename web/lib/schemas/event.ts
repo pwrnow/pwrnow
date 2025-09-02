@@ -59,6 +59,20 @@ export const eventFormSchema = z
       error:
         'Data publikacji musi być w przyszłości (nie dzisiaj ani wcześniej)',
     }
+  )
+  .refine(
+    (data) => {
+      const publicationDate = new Date(data.publicationDate);
+      publicationDate.setHours(0, 0, 0, 0);
+      const startDate = new Date(data.startsAt);
+      startDate.setHours(0, 0, 0, 0);
+      return publicationDate <= startDate;
+    },
+    {
+      path: ['publicationDate'],
+      error:
+        'Data publikacji nie może być późniejsza niż data rozpoczęcia wydarzenia',
+    }
   );
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -69,7 +83,7 @@ export interface EventFormData extends EventFormValues {
 
 export function formToApiData(
   formData: EventFormValues,
-  imageFile?: File | null
+  imageFile: File
 ): {
   title: string;
   description?: string;
@@ -79,17 +93,22 @@ export function formToApiData(
   location?: string;
   url?: string;
   category_slug?: string;
-  image?: File;
+  image: File;
 } {
   return {
     title: formData.title,
     description: formData.description || undefined,
     starts_at: formData.startsAt.toISOString(),
     ends_at: formData.endsAt.toISOString(),
-    publication_date: formData.publicationDate.toISOString().split('T')[0],
+    publication_date: `${formData.publicationDate.getFullYear()}-${String(
+      formData.publicationDate.getMonth() + 1
+    ).padStart(2, '0')}-${String(formData.publicationDate.getDate()).padStart(
+      2,
+      '0'
+    )}`,
     location: formData.location || undefined,
     url: formData.url || undefined,
     category_slug: formData.categorySlug,
-    image: imageFile || undefined,
+    image: imageFile,
   };
 }

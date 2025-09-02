@@ -60,10 +60,11 @@ export interface CreateEventData {
   description?: string;
   starts_at: string;
   ends_at: string;
+  publication_date: string;
   location?: string;
   url?: string;
   category_slug?: string;
-  image?: File;
+  image: File;
 }
 
 export interface PostImage {
