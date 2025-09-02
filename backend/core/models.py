@@ -415,3 +415,59 @@ class PostImage(models.Model):
 
     def __str__(self):
         return f"PostImage(post={self.post_id})"
+
+
+class Schedule(models.Model):
+    """A schedule attached one-to-one to an event."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    event = models.OneToOneField(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='schedule'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Schedule(event={self.event.slug})"
+
+
+class ScheduleItem(models.Model):
+    """Items belonging to a schedule for specific dates with start/end times.
+
+    Note: We intentionally do not store any speaker information.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    schedule = models.ForeignKey(
+        Schedule,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    date = models.DateField(db_index=True)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['date', 'start_time']
+        indexes = [
+            models.Index(fields=['schedule', 'date', 'start_time']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} on {self.date} at {self.start_time}"
+
+    @property
+    def duration_minutes(self):
+        from datetime import datetime
+        start_dt = datetime.combine(self.date, self.start_time)
+        end_dt = datetime.combine(self.date, self.end_time)
+        delta = end_dt - start_dt
+        return max(0, int(delta.total_seconds() // 60))

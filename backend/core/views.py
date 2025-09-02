@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag, Like, Post
+from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem
 from .serializers import (
     EventSerializer,
     EventDetailSerializer,
@@ -15,7 +15,10 @@ from .serializers import (
     TagSerializer,
     EventCreateSerializer,
     PostSerializer,
-    PostCreateSerializer
+    PostCreateSerializer,
+    ScheduleSerializer,
+    ScheduleItemSerializer,
+    ScheduleItemCreateSerializer,
 )
 from .authentication import (
     authenticate_organization,
@@ -339,6 +342,26 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], url_path='schedule', permission_classes=[AllowAny])
+    def get_schedule(self, request, slug=None):
+        """
+        Return the schedule for this event.
+        - Public: only if event is verified
+        - Owner org: return schedule regardless of verification
+        """
+        event = self.get_object()
+        current_org = self.get_current_organization()
+
+        if not (current_org and str(current_org.id) == str(event.organization_id)) and not event.verified:
+            return Response({'detail': _('Event not verified.')}, status=status.HTTP_404_NOT_FOUND)
+
+        schedule = getattr(event, 'schedule', None)
+        if not schedule:
+            return Response(None, status=status.HTTP_200_OK)
+
+        serializer = ScheduleSerializer(schedule, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class PostViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewSet):
     """
@@ -370,6 +393,40 @@ class PostViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewSet):
         if not post.organization or str(post.organization_id) != str(organization.id):
             return Response({'detail': _('You do not have permission to delete this post.')}, status=status.HTTP_403_FORBIDDEN)
         post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ScheduleItemViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewSet):
+    """
+    Endpoints for creating and deleting schedule items.
+    Requires organization authentication and ownership of the event/schedule.
+    """
+    queryset = ScheduleItem.objects.select_related('schedule__event')
+    parser_classes = [JSONParser]
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ScheduleItemCreateSerializer
+        return ScheduleItemSerializer
+
+    def create(self, request, *args, **kwargs):
+        self.check_organization_authentication()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save()
+        read = ScheduleItemSerializer(item, context={'request': request})
+        return Response(read.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        organization = self.get_current_organization()
+        if not organization:
+            return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
+        item = self.get_object()
+        event_org_id = str(item.schedule.event.organization_id)
+        if event_org_id != str(organization.id):
+            return Response({'detail': _('You do not have permission to delete this schedule item.')}, status=status.HTTP_403_FORBIDDEN)
+        item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

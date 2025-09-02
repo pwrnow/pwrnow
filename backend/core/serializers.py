@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem
 from .translation_utils import get_language_from_request, get_translated_field
 
 
@@ -279,9 +279,10 @@ class PostCreateSerializer(serializers.Serializer):
 
 class EventDetailSerializer(EventSerializer):
     posts = serializers.SerializerMethodField()
+    schedule = serializers.SerializerMethodField()
 
     class Meta(EventSerializer.Meta):
-        fields = EventSerializer.Meta.fields + ['posts']
+        fields = EventSerializer.Meta.fields + ['posts', 'schedule']
 
     def get_posts(self, obj):
         request = self.context.get('request')
@@ -297,3 +298,93 @@ class EventDetailSerializer(EventSerializer):
             queryset = queryset.filter(verified=True)
 
         return PostSerializer(queryset, many=True, context={'request': request}).data
+
+    def get_schedule(self, obj):
+        request = self.context.get('request')
+        # Determine ownership similarly to posts
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(request)
+        except Exception:
+            current_org = None
+
+        schedule = getattr(obj, 'schedule', None)
+        if not schedule:
+            return None
+
+        # Public can see schedule only if event is verified
+        if not (current_org and str(current_org.id) == str(obj.organization_id)) and not obj.verified:
+            return None
+
+        return ScheduleSerializer(schedule, context={'request': request}).data
+
+
+class ScheduleItemSerializer(serializers.ModelSerializer):
+    duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScheduleItem
+        fields = [
+            'id', 'date', 'start_time', 'end_time', 'title', 'description', 'duration'
+        ]
+
+    def get_duration(self, obj):
+        minutes = obj.duration_minutes
+        return f"{minutes} min"
+
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    items = ScheduleItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Schedule
+        fields = ['id', 'items']
+
+
+class ScheduleItemCreateSerializer(serializers.Serializer):
+    event_slug = serializers.SlugField(required=True)
+    date = serializers.DateField(required=True)
+    start_time = serializers.TimeField(required=True)
+    end_time = serializers.TimeField(required=True)
+    title = serializers.CharField(max_length=200)
+    description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    def validate(self, attrs):
+        if attrs['end_time'] <= attrs['start_time']:
+            raise serializers.ValidationError({'end_time': _('End time must be after start time.')})
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError(_('No request context found.'))
+
+        from .authentication import get_current_organization
+        organization = get_current_organization(request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        event_slug = validated_data['event_slug']
+        try:
+            event = Event.objects.get(slug=event_slug)
+        except Event.DoesNotExist:
+            raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+        if str(event.organization_id) != str(organization.id):
+            raise serializers.ValidationError(_('You do not have permission to modify this event.'))
+
+        schedule, created = Schedule.objects.get_or_create(event=event)
+
+        description = validated_data.get('description')
+        if description == '':
+            description = None
+
+        item = ScheduleItem.objects.create(
+            schedule=schedule,
+            date=validated_data['date'],
+            start_time=validated_data['start_time'],
+            end_time=validated_data['end_time'],
+            title=validated_data['title'],
+            description=description,
+        )
+        return item
