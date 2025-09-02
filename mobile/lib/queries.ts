@@ -35,6 +35,29 @@ export function useEventPosts(slug?: string) {
   });
 }
 
+export interface ScheduleItemDto {
+  id: string;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM:SS
+  end_time: string; // HH:MM:SS
+  title: string;
+  description: string | null;
+  duration: string; // e.g. "45 min"
+}
+
+export interface EventScheduleDto {
+  id: string;
+  items: ScheduleItemDto[];
+}
+
+export function useEventSchedule(slug?: string) {
+  return useQuery<EventScheduleDto | null>({
+    queryKey: slug ? queryKeys.eventSchedule(slug) : ['event', '', 'schedule'],
+    queryFn: () => api.events.getEventSchedule(slug as string),
+    enabled: typeof slug === 'string' && slug.length > 0,
+  });
+}
+
 export function useLikeEvent() {
   const queryClient = useQueryClient();
 

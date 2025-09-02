@@ -9,7 +9,6 @@ import { Organization, Event } from '@/lib/types';
 import { useTranslations } from 'next-intl';
 import OrganizationHeader from '@/components/organization-header';
 import OrganizationStats from '@/components/organization-stats';
-import EventFilter from '@/components/event-filter';
 import EventCard from '@/components/event-card';
 import EventsEmptyState from '@/components/events-empty-state';
 import OrganizationPageSkeleton from '@/components/organization-page-skeleton';
@@ -21,8 +20,6 @@ import {
   truncateDescription,
 } from '@/lib/organization-utils';
 
-type FilterType = 'all' | 'verified' | 'unverified';
-
 export default function OrganizationPage() {
   const params = useParams();
   const router = useRouter();
@@ -33,7 +30,6 @@ export default function OrganizationPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>('all');
 
   useEffect(() => {
     async function loadOrganizationData() {
@@ -96,23 +92,8 @@ export default function OrganizationPage() {
     }
   }, [orgSlug, router, t]);
 
-  const filteredEvents = events.filter((event) => {
-    switch (filter) {
-      case 'verified':
-        return event.verified;
-      case 'unverified':
-        return !event.verified;
-      default:
-        return true;
-    }
-  });
-
-  const upcomingEvents = filteredEvents.filter((event) =>
-    isUpcoming(event.starts_at)
-  );
-  const pastEvents = filteredEvents.filter(
-    (event) => !isUpcoming(event.starts_at)
-  );
+  const upcomingEvents = events.filter((event) => isUpcoming(event.starts_at));
+  const pastEvents = events.filter((event) => !isUpcoming(event.starts_at));
   const sortedEvents = [...upcomingEvents.reverse(), ...pastEvents.reverse()];
 
   if (loading) {
@@ -161,12 +142,9 @@ export default function OrganizationPage() {
         </div>
       </div>
 
-      {/* Filter Section */}
-      <EventFilter events={events} filter={filter} onFilterChange={setFilter} />
-
       {/* Events Section */}
-      {filteredEvents.length === 0 ? (
-        <EventsEmptyState filter={filter} orgSlug={orgSlug} />
+      {events.length === 0 ? (
+        <EventsEmptyState filter={'all'} orgSlug={orgSlug} />
       ) : (
         <div className='w-full'>
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>

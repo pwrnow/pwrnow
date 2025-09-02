@@ -8,8 +8,7 @@ interface ScheduleItem {
   id: string;
   time: string;
   title: string;
-  description: string;
-  speaker: string | null;
+  description: string | null;
   duration: string;
   endTime: string;
 }
@@ -136,32 +135,7 @@ const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
                 >
                   {item.description}
                 </Text>
-                {item.speaker && (
-                  <View className='flex-row items-center'>
-                    <Feather
-                      name='user'
-                      size={10}
-                      color={
-                        past
-                          ? isDark
-                            ? '#FFFFFF40'
-                            : '#00000040'
-                          : isDark
-                          ? '#FFFFFF80'
-                          : '#00000080'
-                      }
-                    />
-                    <Text
-                      className={`font-groteskMedium text-xs ml-1.5 ${
-                        past
-                          ? 'text-black/40 dark:text-white/40'
-                          : 'text-black/70 dark:text-white/70'
-                      }`}
-                    >
-                      {item.speaker}
-                    </Text>
-                  </View>
-                )}
+                {/* Speaker field removed */}
               </View>
             </View>
           </Animated.View>

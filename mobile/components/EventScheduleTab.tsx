@@ -10,8 +10,7 @@ interface ScheduleItem {
   id: string;
   time: string;
   title: string;
-  description: string;
-  speaker: string | null;
+  description: string | null;
   duration: string;
   endTime: string;
 }

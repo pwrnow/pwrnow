@@ -6,7 +6,7 @@ import {
   useWindowDimensions,
   ScrollView,
 } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
@@ -44,11 +44,7 @@ interface Props {
   ctaAnimatedStyle?: any;
 }
 
-const routes: Route[] = [
-  { key: 'details', title: t('details'), icon: 'info' },
-  { key: 'posts', title: t('posts'), icon: 'message-circle' },
-  { key: 'schedule', title: t('schedule'), icon: 'calendar' },
-];
+// routes are built dynamically in the component based on data
 
 // Details Scene Component
 const DetailsScene: React.FC<{
@@ -217,43 +213,71 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     const isDark = colorScheme === 'dark';
     const { tab } = useLocalSearchParams();
 
+    const hasSchedule = (() => {
+      if (!itemsByDay) return false;
+      for (const key of Object.keys(itemsByDay)) {
+        if ((itemsByDay[key] || []).length > 0) return true;
+      }
+      return false;
+    })();
+
+    const routes: Route[] = [
+      { key: 'details', title: t('details'), icon: 'info' },
+      { key: 'posts', title: t('posts'), icon: 'message-circle' },
+      ...(hasSchedule
+        ? ([
+            { key: 'schedule', title: t('schedule'), icon: 'calendar' },
+          ] as Route[])
+        : ([] as Route[])),
+    ];
+
     const [index, setIndex] = useState(() => {
-      // Initialize based on URL tab parameter
+      // Initialize based on URL tab parameter and availability
       if (tab === 'posts') return 1;
-      if (tab === 'schedule') return 2;
+      if (tab === 'schedule' && hasSchedule)
+        return routes.findIndex((r) => r.key === 'schedule');
       return 0;
     });
 
     // Sync index with URL tab parameter changes
     useEffect(() => {
       if (tab === 'posts') setIndex(1);
-      else if (tab === 'schedule') setIndex(2);
+      else if (tab === 'schedule' && hasSchedule)
+        setIndex(routes.findIndex((r) => r.key === 'schedule'));
       else setIndex(0);
-    }, [tab]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, hasSchedule]);
 
     // Create scene map
-    const renderScene = SceneMap({
-      details: () => (
-        <DetailsScene
-          eventSlug={eventSlug}
-          onMapPress={onMapPress}
-          onExternalLink={onExternalLink}
-          ctaAnimatedStyle={ctaAnimatedStyle}
-        />
-      ),
-      posts: () => (
-        <PostsScene
-          eventSlug={eventSlug}
-          posts={posts}
-          isLoadingPosts={isLoadingPosts}
-          postsError={postsError}
-          onImagePress={onImagePress}
-        />
-      ),
-      schedule: () => (
-        <ScheduleScene eventDays={eventDays} itemsByDay={itemsByDay} />
-      ),
-    });
+    const renderScene = ({ route }: any) => {
+      switch (route.key as TabType) {
+        case 'details':
+          return (
+            <DetailsScene
+              eventSlug={eventSlug}
+              onMapPress={onMapPress}
+              onExternalLink={onExternalLink}
+              ctaAnimatedStyle={ctaAnimatedStyle}
+            />
+          );
+        case 'posts':
+          return (
+            <PostsScene
+              eventSlug={eventSlug}
+              posts={posts}
+              isLoadingPosts={isLoadingPosts}
+              postsError={postsError}
+              onImagePress={onImagePress}
+            />
+          );
+        case 'schedule':
+          return (
+            <ScheduleScene eventDays={eventDays} itemsByDay={itemsByDay} />
+          );
+        default:
+          return null;
+      }
+    };
 
     // Tab Bar Component
     const renderTabBar = (props: any) => (

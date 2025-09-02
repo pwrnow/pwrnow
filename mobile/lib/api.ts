@@ -257,6 +257,31 @@ export const eventsApi = {
     return await response.json();
   },
 
+  async getEventSchedule(
+    slug: string
+  ): Promise<{
+    id: string;
+    items: Array<{
+      id: string;
+      date: string;
+      start_time: string;
+      end_time: string;
+      title: string;
+      description: string | null;
+      duration: string;
+    }>;
+  } | null> {
+    const response = await fetchWithCredentials(`/events/${slug}/schedule/`);
+    // Endpoint may return 200 with null body or empty body
+    const text = await response.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  },
+
   // Like an event by slug
   async like(slug: string): Promise<{ liked: boolean }> {
     const response = await fetchWithCredentials(`/events/${slug}/likes/`, {
