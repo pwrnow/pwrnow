@@ -35,6 +35,7 @@ import { EventBadge } from '@/components/event-badge';
 import { useTranslations } from 'next-intl';
 import PostsList from '@/components/posts-list';
 import CreatePostModal from '@/components/create-post-modal';
+import CreatePostComposer from '@/components/create-post-composer';
 import { toast } from 'sonner';
 import { createEventPublicUrl } from '@/lib/url-utils';
 import EventScheduleDaySelector, {
@@ -557,15 +558,11 @@ export default function OrgEventDetailsPage() {
         </TabsContent>
 
         <TabsContent value='posts' className='mt-6'>
-          <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-semibold'>{t('posts')}</h2>
-            <Button
-              onClick={() => setIsCreatePostModalOpen(true)}
-              className='cursor-pointer'
-            >
-              <Plus className='h-4 w-4 mr-2' />
-              {t('createPost')}
-            </Button>
+          <div className='mb-4'>
+            <CreatePostComposer
+              onPostCreated={handlePostCreated}
+              eventSlug={event.slug}
+            />
           </div>
 
           {postsLoading ? (
