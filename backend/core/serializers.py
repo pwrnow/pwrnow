@@ -352,6 +352,26 @@ class ScheduleItemCreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs['end_time'] <= attrs['start_time']:
             raise serializers.ValidationError({'end_time': _('End time must be after start time.')})
+
+        # Validate that provided date falls within the event's date range
+        event_slug = attrs.get('event_slug')
+        if event_slug:
+            try:
+                event = Event.objects.get(slug=event_slug)
+            except Event.DoesNotExist:
+                raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+            event_start_date = event.starts_at.date()
+            event_end_date = event.ends_at.date()
+            item_date = attrs['date']
+            if item_date < event_start_date or item_date > event_end_date:
+                raise serializers.ValidationError({
+                    'date': _('Date must be within the event dates.')
+                })
+
+            # Keep for create() to avoid re-query
+            self._validated_event = event
+
         return attrs
 
     def create(self, validated_data):
@@ -364,11 +384,14 @@ class ScheduleItemCreateSerializer(serializers.Serializer):
         if not organization:
             raise serializers.ValidationError(_('No authenticated organization found.'))
 
-        event_slug = validated_data['event_slug']
-        try:
-            event = Event.objects.get(slug=event_slug)
-        except Event.DoesNotExist:
-            raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+        # Use event from validate(), or fetch if not present (safety)
+        event = getattr(self, '_validated_event', None)
+        if event is None:
+            event_slug = validated_data['event_slug']
+            try:
+                event = Event.objects.get(slug=event_slug)
+            except Event.DoesNotExist:
+                raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
 
         if str(event.organization_id) != str(organization.id):
             raise serializers.ValidationError(_('You do not have permission to modify this event.'))

@@ -9,6 +9,9 @@ import {
   CreateEventData,
   Post,
   CreatePostData,
+  Schedule,
+  ScheduleItem,
+  CreateScheduleItemData,
 } from './types';
 import { getApiUrl } from './config';
 import { getUserLocale } from './locale';
@@ -405,6 +408,55 @@ export async function deletePost(postId: string): Promise<void> {
     console.log('✅ Post deleted successfully');
   } catch (error) {
     console.error('❌ Failed to delete post:', error);
+    throw error;
+  }
+}
+
+// Schedule endpoints
+export async function getEventSchedule(
+  eventSlug: string
+): Promise<Schedule | null> {
+  console.log('🗓️ Loading schedule for event:', eventSlug);
+  try {
+    const response = await fetchWithCredentials(
+      `/events/${eventSlug}/schedule/`
+    );
+    // Schedule endpoint may return null when no schedule exists
+    const data = await response.json().catch(() => null);
+    return data as Schedule | null;
+  } catch (error) {
+    console.error('❌ Failed to load schedule:', error);
+    throw error;
+  }
+}
+
+export async function createScheduleItem(
+  data: CreateScheduleItemData
+): Promise<ScheduleItem> {
+  console.log('➕ Creating schedule item for event:', data.event_slug, data);
+  try {
+    const response = await fetchWithCredentials('/schedule-items/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const item = (await response.json()) as ScheduleItem;
+    console.log('✅ Schedule item created:', item.id);
+    return item;
+  } catch (error) {
+    console.error('❌ Failed to create schedule item:', error);
+    throw error;
+  }
+}
+
+export async function deleteScheduleItem(itemId: string): Promise<void> {
+  console.log('🗑️ Deleting schedule item:', itemId);
+  try {
+    await fetchWithCredentials(`/schedule-items/${itemId}/`, {
+      method: 'DELETE',
+    });
+    console.log('✅ Schedule item deleted');
+  } catch (error) {
+    console.error('❌ Failed to delete schedule item:', error);
     throw error;
   }
 }

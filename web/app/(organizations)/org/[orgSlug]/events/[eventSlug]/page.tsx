@@ -26,14 +26,22 @@ import {
   getEventBySlug,
   getCurrentOrganization,
   getEventPosts,
+  getEventSchedule,
+  createScheduleItem,
+  deleteScheduleItem,
 } from '@/lib/api';
-import { Event, Organization, Post } from '@/lib/types';
+import { Event, Organization, Post, Schedule, ScheduleItem } from '@/lib/types';
 import { EventBadge } from '@/components/event-badge';
 import { useTranslations } from 'next-intl';
 import PostsList from '@/components/posts-list';
 import CreatePostModal from '@/components/create-post-modal';
 import { toast } from 'sonner';
 import { createEventPublicUrl } from '@/lib/url-utils';
+import EventScheduleDaySelector, {
+  DayOption,
+} from '@/components/event-schedule-day-selector';
+import EventScheduleList from '@/components/event-schedule-list';
+import EventScheduleAddModal from '@/components/event-schedule-add-modal';
 
 export default function OrgEventDetailsPage() {
   const params = useParams();
@@ -51,6 +59,10 @@ export default function OrgEventDetailsPage() {
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [copied, setCopied] = useState(false);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string>('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -110,6 +122,29 @@ export default function OrgEventDetailsPage() {
     loadPosts();
   }, [activeTab, event, posts.length]);
 
+  useEffect(() => {
+    async function loadSchedule() {
+      if (
+        activeTab === 'schedule' &&
+        event &&
+        schedule === null &&
+        !scheduleLoading
+      ) {
+        try {
+          setScheduleLoading(true);
+          const data = await getEventSchedule(event.slug);
+          setSchedule(data);
+          const initialDay = pickInitialDayFromSchedule(data, event);
+          if (initialDay) setSelectedDay(initialDay);
+        } catch {
+        } finally {
+          setScheduleLoading(false);
+        }
+      }
+    }
+    loadSchedule();
+  }, [activeTab, event, schedule, scheduleLoading]);
+
   const getInitials = (name: string) =>
     name
       .split(' ')
@@ -156,6 +191,53 @@ export default function OrgEventDetailsPage() {
     } catch (err) {
       console.error('Failed to copy: ', err);
       toast.error(t('copyFailed'));
+    }
+  };
+
+  const dayOptions: DayOption[] = buildDayOptions(
+    schedule?.items || [],
+    event?.starts_at,
+    event?.ends_at
+  );
+  const itemsByDay: Record<string, ScheduleItem[]> = groupItemsByDate(
+    schedule?.items || []
+  );
+  const currentItems = selectedDay ? itemsByDay[selectedDay] || [] : [];
+
+  const canManage =
+    !!organization && !!event && organization.id === event.organization.id;
+
+  const handleCreateScheduleItem = async (payload: {
+    event_slug: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    title: string;
+    description?: string;
+  }) => {
+    try {
+      const created = await createScheduleItem(payload);
+      setSchedule((prev) => {
+        const items = prev?.items ? [...prev.items, created] : [created];
+        return { id: prev?.id || 'tmp', items } as Schedule;
+      });
+      if (!selectedDay) setSelectedDay(created.date);
+      toast.success(t('createSuccess'));
+    } catch {
+      toast.error(t('createError'));
+    }
+  };
+
+  const handleDeleteScheduleItem = async (id: string) => {
+    try {
+      await deleteScheduleItem(id);
+      setSchedule((prev) => {
+        if (!prev) return prev;
+        return { ...prev, items: prev.items.filter((i) => i.id !== id) };
+      });
+      toast.success(t('deleteSuccess'));
+    } catch {
+      toast.error(t('deleteError'));
     }
   };
 
@@ -223,6 +305,102 @@ export default function OrgEventDetailsPage() {
   const endTime = formatTime(event.ends_at);
   const timeString = `${startTime} - ${endTime}`;
 
+  function buildDayOptions(
+    items: ScheduleItem[],
+    startsAt?: string,
+    endsAt?: string
+  ): DayOption[] {
+    const uniqueDates = new Set<string>();
+    items.forEach((i) => uniqueDates.add(i.date));
+    // Ensure event date range days are included as options if present
+    const extraDates: string[] = [];
+    if (startsAt && endsAt) {
+      const [sy, sm, sd] = startsAt
+        .slice(0, 10)
+        .split('-')
+        .map((n) => parseInt(n, 10));
+      const [ey, em, ed] = endsAt
+        .slice(0, 10)
+        .split('-')
+        .map((n) => parseInt(n, 10));
+      const startDate = new Date(sy, (sm || 1) - 1, sd || 1);
+      const endDate = new Date(ey, (em || 1) - 1, ed || 1);
+      for (
+        let d = new Date(startDate.getTime());
+        d <= endDate;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        extraDates.push(`${yyyy}-${mm}-${dd}`);
+      }
+    }
+    extraDates.forEach((d) => uniqueDates.add(d));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const options = Array.from(uniqueDates)
+      .sort()
+      .map((d) => {
+        const [y, m, day] = d.split('-').map((n) => parseInt(n, 10));
+        const date = new Date(y, (m || 1) - 1, day || 1);
+        const label = date.toLocaleDateString('pl-PL', {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+        });
+        return {
+          id: d,
+          label,
+          isToday: d === today,
+          isPast: d < today,
+        } as DayOption;
+      });
+    return options;
+  }
+
+  function groupItemsByDate(
+    items: ScheduleItem[]
+  ): Record<string, ScheduleItem[]> {
+    const map: Record<string, ScheduleItem[]> = {};
+    for (const item of items) {
+      if (!map[item.date]) map[item.date] = [];
+      map[item.date].push(item);
+    }
+    for (const key of Object.keys(map)) {
+      map[key].sort((a, b) =>
+        a.start_time < b.start_time ? -1 : a.start_time > b.start_time ? 1 : 0
+      );
+    }
+    return map;
+  }
+
+  function pickInitialDayFromSchedule(
+    s: Schedule | null,
+    ev: Event | null
+  ): string | null {
+    if (!s || !ev) return ev ? ev.starts_at.slice(0, 10) : null;
+    const dates = Array.from(new Set(s.items.map((i) => i.date))).sort();
+    if (dates.length === 0) return ev.starts_at.slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    if (dates.includes(today)) return today;
+    return dates[0];
+  }
+
+  function getInitialStartTimeForSelectedDay(
+    items: ScheduleItem[]
+  ): string | null {
+    if (!items || items.length === 0) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(Math.floor(now.getMinutes() / 5) * 5).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+    const last = items[items.length - 1];
+    const [h, m] = last.end_time.split(':');
+    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+  }
+
   return (
     <div className='w-full mx-auto max-w-4xl px-4 py-6'>
       <div className='mb-6'>
@@ -276,9 +454,10 @@ export default function OrgEventDetailsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-        <TabsList className='grid w-full grid-cols-2'>
+        <TabsList className='grid w-full grid-cols-3'>
           <TabsTrigger value='details'>{t('details')}</TabsTrigger>
           <TabsTrigger value='posts'>{t('posts')}</TabsTrigger>
+          <TabsTrigger value='schedule'>{t('schedule')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value='details' className='mt-6'>
@@ -379,7 +558,7 @@ export default function OrgEventDetailsPage() {
 
         <TabsContent value='posts' className='mt-6'>
           <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-semibold'>{t('eventPosts')}</h2>
+            <h2 className='text-xl font-semibold'>{t('posts')}</h2>
             <Button
               onClick={() => setIsCreatePostModalOpen(true)}
               className='cursor-pointer'
@@ -431,7 +610,58 @@ export default function OrgEventDetailsPage() {
             </Card>
           )}
         </TabsContent>
+
+        <TabsContent value='schedule' className='mt-6'>
+          {scheduleLoading ? (
+            <Card className='p-6'>
+              <Skeleton className='h-6 w-40 mb-4' />
+              <Skeleton className='h-16 w-full mb-3' />
+              <Skeleton className='h-24 w-full' />
+            </Card>
+          ) : (
+            <div className='space-y-4 max-w-2xl mx-auto'>
+              <EventScheduleDaySelector
+                days={dayOptions}
+                selectedDay={selectedDay}
+                onSelect={setSelectedDay}
+              />
+
+              {currentItems.length > 0 ? (
+                <EventScheduleList
+                  items={currentItems}
+                  canDelete={canManage}
+                  onDelete={handleDeleteScheduleItem}
+                />
+              ) : (
+                <Card className='p-12 text-center text-muted-foreground'>
+                  {t('scheduleEmpty')}
+                </Card>
+              )}
+
+              {canManage && selectedDay && (
+                <div className='flex justify-center pt-2'>
+                  <Button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className='cursor-pointer'
+                  >
+                    <Plus className='h-4 w-4 mr-2' />
+                    {t('addScheduleItem')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
+
+      <EventScheduleAddModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        eventSlug={event.slug}
+        selectedDate={selectedDay}
+        initialStartTime={getInitialStartTimeForSelectedDay(currentItems)}
+        onCreate={handleCreateScheduleItem}
+      />
 
       <CreatePostModal
         isOpen={isCreatePostModalOpen}

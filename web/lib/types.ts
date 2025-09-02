@@ -87,3 +87,28 @@ export interface CreatePostData {
   text?: string;
   images?: File[];
 }
+
+// Schedule types
+export interface ScheduleItem {
+  id: string;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM:SS
+  end_time: string; // HH:MM:SS
+  title: string;
+  description?: string | null;
+  duration_minutes?: number;
+}
+
+export interface Schedule {
+  id: string;
+  items: ScheduleItem[];
+}
+
+export interface CreateScheduleItemData {
+  event_slug: string;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM
+  end_time: string; // HH:MM
+  title: string;
+  description?: string;
+}

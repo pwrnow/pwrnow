@@ -7,7 +7,7 @@ from django.utils.text import Truncator
 from django.conf import settings
 from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -282,6 +282,8 @@ class EventAdmin(TranslationAdmin):
         count = obj.likes_count
         return format_html('<span style="color: #10b981;">❤️ {}</span>', count)
     likes_count_display.short_description = 'Likes'
+
+    # Removed schedule_manage_link from Event admin per request
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -566,3 +568,41 @@ class PostAdmin(admin.ModelAdmin):
             level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
             self.message_user(request, f'Skipped {skipped_count} posts (no images).', level=level)
     detect_post_images_aspect_ratios.short_description = "Detect aspect ratios for all images in selected posts"
+
+
+class ScheduleItemInline(admin.TabularInline):
+    model = ScheduleItem
+    extra = 1
+    fields = ['date', 'start_time', 'end_time', 'title', 'description']
+    ordering = ['date', 'start_time']
+
+
+@admin.register(Schedule)
+class ScheduleAdmin(admin.ModelAdmin):
+    list_display = ['event', 'items_count', 'days_count', 'updated_at']
+    search_fields = ['event__title', 'event__slug']
+    autocomplete_fields = ['event']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    inlines = [ScheduleItemInline]
+
+    @admin.display(description='Items')
+    def items_count(self, obj):
+        return obj.items.count()
+
+    @admin.display(description='Days')
+    def days_count(self, obj):
+        return obj.items.values('date').distinct().count()
+
+
+
+@admin.register(ScheduleItem)
+class ScheduleItemAdmin(admin.ModelAdmin):
+    list_display = ['title', 'event_display', 'date', 'start_time', 'end_time']
+    list_filter = ['date']
+    search_fields = ['title', 'description', 'schedule__event__title']
+    autocomplete_fields = ['schedule']
+    ordering = ['date', 'start_time']
+
+    @admin.display(description='Event', ordering='schedule__event__title')
+    def event_display(self, obj):
+        return obj.schedule.event
