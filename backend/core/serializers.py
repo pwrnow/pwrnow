@@ -130,7 +130,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'title': {'max_length': 200, 'required': True},
-            'description': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'description': {'max_length': 5000, 'required': False, 'allow_null': True, 'allow_blank': True},
             'location': {'max_length': 300, 'required': False, 'allow_null': True, 'allow_blank': True},
             'url': {'required': False, 'allow_null': True, 'allow_blank': True},
         }
@@ -234,7 +234,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostCreateSerializer(serializers.Serializer):
     event_slug = serializers.SlugField(required=True)
-    text = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    text = serializers.CharField(max_length=5000, required=False, allow_blank=True, allow_null=True)
     # Accept multiple images in multipart under key "images"
     images = serializers.ListField(
         child=serializers.ImageField(), required=False, allow_empty=True
@@ -357,7 +357,7 @@ class ScheduleItemCreateSerializer(serializers.Serializer):
     start_time = serializers.TimeField(required=True)
     end_time = serializers.TimeField(required=True)
     title = serializers.CharField(max_length=200)
-    description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    description = serializers.CharField(max_length=2000, required=False, allow_blank=True, allow_null=True)
 
     def validate(self, attrs):
         if attrs['end_time'] <= attrs['start_time']:

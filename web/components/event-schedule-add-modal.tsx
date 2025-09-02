@@ -54,7 +54,7 @@ export default function EventScheduleAddModal({
   const [endMinute, setEndMinute] = useState('00');
   const [submitting, setSubmitting] = useState(false);
 
-  const presets = useMemo(() => [15, 40, 45, 60], []);
+  const presets = useMemo(() => [15, 30, 45, 60], []);
   const minuteOptions = useMemo(
     () =>
       Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0')),
