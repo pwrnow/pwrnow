@@ -25,36 +25,8 @@ export function useEventBySlug(slug?: string) {
   });
 }
 
-export function useEventPosts(slug?: string) {
-  return useQuery<Post[]>({
-    queryKey: slug ? queryKeys.eventPosts(slug) : ['event', '', 'posts'],
-    queryFn: () => api.events.getEventPosts(slug as string),
-    enabled: typeof slug === 'string' && slug.length > 0,
-  });
-}
-
-export interface ScheduleItemDto {
-  id: string;
-  date: string; // YYYY-MM-DD
-  start_time: string; // HH:MM:SS
-  end_time: string; // HH:MM:SS
-  title: string;
-  description: string | null;
-  duration: string; // e.g. "45 min"
-}
-
-export interface EventScheduleDto {
-  id: string;
-  items: ScheduleItemDto[];
-}
-
-export function useEventSchedule(slug?: string) {
-  return useQuery<EventScheduleDto | null>({
-    queryKey: slug ? queryKeys.eventSchedule(slug) : ['event', '', 'schedule'],
-    queryFn: () => api.events.getEventSchedule(slug as string),
-    enabled: typeof slug === 'string' && slug.length > 0,
-  });
-}
+// Note: useEventPosts and useEventSchedule are no longer needed
+// as posts and schedule are now included in the event details response
 
 export function useLikeEvent() {
   const queryClient = useQueryClient();
@@ -180,24 +152,10 @@ export function usePrefetchEventDetails() {
   const queryClient = useQueryClient();
 
   const prefetchEventDetails = async (eventSlug: string) => {
-    // Prefetch event details
+    // Prefetch event details (now includes posts and schedule)
     await queryClient.prefetchQuery({
       queryKey: queryKeys.eventBySlug(eventSlug),
       queryFn: () => api.events.getEventBySlug(eventSlug),
-      staleTime: 10 * 60 * 1000, // 10 minutes
-    });
-
-    // Prefetch event posts
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.eventPosts(eventSlug),
-      queryFn: () => api.events.getEventPosts(eventSlug),
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    });
-
-    // Prefetch event schedule
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.eventSchedule(eventSlug),
-      queryFn: () => api.events.getEventSchedule(eventSlug),
       staleTime: 10 * 60 * 1000, // 10 minutes
     });
   };

@@ -50,15 +50,8 @@ export default function EventDetailScreen() {
   const eventSlugString = typeof eventSlug === 'string' ? eventSlug : undefined;
 
   // Custom hooks for data and actions
-  const {
-    event,
-    posts,
-    eventDays,
-    scheduleByDay,
-    isLoading,
-    eventError,
-    postsError,
-  } = useEventData(eventSlugString);
+  const { event, posts, eventDays, scheduleByDay, isLoading, eventError } =
+    useEventData(eventSlugString);
 
   const { handleHeartPress, handleMapPress, handleExternalLink } =
     useEventActions(event, setShowAuthModal);
@@ -138,11 +131,7 @@ export default function EventDetailScreen() {
     }
   }, [eventError, router]);
 
-  // Handle posts error separately - we can still show the event details
-  if (postsError) {
-    console.warn('Failed to load posts:', postsError);
-    // Continue rendering the component - posts will show error state in the tab
-  }
+  // Posts are now included in the main event query, so no separate error handling needed
 
   // Loading state
   if (isLoading) {
@@ -194,7 +183,7 @@ export default function EventDetailScreen() {
           eventSlug={eventSlug as string}
           posts={posts}
           isLoadingPosts={false} // We handle loading at the top level
-          postsError={postsError}
+          postsError={undefined} // No separate posts error since we use single query
           eventDays={eventDays}
           itemsByDay={scheduleByDay}
           onMapPress={handleMapPress}

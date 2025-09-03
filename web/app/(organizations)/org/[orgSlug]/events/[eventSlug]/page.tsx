@@ -25,8 +25,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   getEventBySlug,
   getCurrentOrganization,
-  getEventPosts,
-  getEventSchedule,
   createScheduleItem,
   deleteScheduleItem,
 } from '@/lib/api';
@@ -53,15 +51,11 @@ export default function OrgEventDetailsPage() {
 
   const [event, setEvent] = useState<Event | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [postsLoading, setPostsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [copied, setCopied] = useState(false);
-  const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -107,50 +101,15 @@ export default function OrgEventDetailsPage() {
     }
   }, [orgSlug, eventSlug, router, t]);
 
+  // Reset selected day when event changes and set initial day from schedule
   useEffect(() => {
-    async function loadPosts() {
-      if (activeTab === 'posts' && event && posts.length === 0) {
-        try {
-          setPostsLoading(true);
-          const postsData = await getEventPosts(event.slug);
-          setPosts(postsData);
-        } catch {
-        } finally {
-          setPostsLoading(false);
-        }
-      }
+    if (event?.schedule) {
+      const initialDay = pickInitialDayFromSchedule(event.schedule, event);
+      if (initialDay) setSelectedDay(initialDay);
+    } else {
+      setSelectedDay('');
     }
-    loadPosts();
-  }, [activeTab, event, posts.length]);
-
-  // Reset schedule when event changes
-  useEffect(() => {
-    setSchedule(null);
-    setSelectedDay('');
-  }, [event?.slug]);
-
-  useEffect(() => {
-    async function loadSchedule() {
-      if (
-        activeTab === 'schedule' &&
-        event &&
-        schedule === null &&
-        !scheduleLoading
-      ) {
-        try {
-          setScheduleLoading(true);
-          const data = await getEventSchedule(event.slug);
-          setSchedule(data);
-          const initialDay = pickInitialDayFromSchedule(data, event);
-          if (initialDay) setSelectedDay(initialDay);
-        } catch {
-        } finally {
-          setScheduleLoading(false);
-        }
-      }
-    }
-    loadSchedule();
-  }, [activeTab, event]);
+  }, [event?.slug, event?.schedule]);
 
   const getInitials = (name: string) =>
     name
@@ -178,13 +137,15 @@ export default function OrgEventDetailsPage() {
   };
 
   const handlePostCreated = (newPost: Post) => {
-    setPosts((prev) => [newPost, ...prev]);
+    // Refresh event data to get updated posts
+    window.location.reload();
     setIsCreatePostModalOpen(false);
     setActiveTab('posts');
   };
 
   const handlePostDeleted = (postId: string) => {
-    setPosts((prev) => prev.filter((post) => post.id !== postId));
+    // Refresh event data to get updated posts
+    window.location.reload();
   };
 
   const handleCopyLink = async () => {
@@ -202,12 +163,12 @@ export default function OrgEventDetailsPage() {
   };
 
   const dayOptions: DayOption[] = buildDayOptions(
-    schedule?.items || [],
+    event?.schedule?.items || [],
     event?.starts_at,
     event?.ends_at
   );
   const itemsByDay: Record<string, ScheduleItem[]> = groupItemsByDate(
-    schedule?.items || []
+    event?.schedule?.items || []
   );
   const currentItems = selectedDay ? itemsByDay[selectedDay] || [] : [];
 
@@ -223,12 +184,9 @@ export default function OrgEventDetailsPage() {
     description?: string;
   }) => {
     try {
-      const created = await createScheduleItem(payload);
-      setSchedule((prev) => {
-        const items = prev?.items ? [...prev.items, created] : [created];
-        return { id: prev?.id || 'tmp', items } as Schedule;
-      });
-      if (!selectedDay) setSelectedDay(created.date);
+      await createScheduleItem(payload);
+      // Refresh event data to get updated schedule
+      window.location.reload();
       toast.success(t('createSuccess'));
     } catch {
       toast.error(t('createError'));
@@ -238,10 +196,8 @@ export default function OrgEventDetailsPage() {
   const handleDeleteScheduleItem = async (id: string) => {
     try {
       await deleteScheduleItem(id);
-      setSchedule((prev) => {
-        if (!prev) return prev;
-        return { ...prev, items: prev.items.filter((i) => i.id !== id) };
-      });
+      // Refresh event data to get updated schedule
+      window.location.reload();
       toast.success(t('deleteSuccess'));
     } catch {
       toast.error(t('deleteError'));
@@ -571,24 +527,9 @@ export default function OrgEventDetailsPage() {
             />
           </div>
 
-          {postsLoading ? (
-            <Card className='p-6'>
-              <div className='space-y-4'>
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className='flex space-x-3'>
-                    <Skeleton className='w-10 h-10 rounded-full' />
-                    <div className='flex-1'>
-                      <Skeleton className='h-4 w-32 mb-2' />
-                      <Skeleton className='h-4 w-full mb-1' />
-                      <Skeleton className='h-4 w-3/4' />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          ) : posts.length > 0 ? (
+          {event?.posts && event.posts.length > 0 ? (
             <PostsList
-              posts={posts}
+              posts={event.posts}
               onPostDeleted={handlePostDeleted}
               organizationId={organization.id}
             />
@@ -608,13 +549,7 @@ export default function OrgEventDetailsPage() {
         </TabsContent>
 
         <TabsContent value='schedule' className='mt-6'>
-          {scheduleLoading ? (
-            <Card className='p-6'>
-              <Skeleton className='h-6 w-40 mb-4' />
-              <Skeleton className='h-16 w-full mb-3' />
-              <Skeleton className='h-24 w-full' />
-            </Card>
-          ) : (
+          {event?.schedule ? (
             <div className='space-y-4 max-w-2xl mx-auto'>
               <EventScheduleDaySelector
                 days={dayOptions}
@@ -646,6 +581,10 @@ export default function OrgEventDetailsPage() {
                 </div>
               )}
             </div>
+          ) : (
+            <Card className='p-12 text-center text-muted-foreground'>
+              {t('noSchedule')}
+            </Card>
           )}
         </TabsContent>
       </Tabs>

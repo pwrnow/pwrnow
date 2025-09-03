@@ -27,6 +27,18 @@ export interface Event {
   organization: Organization;
   category: Category;
   posts?: Post[];
+  schedule?: {
+    id: string;
+    items: Array<{
+      id: string;
+      date: string;
+      start_time: string;
+      end_time: string;
+      title: string;
+      description: string | null;
+      duration: string;
+    }>;
+  } | null;
 }
 
 export interface PostImage {

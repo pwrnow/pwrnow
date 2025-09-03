@@ -228,6 +228,14 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         # Use raw SQL for better performance on large datasets
         queryset = Event.objects.select_related('category', 'organization').prefetch_related('tags')
 
+        # For retrieve action, prefetch posts and schedule to avoid N+1 queries
+        if self.action == 'retrieve':
+            queryset = queryset.select_related('schedule').prefetch_related(
+                'posts__organization',
+                'posts__images',
+                'schedule__items'
+            )
+
         current_org = self.get_current_organization()
         if current_org:
             queryset = queryset.filter(organization__id=current_org.id)

@@ -70,13 +70,15 @@ class EventSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     is_new = serializers.SerializerMethodField()
     liked = serializers.SerializerMethodField()
+    posts = serializers.SerializerMethodField()
+    schedule = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'aspect_ratio',
-            'organization', 'category', 'is_new', 'liked'
+            'organization', 'category', 'is_new', 'liked', 'posts', 'schedule'
         ]
 
     def get_title(self, obj):
@@ -115,6 +117,45 @@ class EventSerializer(serializers.ModelSerializer):
             return False
         # Efficient existence check
         return Like.objects.filter(user_id=user.id, event_id=obj.id).exists()
+
+    def get_posts(self, obj):
+        """Get posts for the event."""
+        request = self.context.get('request')
+        # Determine if current org owns the event
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(request)
+        except Exception:
+            current_org = None
+
+        # Get posts - this will use prefetched data if available, otherwise make a query
+        queryset = obj.posts.all().select_related('organization').prefetch_related('images').order_by('-created_at')
+        if not (current_org and str(current_org.id) == str(obj.organization_id)):
+            queryset = queryset.filter(verified=True)
+
+        return PostSerializer(queryset, many=True, context={'request': request}).data
+
+    def get_schedule(self, obj):
+        """Get schedule for the event."""
+        request = self.context.get('request')
+        # Determine ownership similarly to posts
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(request)
+        except Exception:
+            current_org = None
+
+        # Get schedule - this will use prefetched data if available, otherwise make a query
+        schedule = getattr(obj, 'schedule', None)
+        if not schedule:
+            return None
+
+        # Public can see schedule only if event is verified
+        # For public users, events are already filtered to be verified in the queryset
+        if not (current_org and str(current_org.id) == str(obj.organization_id)) and not obj.verified:
+            return None
+
+        return ScheduleSerializer(schedule, context={'request': request}).data
 
 
 class EventCreateSerializer(serializers.ModelSerializer):
@@ -288,45 +329,11 @@ class PostCreateSerializer(serializers.Serializer):
 
 
 class EventDetailSerializer(EventSerializer):
-    posts = serializers.SerializerMethodField()
-    schedule = serializers.SerializerMethodField()
-
-    class Meta(EventSerializer.Meta):
-        fields = EventSerializer.Meta.fields + ['posts', 'schedule']
-
-    def get_posts(self, obj):
-        request = self.context.get('request')
-        # Determine if current org owns the event
-        try:
-            from .authentication import get_current_organization
-            current_org = get_current_organization(request)
-        except Exception:
-            current_org = None
-
-        queryset = obj.posts.all().select_related('organization').prefetch_related('images').order_by('-created_at')
-        if not (current_org and str(current_org.id) == str(obj.organization_id)):
-            queryset = queryset.filter(verified=True)
-
-        return PostSerializer(queryset, many=True, context={'request': request}).data
-
-    def get_schedule(self, obj):
-        request = self.context.get('request')
-        # Determine ownership similarly to posts
-        try:
-            from .authentication import get_current_organization
-            current_org = get_current_organization(request)
-        except Exception:
-            current_org = None
-
-        schedule = getattr(obj, 'schedule', None)
-        if not schedule:
-            return None
-
-        # Public can see schedule only if event is verified
-        if not (current_org and str(current_org.id) == str(obj.organization_id)) and not obj.verified:
-            return None
-
-        return ScheduleSerializer(schedule, context={'request': request}).data
+    """
+    EventDetailSerializer inherits from EventSerializer and includes posts and schedule.
+    The base EventSerializer now handles posts and schedule with prefetch optimization.
+    """
+    pass
 
 
 class ScheduleItemSerializer(serializers.ModelSerializer):

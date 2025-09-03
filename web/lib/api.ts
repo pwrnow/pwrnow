@@ -350,21 +350,7 @@ export async function uploadOrganizationImage(
   }
 }
 
-// Post endpoints
-export async function getEventPosts(eventSlug: string): Promise<Post[]> {
-  console.log('📝 Loading posts for event:', eventSlug);
-
-  try {
-    const response = await fetchWithCredentials(`/events/${eventSlug}/posts/`);
-    const posts = await response.json();
-    console.log('✅ Posts loaded:', posts.length, 'posts');
-
-    return posts;
-  } catch (error) {
-    console.error('❌ Failed to load posts:', error);
-    throw error;
-  }
-}
+// Note: getEventPosts is no longer needed as posts are now included in getEventBySlug response
 
 export async function createPost(data: CreatePostData): Promise<Post> {
   console.log('📝 Creating post:', data);
@@ -413,23 +399,7 @@ export async function deletePost(postId: string): Promise<void> {
   }
 }
 
-// Schedule endpoints
-export async function getEventSchedule(
-  eventSlug: string
-): Promise<Schedule | null> {
-  console.log('🗓️ Loading schedule for event:', eventSlug);
-  try {
-    const response = await fetchWithCredentials(
-      `/events/${eventSlug}/schedule/`
-    );
-    // Schedule endpoint may return null when no schedule exists
-    const data = await response.json().catch(() => null);
-    return data as Schedule | null;
-  } catch (error) {
-    console.error('❌ Failed to load schedule:', error);
-    throw error;
-  }
-}
+// Note: getEventSchedule is no longer needed as schedule is now included in getEventBySlug response
 
 export async function createScheduleItem(
   data: CreateScheduleItemData

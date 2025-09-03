@@ -23,6 +23,8 @@ export interface Event {
   aspect_ratio?: string;
   organization: Organization;
   category: Category;
+  posts?: Post[];
+  schedule?: Schedule | null;
 }
 
 export interface Category {

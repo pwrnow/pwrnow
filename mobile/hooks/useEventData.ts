@@ -1,31 +1,23 @@
 import { useMemo } from 'react';
-import {
-  useEventBySlug,
-  useEventPosts,
-  useEventSchedule,
-} from '../lib/queries';
+import { useEventBySlug } from '../lib/queries';
 import { generateEventDays } from '../components/WeekDaySelector';
-import type { ScheduleItemDto } from '../lib/queries';
 
 export const useEventData = (eventSlug?: string) => {
-  // Query hooks
+  // Single query hook that includes posts and schedule
   const {
     data: event,
     isLoading: isLoadingEvent,
     error: eventError,
   } = useEventBySlug(eventSlug);
-  const {
-    data: posts,
-    isLoading: isLoadingPosts,
-    error: postsError,
-  } = useEventPosts(eventSlug);
-  const { data: schedule, isLoading: isLoadingSchedule } =
-    useEventSchedule(eventSlug);
 
   // Generate event days from event dates
   const eventDays = useMemo(() => {
     return event ? generateEventDays(event.starts_at, event.ends_at) : [];
   }, [event?.starts_at, event?.ends_at]);
+
+  // Extract posts and schedule from event data
+  const posts = event?.posts || [];
+  const schedule = event?.schedule;
 
   // Group schedule items by day id
   const scheduleByDay = useMemo(() => {
@@ -43,7 +35,7 @@ export const useEventData = (eventSlug?: string) => {
 
     if (!schedule || !schedule.items) return grouped;
 
-    for (const item of schedule.items as ScheduleItemDto[]) {
+    for (const item of schedule.items) {
       const dayId = item.date; // YYYY-MM-DD
       const time = item.start_time.slice(0, 5); // HH:MM
       const endTime = item.end_time.slice(0, 5); // HH:MM
@@ -69,9 +61,6 @@ export const useEventData = (eventSlug?: string) => {
     return grouped;
   }, [schedule]);
 
-  // Combined loading state
-  const isLoading = isLoadingEvent || isLoadingPosts || isLoadingSchedule;
-
   return {
     // Data
     event,
@@ -79,13 +68,11 @@ export const useEventData = (eventSlug?: string) => {
     eventDays,
     scheduleByDay,
 
-    // Loading states
-    isLoading,
+    // Loading states - now only one loading state since we use single query
+    isLoading: isLoadingEvent,
     isLoadingEvent,
-    isLoadingPosts,
 
     // Errors
     eventError,
-    postsError,
   };
 };

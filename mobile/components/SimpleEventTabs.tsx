@@ -35,7 +35,7 @@ interface Props {
   eventSlug: string;
   posts?: any[];
   isLoadingPosts?: boolean;
-  postsError?: any;
+  postsError?: any; // Optional since posts are now included in main event query
   eventDays: any[];
   itemsByDay: Record<string, any[]>;
   onMapPress?: () => void;
