@@ -33,17 +33,32 @@ export async function authenticate(
     };
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    // console.log('Social login failed:', text);
-    throw new Error(`Social login failed: ${res.status} ${res.statusText}`);
+  // Create an AbortController for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text();
+      // console.log('Social login failed:', text);
+      throw new Error(`Social login failed: ${res.status} ${res.statusText}`);
+    }
+    return res.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Authentication timeout - please try again');
+    }
+    throw error;
   }
-  return res.json();
 }
 
 // Validate stored access token with backend
@@ -51,24 +66,39 @@ export async function validateToken(
   accessToken: string
 ): Promise<{ user: any }> {
   const url = `${getApiUrl()}/auth/token/verify/`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ token: accessToken }),
-  });
 
-  if (!res.ok) {
-    if (res.status === 401) {
-      throw new Error('Token expired or invalid');
+  // Create an AbortController for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ token: accessToken }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error('Token expired or invalid');
+      }
+      const text = await res.text();
+      throw new Error(`Token validation failed: ${res.status} ${text}`);
     }
-    const text = await res.text();
-    throw new Error(`Token validation failed: ${res.status} ${text}`);
-  }
 
-  return res.json();
+    return res.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Token validation timeout - please try again');
+    }
+    throw error;
+  }
 }
 
 // Refresh access token using refresh token from secure storage
@@ -80,31 +110,47 @@ async function performTokenRefresh(): Promise<string | null> {
     if (!refreshToken) return null;
 
     const url = `${getApiUrl()}/auth/token/refresh/`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
 
-    if (!res.ok) {
-      // Clear tokens if refresh fails
-      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh: refreshToken }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        // Clear tokens if refresh fails
+        await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+        return null;
+      }
+
+      const data = await res.json();
+      const newAccess: string | undefined = data?.access || data?.access_token;
+      const newRefresh: string | undefined =
+        data?.refresh || data?.refresh_token;
+
+      if (newAccess) {
+        await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccess);
+      }
+      if (newRefresh) {
+        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefresh);
+      }
+
+      return newAccess || null;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('Token refresh timeout');
+      }
       return null;
     }
-
-    const data = await res.json();
-    const newAccess: string | undefined = data?.access || data?.access_token;
-    const newRefresh: string | undefined = data?.refresh || data?.refresh_token;
-
-    if (newAccess) {
-      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccess);
-    }
-    if (newRefresh) {
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefresh);
-    }
-
-    return newAccess || null;
   } catch (err) {
     return null;
   }
@@ -163,11 +209,26 @@ async function fetchWithCredentials(
     } as any;
     if (overrideAuth) headers['Authorization'] = `Bearer ${overrideAuth}`;
 
-    return fetch(`${getApiUrl()}${url}`, {
-      ...options,
-      credentials: 'include',
-      headers,
-    });
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+    try {
+      const response = await fetch(`${getApiUrl()}${url}`, {
+        ...options,
+        credentials: 'include',
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
+      throw error;
+    }
   };
 
   let response = await makeRequest();

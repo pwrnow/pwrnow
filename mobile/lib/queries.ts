@@ -162,7 +162,7 @@ export function usePrefetchEventDetails() {
 
   const prefetchAllEventDetails = async (
     eventSlugs: string[],
-    delayMs: number = 500
+    delayMs: number = 3000 // Reduced to 3 seconds for better user experience
   ) => {
     for (let i = 0; i < eventSlugs.length; i++) {
       const eventSlug = eventSlugs[i];

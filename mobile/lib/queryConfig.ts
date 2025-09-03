@@ -8,7 +8,7 @@ export const queryConfig = {
     default: 5 * 60 * 1000, // 5 minutes
     events: 5 * 60 * 1000, // 5 minutes
     categories: 30 * 60 * 1000, // 30 minutes
-    eventDetails: 10 * 60 * 1000, // 10 minutes
+    eventDetails: 5 * 60 * 1000, // 10 minutes
     posts: 5 * 60 * 1000, // 5 minutes
   },
 
@@ -24,13 +24,12 @@ export const queryConfig = {
   // Retry settings
   retry: {
     queries: {
-      maxAttempts: 3,
-      delay: (attemptIndex: number) =>
-        Math.min(1000 * 2 ** attemptIndex, 30000),
+      maxAttempts: 1, // Reduced to 1 retry for faster user experience
+      delay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 3000), // Reduced max delay to 3 seconds
     },
     mutations: {
       maxAttempts: 1,
-      delay: 1000,
+      delay: 1000, // Keep at 1 second for mutations
     },
   },
 
