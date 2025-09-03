@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
   View,
@@ -14,7 +14,11 @@ import { Event, Category } from '../types';
 import CategorySelector from '../components/CategorySelector';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
-import { useCategories, useEvents } from '../lib/queries';
+import {
+  useCategories,
+  useEvents,
+  usePrefetchEventDetails,
+} from '../lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,6 +31,8 @@ export default function HomeScreen() {
   const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
   const queryClient = useQueryClient();
   const { isLoading, isAuthenticated } = useAuth();
+  const { prefetchAllEventDetails } = usePrefetchEventDetails();
+  const hasPrefetchedRef = useRef(false);
 
   const {
     data: events = [],
@@ -38,6 +44,18 @@ export default function HomeScreen() {
   const { data: fetchedCategories = [] } = useCategories();
 
   console.log('fetchStatus', fetchStatus);
+
+  // Prefetch event details when events are loaded (only once)
+  useEffect(() => {
+    if (events.length > 0 && !hasPrefetchedRef.current) {
+      hasPrefetchedRef.current = true;
+      // Prefetch details for all events with a delay between each request
+      const eventSlugs = events.map((event) => event.slug);
+      prefetchAllEventDetails(eventSlugs, 500).catch((error) => {
+        console.warn('Failed to prefetch event details:', error);
+      });
+    }
+  }, [events.length, prefetchAllEventDetails]);
 
   // Compose categories with the localized "All"
   const categories: Category[] = [
@@ -56,6 +74,7 @@ export default function HomeScreen() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setRefreshing(true);
+      hasPrefetchedRef.current = false; // Reset prefetch flag on refresh
       await queryClient.invalidateQueries({ queryKey: queryKeys.events });
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {

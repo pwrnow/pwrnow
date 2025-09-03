@@ -27,9 +27,7 @@ export function useEventBySlug(slug?: string) {
 
 export function useEventPosts(slug?: string) {
   return useQuery<Post[]>({
-    queryKey: slug
-      ? [...queryKeys.eventBySlug(slug), 'posts']
-      : ['event', '', 'posts'],
+    queryKey: slug ? queryKeys.eventPosts(slug) : ['event', '', 'posts'],
     queryFn: () => api.events.getEventPosts(slug as string),
     enabled: typeof slug === 'string' && slug.length > 0,
   });
@@ -175,4 +173,65 @@ export function useUnlikeEvent() {
       }
     },
   });
+}
+
+// Prefetch functions for event details
+export function usePrefetchEventDetails() {
+  const queryClient = useQueryClient();
+
+  const prefetchEventDetails = async (eventSlug: string) => {
+    // Prefetch event details
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.eventBySlug(eventSlug),
+      queryFn: () => api.events.getEventBySlug(eventSlug),
+      staleTime: 10 * 60 * 1000, // 10 minutes
+    });
+
+    // Prefetch event posts
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.eventPosts(eventSlug),
+      queryFn: () => api.events.getEventPosts(eventSlug),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+
+    // Prefetch event schedule
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.eventSchedule(eventSlug),
+      queryFn: () => api.events.getEventSchedule(eventSlug),
+      staleTime: 10 * 60 * 1000, // 10 minutes
+    });
+  };
+
+  const prefetchAllEventDetails = async (
+    eventSlugs: string[],
+    delayMs: number = 500
+  ) => {
+    for (let i = 0; i < eventSlugs.length; i++) {
+      const eventSlug = eventSlugs[i];
+
+      try {
+        await prefetchEventDetails(eventSlug);
+        console.log(
+          `Prefetched details for event ${i + 1}/${
+            eventSlugs.length
+          }: ${eventSlug}`
+        );
+      } catch (error) {
+        console.warn(
+          `Failed to prefetch details for event ${eventSlug}:`,
+          error
+        );
+      }
+
+      // Add delay between requests (except for the last one)
+      if (i < eventSlugs.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  };
+
+  return {
+    prefetchEventDetails,
+    prefetchAllEventDetails,
+  };
 }
