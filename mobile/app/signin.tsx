@@ -71,6 +71,10 @@ export default function SignInScreen() {
     }
   }, [isLoading, isAuthenticated, isAuthenticating]);
 
+  console.log('REDIRECT_URI', REDIRECT_URI);
+  console.log('ANDROID_CLIENT_ID', ANDROID_CLIENT_ID);
+  console.log('IOS_CLIENT_ID', IOS_CLIENT_ID);
+
   const [googleRequest, googleResponse, promptGoogleAsync] =
     Google.useAuthRequest({
       iosClientId: IOS_CLIENT_ID,
