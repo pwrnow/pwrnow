@@ -13,6 +13,7 @@ import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
 import StartupAnimation from '../components/StartupAnimation';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -54,23 +55,28 @@ export default function StackLayout() {
   }
 
   return (
-    <AuthProvider>
-      <NotificationsProvider enabled={!showStartup}>
-        <QueryProvider>
-          <PosthogProvider>
-            {/* Startup overlay animation shown briefly after splash */}
-            <StartupAnimation visible={showStartup} onEnd={handleStartupEnd} />
-            <StatusBar
-              style={isDark ? 'light' : 'dark'}
-              animated
-              translucent={false}
-              backgroundColor={isDark ? '#000000' : '#FFFFFF'}
-            />
-            <RootNavigator />
-          </PosthogProvider>
-        </QueryProvider>
-      </NotificationsProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NotificationsProvider enabled={!showStartup}>
+          <QueryProvider>
+            <PosthogProvider>
+              {/* Startup overlay animation shown briefly after splash */}
+              <StartupAnimation
+                visible={showStartup}
+                onEnd={handleStartupEnd}
+              />
+              <StatusBar
+                style={isDark ? 'light' : 'dark'}
+                animated
+                translucent={false}
+                backgroundColor={isDark ? '#000000' : '#FFFFFF'}
+              />
+              <RootNavigator />
+            </PosthogProvider>
+          </QueryProvider>
+        </NotificationsProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -87,7 +93,7 @@ function RootNavigator() {
         headerBackTitle: '',
         headerBackButtonDisplayMode: 'minimal',
         headerTitle: () => <Logo size='medium' />,
-        headerTitleAlign: 'left',
+        headerTitleAlign: 'center',
         headerTransparent: false,
         headerShadowVisible: true,
         headerStyle: {

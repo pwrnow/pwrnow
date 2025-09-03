@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
@@ -52,6 +52,27 @@ export const useEventActions = (
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
+    // On Android, directly open Google Maps without showing alert
+    if (Platform.OS === 'android') {
+      try {
+        const googleMapsUrl = `https://maps.google.com/?q=${encodeURIComponent(
+          event.location || ''
+        )}`;
+        const canOpen = await Linking.canOpenURL(googleMapsUrl);
+        if (canOpen) {
+          await Linking.openURL(googleMapsUrl);
+        } else {
+          // Fallback to web version
+          await Linking.openURL(googleMapsUrl);
+        }
+      } catch (error) {
+        console.error('Error opening Google Maps:', error);
+        Alert.alert(t('error'), t('failedToOpenMaps'));
+      }
+      return;
+    }
+
+    // On iOS, show the selection alert
     Alert.alert(
       t('openLocation'),
       t('chooseMapApp'),

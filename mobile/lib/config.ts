@@ -3,7 +3,9 @@ const resolveBaseUrl = (): string => {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL?.trim();
   const sanitizedEnv = fromEnv?.replace(/\/+$/u, '');
   if (sanitizedEnv) return sanitizedEnv;
-  const fallback = __DEV__ ? 'http://localhost:8000' : 'https://api.pwrnow.pl';
+  const fallback = __DEV__
+    ? 'https://99a21271975b.ngrok-free.app'
+    : 'https://api.pwrnow.pl';
   return fallback;
 };
 
@@ -23,4 +25,5 @@ export const config = {
   posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
   posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST,
   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
 };

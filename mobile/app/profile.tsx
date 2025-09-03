@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   useColorScheme,
   Alert,
 } from 'react-native';
@@ -12,11 +11,13 @@ import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { user, signOut, isAuthenticated, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Redirect if not authenticated
   React.useEffect(() => {
@@ -50,11 +51,20 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className='flex-1 bg-white dark:bg-black'>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          // paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }}
+      >
         <View className='flex-1 justify-center items-center'>
           <Text className='text-black dark:text-white'>{t('loading')}</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -63,7 +73,16 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-white dark:bg-black'>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? '#000000' : '#FFFFFF',
+        // paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
       <View className='flex-1 px-6 pt-12'>
         {/* User Avatar and Info */}
         <View className='items-center mb-16'>
@@ -113,6 +132,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

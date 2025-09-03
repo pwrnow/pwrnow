@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  SafeAreaView,
   View,
   ScrollView,
   RefreshControl,
@@ -22,6 +21,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
 import { useAuth } from '../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -32,6 +32,7 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { isLoading, isAuthenticated } = useAuth();
   const { prefetchAllEventDetails } = usePrefetchEventDetails();
+  const insets = useSafeAreaInsets();
   const hasPrefetchedRef = useRef(false);
 
   const {
@@ -85,7 +86,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className='flex-1'>
+    <View
+      style={{
+        flex: 1,
+        // paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
       <ScrollView
         className='bg-white dark:bg-black'
         contentContainerStyle={{
@@ -127,6 +136,6 @@ export default function HomeScreen() {
           scrollEnabled={false}
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -3,12 +3,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   useColorScheme,
   Alert,
   Platform,
   Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -32,6 +32,7 @@ import * as Haptics from 'expo-haptics';
 WebBrowser.maybeCompleteAuthSession();
 
 const IOS_CLIENT_ID = config.iosClientId;
+const ANDROID_CLIENT_ID = config.androidClientId;
 
 // Use a custom scheme instead of proxy
 const REDIRECT_URI = makeRedirectUri({
@@ -47,6 +48,7 @@ export default function SignInScreen() {
   const isDark = colorScheme === 'dark';
   const { setAuthFromBackend, isLoading, isAuthenticated } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const insets = useSafeAreaInsets();
 
   console.log(
     'SignIn Screen - isLoading:',
@@ -72,6 +74,7 @@ export default function SignInScreen() {
   const [googleRequest, googleResponse, promptGoogleAsync] =
     Google.useAuthRequest({
       iosClientId: IOS_CLIENT_ID,
+      androidClientId: ANDROID_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
       redirectUri: REDIRECT_URI,
       extraParams: {
@@ -193,8 +196,15 @@ export default function SignInScreen() {
   // Simple loading check
   if (isLoading) {
     return (
-      <SafeAreaView
-        style={{ flex: 1, backgroundColor: isDark ? '#000000' : '#FFFFFF' }}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }}
       >
         <View
           style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
@@ -209,13 +219,20 @@ export default function SignInScreen() {
             {t('loading')}
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: isDark ? '#000000' : '#FFFFFF' }}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? '#000000' : '#FFFFFF',
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
     >
       {/* Header with back button, no logo */}
       <View
@@ -415,6 +432,6 @@ export default function SignInScreen() {
           </Text>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
