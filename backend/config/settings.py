@@ -190,18 +190,6 @@ CACHES = {
     }
 }
 
-# Cache keys
-CACHE_KEYS = {
-    'PUBLIC_EVENTS_LIST': 'public_events_list',
-    'CATEGORIES_LIST': 'categories_list',
-}
-
-# Cache TTL settings (in seconds)
-CACHE_TTL = {
-    'PUBLIC_EVENTS': 60 * 60, # 1 hour
-    'CATEGORIES': 60 * 60 * 24, # 1 day
-}
-
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_URL = REDIS_URL
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-use-ssl
@@ -412,12 +400,6 @@ LOGGING = {
         "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {
             "level": "ERROR",
-            "handlers": ["console"],
-            "propagate": False,
-        },
-        # Cache module debug logging
-        "core.cache": {
-            "level": "DEBUG",
             "handlers": ["console"],
             "propagate": False,
         },

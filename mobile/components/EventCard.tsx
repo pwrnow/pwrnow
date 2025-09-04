@@ -291,8 +291,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     return `${time(startDate)}–${time(endDate)}`;
   };
 
-  console.log('eventcard');
-
   return (
     <Animated.View
       entering={FadeInDown.duration(420)

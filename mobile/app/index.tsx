@@ -44,8 +44,6 @@ export default function HomeScreen() {
   } = useEvents();
   const { data: fetchedCategories = [] } = useCategories();
 
-  console.log('fetchStatus', fetchStatus);
-
   // Prefetch event details when events are loaded (only once)
   useEffect(() => {
     if (events.length > 0 && !hasPrefetchedRef.current) {
