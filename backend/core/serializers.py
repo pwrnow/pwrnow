@@ -3,6 +3,9 @@ from django.utils.translation import gettext_lazy as _
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem
 from .translation_utils import get_language_from_request, get_translated_field
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CategorySerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
@@ -115,6 +118,8 @@ class EventSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         if not user or not getattr(user, 'is_authenticated', False):
             return False
+
+        logger.info(f"Checking if user {user.id} liked event {obj.id}")
         # Efficient existence check
         return Like.objects.filter(user_id=user.id, event_id=obj.id).exists()
 
