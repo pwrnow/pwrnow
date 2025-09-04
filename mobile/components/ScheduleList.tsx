@@ -33,6 +33,25 @@ const isEventCurrent = (dayId: string, time: string, endTime: string) => {
 };
 
 const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
+  // Show empty state if no items for this day
+  if (items.length === 0) {
+    return (
+      <View className='flex-1 justify-center items-center py-12'>
+        <View className='items-center'>
+          <View className='w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full items-center justify-center mb-4'>
+            <Feather name='calendar' size={24} color='#9CA3AF' />
+          </View>
+          <Text className='font-groteskSemibold text-lg text-black dark:text-white mb-2'>
+            {t('noScheduleItems')}
+          </Text>
+          <Text className='font-grotesk text-sm text-black/60 dark:text-white/60 text-center px-8'>
+            {t('noScheduleItemsDescription')}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View className='space-y-2'>
       {items.map((item, index) => {

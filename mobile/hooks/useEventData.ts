@@ -17,7 +17,6 @@ export const useEventData = (eventSlug?: string) => {
 
   // Extract posts and schedule from event data
   const posts = event?.posts || [];
-  const schedule = event?.schedule;
 
   // Group schedule items by day id
   const scheduleByDay = useMemo(() => {
@@ -33,7 +32,10 @@ export const useEventData = (eventSlug?: string) => {
       }>
     > = {};
 
-    if (!schedule || !schedule.items) return grouped;
+    const schedule = event?.schedule;
+    if (!schedule || !schedule.items) {
+      return grouped;
+    }
 
     for (const item of schedule.items) {
       const dayId = item.date; // YYYY-MM-DD
@@ -59,7 +61,7 @@ export const useEventData = (eventSlug?: string) => {
     }
 
     return grouped;
-  }, [schedule]);
+  }, [event?.schedule]);
 
   return {
     // Data

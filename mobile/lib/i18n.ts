@@ -35,6 +35,8 @@ const translations: Record<string, TranslationMap> = {
     loadingPosts: 'Loading posts...',
     failedToLoadPosts: 'Failed to load posts',
     noSchedule: 'No schedule',
+    noScheduleItems: 'No schedule items',
+    noScheduleItemsDescription: 'No schedule items for this day',
     noPostsDescription: 'Posts about this event will appear here',
     noScheduleDescription: 'Detailed event schedule will appear here',
     backToHome: 'Back to home page',
@@ -185,6 +187,8 @@ const translations: Record<string, TranslationMap> = {
     loadingPosts: 'Ładowanie postów...',
     failedToLoadPosts: 'Nie udało się załadować postów',
     noSchedule: 'Brak harmonogramu',
+    noScheduleItems: 'Brak elementów harmonogramu',
+    noScheduleItemsDescription: 'Brak elementów harmonogramu na ten dzień',
     noPostsDescription: 'Posty dotyczące tego wydarzenia pojawią się tutaj',
     noScheduleDescription:
       'Szczegółowy harmonogram wydarzenia pojawi się tutaj',

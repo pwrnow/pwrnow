@@ -149,26 +149,49 @@ export const generateEventDays = (
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  const current = new Date(start);
+  // Check if it's a single day event by comparing date strings
+  const startDateStr = startDate.split('T')[0];
+  const endDateStr = endDate.split('T')[0];
 
-  while (current <= end) {
-    const locale = deviceLocaleTag;
-    const currentStr = current.toISOString().split('T')[0];
-    const currentDate = new Date(current);
+  if (startDateStr === endDateStr) {
+    // Single day event - only include the start date
+    const currentStr = startDateStr;
+    const currentDate = new Date(start);
     const isPast = currentDate < new Date(todayStr);
     const isToday = currentStr === todayStr;
 
     days.push({
       id: currentStr, // YYYY-MM-DD format
-      date: new Date(current),
-      dayName: current.toLocaleDateString(locale, { weekday: 'short' }),
-      dayNumber: current.getDate(),
-      monthName: current.toLocaleDateString(locale, { month: 'short' }),
+      date: new Date(start),
+      dayName: start.toLocaleDateString(deviceLocaleTag, { weekday: 'short' }),
+      dayNumber: start.getDate(),
+      monthName: start.toLocaleDateString(deviceLocaleTag, { month: 'short' }),
       isPast,
       isToday,
     });
+  } else {
+    // Multi-day event - include all days from start to end
+    const current = new Date(start);
 
-    current.setDate(current.getDate() + 1);
+    while (current <= end) {
+      const locale = deviceLocaleTag;
+      const currentStr = current.toISOString().split('T')[0];
+      const currentDate = new Date(current);
+      const isPast = currentDate < new Date(todayStr);
+      const isToday = currentStr === todayStr;
+
+      days.push({
+        id: currentStr, // YYYY-MM-DD format
+        date: new Date(current),
+        dayName: current.toLocaleDateString(locale, { weekday: 'short' }),
+        dayNumber: current.getDate(),
+        monthName: current.toLocaleDateString(locale, { month: 'short' }),
+        isPast,
+        isToday,
+      });
+
+      current.setDate(current.getDate() + 1);
+    }
   }
 
   return days;

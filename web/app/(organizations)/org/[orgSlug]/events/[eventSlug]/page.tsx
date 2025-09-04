@@ -197,9 +197,18 @@ export default function OrgEventDetailsPage() {
     description?: string;
   }) => {
     try {
-      await createScheduleItem(payload);
-      // Refresh event data to get updated schedule
-      window.location.reload();
+      const newItem = await createScheduleItem(payload);
+      // Update local state instead of refreshing the page
+      if (event) {
+        const updatedSchedule = {
+          id: event.schedule?.id || '',
+          items: [...(event.schedule?.items || []), newItem],
+        };
+        setEvent({
+          ...event,
+          schedule: updatedSchedule,
+        });
+      }
       toast.success(t('createSuccess'));
     } catch {
       toast.error(t('createError'));
@@ -216,21 +225,33 @@ export default function OrgEventDetailsPage() {
     }>
   ) => {
     try {
-      // Create schedule items one by one
+      // Create schedule items one by one and collect them
+      const newItems: ScheduleItem[] = [];
       for (const item of scheduleItems) {
         const createData = {
-          event_slug: event.slug,
+          event_slug: event!.slug,
           date: item.date,
           start_time: item.start_time,
           end_time: item.end_time,
           title: item.title,
           description: item.description || '',
         };
-        await createScheduleItem(createData);
+        const newItem = await createScheduleItem(createData);
+        newItems.push(newItem);
       }
 
-      // Refresh the event data to get the updated schedule
-      window.location.reload();
+      // Update local state instead of refreshing the page
+      if (event) {
+        const updatedSchedule = {
+          id: event.schedule?.id || '',
+          items: [...(event.schedule?.items || []), ...newItems],
+        };
+        setEvent({
+          ...event,
+          schedule: updatedSchedule,
+        });
+      }
+
       toast.success(
         `Successfully imported ${scheduleItems.length} schedule items!`
       );
@@ -243,8 +264,17 @@ export default function OrgEventDetailsPage() {
   const handleDeleteScheduleItem = async (id: string) => {
     try {
       await deleteScheduleItem(id);
-      // Refresh event data to get updated schedule
-      window.location.reload();
+      // Update local state instead of refreshing the page
+      if (event && event.schedule) {
+        const updatedSchedule = {
+          id: event.schedule.id,
+          items: event.schedule.items.filter((item) => item.id !== id),
+        };
+        setEvent({
+          ...event,
+          schedule: updatedSchedule,
+        });
+      }
       toast.success(t('deleteSuccess'));
     } catch {
       toast.error(t('deleteError'));
@@ -322,9 +352,10 @@ export default function OrgEventDetailsPage() {
   ): DayOption[] {
     const uniqueDates = new Set<string>();
     items.forEach((i) => uniqueDates.add(i.date));
-    // Ensure event date range days are included as options if present
-    const extraDates: string[] = [];
-    if (startsAt && endsAt) {
+
+    // Only add event date range days if there are no schedule items
+    // This prevents showing extra days when schedule items already define the days
+    if (items.length === 0 && startsAt && endsAt) {
       const [sy, sm, sd] = startsAt
         .slice(0, 10)
         .split('-')
@@ -335,18 +366,29 @@ export default function OrgEventDetailsPage() {
         .map((n) => parseInt(n, 10));
       const startDate = new Date(sy, (sm || 1) - 1, sd || 1);
       const endDate = new Date(ey, (em || 1) - 1, ed || 1);
-      for (
-        let d = new Date(startDate.getTime());
-        d <= endDate;
-        d.setDate(d.getDate() + 1)
-      ) {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        extraDates.push(`${yyyy}-${mm}-${dd}`);
+
+      // Only include the start date if it's a single-day event
+      // or if the end date is on the same day
+      const startDateStr = startsAt.slice(0, 10);
+      const endDateStr = endsAt.slice(0, 10);
+
+      if (startDateStr === endDateStr) {
+        // Single day event
+        uniqueDates.add(startDateStr);
+      } else {
+        // Multi-day event - include all days from start to end
+        for (
+          let d = new Date(startDate.getTime());
+          d <= endDate;
+          d.setDate(d.getDate() + 1)
+        ) {
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          uniqueDates.add(`${yyyy}-${mm}-${dd}`);
+        }
       }
     }
-    extraDates.forEach((d) => uniqueDates.add(d));
 
     const today = new Date().toISOString().slice(0, 10);
     const options = Array.from(uniqueDates)

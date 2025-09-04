@@ -224,14 +224,9 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     const { colors } = useThemeColors();
     const { tab } = useLocalSearchParams();
 
-    const hasSchedule = (() => {
-      if (!itemsByDay) return false;
-      for (const key of Object.keys(itemsByDay)) {
-        if ((itemsByDay[key] || []).length > 0) return true;
-      }
-      return false;
-    })();
-
+    // Always show schedule tab for events - even if no schedule items exist
+    // This allows users to see event days and potentially add schedule items
+    const hasSchedule = true;
     const routes: Route[] = [
       { key: 'details', title: t('details'), icon: 'info' },
       { key: 'posts', title: t('posts'), icon: 'message-circle' },

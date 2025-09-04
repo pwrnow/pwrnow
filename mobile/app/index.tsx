@@ -84,14 +84,15 @@ export default function HomeScreen() {
   };
 
   // fetch evetns all manyulal and priunt all likes
-  const fetchEventsAndLikes = async () => {
-    const events = await api.events.getEvents();
-    for (const event of events) {
-      console.log('event', event.title, event.liked);
-    }
-  };
+  // const fetchEventsAndLikes = async () => {
+  //   const events = await api.events.getEvents();
+  //   for (const event of events) {
+  //     console.log('event', event.title, event.liked);
+  //     console.log('event.schedule', event.schedule);
+  //   }
+  // };
 
-  fetchEventsAndLikes();
+  // fetchEventsAndLikes();
 
   return (
     <View
