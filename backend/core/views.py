@@ -28,7 +28,6 @@ from .authentication import (
 )
 from .tasks import send_discord_notification
 from django.conf import settings
-from .cache import cache_categories, cache_public_events
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -38,7 +37,6 @@ from django.utils.translation import gettext as _
 class CategoryViewSet(viewsets.GenericViewSet):
     """
     ViewSet for listing categories only (no single category retrieval)
-    Uses Redis caching for performance with translation support
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -46,26 +44,10 @@ class CategoryViewSet(viewsets.GenericViewSet):
     authentication_classes = []
 
     def list(self, request, *args, **kwargs):
-        """List all categories with caching and language support."""
-        # Get all categories ordered by order_index and name
+        """List all categories ordered by order_index and name."""
         queryset = self.get_queryset()
-
-        # Extract filter parameters for cache key generation
-        filter_params = {}
-        if hasattr(request, 'query_params'):
-            # Include language parameter in cache key
-            if 'lang' in request.query_params:
-                filter_params['lang'] = request.query_params['lang']
-
-        # Cache the categories list
-        data = cache_categories(
-            queryset=queryset,
-            serializer_class=self.get_serializer_class(),
-            context={'request': request},
-            **filter_params
-        )
-
-        return Response(data)
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -223,7 +205,6 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         """Optimized version with better database performance"""
         now = timezone.now()
         today = now.date()
-        twenty_four_hours_ago = now - timezone.timedelta(hours=24)
 
         # Use raw SQL for better performance on large datasets
         queryset = Event.objects.select_related('category', 'organization').prefetch_related('tags')
@@ -260,36 +241,7 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         )
 
     def list(self, request, *args, **kwargs):
-        """
-        List events with caching for public (non-authenticated) requests.
-        Skip caching if user is authenticated to ensure 'liked' field is accurate.
-        """
-        current_org = self.get_current_organization()
-        is_user_authenticated = request.user and request.user.is_authenticated
-
-        # Only cache public events (when no org is authenticated AND no user is authenticated)
-        if not current_org and not is_user_authenticated:
-            queryset = self.filter_queryset(self.get_queryset())
-
-            # Extract filter parameters for cache key generation
-            filter_params = {}
-            if hasattr(request, 'query_params'):
-                # Include relevant filter parameters in cache key
-                for param in ['category__slug', 'organization__slug', 'verified', 'search', 'ordering', 'lang']:
-                    if param in request.query_params:
-                        filter_params[param] = request.query_params[param]
-
-            # Cache the public events list
-            data = cache_public_events(
-                queryset=queryset,
-                serializer_class=self.get_serializer_class(),
-                context={'request': request},
-                **filter_params
-            )
-
-            return Response(data)
-
-        # For authenticated users or organizations, don't cache (personalized data)
+        """List events with filtering support."""
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):

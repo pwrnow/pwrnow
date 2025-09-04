@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateToken, refreshAccessToken } from '../lib/api';
 import {
   ACCESS_TOKEN_KEY,
@@ -7,6 +8,7 @@ import {
   USER_KEY,
 } from '../lib/authStorage';
 import { queryClient } from '../providers/query';
+import { queryConfig } from '../lib/queryConfig';
 
 type AuthState = {
   accessToken: string | null;
@@ -107,7 +109,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   async function signOut() {
-    // Clear all cached data from React Query
+    // Clear all cached data from React Query FIRST
+    await queryClient.clear();
+
+    // Also invalidate all queries to ensure fresh data on next login
+    await queryClient.invalidateQueries();
+
+    // Clear the persisted cache from AsyncStorage directly
+    try {
+      await AsyncStorage.removeItem(queryConfig.persistence.storageKey);
+    } catch (error) {
+      console.warn('Failed to clear AsyncStorage cache:', error);
+    }
 
     // Clear secure storage
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
@@ -119,9 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setRefreshToken(null);
     setUser(null);
     setIsAuthenticated(false);
-
-    await queryClient.clear();
-
     setIsLoading(false);
   }
 
