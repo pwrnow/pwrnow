@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -104,7 +104,7 @@ export default function OrgEventDetailsPage() {
     }
   }, [orgSlug, eventSlug, router, t]);
 
-  // Reset selected day when event changes and set initial day from schedule
+  // Reset selected day only when event slug changes (navigating to different event)
   useEffect(() => {
     if (event) {
       const initialDay = pickInitialDayFromSchedule(
@@ -115,7 +115,7 @@ export default function OrgEventDetailsPage() {
     } else {
       setSelectedDay('');
     }
-  }, [event?.slug, event?.schedule]);
+  }, [event?.slug]); // Only depend on event slug, not schedule
 
   const getInitials = (name: string) =>
     name
@@ -178,15 +178,25 @@ export default function OrgEventDetailsPage() {
     }
   };
 
-  const dayOptions: DayOption[] = buildDayOptions(
-    event?.schedule?.items || [],
-    event?.starts_at,
-    event?.ends_at
+  const dayOptions: DayOption[] = useMemo(
+    () => buildDayOptions(event?.starts_at, event?.ends_at),
+    [event?.starts_at, event?.ends_at]
   );
-  const itemsByDay: Record<string, ScheduleItem[]> = groupItemsByDate(
-    event?.schedule?.items || []
+
+  const itemsByDay: Record<string, ScheduleItem[]> = useMemo(
+    () => groupItemsByDate(event?.schedule?.items || []),
+    [event?.schedule?.items]
   );
-  const currentItems = selectedDay ? itemsByDay[selectedDay] || [] : [];
+
+  const currentItems = useMemo(
+    () => (selectedDay ? itemsByDay[selectedDay] || [] : []),
+    [selectedDay, itemsByDay]
+  );
+
+  const initialStartTime = useMemo(
+    () => getInitialStartTimeForSelectedDay(currentItems),
+    [currentItems]
+  );
 
   const canManage =
     !!organization && !!event && organization.id === event.organization.id;
@@ -201,17 +211,18 @@ export default function OrgEventDetailsPage() {
   }) => {
     try {
       const newItem = await createScheduleItem(payload);
-      // Update local state instead of refreshing the page
-      if (event) {
+      // Update local state more efficiently
+      setEvent((prevEvent) => {
+        if (!prevEvent) return prevEvent;
         const updatedSchedule = {
-          id: event.schedule?.id || '',
-          items: [...(event.schedule?.items || []), newItem],
+          id: prevEvent.schedule?.id || '',
+          items: [...(prevEvent.schedule?.items || []), newItem],
         };
-        setEvent({
-          ...event,
+        return {
+          ...prevEvent,
           schedule: updatedSchedule,
-        });
-      }
+        };
+      });
       toast.success(t('createSuccess'));
     } catch {
       toast.error(t('createError'));
@@ -243,17 +254,18 @@ export default function OrgEventDetailsPage() {
         newItems.push(newItem);
       }
 
-      // Update local state instead of refreshing the page
-      if (event) {
+      // Update local state more efficiently
+      setEvent((prevEvent) => {
+        if (!prevEvent) return prevEvent;
         const updatedSchedule = {
-          id: event.schedule?.id || '',
-          items: [...(event.schedule?.items || []), ...newItems],
+          id: prevEvent.schedule?.id || '',
+          items: [...(prevEvent.schedule?.items || []), ...newItems],
         };
-        setEvent({
-          ...event,
+        return {
+          ...prevEvent,
           schedule: updatedSchedule,
-        });
-      }
+        };
+      });
 
       toast.success(
         `Successfully imported ${scheduleItems.length} schedule items!`
@@ -267,17 +279,18 @@ export default function OrgEventDetailsPage() {
   const handleDeleteScheduleItem = async (id: string) => {
     try {
       await deleteScheduleItem(id);
-      // Update local state instead of refreshing the page
-      if (event && event.schedule) {
+      // Update local state more efficiently
+      setEvent((prevEvent) => {
+        if (!prevEvent || !prevEvent.schedule) return prevEvent;
         const updatedSchedule = {
-          id: event.schedule.id,
-          items: event.schedule.items.filter((item) => item.id !== id),
+          id: prevEvent.schedule.id,
+          items: prevEvent.schedule.items.filter((item) => item.id !== id),
         };
-        setEvent({
-          ...event,
+        return {
+          ...prevEvent,
           schedule: updatedSchedule,
-        });
-      }
+        };
+      });
       toast.success(t('deleteSuccess'));
     } catch {
       toast.error(t('deleteError'));
@@ -348,56 +361,63 @@ export default function OrgEventDetailsPage() {
   const endTime = formatTime(event.ends_at);
   const timeString = `${startTime} - ${endTime}`;
 
-  function buildDayOptions(
-    items: ScheduleItem[],
-    startsAt?: string,
-    endsAt?: string
-  ): DayOption[] {
-    const uniqueDates = new Set<string>();
+  function buildDayOptions(startsAt?: string, endsAt?: string): DayOption[] {
+    // Copy mobile generateEventDays logic exactly
+    if (!startsAt || !endsAt) return [];
 
-    // Mirror mobile generateEventDays logic exactly
-    if (startsAt && endsAt) {
-      const start = new Date(startsAt);
-      const end = new Date(endsAt);
+    const start = new Date(startsAt);
+    const end = new Date(endsAt);
+    const days: DayOption[] = [];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
 
-      // Check if it's a single day event by comparing date strings
-      const startDateStr = startsAt.split('T')[0];
-      const endDateStr = endsAt.split('T')[0];
+    // Check if it's a single day event by comparing date strings
+    const startDateStr = startsAt.split('T')[0];
+    const endDateStr = endsAt.split('T')[0];
 
-      if (startDateStr === endDateStr) {
-        // Single day event - only include the start date
-        uniqueDates.add(startDateStr);
-      } else {
-        // Multi-day event - include all days from start to end
-        const current = new Date(start);
+    if (startDateStr === endDateStr) {
+      // Single day event - only include the start date
+      const currentStr = startDateStr;
+      const currentDate = new Date(start);
+      const isPast = currentDate < new Date(todayStr);
+      const isToday = currentStr === todayStr;
 
-        while (current <= end) {
-          const currentStr = current.toISOString().split('T')[0];
-          uniqueDates.add(currentStr);
-          current.setDate(current.getDate() + 1);
-        }
-      }
-    }
-
-    const today = new Date().toISOString().slice(0, 10);
-    const options = Array.from(uniqueDates)
-      .sort()
-      .map((d) => {
-        const [y, m, day] = d.split('-').map((n) => parseInt(n, 10));
-        const date = new Date(y, (m || 1) - 1, day || 1);
-        const label = date.toLocaleDateString('pl-PL', {
+      days.push({
+        id: currentStr,
+        label: start.toLocaleDateString('pl-PL', {
           weekday: 'short',
           day: '2-digit',
           month: 'short',
-        });
-        return {
-          id: d,
-          label,
-          isToday: d === today,
-          isPast: d < today,
-        } as DayOption;
+        }),
+        isToday,
+        isPast,
       });
-    return options;
+    } else {
+      // Multi-day event - include all days from start to end
+      const current = new Date(start);
+
+      while (current.getDate() <= end.getDate()) {
+        const currentStr = current.toISOString().split('T')[0];
+        const currentDate = new Date(current);
+        const isPast = currentDate < new Date(todayStr);
+        const isToday = currentStr === todayStr;
+
+        days.push({
+          id: currentStr,
+          label: current.toLocaleDateString('pl-PL', {
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+          }),
+          isToday,
+          isPast,
+        });
+
+        current.setDate(current.getDate() + 1);
+      }
+    }
+
+    return days;
   }
 
   function groupItemsByDate(
@@ -684,7 +704,7 @@ export default function OrgEventDetailsPage() {
         onOpenChange={setIsAddModalOpen}
         eventSlug={event.slug}
         selectedDate={selectedDay}
-        initialStartTime={getInitialStartTimeForSelectedDay(currentItems)}
+        initialStartTime={initialStartTime}
         onCreate={handleCreateScheduleItem}
       />
 

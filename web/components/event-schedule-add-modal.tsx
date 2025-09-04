@@ -90,8 +90,12 @@ export default function EventScheduleAddModal({
     const baseH = parseInt(h || '10', 10);
     const baseM = parseInt(m || '0', 10);
     const total = baseH * 60 + baseM + selectedPreset;
-    const eh = Math.floor((total % (24 * 60)) / 60);
-    const em = total % 60;
+
+    // Cap at 23:59 (1439 minutes in a day)
+    const cappedTotal = Math.min(total, 23 * 60 + 59);
+
+    const eh = Math.floor(cappedTotal / 60);
+    const em = cappedTotal % 60;
     setEndHour(String(eh).padStart(2, '0'));
     setEndMinute(String(em).padStart(2, '0'));
   }, [open, initialStartTime, selectedPreset]);
@@ -108,8 +112,12 @@ export default function EventScheduleAddModal({
     const startH = parseInt(startHour, 10);
     const startM = parseInt(startMinute, 10);
     const total = startH * 60 + startM + minutes;
-    const h = Math.floor((total % (24 * 60)) / 60);
-    const m = total % 60;
+
+    // Cap at 23:59 (1439 minutes in a day)
+    const cappedTotal = Math.min(total, 23 * 60 + 59);
+
+    const h = Math.floor(cappedTotal / 60);
+    const m = cappedTotal % 60;
     setEndHour(h.toString().padStart(2, '0'));
     setEndMinute(m.toString().padStart(2, '0'));
     setSelectedPreset(minutes);
@@ -125,7 +133,7 @@ export default function EventScheduleAddModal({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission behavior
     if (!title) return;
     setSubmitting(true);
     try {

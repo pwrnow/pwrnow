@@ -20,7 +20,7 @@ export default function EventScheduleDaySelector({
   selectedDay,
   onSelect,
 }: Props) {
-  if (days.length <= 1) return null;
+  if (days.length === 0) return null;
 
   return (
     <div className='flex gap-2 overflow-x-auto pb-2 -mx-1 px-1'>
