@@ -6,6 +6,7 @@ import {
   REFRESH_TOKEN_KEY,
   USER_KEY,
 } from '../lib/authStorage';
+import { queryClient } from '../providers/query';
 
 type AuthState = {
   accessToken: string | null;
@@ -106,14 +107,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   async function signOut() {
+    // Clear all cached data from React Query
+
+    // Clear secure storage
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
     await SecureStore.deleteItemAsync(USER_KEY);
 
+    // Reset auth state
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
     setIsAuthenticated(false);
+
+    await queryClient.clear();
+
     setIsLoading(false);
   }
 
