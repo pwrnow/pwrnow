@@ -93,14 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { access, refresh, user } = res;
     if (!access) throw new Error('backend did not return access token');
 
-    // Clear all existing cached data to avoid leaking previous session data
-    await queryClient.clear();
+    // Invalidate cached queries to refetch fresh data for the new session
     await queryClient.invalidateQueries();
-    try {
-      await AsyncStorage.removeItem(queryConfig.persistence.storageKey);
-    } catch (error) {
-      console.warn('Failed to clear AsyncStorage cache on sign-in:', error);
-    }
 
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access);
     if (refresh) {
