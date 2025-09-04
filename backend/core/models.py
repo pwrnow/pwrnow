@@ -7,7 +7,9 @@ from django.utils.text import slugify
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.conf import settings
 from sqids import Sqids
+from django.utils.translation import gettext_lazy as _
 
 
 def generate_organization_code():
@@ -143,6 +145,10 @@ class Event(models.Model):
     # Timing
     starts_at = models.DateTimeField(db_index=True)
     ends_at = models.DateTimeField(db_index=True)
+    publication_date = models.DateField(
+        db_index=True,
+        help_text="Date when the event will be published and appear on the website. Notifications are sent on this date at 9 AM."
+    )
 
     # Media and external links
     image = models.ImageField(
@@ -246,6 +252,12 @@ class Event(models.Model):
         return reverse('event-detail', kwargs={'slug': self.slug})
 
     @property
+    def public_url(self):
+        """Get the public-facing URL for this event, suitable for notifications and sharing."""
+        from django.conf import settings
+        return f"{settings.SITE_URL}/wydarzenia/{self.slug}"
+
+    @property
     def is_past(self):
         """Check if event has ended."""
         return timezone.now() > self.ends_at
@@ -262,12 +274,200 @@ class Event(models.Model):
         return timezone.now() < self.starts_at
 
     def check_is_new(self):
-        """Check if the event was verified in the last 24 hours."""
-        if not self.verified_at:
+        """Check if the event was published in the last 24 hours."""
+        if not self.publication_date:
             return False
-        return timezone.now() - self.verified_at < timezone.timedelta(days=1)
+        today = timezone.now().date()
+        return (today - self.publication_date).days < 1
 
     @property
     def duration(self):
         """Get event duration as timedelta."""
         return self.ends_at - self.starts_at
+
+    @property
+    def likes_count(self):
+        """Get the total number of likes for this event."""
+        return self.likes.count()
+
+
+class Like(models.Model):
+    """User likes for events."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='likes'
+    )
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='likes'
+    )
+
+    class Meta:
+        unique_together = (('user', 'event'),)
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'event']),
+            models.Index(fields=['event', 'user']),
+        ]
+
+    def __str__(self):
+        return f"Like(user={self.user_id}, event={self.event_id})"
+
+
+class Post(models.Model):
+    """Posts attached to events, created by organizations with verification support."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='posts'
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='posts'
+    )
+
+    text = models.TextField(blank=True, null=True, help_text=_('Optional text content'))
+
+    # Verification flags mirroring Event
+    verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_('Timestamp of when the post was verified')
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event', '-created_at']),
+            models.Index(fields=['organization', '-created_at']),
+            models.Index(fields=['verified', '-created_at']),
+        ]
+
+    def __str__(self):
+        preview = (self.text or '').strip()[:40]
+        return f"Post for {self.event.title}: {preview}"
+
+    def clean(self):
+        # Ensure at least text or one image exists; allow initial create to pass
+        # so that admin inlines can attach images after the parent saves.
+        if self._state.adding:
+            return
+        if not (self.text and self.text.strip()) and not self.images.exists():
+            raise ValidationError(_('Post must include text or at least one image.'))
+
+    @property
+    def public_url(self):
+        """Get the public-facing URL for this post, suitable for notifications and sharing."""
+        return f"{self.event.public_url}/posts/{self.id}"
+
+    def save(self, *args, **kwargs):
+        is_new_instance = self._state.adding
+        if not is_new_instance:
+            try:
+                original = Post.objects.get(pk=self.pk)
+                if self.verified and not original.verified:
+                    self.verified_at = timezone.now()
+                elif not self.verified:
+                    self.verified_at = None
+            except Post.DoesNotExist:
+                if self.verified:
+                    self.verified_at = timezone.now()
+        else:
+            if self.verified:
+                self.verified_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class PostImage(models.Model):
+    """Image attachments for posts."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(upload_to='posts/', help_text=_('Image file'))
+    aspect_ratio = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text=_("Detected aspect ratio of the post image (e.g., '16:9', '1:1')")
+    )
+    order_index = models.PositiveIntegerField(default=0, db_index=True)
+
+    class Meta:
+        ordering = ['order_index', 'created_at']
+        indexes = [
+            models.Index(fields=['post', 'order_index']),
+        ]
+
+    def __str__(self):
+        return f"PostImage(post={self.post_id})"
+
+
+class Schedule(models.Model):
+    """A schedule attached one-to-one to an event."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    event = models.OneToOneField(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='schedule'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Schedule(event={self.event.slug})"
+
+
+class ScheduleItem(models.Model):
+    """Items belonging to a schedule for specific dates with start/end times.
+
+    Note: We intentionally do not store any speaker information.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    schedule = models.ForeignKey(
+        Schedule,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    date = models.DateField(db_index=True)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['date', 'start_time']
+        indexes = [
+            models.Index(fields=['schedule', 'date', 'start_time']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} on {self.date} at {self.start_time}"
+
+    @property
+    def duration_minutes(self):
+        from datetime import datetime
+        start_dt = datetime.combine(self.date, self.start_time)
+        end_dt = datetime.combine(self.date, self.end_time)
+        delta = end_dt - start_dt
+        return max(0, int(delta.total_seconds() // 60))

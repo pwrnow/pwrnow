@@ -5,8 +5,9 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
+from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -174,24 +175,27 @@ class EventAdmin(TranslationAdmin):
         'image_preview',
         'starts_at',
         'ends_at',
+        'publication_date',
         'category',
         'organization',
         'verified',
-        'status_display'
+        'status_display',
+        'likes_count_display'
     ]
     list_filter = [
         'verified',
         'category',
         'organization',
         'starts_at',
-        'created_at'
+        'created_at',
+        'publication_date'
     ]
     search_fields = ['title', 'description', 'location', 'slug']
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['verified']
     date_hierarchy = 'starts_at'
     ordering = ['starts_at']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'likes_count_display']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
 
@@ -203,7 +207,7 @@ class EventAdmin(TranslationAdmin):
             'fields': ('title', 'slug', 'description', 'category')
         }),
         ('Timing', {
-            'fields': ('starts_at', 'ends_at', 'duration_display')
+            'fields': ('starts_at', 'ends_at', 'publication_date', 'duration_display')
         }),
         ('Location & Links', {
             'fields': ('location', 'url', 'image', 'aspect_ratio')
@@ -263,15 +267,30 @@ class EventAdmin(TranslationAdmin):
             duration = obj.duration
             hours = duration.total_seconds() // 3600
             minutes = (duration.total_seconds() % 3600) // 60
-            return f"{int(hours)}h {int(minutes)}m"
-        return "-"
+
+            if hours > 0:
+                if minutes > 0:
+                    return f"{hours}h {minutes}m"
+                else:
+                    return f"{hours}h"
+            else:
+                return f"{minutes}m"
+        return "N/A"
+
+    @admin.display(description='Likes')
+    def likes_count_display(self, obj):
+        count = obj.likes_count
+        return format_html('<span style="color: #10b981;">❤️ {}</span>', count)
+    likes_count_display.short_description = 'Likes'
+
+    # Removed schedule_manage_link from Event admin per request
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'category', 'organization'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'resend_push_notifications']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -283,41 +302,341 @@ class EventAdmin(TranslationAdmin):
         self.message_user(request, f'{updated} events marked as unverified.')
     mark_as_unverified.short_description = "Mark selected events as unverified"
 
-    def resend_push_notifications(self, request, queryset):
-        """Resend the "new event" push notification for selected, verified events."""
+    def detect_aspect_ratios(self, request, queryset):
+        """Trigger aspect ratio detection for selected events."""
         queued_count = 0
-        sent_sync_count = 0
         skipped_count = 0
 
         for event in queryset:
-            if not event.verified:
+            if not event.image:
                 skipped_count += 1
                 continue
 
-            # Prefer async via Celery; fall back to sync if Celery is unavailable
+            # Trigger the aspect ratio detection task
             try:
-                from notifications.tasks import send_event_verification_notifications
-                send_event_verification_notifications.delay(str(event.id))
+                from .tasks import detect_event_image_aspect_ratio
+                detect_event_image_aspect_ratio.delay(str(event.id))
                 queued_count += 1
-            except Exception:
-                from notifications.services import push_service
-                push_service.send_event_verification_notification(event)
-                sent_sync_count += 1
+            except Exception as e:
+                # Fallback to synchronous processing if Celery is unavailable
+                try:
+                    from .tasks import detect_event_image_aspect_ratio
+                    detect_event_image_aspect_ratio(str(event.id))
+                    queued_count += 1
+                except Exception:
+                    skipped_count += 1
 
-        if queued_count or sent_sync_count:
-            parts = []
-            if queued_count:
-                parts.append(f"queued {queued_count}")
-            if sent_sync_count:
-                parts.append(f"sent synchronously {sent_sync_count}")
-            if skipped_count:
-                parts.append(f"skipped {skipped_count} not verified")
-            self.message_user(request, f"Resend triggered: {', '.join(parts)}.")
-        else:
-            self.message_user(request, "No verified events selected.", level=messages.WARNING)
-    resend_push_notifications.short_description = "Resend push notification (verified events only)"
+        if queued_count:
+            self.message_user(request, f'Aspect ratio detection queued for {queued_count} events.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} events (no image).', level=level)
+    detect_aspect_ratios.short_description = "Detect aspect ratios for selected events"
+
+    def send_event_publication_notifications(self, request, queryset):
+        """Send publication notifications for selected events regardless of publication date."""
+        # Filter only verified events
+        verified_events = queryset.filter(verified=True)
+        if not verified_events.exists():
+            self.message_user(
+                request,
+                'No verified events selected. Please select verified events only.',
+                level=messages.WARNING
+            )
+            return
+
+        try:
+            from notifications.services import push_service
+            result = push_service.send_publication_notifications_for_events(verified_events)
+
+            if result['sent'] > 0:
+                self.message_user(
+                    request,
+                    f'Successfully sent publication notifications for {len(verified_events)} events: {result["sent"]} sent, {result["failed"]} failed.'
+                )
+            else:
+                self.message_user(
+                    request,
+                    f'Failed to send publication notifications: {result["failed"]} failed.',
+                    level=messages.ERROR
+                )
+        except Exception as e:
+            self.message_user(
+                request,
+                f'Error sending publication notifications: {str(e)}',
+                level=messages.ERROR
+            )
+    send_event_publication_notifications.short_description = "Send event publication notifications"
+
+    def send_event_reminder_24h(self, request, queryset):
+        """Manually trigger 24h reminder notifications for selected verified events (ignores time window)."""
+        verified_events = queryset.filter(verified=True)
+        if not verified_events.exists():
+            self.message_user(
+                request,
+                'No verified events selected. Please select verified events only.',
+                level=messages.WARNING
+            )
+            return
+
+        try:
+            from notifications.services import push_service
+            result = push_service.send_event_reminders_for_events(verified_events)
+
+            if result['sent'] > 0:
+                self.message_user(
+                    request,
+                    f'Successfully sent reminder notifications: {result["sent"]} sent, {result["failed"]} failed.'
+                )
+            else:
+                self.message_user(
+                    request,
+                    f'Failed to send reminders: {result["failed"]} failed.',
+                    level=messages.ERROR
+                )
+        except Exception as e:
+            self.message_user(
+                request,
+                f'Error sending reminders: {str(e)}',
+                level=messages.ERROR
+            )
+    send_event_reminder_24h.short_description = "Send 24h reminder notifications (manual)"
 
 
 admin.site.site_header = "PWr Now Admin"
 admin.site.site_title = "PWr Now Admin Portal"
 admin.site.index_title = "Welcome to PWr Now Administration"
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'event', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__email', 'event__title']
+    autocomplete_fields = ['user', 'event']
+
+
+class PostImageInline(admin.TabularInline):
+    model = PostImage
+    extra = 0
+    fields = ['image', 'aspect_ratio', 'order_index', 'image_preview', 'created_at']
+    readonly_fields = ['image_preview', 'created_at']
+
+    @admin.display(description='Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit: cover;" />', obj.image.url)
+        return "-"
+
+
+@admin.register(PostImage)
+class PostImageAdmin(admin.ModelAdmin):
+    list_display = ['post', 'image_preview', 'aspect_ratio_display', 'order_index', 'created_at']
+    list_filter = ['created_at', 'post__event', 'post__organization']
+    search_fields = ['post__event__title', 'post__organization__name']
+    readonly_fields = ['id', 'created_at', 'image_preview', 'aspect_ratio_display']
+    list_editable = ['order_index']
+    autocomplete_fields = ['post']
+    ordering = ['post', 'order_index']
+
+    fieldsets = (
+        ('Post Information', {
+            'fields': ('post',)
+        }),
+        ('Image Details', {
+            'fields': ('image', 'image_preview', 'aspect_ratio', 'aspect_ratio_display', 'order_index'),
+            'description': 'Upload an image and set its display order. Aspect ratio is automatically detected.'
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="80" height="80" style="object-fit: cover; border-radius: 4px;" />', obj.image.url)
+        return "No image"
+
+    @admin.display(description='Aspect Ratio')
+    def aspect_ratio_display(self, obj):
+        if obj.aspect_ratio:
+            return format_html(
+                '<span style="background-color: #e8f5e8; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; color: #2e7d32;">{}</span>',
+                obj.aspect_ratio
+            )
+        return format_html('<span style="color: #999; font-style: italic;">Auto-detect</span>')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'post__event', 'post__organization'
+        )
+
+    actions = ['detect_aspect_ratios']
+
+    def detect_aspect_ratios(self, request, queryset):
+        """Trigger aspect ratio detection for selected post images."""
+        queued_count = 0
+        skipped_count = 0
+
+        for post_image in queryset:
+            if not post_image.image:
+                skipped_count += 1
+                continue
+
+            # Trigger the aspect ratio detection task
+            try:
+                from .tasks import detect_post_image_aspect_ratio
+                detect_post_image_aspect_ratio.delay(str(post_image.id))
+                queued_count += 1
+            except Exception as e:
+                # Fallback to synchronous processing if Celery is unavailable
+                try:
+                    from .tasks import detect_post_image_aspect_ratio
+                    detect_post_image_aspect_ratio(str(post_image.id))
+                    queued_count += 1
+                except Exception:
+                    skipped_count += 1
+
+        if queued_count:
+            self.message_user(request, f'Aspect ratio detection queued for {queued_count} post images.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} post images (no image).', level=level)
+    detect_aspect_ratios.short_description = "Detect aspect ratios for selected post images"
+
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['event', 'organization', 'text_preview', 'images_count', 'verified', 'created_at']
+    list_filter = ['verified', 'event', 'organization', 'created_at']
+    search_fields = ['event__title', 'organization__name', 'text']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'verified_at']
+    list_editable = ['verified']
+    inlines = [PostImageInline]
+    autocomplete_fields = ['event', 'organization']
+
+    fieldsets = (
+        ('Content', {
+            'fields': ('event', 'organization', 'text')
+        }),
+        ('Verification', {
+            'fields': ('verified', 'verified_at')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Text')
+    def text_preview(self, obj):
+        if obj.text:
+            return Truncator(obj.text).chars(60)
+        return "-"
+
+    @admin.display(description='Images')
+    def images_count(self, obj):
+        cnt = obj.images.count()
+        url = reverse('admin:core_postimage_changelist') + f'?post__id__exact={obj.id}'
+        return format_html('<a href="{}">{} images</a>', url, cnt)
+
+    actions = ['detect_post_images_aspect_ratios', 'send_post_notifications']
+
+    def send_post_notifications(self, request, queryset):
+        """Manually trigger post notifications for selected posts."""
+        from notifications.tasks import send_post_verification_notifications
+
+        queued_count = 0
+        skipped_count = 0
+
+        for post in queryset:
+            if not post.verified:
+                skipped_count += 1
+                continue
+
+            try:
+                # Trigger the notification task
+                send_post_verification_notifications.delay(str(post.id))
+                queued_count += 1
+            except Exception as e:
+                skipped_count += 1
+
+        if queued_count:
+            self.message_user(request, f'Post notifications queued for {queued_count} verified posts.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} posts (not verified).', level=level)
+    send_post_notifications.short_description = "Send post notifications to users who liked the event"
+
+    def detect_post_images_aspect_ratios(self, request, queryset):
+        """Trigger aspect ratio detection for all images in selected posts."""
+        queued_count = 0
+        skipped_count = 0
+
+        for post in queryset:
+            post_images = post.images.filter(image__isnull=False)
+            if not post_images.exists():
+                skipped_count += 1
+                continue
+
+            for post_image in post_images:
+                # Trigger the aspect ratio detection task
+                try:
+                    from .tasks import detect_post_image_aspect_ratio
+                    detect_post_image_aspect_ratio.delay(str(post_image.id))
+                    queued_count += 1
+                except Exception as e:
+                    # Fallback to synchronous processing if Celery is unavailable
+                    try:
+                        from .tasks import detect_post_image_aspect_ratio
+                        detect_post_image_aspect_ratio(str(post_image.id))
+                        queued_count += 1
+                    except Exception:
+                        pass
+
+        if queued_count:
+            self.message_user(request, f'Aspect ratio detection queued for {queued_count} post images across selected posts.')
+        if skipped_count:
+            level = messages.WARNING if skipped_count == queryset.count() else messages.INFO
+            self.message_user(request, f'Skipped {skipped_count} posts (no images).', level=level)
+    detect_post_images_aspect_ratios.short_description = "Detect aspect ratios for all images in selected posts"
+
+
+class ScheduleItemInline(admin.TabularInline):
+    model = ScheduleItem
+    extra = 1
+    fields = ['date', 'start_time', 'end_time', 'title', 'description']
+    ordering = ['date', 'start_time']
+
+
+@admin.register(Schedule)
+class ScheduleAdmin(admin.ModelAdmin):
+    list_display = ['event', 'items_count', 'days_count', 'updated_at']
+    search_fields = ['event__title', 'event__slug']
+    autocomplete_fields = ['event']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    inlines = [ScheduleItemInline]
+
+    @admin.display(description='Items')
+    def items_count(self, obj):
+        return obj.items.count()
+
+    @admin.display(description='Days')
+    def days_count(self, obj):
+        return obj.items.values('date').distinct().count()
+
+
+
+@admin.register(ScheduleItem)
+class ScheduleItemAdmin(admin.ModelAdmin):
+    list_display = ['title', 'event_display', 'date', 'start_time', 'end_time']
+    list_filter = ['date']
+    search_fields = ['title', 'description', 'schedule__event__title']
+    autocomplete_fields = ['schedule']
+    ordering = ['date', 'start_time']
+
+    @admin.display(description='Event', ordering='schedule__event__title')
+    def event_display(self, obj):
+        return obj.schedule.event

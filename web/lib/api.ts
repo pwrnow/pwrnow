@@ -7,6 +7,11 @@ import {
   AuthenticateRequest,
   ApiError,
   CreateEventData,
+  Post,
+  CreatePostData,
+  Schedule,
+  ScheduleItem,
+  CreateScheduleItemData,
 } from './types';
 import { getApiUrl } from './config';
 import { getUserLocale } from './locale';
@@ -295,6 +300,7 @@ export async function createEvent(eventData: CreateEventData): Promise<Event> {
     formData.append('description', eventData.description);
   formData.append('starts_at', eventData.starts_at);
   formData.append('ends_at', eventData.ends_at);
+  formData.append('publication_date', eventData.publication_date);
   if (eventData.location) formData.append('location', eventData.location);
   if (eventData.url) formData.append('url', eventData.url);
   if (eventData.category_slug)
@@ -340,6 +346,101 @@ export async function uploadOrganizationImage(
     return organization;
   } catch (error) {
     console.error('❌ Failed to upload organization image:', error);
+    throw error;
+  }
+}
+
+// Note: getEventPosts is no longer needed as posts are now included in getEventBySlug response
+
+export async function createPost(data: CreatePostData): Promise<Post> {
+  console.log('📝 Creating post:', data);
+
+  try {
+    const formData = new FormData();
+    formData.append('event_slug', data.event_slug);
+
+    if (data.text) {
+      formData.append('text', data.text);
+    }
+
+    if (data.images && data.images.length > 0) {
+      data.images.forEach((image, index) => {
+        formData.append(`images`, image);
+        formData.append(`image_order_${index}`, index.toString());
+      });
+    }
+
+    const response = await fetchWithCredentials('/posts/', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const post = await response.json();
+    console.log('✅ Post created successfully:', post.id);
+
+    return post;
+  } catch (error) {
+    console.error('❌ Failed to create post:', error);
+    throw error;
+  }
+}
+
+export async function deletePost(postId: string): Promise<void> {
+  console.log('🗑️ Deleting post:', postId);
+
+  try {
+    await fetchWithCredentials(`/posts/${postId}/`, {
+      method: 'DELETE',
+    });
+    console.log('✅ Post deleted successfully');
+  } catch (error) {
+    console.error('❌ Failed to delete post:', error);
+    throw error;
+  }
+}
+
+// Note: getEventSchedule is no longer needed as schedule is now included in getEventBySlug response
+
+export async function createScheduleItem(
+  data: CreateScheduleItemData
+): Promise<ScheduleItem> {
+  console.log('➕ Creating schedule item for event:', data.event_slug, data);
+  try {
+    const response = await fetchWithCredentials('/schedule-items/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const item = (await response.json()) as ScheduleItem;
+    console.log('✅ Schedule item created:', item.id);
+    return item;
+  } catch (error) {
+    console.error('❌ Failed to create schedule item:', error);
+    throw error;
+  }
+}
+
+export async function deleteScheduleItem(itemId: string): Promise<void> {
+  console.log('🗑️ Deleting schedule item:', itemId);
+  try {
+    await fetchWithCredentials(`/schedule-items/${itemId}/`, {
+      method: 'DELETE',
+    });
+    console.log('✅ Schedule item deleted');
+  } catch (error) {
+    console.error('❌ Failed to delete schedule item:', error);
+    throw error;
+  }
+}
+
+export async function deleteEvent(eventSlug: string): Promise<void> {
+  console.log('🗑️ Deleting event:', eventSlug);
+  try {
+    await fetchWithCredentials(`/events/${eventSlug}/`, {
+      method: 'DELETE',
+    });
+    console.log('✅ Event deleted successfully');
+  } catch (error) {
+    console.error('❌ Failed to delete event:', error);
     throw error;
   }
 }

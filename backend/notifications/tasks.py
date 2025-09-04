@@ -8,39 +8,89 @@ from core.models import Event
 logger = logging.getLogger(__name__)
 
 
-@shared_task
-def send_event_verification_notifications(event_id):
-    """Send push notifications for a newly verified event."""
 
-    try:
-        event = Event.objects.get(id=event_id)
-
-        if not event.verified:
-            logger.warning(f"Event {event_id} is not verified, skipping notifications")
-            return
-
-        count = push_service.send_event_verification_notification(event)
-        logger.info(f"Sent {count} notifications for verified event {event.title}")
-
-        return count
-
-    except Event.DoesNotExist:
-        logger.error(f"Event {event_id} not found")
-        return 0
-    except Exception as e:
-        logger.error(f"Error sending notifications for event {event_id}: {str(e)}")
-        return 0
 
 
 @shared_task
 def update_notification_delivery_status():
     """Periodically update delivery status of sent notifications."""
-
     try:
-        push_service.update_delivery_status()
-        logger.info("Updated notification delivery status")
+        count = push_service.update_delivery_status()
+        logger.info(f"Updated delivery status for {count} notifications")
+        return count
     except Exception as e:
-        logger.error(f"Error updating delivery status: {str(e)}")
+        logger.error(f"Error updating notification delivery status: {str(e)}")
+        return 0
+
+
+@shared_task
+def send_daily_publication_notifications():
+    """Send notifications for all events published today at 9 AM."""
+    try:
+        today = timezone.now().date()
+
+        # Get all events published today that are verified
+        events = Event.objects.filter(
+            publication_date=today,
+            verified=True
+        ).select_related('organization', 'category')
+
+        if not events.exists():
+            logger.info(f"No events published today ({today})")
+            return 0
+
+        # Send all publication notifications in a single batch using the push service
+        try:
+            result = push_service.send_publication_notifications_for_events(events)
+            total_sent = result['sent']
+            total_failed = result['failed']
+
+            logger.info(f"Batch publication notifications completed: {total_sent} sent, {total_failed} failed out of {result['total']} total")
+            return total_sent
+
+        except Exception as e:
+            logger.error(f"Error sending batch publication notifications: {str(e)}")
+            return 0
+
+    except Exception as e:
+        logger.error(f"Error in daily publication notifications task: {str(e)}")
+        return 0
+
+
+@shared_task
+def send_event_reminder_24h():
+    """Send reminders for events starting in ~24 hours.
+
+    Window: events with starts_at between (now + 24h) and (now + 25h) to be resilient to scheduler drift.
+    """
+    try:
+        now = timezone.now()
+        start_window = now + timezone.timedelta(hours=24)
+        end_window = now + timezone.timedelta(hours=25)
+
+        events = (
+            Event.objects
+            .filter(
+                verified=True,
+                starts_at__gte=start_window,
+                starts_at__lt=end_window,
+                publication_date__lte=timezone.localdate()
+            )
+            .select_related('organization', 'category')
+        )
+
+        if not events.exists():
+            logger.info("No events starting ~24h from now for reminders")
+            return 0
+
+        result = push_service.send_event_reminders_for_events(events)
+        logger.info(
+            f"Event reminder 24h notifications: {result['sent']} sent, {result['failed']} failed out of {result['total']} total"
+        )
+        return result['sent']
+    except Exception as e:
+        logger.error(f"Error in send_event_reminder_24h: {str(e)}")
+        return 0
 
 
 @shared_task
@@ -127,3 +177,58 @@ def send_test_notification(device_id, title="Test Notification", body="This is a
     except Exception as e:
         logger.error(f"Error sending test notification: {str(e)}")
         return False
+
+
+@shared_task
+def send_batch_notifications(notifications_data):
+    """
+    Send a batch of notifications using the push service.
+
+    Args:
+        notifications_data: List of notification data dictionaries
+
+    Returns:
+        Dict with counts: {'sent': int, 'failed': int, 'total': int}
+    """
+    try:
+        result = push_service.send_multiple_notifications(notifications_data)
+        logger.info(f"Batch notifications completed: {result['sent']} sent, {result['failed']} failed out of {result['total']} total")
+        return result
+    except Exception as e:
+        logger.error(f"Error sending batch notifications: {str(e)}")
+        return {'sent': 0, 'failed': 0, 'total': 0}
+
+
+@shared_task
+def send_post_verification_notifications(post_id):
+    """
+    Send notifications to users who liked the event when a post is verified.
+
+    Args:
+        post_id: The UUID of the verified post
+
+    Returns:
+        Dict with counts: {'sent': int, 'failed': int, 'total': int}
+    """
+    try:
+        from core.models import Post
+
+        # Get the post instance
+        post = Post.objects.select_related('event', 'organization').get(id=post_id)
+
+        if not post.verified:
+            logger.warning(f"Post {post_id} is not verified, skipping notifications")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
+        # Send notifications using the push service
+        result = push_service.send_post_verification_notifications(post)
+
+        logger.info(f"Post verification notifications for post {post_id}: {result['sent']} sent, {result['failed']} failed out of {result['total']} total")
+        return result
+
+    except Post.DoesNotExist:
+        logger.error(f"Post {post_id} not found")
+        return {'sent': 0, 'failed': 0, 'total': 0}
+    except Exception as e:
+        logger.error(f"Error sending post verification notifications for post {post_id}: {str(e)}")
+        return {'sent': 0, 'failed': 0, 'total': 0}

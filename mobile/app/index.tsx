@@ -1,20 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  SafeAreaView,
   View,
   ScrollView,
   RefreshControl,
   useColorScheme,
   Platform,
+  ActivityIndicator,
+  Text,
 } from 'react-native';
 import EventFeed from '../components/EventFeed';
 import { Event, Category } from '../types';
 import CategorySelector from '../components/CategorySelector';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
-import { useCategories, useEvents } from '../lib/queries';
+import {
+  useCategories,
+  useEvents,
+  usePrefetchEventDetails,
+} from '../lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
+import { useAuth } from '../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -23,29 +30,52 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
   const queryClient = useQueryClient();
+  const { isLoading, isAuthenticated } = useAuth();
+  const { prefetchAllEventDetails } = usePrefetchEventDetails();
+  const insets = useSafeAreaInsets();
+  const hasPrefetchedRef = useRef(false);
+
   const {
     data: events = [],
     isFetching: isFetchingEvents,
     isRefetching: isRefetchingEvents,
+    status: eventsStatus,
+    fetchStatus,
   } = useEvents();
   const { data: fetchedCategories = [] } = useCategories();
 
+  console.log('fetchStatus', fetchStatus);
+
+  // Prefetch event details when events are loaded (only once)
+  useEffect(() => {
+    if (events.length > 0 && !hasPrefetchedRef.current) {
+      hasPrefetchedRef.current = true;
+      // Prefetch details for all events with a delay between each request
+      const eventSlugs = events.map((event) => event.slug);
+      prefetchAllEventDetails(eventSlugs, 500).catch((error) => {
+        console.warn('Failed to prefetch event details:', error);
+      });
+    }
+  }, [events.length, prefetchAllEventDetails]);
+
   // Compose categories with the localized "All"
-  const categories: Category[] = useMemo(() => {
-    return [{ name: t('all'), slug: 'wszystkie' }, ...fetchedCategories];
-  }, [fetchedCategories]);
+  const categories: Category[] = [
+    { name: t('all'), slug: 'wszystkie' },
+    ...fetchedCategories,
+  ];
 
   // Compute filtered events based on selected category
-  const filteredEvents = useMemo(() => {
-    if (selectedCategory === 'wszystkie') return events;
-    return events.filter((event) => event.category.slug === selectedCategory);
-  }, [events, selectedCategory]);
+  const filteredEvents =
+    selectedCategory === 'wszystkie'
+      ? events
+      : events.filter((event) => event.category.slug === selectedCategory);
 
   // Handle refresh events
   const handleRefresh = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setRefreshing(true);
+      hasPrefetchedRef.current = false; // Reset prefetch flag on refresh
       await queryClient.invalidateQueries({ queryKey: queryKeys.events });
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
@@ -56,7 +86,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView className='flex-1'>
+    <View
+      style={{
+        flex: 1,
+        // paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
       <ScrollView
         className='bg-white dark:bg-black'
         contentContainerStyle={{
@@ -64,7 +102,7 @@ export default function HomeScreen() {
         }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing || isFetchingEvents || isRefetchingEvents}
+            refreshing={refreshing}
             onRefresh={handleRefresh}
             // iOS supports only a single color; Android supports an array (spins through colors)
             tintColor={Platform.OS === 'ios' ? subtleSpinnerColor : undefined}
@@ -98,6 +136,6 @@ export default function HomeScreen() {
           scrollEnabled={false}
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

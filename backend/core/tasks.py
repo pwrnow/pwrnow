@@ -1,13 +1,60 @@
 import requests
 from celery import shared_task
 from django.conf import settings
-from django.utils import timezone
-from datetime import datetime
 import logging
 from PIL import Image
-import io
 
 logger = logging.getLogger(__name__)
+
+
+def detect_image_aspect_ratio(width, height):
+    """
+    Unified function to detect the most appropriate aspect ratio category for an image.
+
+    Args:
+        width (int): Image width in pixels
+        height (int): Image height in pixels
+
+    Returns:
+        str: The most appropriate aspect ratio category ('1:1', '16:9', '4:3', '3:2')
+    """
+    if width <= 0 or height <= 0:
+        return '16:9'  # Default fallback
+
+    # Calculate actual ratio
+    ratio = width / height
+
+    # Define standard ratios with their numeric values and tolerance
+    standard_ratios = [
+        ('1:1', 1.0, 0.1),
+        ('4:3', 4/3, 0.1),
+        ('3:2', 3/2, 0.1),
+        ('16:9', 16/9, 0.1),
+    ]
+
+    # Find the closest matching standard ratio
+    best_match = None
+    min_difference = float('inf')
+
+    for ratio_name, ratio_value, tolerance in standard_ratios:
+        difference = abs(ratio - ratio_value)
+        if difference <= tolerance and difference < min_difference:
+            best_match = ratio_name
+            min_difference = difference
+
+    # If we found a match within tolerance, return it
+    if best_match:
+        return best_match
+
+    # If no match within tolerance, find the closest one
+    for ratio_name, ratio_value, _ in standard_ratios:
+        difference = abs(ratio - ratio_value)
+        if difference < min_difference:
+            best_match = ratio_name
+            min_difference = difference
+
+    # Fallback to 16:9 if something goes wrong
+    return best_match or '16:9'
 
 
 @shared_task
@@ -235,21 +282,8 @@ def detect_event_image_aspect_ratio(event_id):
                 img = Image.open(img_file)
                 width, height = img.size
 
-                # Calculate aspect ratio
-                ratio = width / height
-
-                # Determine aspect ratio category
-                if abs(ratio - 1) <= 0.1:
-                    aspect_ratio = '1:1'
-                elif abs(ratio - 16/9) <= 0.1:
-                    aspect_ratio = '16:9'
-                elif abs(ratio - 4/3) <= 0.1:
-                    aspect_ratio = '4:3'
-                elif abs(ratio - 3/2) <= 0.1:
-                    aspect_ratio = '3:2'
-                else:
-                    # For other ratios, store the actual ratio as a string
-                    aspect_ratio = f"{width}:{height}"
+                # Determine aspect ratio using unified function
+                aspect_ratio = detect_image_aspect_ratio(width, height)
 
                 # Update the event with the detected aspect ratio
                 event.aspect_ratio = aspect_ratio
@@ -290,4 +324,184 @@ def detect_event_image_aspect_ratio(event_id):
         }
 
 
+@shared_task
+def detect_post_image_aspect_ratio(post_image_id):
+    """
+    Detect the aspect ratio of a post image and save it to the database.
 
+    Args:
+        post_image_id: The UUID of the post image
+    """
+    from .models import PostImage
+
+    try:
+        # Get the post image
+        post_image = PostImage.objects.get(id=post_image_id)
+
+        # Check if post image has an image
+        if not post_image.image:
+            logger.info(f"PostImage {post_image_id} has no image, skipping aspect ratio detection")
+            return {
+                'post_image_id': str(post_image_id),
+                'message': 'No image to process',
+                'success': True
+            }
+
+        # Open the image using PIL
+        try:
+            with post_image.image.open() as img_file:
+                img = Image.open(img_file)
+                width, height = img.size
+
+                # Determine aspect ratio using unified function
+                aspect_ratio = detect_image_aspect_ratio(width, height)
+
+                # Update the post image with the detected aspect ratio
+                post_image.aspect_ratio = aspect_ratio
+                post_image.save(update_fields=['aspect_ratio'])
+
+                logger.info(f"Detected aspect ratio {aspect_ratio} for post image {post_image_id} (image: {width}x{height})")
+
+                return {
+                    'post_image_id': str(post_image_id),
+                    'aspect_ratio': aspect_ratio,
+                    'dimensions': f"{width}x{height}",
+                    'success': True
+                }
+
+        except Exception as e:
+            logger.error(f"Error processing image for post image {post_image_id}: {str(e)}")
+            return {
+                'post_image_id': str(post_image_id),
+                'error': f"Image processing error: {str(e)}",
+                'success': False
+            }
+
+    except PostImage.DoesNotExist:
+        error_msg = f"PostImage with ID {post_image_id} not found"
+        logger.error(error_msg)
+        return {
+            'post_image_id': str(post_image_id),
+            'error': error_msg,
+            'success': False
+        }
+    except Exception as e:
+        error_msg = f"Error in post image aspect ratio detection task: {str(e)}"
+        logger.error(error_msg)
+        return {
+            'post_image_id': str(post_image_id),
+            'error': error_msg,
+            'success': False
+        }
+
+
+@shared_task
+def bulk_detect_event_aspect_ratios():
+    """
+    Detect aspect ratios for all events that have images but no aspect ratio set.
+
+    Returns:
+        dict: Summary of processing results
+    """
+    from .models import Event
+
+    try:
+        # Find events with images but no aspect ratio
+        events_needing_detection = Event.objects.filter(
+            image__isnull=False,
+            aspect_ratio__isnull=True
+        ) | Event.objects.filter(
+            image__isnull=False,
+            aspect_ratio=''
+        )
+
+        total_count = events_needing_detection.count()
+        processed_count = 0
+        error_count = 0
+
+        logger.info(f"Starting bulk aspect ratio detection for {total_count} events")
+
+        for event in events_needing_detection:
+            try:
+                result = detect_event_image_aspect_ratio(str(event.id))
+                if result['success']:
+                    processed_count += 1
+                else:
+                    error_count += 1
+                    logger.warning(f"Failed to process event {event.id}: {result.get('error', 'Unknown error')}")
+            except Exception as e:
+                error_count += 1
+                logger.error(f"Error processing event {event.id}: {str(e)}")
+
+        logger.info(f"Bulk aspect ratio detection completed: {processed_count} processed, {error_count} errors")
+
+        return {
+            'total_events': total_count,
+            'processed': processed_count,
+            'errors': error_count,
+            'success': True
+        }
+
+    except Exception as e:
+        error_msg = f"Error in bulk aspect ratio detection: {str(e)}"
+        logger.error(error_msg)
+        return {
+            'error': error_msg,
+            'success': False
+        }
+
+
+@shared_task
+def bulk_detect_post_image_aspect_ratios():
+    """
+    Detect aspect ratios for all post images that have images but no aspect ratio set.
+
+    Returns:
+        dict: Summary of processing results
+    """
+    from .models import PostImage
+
+    try:
+        # Find post images with images but no aspect ratio
+        post_images_needing_detection = PostImage.objects.filter(
+            image__isnull=False,
+            aspect_ratio__isnull=True
+        ) | PostImage.objects.filter(
+            image__isnull=False,
+            aspect_ratio=''
+        )
+
+        total_count = post_images_needing_detection.count()
+        processed_count = 0
+        error_count = 0
+
+        logger.info(f"Starting bulk aspect ratio detection for {total_count} post images")
+
+        for post_image in post_images_needing_detection:
+            try:
+                result = detect_post_image_aspect_ratio(str(post_image.id))
+                if result['success']:
+                    processed_count += 1
+                else:
+                    error_count += 1
+                    logger.warning(f"Failed to process post image {post_image.id}: {result.get('error', 'Unknown error')}")
+            except Exception as e:
+                error_count += 1
+                logger.error(f"Error processing post image {post_image.id}: {str(e)}")
+
+        logger.info(f"Bulk post image aspect ratio detection completed: {processed_count} processed, {error_count} errors")
+
+        return {
+            'total_post_images': total_count,
+            'processed': processed_count,
+            'errors': error_count,
+            'success': True
+        }
+
+    except Exception as e:
+        error_msg = f"Error in bulk post image aspect ratio detection: {str(e)}"
+        logger.error(error_msg)
+        return {
+            'error': error_msg,
+            'success': False
+        }

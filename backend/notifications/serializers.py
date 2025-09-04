@@ -36,7 +36,7 @@ class DeviceRegistrationSerializer(serializers.Serializer):
     deviceName = serializers.CharField(max_length=100, allow_blank=True, required=False)
     appVersion = serializers.CharField(max_length=20, allow_blank=True, required=False)
     notificationsEnabled = serializers.BooleanField(required=False, default=True)
-    preferredLanguage = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    preferredLanguage = serializers.CharField(max_length=5, required=False, allow_blank=True)
 
     def validate_expoPushToken(self, value: str) -> str:
         if not (value.startswith('ExponentPushToken[') or value.startswith('ExpoPushToken[')):

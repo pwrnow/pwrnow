@@ -1,18 +1,24 @@
 from django.utils import timezone
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag
+from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem
 from .serializers import (
     EventSerializer,
+    EventDetailSerializer,
     CategorySerializer,
     OrganizationSerializer,
     OrganizationAuthSerializer,
     TagSerializer,
-    EventCreateSerializer
+    EventCreateSerializer,
+    PostSerializer,
+    PostCreateSerializer,
+    ScheduleSerializer,
+    ScheduleItemSerializer,
+    ScheduleItemCreateSerializer,
 )
 from .authentication import (
     authenticate_organization,
@@ -23,6 +29,10 @@ from .authentication import (
 from .tasks import send_discord_notification
 from django.conf import settings
 from .cache import cache_categories, cache_public_events
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.utils.translation import gettext as _
 
 
 class CategoryViewSet(viewsets.GenericViewSet):
@@ -41,18 +51,18 @@ class CategoryViewSet(viewsets.GenericViewSet):
         queryset = self.get_queryset()
 
         # Extract filter parameters for cache key generation
-        filters = {}
+        filter_params = {}
         if hasattr(request, 'query_params'):
             # Include language parameter in cache key
             if 'lang' in request.query_params:
-                filters['lang'] = request.query_params['lang']
+                filter_params['lang'] = request.query_params['lang']
 
         # Cache the categories list
         data = cache_categories(
             queryset=queryset,
             serializer_class=self.get_serializer_class(),
             context={'request': request},
-            **filters
+            **filter_params
         )
 
         return Response(data)
@@ -110,7 +120,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         """
         clear_organization_session(request)
         return Response({
-            'message': 'Successfully logged out'
+            'message': _('Successfully logged out')
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
@@ -122,7 +132,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         organization = get_current_organization(request)
         if not organization:
             return Response(
-                {'error': 'No organization authenticated'},
+                {'error': _('No organization authenticated')},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -139,7 +149,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         current_org = get_current_organization(request)
         if not current_org:
             return Response(
-                {'error': 'No organization authenticated'},
+                {'error': _('No organization authenticated')},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -148,13 +158,13 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         # Verify the authenticated org matches the requested org
         if str(organization.id) != str(current_org.id):
             return Response(
-                {'error': 'Access denied'},
+                {'error': _('Access denied')},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         if 'image' not in request.FILES:
             return Response(
-                {'error': 'No image file provided'},
+                {'error': _('No image file provided')},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -163,7 +173,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         # Validate image size (5MB limit)
         if image_file.size > 5 * 1024 * 1024:
             return Response(
-                {'error': 'Image size cannot exceed 5MB'},
+                {'error': _('Image size cannot exceed 5MB')},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -194,18 +204,17 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
     ORGANIZATION AUTH REQUIRED - For creating events
     Only create, list, and retrieve are allowed.
     """
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category__slug', 'organization__slug', 'verified']
-    search_fields = ['title', 'description', 'location']
-    ordering_fields = ['starts_at']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category__slug']
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     permission_classes = [AllowAny]
-    authentication_classes = []
     lookup_field = 'slug'
 
     def get_serializer_class(self):
         if self.action == 'create':
             return EventCreateSerializer
+        if self.action == 'retrieve':
+            return EventDetailSerializer
         return EventSerializer
 
 
@@ -219,52 +228,68 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         # Use raw SQL for better performance on large datasets
         queryset = Event.objects.select_related('category', 'organization').prefetch_related('tags')
 
+        # For retrieve action, prefetch posts and schedule to avoid N+1 queries
+        if self.action == 'retrieve':
+            queryset = queryset.select_related('schedule').prefetch_related(
+                'posts__organization',
+                'posts__images',
+                'schedule__items'
+            )
+
         current_org = self.get_current_organization()
         if current_org:
             queryset = queryset.filter(organization__id=current_org.id)
         else:
             # Apply filters first, then annotations
-            queryset = queryset.filter(verified=True, ends_at__gte=now)
+            # Only show events that are published today or in the past
+            today = timezone.now().date()
+            queryset = queryset.filter(
+                verified=True,
+                ends_at__gte=now,
+                publication_date__lte=today
+            )
 
         # Simpler ordering - avoid complex CASE statements
         return queryset.extra(
             select={
                 'is_today': "DATE(starts_at) = %s",
-                'is_new': "verified_at >= %s"
+                'is_new': "publication_date = %s"
             },
-            select_params=[today, twenty_four_hours_ago],
+            select_params=[today, today],
             order_by=['-is_today', '-is_new', 'starts_at']
         )
 
     def list(self, request, *args, **kwargs):
         """
-        List events with caching for public (non-authenticated org) requests.
+        List events with caching for public (non-authenticated) requests.
+        Skip caching if user is authenticated to ensure 'liked' field is accurate.
         """
         current_org = self.get_current_organization()
+        is_user_authenticated = request.user and request.user.is_authenticated
 
-        # Only cache public events (when no org is authenticated)
-        if not current_org:
+        # Only cache public events (when no org is authenticated AND no user is authenticated)
+        if not current_org and not is_user_authenticated:
             queryset = self.filter_queryset(self.get_queryset())
 
             # Extract filter parameters for cache key generation
-            filters = {}
+            filter_params = {}
             if hasattr(request, 'query_params'):
                 # Include relevant filter parameters in cache key
                 for param in ['category__slug', 'organization__slug', 'verified', 'search', 'ordering', 'lang']:
                     if param in request.query_params:
-                        filters[param] = request.query_params[param]
+                        filter_params[param] = request.query_params[param]
 
             # Cache the public events list
             data = cache_public_events(
                 queryset=queryset,
                 serializer_class=self.get_serializer_class(),
                 context={'request': request},
-                **filters
+                **filter_params
             )
 
             return Response(data)
 
-        # For authenticated organizations, don't cache (private data)
+        # For authenticated users or organizations, don't cache (personalized data)
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
@@ -304,3 +329,127 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             return Response({'detail': 'You do not have permission to delete this event.'}, status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(event)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='posts', permission_classes=[AllowAny])
+    def list_posts(self, request, slug=None):
+        """
+        List posts for a given event by slug.
+        Public: returns only verified posts.
+        If an organization is authenticated and owns the event, include unverified as well.
+        """
+        event = self.get_object()
+        current_org = self.get_current_organization()
+
+        queryset = event.posts.select_related('organization').prefetch_related('images').order_by('-created_at')
+        if not (current_org and str(current_org.id) == str(event.organization_id)):
+            queryset = queryset.filter(verified=True)
+
+        page = self.paginate_queryset(queryset)
+        serializer = PostSerializer(page or queryset, many=True, context={'request': request})
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='schedule', permission_classes=[AllowAny])
+    def get_schedule(self, request, slug=None):
+        """
+        Return the schedule for this event.
+        - Public: only if event is verified
+        - Owner org: return schedule regardless of verification
+        """
+        event = self.get_object()
+        current_org = self.get_current_organization()
+
+        if not (current_org and str(current_org.id) == str(event.organization_id)) and not event.verified:
+            return Response({'detail': _('Event not verified.')}, status=status.HTTP_404_NOT_FOUND)
+
+        schedule = getattr(event, 'schedule', None)
+        if not schedule:
+            return Response(None, status=status.HTTP_200_OK)
+
+        serializer = ScheduleSerializer(schedule, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PostViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewSet):
+    """
+    Web-only endpoints for creating and deleting posts.
+    Requires organization authentication.
+    """
+    queryset = Post.objects.all().select_related('event', 'organization').prefetch_related('images')
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PostCreateSerializer
+        return PostSerializer
+
+    def create(self, request, *args, **kwargs):
+        self.check_organization_authentication()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        post = serializer.save()
+        read_serializer = PostSerializer(post, context={'request': request})
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        organization = self.get_current_organization()
+        if not organization:
+            return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
+        post = self.get_object()
+        if not post.organization or str(post.organization_id) != str(organization.id):
+            return Response({'detail': _('You do not have permission to delete this post.')}, status=status.HTTP_403_FORBIDDEN)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ScheduleItemViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewSet):
+    """
+    Endpoints for creating and deleting schedule items.
+    Requires organization authentication and ownership of the event/schedule.
+    """
+    queryset = ScheduleItem.objects.select_related('schedule__event')
+    parser_classes = [JSONParser]
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ScheduleItemCreateSerializer
+        return ScheduleItemSerializer
+
+    def create(self, request, *args, **kwargs):
+        self.check_organization_authentication()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save()
+        read = ScheduleItemSerializer(item, context={'request': request})
+        return Response(read.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        organization = self.get_current_organization()
+        if not organization:
+            return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
+        item = self.get_object()
+        event_org_id = str(item.schedule.event.organization_id)
+        if event_org_id != str(organization.id):
+            return Response({'detail': _('You do not have permission to delete this schedule item.')}, status=status.HTTP_403_FORBIDDEN)
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+def event_like(request, slug):
+    """Create or delete a like for the authenticated user on an event by slug."""
+    event = get_object_or_404(Event, slug=slug)
+
+    if request.method == "POST":
+        like, created = Like.objects.get_or_create(user=request.user, event=event)
+        if created:
+            return Response({"liked": True}, status=status.HTTP_201_CREATED)
+        return Response({"liked": True}, status=status.HTTP_200_OK)
+
+    # DELETE
+    Like.objects.filter(user=request.user, event=event).delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

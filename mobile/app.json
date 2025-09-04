@@ -34,7 +34,8 @@
         "dark": {
           "backgroundColor": "#000000"
         }
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "pl.pwrnow.app",
@@ -99,9 +100,11 @@
             "android": ["en", "pl"]
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-apple-authentication"
     ],
-    "scheme": "pwrnow",
+    "scheme": "pl.pwrnow.app",
     "extra": {
       "router": {
         "origin": "https://pwrnow.pl"

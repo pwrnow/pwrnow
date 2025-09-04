@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import environ
 import ssl
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -45,13 +46,27 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
     'corsheaders',
     'django_filters',
     'django_celery_beat',
     'core',
     'users',
     'notifications',
+
+    'rest_framework',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'dj_rest_auth.registration',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.apple',  # apple provider
+
+    'rest_framework_simplejwt.token_blacklist',
+
 ]
 
 
@@ -65,7 +80,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',   # default
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 ROOT_URLCONF = 'config.urls'
 
@@ -250,6 +271,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
+    ),
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
     'DEFAULT_VERSION': 'v1',
     'ALLOWED_VERSIONS': ['v1'],
@@ -310,6 +334,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+SITE_ID = 1
 
 # Site URL for generating absolute URLs
 SITE_URL = env("SITE_URL", default="http://localhost:8000")
@@ -375,7 +401,7 @@ LOGGING = {
             "formatter": "verbose",
         },
     },
-    "root": {"level": "INFO", "handlers": ["console"]},
+    "root": {"level": "DEBUG", "handlers": ["console"]},
     "loggers": {
         "django.db.backends": {
             "level": "ERROR",
@@ -424,6 +450,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.update_notification_delivery_status',
         'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
+    'send-daily-publication-notifications': {
+        'task': 'notifications.tasks.send_daily_publication_notifications',
+        'schedule': crontab(hour=9, minute=0),  # Daily at 9 AM
+    },
     'cleanup-old-notifications': {
         'task': 'notifications.tasks.cleanup_old_notifications',
         'schedule': crontab(hour=2, minute=0),  # Daily at 2 AM
@@ -432,4 +462,103 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'notifications.tasks.cleanup_inactive_devices',
         'schedule': crontab(hour=3, minute=0),  # Daily at 3 AM
     },
+    'send-event-reminder-24h': {
+        'task': 'notifications.tasks.send_event_reminder_24h',
+        'schedule': crontab(minute='*/10'),  # Every 10 minutes
+    },
+}
+
+# allauth
+# # Optional: adjust allauth behavior
+# # ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# # ACCOUNT_EMAIL_VERIFICATION = "none"
+# # ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+# # ACCOUNT_LOGIN_METHODS = {'email'}
+# # ACCOUNT_UNIQUE_EMAIL = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_USERNAME_FIELD = 'email'
+# # ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_LOGIN_METHODS = {"email"}
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
+
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ONLY = True
+
+GOOGLE_CALLBACK_URL = env("GOOGLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/google/")
+APPLE_CALLBACK_URL = env("APPLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/apple/")
+# Helper function to read Apple private key from file
+def get_apple_private_key():
+    """Read Apple private key from file path specified in environment variable."""
+    private_key_path = env("APPLE_PRIVATE_KEY_PATH")
+    if not private_key_path:
+        return ""
+
+    # If it's an absolute path, use it directly
+    if os.path.isabs(private_key_path):
+        key_path = private_key_path
+    else:
+        # If it's a relative path, make it relative to the backend directory
+        key_path = BASE_DIR / private_key_path
+
+    try:
+        with open(key_path, 'r') as f:
+            return f.read().strip()
+    except (FileNotFoundError, IOError) as e:
+        print(f"Warning: Could not read Apple private key from {key_path}: {e}")
+        return ""
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env("GOOGLE_CLIENT_ID"),
+            "secret": env("GOOGLE_CLIENT_SECRET"),
+        },
+    },
+    # "facebook": {
+    #     "APP": {
+    #         "client_id": env("FACEBOOK_CLIENT_ID"),
+    #         "secret": env("FACEBOOK_CLIENT_SECRET"),
+    #         "key": "",
+    #     },
+    #     "SCOPE": ["email"],
+    #     "AUTH_PARAMS": {"auth_type": "rerequest"},
+    # },
+    "apple": {
+        "APP": {
+            "client_id": env("APPLE_CLIENT_ID"),  # Service ID
+            "secret": env("APPLE_KEY_ID"),
+            "key": env("APPLE_TEAM_ID"),  # Apple Team ID
+            "settings": {
+                "certificate_key": get_apple_private_key(),
+            },
+        },
+        # "SCOPE": ["email", "name"],
+        # "AUTH_PARAMS": {"access_type": "online"},
+    },
+}
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'auth_token',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'JWT_AUTH_HTTPONLY': False
+}
+# Standard simplejwt settings:
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
 }

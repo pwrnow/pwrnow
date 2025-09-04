@@ -1,148 +1,177 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { cn, formatEventDateRange, formatEventTimeRange } from '@/lib/utils';
-import type { Event } from '@/lib/types';
-import { useAnalytics } from '@/lib/useAnalytics';
-import { useTranslations, useLocale } from 'next-intl';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Calendar,
+  MapPin,
+  ExternalLink,
+  Settings,
+  Clock,
+  ShieldCheck,
+  Clock3,
+  MoreHorizontal,
+  Trash2,
+} from 'lucide-react';
+import { Event } from '@/lib/types';
+import { EventBadge } from '@/components/event-badge';
+import { useTranslations } from 'next-intl';
+import { deleteEvent } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface EventCardProps {
   event: Event;
+  orgSlug: string;
+  getInitials: (name: string) => string;
+  handleMapLinkClick: (location: string) => void;
+  truncateDescription: (text: string, maxLength: number) => string;
+  isUpcoming: (dateString: string) => boolean;
+  onEventDeleted?: (eventSlug: string) => void;
 }
 
-export default function EventCard({ event }: EventCardProps) {
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [isImageLoading, setIsImageLoading] = useState(true);
-  const { trackEventClick, trackEventInteraction } = useAnalytics();
-  const t = useTranslations('EventCard');
-  const locale = useLocale();
+export default function EventCard({
+  event,
+  orgSlug,
+  getInitials,
+  handleMapLinkClick,
+  truncateDescription,
+  isUpcoming,
+  onEventDeleted,
+}: EventCardProps) {
+  const router = useRouter();
+  const t = useTranslations('OrganizationPage');
 
-  // Use utility functions for consistent date/time formatting
-  const dateString = formatEventDateRange(
-    event.starts_at,
-    event.ends_at,
-    locale
-  );
-  const timeString = formatEventTimeRange(event.starts_at, event.ends_at);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const organizationName = event.organization?.name || t('defaultOrganization');
-  const organizationImageUrl = event.organization?.image_url;
-  const categoryName = event.category.name;
+  const isEventToday =
+    new Date(event.starts_at).toDateString() === new Date().toDateString();
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((part) => part[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  };
-  const orgInitials = getInitials(organizationName);
-  const handleMapLinkClick = () => {
-    if (!event.location) return;
+  // Format date and time exactly like the old component
+  const startsAt = new Date(event.starts_at);
+  const endsAt = new Date(event.ends_at);
+  const dateString = startsAt.toLocaleDateString('pl-PL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const startTimeString = startsAt.toLocaleTimeString('pl-PL', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const endTimeString = endsAt.toLocaleTimeString('pl-PL', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const timeString = `${startTimeString} - ${endTimeString}`;
 
-    // Track map click with organization info
-    trackEventInteraction(
-      'map_click',
-      event.id,
-      event.title,
-      event.organization?.id,
-      event.organization?.name
-    );
-
-    const isIOS =
-      typeof navigator !== 'undefined' &&
-      /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const encodedLocation = encodeURIComponent(event.location);
-    const mapsUrl = isIOS
-      ? `maps://?q=${encodedLocation}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-    window.open(mapsUrl, '_blank');
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
   };
 
-  const handleEventLinkClick = () => {
-    // Track event link click with organization info
-    trackEventClick(
-      event.id,
-      event.title,
-      event.organization?.id,
-      event.organization?.name
-    );
-  };
-  const truncateDescription = (text: string, maxLength: number) => {
-    if (!text || text.length <= maxLength) return text;
-    return text.slice(0, maxLength).trim() + '...';
+  const handleDeleteConfirm = async () => {
+    try {
+      setDeleting(true);
+      await deleteEvent(event.slug);
+      toast.success(t('eventDeletedSuccessfully'));
+      onEventDeleted?.(event.slug);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+      toast.error(t('failedToDeleteEvent'));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
-    <div className='mb-8 border-0 sm:border sm:rounded-lg sm:shadow-sm hover:sm:shadow-md transition-all duration-300 overflow-hidden group'>
-      <div className='flex flex-col'>
+    <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card flex flex-col h-full'>
+      {/* Verification Status Bar */}
+      <div
+        className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
+          event.verified
+            ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
+            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+        }`}
+      >
+        {event.verified ? (
+          <>
+            <ShieldCheck className='h-3 w-3' />
+            {t('approved')}
+          </>
+        ) : (
+          <>
+            <Clock3 className='h-3 w-3' />
+            {t('pendingVerification')}
+          </>
+        )}
+      </div>
+
+      <div className='flex flex-col flex-1'>
+        {/* Organization Header */}
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
           <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
-            {organizationImageUrl ? (
-              <Image
-                src={organizationImageUrl}
-                alt={organizationName}
-                fill
-                className='object-cover rounded-full'
-                sizes='(max-width: 640px) 32px, 40px'
-              />
-            ) : (
-              <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
-                {orgInitials}
-              </AvatarFallback>
-            )}
+            <AvatarImage
+              src={event.organization.image_url || undefined}
+              alt={event.organization.name}
+            />
+            <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
+              {getInitials(event.organization.name)}
+            </AvatarFallback>
           </Avatar>
           <div className='flex-1'>
             <div className='flex items-center justify-between'>
               <span className='font-medium text-sm sm:text-base leading-tight break-words max-w-[60%]'>
-                {organizationName}
+                {event.organization.name}
               </span>
               <div className='flex items-center gap-2'>
-                {event.category && (
-                  <Badge
-                    variant='outline'
-                    className='bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 text-xs sm:text-sm'
-                  >
-                    {categoryName}
-                  </Badge>
+                {isEventToday ? (
+                  <EventBadge variant='today' />
+                ) : (
+                  event.is_new && <EventBadge variant='new' />
                 )}
               </div>
             </div>
           </div>
         </div>
-        <div
-          className={cn(
-            'relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900',
-            event.aspect_ratio === '1:1' ? 'aspect-square' : 'aspect-[16/9]',
-            isImageLoading && 'animate-pulse'
-          )}
-        >
+
+        {/* Event Image */}
+        <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9]'>
           <Image
             src={event.image_url || '/placeholder.svg'}
             alt={event.title}
             fill
-            className={cn(
-              'object-cover transition-transform duration-500 z-10',
-              isImageLoading && 'opacity-0'
-            )}
-            sizes='(max-width: 640px) 100vw, (max-width: 768px) 540px, (max-width: 1024px) 680px, 768px'
-            priority
-            onLoad={() => {
-              setIsImageLoading(false);
-            }}
+            className='object-cover transition-transform duration-500 z-10'
           />
         </div>
-        <div className='px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6'>
-          <h2 className='text-lg sm:text-xl md:text-2xl font-bold display-font mb-2 sm:mb-3'>
+
+        {/* Event Content */}
+        <div className='px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6 flex flex-col flex-1'>
+          <h2 className='text-lg sm:text-xl font-bold display-font mb-2 sm:mb-3 break-words leading-tight'>
             {event.title}
           </h2>
+
+          {/* Event Details with colored icons */}
           <div className='flex flex-col space-y-2 mb-3 sm:mb-4 text-xs sm:text-sm'>
             <div className='flex items-center'>
               <div className='p-1.5 rounded-md bg-blue-100 dark:bg-blue-950 mr-2 flex-shrink-0'>
@@ -150,19 +179,21 @@ export default function EventCard({ event }: EventCardProps) {
               </div>
               <span className='font-medium'>{dateString}</span>
             </div>
+
             <div className='flex items-center'>
               <div className='p-1.5 rounded-md bg-purple-100 dark:bg-purple-950 mr-2 flex-shrink-0'>
                 <Clock className='h-4 w-4 sm:h-5 sm:w-5 text-purple-500 dark:text-purple-400' />
               </div>
               <span className='font-medium'>{timeString}</span>
             </div>
+
             {event.location && (
               <div className='flex items-center'>
                 <div className='p-1.5 rounded-md bg-red-100 dark:bg-red-950 mr-2 flex-shrink-0'>
                   <MapPin className='h-4 w-4 sm:h-5 sm:w-5 text-red-500 dark:text-red-400' />
                 </div>
                 <button
-                  onClick={handleMapLinkClick}
+                  onClick={() => handleMapLinkClick(event.location!)}
                   className='font-medium hover:underline flex items-center gap-1 cursor-pointer'
                   title={t('openInMaps')}
                 >
@@ -172,58 +203,109 @@ export default function EventCard({ event }: EventCardProps) {
               </div>
             )}
           </div>
+
+          {/* Event Description */}
           {event.description && (
             <div className='text-muted-foreground leading-relaxed text-xs sm:text-sm mb-3 sm:mb-4'>
-              <div
-                className={cn(
-                  'relative',
-                  !isDescriptionExpanded &&
-                    event.description.length > 200 &&
-                    'after:absolute after:bottom-0 after:left-0 after:h-8 after:w-full after:bg-gradient-to-b after:from-transparent after:to-background'
-                )}
-              >
-                <p className='whitespace-pre-wrap break-words'>
-                  {isDescriptionExpanded
-                    ? event.description
-                    : truncateDescription(event.description, 200)}
-                </p>
-              </div>
+              <p className='whitespace-pre-wrap break-words'>
+                {truncateDescription(event.description, 200)}
+              </p>
               {event.description.length > 200 && (
-                <Button
-                  variant='link'
-                  size='sm'
-                  className='mt-1 h-auto p-0 text-primary cursor-pointer'
-                  onClick={() =>
-                    setIsDescriptionExpanded(!isDescriptionExpanded)
-                  }
-                >
-                  {isDescriptionExpanded ? t('showLess') : t('showMore')}
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant='link'
+                      size='sm'
+                      className='p-0 h-auto text-primary hover:text-primary/80 cursor-pointer mt-1'
+                    >
+                      <MoreHorizontal className='h-3 w-3 mr-1' />
+                      {t('showMore')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className='!max-w-6xl max-h-[80vh] overflow-y-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+                    <DialogHeader>
+                      <DialogTitle className='text-left display-font'>
+                        {event.title}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className='mt-4'>
+                      <div className='text-muted-foreground leading-relaxed whitespace-pre-wrap break-words'>
+                        {event.description}
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
           )}
-          {event.url && (
-            <div className='mt-3'>
-              <Link
-                href={event.url}
-                target='_blank'
-                rel='noopener noreferrer'
-                onClick={handleEventLinkClick}
+
+          {/* Action Buttons - Pushed to bottom */}
+          <div className='mt-auto pt-4 space-y-2'>
+            <div className='flex gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() =>
+                  router.push(`/org/${orgSlug}/events/${event.slug}`)
+                }
+                className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
               >
+                <Settings className='h-4 w-4' />
+                {t('manageEvent')}
+              </Button>
+
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={handleDeleteClick}
+                className='text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30'
+                title={t('deleteEvent')}
+              >
+                <Trash2 className='h-4 w-4' />
+              </Button>
+            </div>
+
+            {event.url && (
+              <a href={event.url} target='_blank' rel='noopener noreferrer'>
                 <Button
                   variant='default'
                   size='sm'
-                  className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
+                  className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/90'
                 >
                   <ExternalLink className='h-4 w-4' />
                   {t('visitEventPage')}
                 </Button>
-              </Link>
-            </div>
-          )}
+              </a>
+            )}
+          </div>
         </div>
       </div>
+
       <div className='h-px bg-border sm:hidden mt-2 mb-2'></div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteEvent')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteEventConfirmation', { title: event.title })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleting ? t('deleting') : t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

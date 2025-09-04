@@ -14,6 +14,7 @@ export interface Event {
   description?: string;
   starts_at: string;
   ends_at: string;
+  publication_date?: string;
   location?: string;
   image_url?: string;
   url?: string;
@@ -22,6 +23,8 @@ export interface Event {
   aspect_ratio?: string;
   organization: Organization;
   category: Category;
+  posts?: Post[];
+  schedule?: Schedule | null;
 }
 
 export interface Category {
@@ -59,8 +62,56 @@ export interface CreateEventData {
   description?: string;
   starts_at: string;
   ends_at: string;
+  publication_date: string;
   location?: string;
   url?: string;
   category_slug?: string;
-  image?: File;
+  image: File;
+}
+
+export interface PostImage {
+  id: string;
+  url: string;
+  aspect_ratio?: string | null;
+  order_index: number;
+}
+
+export interface Post {
+  id: string;
+  created_at: string;
+  text: string | null;
+  organization: Organization;
+  images: PostImage[];
+  verified: boolean;
+}
+
+export interface CreatePostData {
+  event_slug: string;
+  text?: string;
+  images?: File[];
+}
+
+// Schedule types
+export interface ScheduleItem {
+  id: string;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM:SS
+  end_time: string; // HH:MM:SS
+  title: string;
+  description?: string | null;
+  duration_minutes?: number;
+}
+
+export interface Schedule {
+  id: string;
+  items: ScheduleItem[];
+}
+
+export interface CreateScheduleItemData {
+  event_slug: string;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:MM
+  end_time: string; // HH:MM
+  title: string;
+  description?: string;
 }

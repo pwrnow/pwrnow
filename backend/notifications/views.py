@@ -45,6 +45,10 @@ def register_device(request):
         if 'preferredLanguage' in validated:
             device.preferred_language = normalized_lang
 
+    # Assign device to authenticated user if present
+    if request.user and request.user.is_authenticated:
+        device.user = request.user
+
     # Always update last_active_at
     device.last_active_at = timezone.now()
     device.save()

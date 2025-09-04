@@ -6,12 +6,14 @@ import {
   type NotificationData,
 } from '../lib/push-notification-service';
 import { deviceLocaleTag } from '../lib/i18n';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * React hook for managing push notifications
  */
 export function usePushNotifications(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true;
+  const { isAuthenticated } = useAuth();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<
     Notifications.Notification | undefined
@@ -27,18 +29,46 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
   function navigateFromNotificationData(data: NotificationData | undefined) {
     if (!data) return;
 
-    // Handle different notification types
-    if (
-      (data.type === 'event_verified' || data.type === 'test') &&
-      data.event_slug
-    ) {
-      const targetPath = `/wydarzenia/${data.event_slug}` as const;
-      console.log('[Notifications] Navigating to event:', targetPath);
+    console.log('[Notifications] Processing notification data:', data);
+
+    // If URL is provided, navigate to it
+    if (data.url) {
+      // Strip domain and keep only the path
+      const url = new URL(data.url);
+      const path = url.pathname;
+      console.log('[Notifications] Navigating to path:', path);
+      console.log(url);
+
+      // Check if this is a post-specific URL structure
+      const postUrlMatch = path.match(
+        /^\/wydarzenia\/([^\/]+)\/posts\/([^\/]+)$/
+      );
+      if (postUrlMatch) {
+        const [, eventSlug, postId] = postUrlMatch;
+        console.log(
+          '[Notifications] Post URL detected, building query-based URL'
+        );
+
+        // Build new URL with query parameters
+        const newPath = `/wydarzenia/${eventSlug}?postId=${postId}&tab=posts`;
+        console.log('[Notifications] Navigating to:', newPath);
+
+        try {
+          router.push(newPath as any);
+          return;
+        } catch (err) {
+          console.warn('[Notifications] Post navigation failed:', err);
+        }
+      }
+
+      // For other URLs, navigate normally
       try {
-        router.push(targetPath as any);
+        router.push(path as any);
       } catch (err) {
         console.warn('[Notifications] Navigation failed:', err);
       }
+    } else {
+      console.log('[Notifications] No URL provided in notification data');
     }
   }
 
@@ -100,6 +130,7 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
         const data = lastResponse.notification.request.content
           .data as NotificationData;
         console.log('Last notification response found on mount:', data);
+        console.log('[Notifications] Attempting cold start navigation');
         navigateFromNotificationData(data);
       }
     });
@@ -113,6 +144,28 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
       }
     };
   }, [enabled]);
+
+  // After user signs in, re-register device to attach it to the user
+  useEffect(() => {
+    if (!enabled) return;
+    if (!isAuthenticated) return;
+    if (!expoPushToken) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const registered = await pushNotificationService.registerDevice(
+          expoPushToken,
+          { preferredLanguage: deviceLocaleTag }
+        );
+        if (isMounted) setIsRegistered(registered);
+      } catch (_e) {}
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, expoPushToken, enabled]);
 
   return {
     expoPushToken,

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-10 18:54+0200\n"
+"POT-Creation-Date: 2025-09-02 09:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,18 +19,145 @@ msgstr ""
 "(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && "
 "n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
 
-#: config/settings.py:137
+#: config/settings.py:158
 msgid "Polish"
 msgstr "Polski"
 
-#: config/settings.py:138
+#: config/settings.py:159
 msgid "English"
 msgstr "Angielski"
 
-#: notifications/services.py:231
+#: core/models.py:338
+msgid "Optional text content"
+msgstr ""
+
+#: core/models.py:346
+msgid "Timestamp of when the post was verified"
+msgstr ""
+
+#: core/models.py:367 core/serializers.py:239
+msgid "Post must include text or at least one image."
+msgstr ""
+
+#: core/models.py:401
+msgid "Image file"
+msgstr ""
+
+#: core/models.py:406
+msgid "Detected aspect ratio of the post image (e.g., '16:9', '1:1')"
+msgstr ""
+
+#: core/serializers.py:52
+msgid "Invalid authentication code"
+msgstr ""
+
+#: core/serializers.py:142 core/serializers.py:354
+msgid "End time must be after start time."
+msgstr ""
+
+#: core/serializers.py:151
+msgid "Publication date must be in the future (not today or earlier)."
+msgstr ""
+
+#: core/serializers.py:159
+msgid "Image size cannot exceed 5MB."
+msgstr ""
+
+#: core/serializers.py:166 core/serializers.py:245 core/serializers.py:380
+msgid "No request context found."
+msgstr ""
+
+#: core/serializers.py:173 core/serializers.py:250 core/serializers.py:385
+msgid "No authenticated organization found."
+msgstr ""
+
+#: core/serializers.py:182
+msgid "Invalid category slug."
+msgstr ""
+
+#: core/serializers.py:256 core/serializers.py:362 core/serializers.py:394
+msgid "Invalid event slug."
+msgstr ""
+
+#: core/serializers.py:260
+msgid "You do not have permission to post to this event."
+msgstr ""
+
+#: core/serializers.py:369
+msgid "Date must be within the event dates."
+msgstr ""
+
+#: core/serializers.py:397
+msgid "You do not have permission to modify this event."
+msgstr ""
+
+#: core/views.py:123
+msgid "Successfully logged out"
+msgstr ""
+
+#: core/views.py:135 core/views.py:152
+msgid "No organization authenticated"
+msgstr ""
+
+#: core/views.py:161
+msgid "Access denied"
+msgstr ""
+
+#: core/views.py:167
+msgid "No image file provided"
+msgstr ""
+
+#: core/views.py:176
+msgid "Image size cannot exceed 5MB"
+msgstr ""
+
+#: core/views.py:356
+msgid "Event not verified."
+msgstr ""
+
+#: core/views.py:391 core/views.py:424
+msgid "Authentication required."
+msgstr ""
+
+#: core/views.py:394
+msgid "You do not have permission to delete this post."
+msgstr ""
+
+#: core/views.py:428
+msgid "You do not have permission to delete this schedule item."
+msgstr ""
+
+#: notifications/services.py:613
 msgid "New event available"
 msgstr "Nowe wydarzenie dostępne"
+
+#: notifications/services.py:635
+msgid "tomorrow"
+msgstr "jutro"
+
+#: notifications/services.py:636
+msgid "it's tomorrow!"
+msgstr "to już jutro!"
+
+#: notifications/services.py:637
+msgid "24h to go"
+msgstr "24h do startu"
+
+#: notifications/services.py:638
+msgid "see you tomorrow"
+msgstr "do zobaczenia jutro"
+
+#: notifications/services.py:639
+msgid "tomorrow — ready?"
+msgstr "jutro — gotowy?"
+
+#: notifications/services.py:664
+msgid "New post"
+msgstr "Nowy post"
 
 #: users/models.py:13
 msgid "email address"
 msgstr "adres e-mail"
+
+#~ msgid "Don’t forget — see you there! 🎉"
+#~ msgstr "Nie zapomnij — widzimy się! 🎉"

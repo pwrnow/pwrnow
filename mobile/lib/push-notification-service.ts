@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { getApiUrl } from './config';
 import { deviceLocaleTag } from './i18n';
+import { notificationsApi } from './api';
 
 // Configure how notifications are handled when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -25,11 +26,13 @@ export interface DeviceRegistration {
 }
 
 export interface NotificationData {
-  type: string;
+  type: 'new_post' | 'event_published' | string;
+  post_id?: string;
   event_id?: string;
   event_slug?: string;
   category_slug?: string;
   organization_slug?: string;
+  url?: string;
   [key: string]: any;
 }
 
@@ -42,10 +45,10 @@ class PushNotificationService {
    */
   async registerForPushNotifications(): Promise<string | null> {
     // Check if running on physical device
-    if (!Device.isDevice) {
-      console.log('Must use physical device for push notifications');
-      return null;
-    }
+    // if (!Device.isDevice) {
+    //   console.log('Must use physical device for push notifications');
+    //   return null;
+    // }
 
     // Check existing permissions
     const { status: existingStatus } =
@@ -118,23 +121,11 @@ class PushNotificationService {
         ...preferences,
       };
 
-      const response = await fetch(`${getApiUrl()}/api/devices/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
-      });
-
-      if (response.ok) {
-        this.isRegistered = true;
-        console.log('Device registered successfully');
-        return true;
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to register device:', errorData);
-        return false;
-      }
+      // Use authenticated API helper to ensure credentials/Authorization headers
+      await notificationsApi.registerDevice(registrationData);
+      this.isRegistered = true;
+      console.log('Device registered successfully');
+      return true;
     } catch (error) {
       console.error('Error registering device:', error);
       return false;
