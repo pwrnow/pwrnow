@@ -106,8 +106,11 @@ export default function OrgEventDetailsPage() {
 
   // Reset selected day when event changes and set initial day from schedule
   useEffect(() => {
-    if (event?.schedule) {
-      const initialDay = pickInitialDayFromSchedule(event.schedule, event);
+    if (event) {
+      const initialDay = pickInitialDayFromSchedule(
+        event.schedule || null,
+        event
+      );
       if (initialDay) setSelectedDay(initialDay);
     } else {
       setSelectedDay('');
@@ -351,32 +354,31 @@ export default function OrgEventDetailsPage() {
     endsAt?: string
   ): DayOption[] {
     const uniqueDates = new Set<string>();
+
+    // Always add schedule item dates
     items.forEach((i) => uniqueDates.add(i.date));
 
-    // Only add event date range days if there are no schedule items
-    // This prevents showing extra days when schedule items already define the days
-    if (items.length === 0 && startsAt && endsAt) {
-      const [sy, sm, sd] = startsAt
-        .slice(0, 10)
-        .split('-')
-        .map((n) => parseInt(n, 10));
-      const [ey, em, ed] = endsAt
-        .slice(0, 10)
-        .split('-')
-        .map((n) => parseInt(n, 10));
-      const startDate = new Date(sy, (sm || 1) - 1, sd || 1);
-      const endDate = new Date(ey, (em || 1) - 1, ed || 1);
-
-      // Only include the start date if it's a single-day event
-      // or if the end date is on the same day
+    // Always add event date range days (same logic as mobile)
+    if (startsAt && endsAt) {
       const startDateStr = startsAt.slice(0, 10);
       const endDateStr = endsAt.slice(0, 10);
 
       if (startDateStr === endDateStr) {
-        // Single day event
+        // Single day event - only include the start date
         uniqueDates.add(startDateStr);
       } else {
         // Multi-day event - include all days from start to end
+        const [sy, sm, sd] = startsAt
+          .slice(0, 10)
+          .split('-')
+          .map((n) => parseInt(n, 10));
+        const [ey, em, ed] = endsAt
+          .slice(0, 10)
+          .split('-')
+          .map((n) => parseInt(n, 10));
+        const startDate = new Date(sy, (sm || 1) - 1, sd || 1);
+        const endDate = new Date(ey, (em || 1) - 1, ed || 1);
+
         for (
           let d = new Date(startDate.getTime());
           d <= endDate;
@@ -431,12 +433,30 @@ export default function OrgEventDetailsPage() {
     s: Schedule | null,
     ev: Event | null
   ): string | null {
-    if (!s || !ev) return ev ? ev.starts_at.slice(0, 10) : null;
+    if (!ev) return null;
+
+    // If no schedule, return the event start date
+    if (!s || !s.items || s.items.length === 0) {
+      return ev.starts_at.slice(0, 10);
+    }
+
+    // If schedule exists, try to select today if it's within the event dates, otherwise select the first day
     const dates = Array.from(new Set(s.items.map((i) => i.date))).sort();
-    if (dates.length === 0) return ev.starts_at.slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
-    if (dates.includes(today)) return today;
-    return dates[0];
+
+    // Check if today is within the event date range
+    const eventStartDate = ev.starts_at.slice(0, 10);
+    const eventEndDate = ev.ends_at.slice(0, 10);
+
+    if (
+      today >= eventStartDate &&
+      today <= eventEndDate &&
+      dates.includes(today)
+    ) {
+      return today;
+    }
+
+    return dates[0] || eventStartDate;
   }
 
   function getInitialStartTimeForSelectedDay(
@@ -638,53 +658,37 @@ export default function OrgEventDetailsPage() {
         </TabsContent>
 
         <TabsContent value='schedule' className='mt-6'>
-          {event?.schedule ? (
-            <div className='space-y-4 max-w-2xl mx-auto'>
-              <EventScheduleDaySelector
-                days={dayOptions}
-                selectedDay={selectedDay}
-                onSelect={setSelectedDay}
+          <div className='space-y-4 max-w-2xl mx-auto'>
+            <EventScheduleDaySelector
+              days={dayOptions}
+              selectedDay={selectedDay}
+              onSelect={setSelectedDay}
+            />
+
+            {currentItems.length > 0 ? (
+              <EventScheduleList
+                items={currentItems}
+                canDelete={canManage}
+                onDelete={handleDeleteScheduleItem}
               />
+            ) : (
+              <Card className='p-12 text-center text-muted-foreground'>
+                {t('scheduleEmpty')}
+              </Card>
+            )}
 
-              {currentItems.length > 0 ? (
-                <EventScheduleList
-                  items={currentItems}
-                  canDelete={canManage}
-                  onDelete={handleDeleteScheduleItem}
-                />
-              ) : (
-                <Card className='p-12 text-center text-muted-foreground'>
-                  {t('scheduleEmpty')}
-                </Card>
-              )}
-
-              {canManage && (
-                <div className='flex justify-center gap-2 pt-2'>
-                  <Button
-                    onClick={() => setIsMagicImportModalOpen(true)}
-                    variant='outline'
-                    className='cursor-pointer'
-                  >
-                    <Wand2 className='h-4 w-4 mr-2' />
-                    Magic Import
-                  </Button>
-                  {selectedDay && (
-                    <Button
-                      onClick={() => setIsAddModalOpen(true)}
-                      className='cursor-pointer'
-                    >
-                      <Plus className='h-4 w-4 mr-2' />
-                      {t('addScheduleItem')}
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <Card className='p-12 text-center text-muted-foreground'>
-              {t('noSchedule')}
-            </Card>
-          )}
+            {canManage && selectedDay && (
+              <div className='flex justify-center pt-2'>
+                <Button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className='cursor-pointer'
+                >
+                  <Plus className='h-4 w-4 mr-2' />
+                  {t('addScheduleItem')}
+                </Button>
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
