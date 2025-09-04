@@ -151,7 +151,7 @@ export default function ProfileScreen() {
             >
               {user.first_name && user.last_name
                 ? `${user.first_name} ${user.last_name}`
-                : user.first_name || t('user')}
+                : user.first_name || user.email}
             </Text>
             {user.email && (
               <Text

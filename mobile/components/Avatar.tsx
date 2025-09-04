@@ -24,27 +24,30 @@ export default function Avatar({
 
   // Generate initials from first and last name, or from email
   const getInitials = () => {
-    if (firstName && lastName) {
+    if (firstName && lastName && firstName.trim() && lastName.trim()) {
       return `${firstName.charAt(0).toUpperCase()}${lastName
         .charAt(0)
         .toUpperCase()}`;
     }
-    if (firstName) {
+    if (firstName && firstName.trim()) {
       return firstName.charAt(0).toUpperCase();
     }
-    if (email) {
+    if (email && email.trim()) {
       return email.charAt(0).toUpperCase();
     }
     return '?';
   };
 
   // Generate gradient colors using app accent colors
-  const getGradientColors = () => {
+  const getGradientColors = (): [string, string] => {
     const initials = getInitials();
-    const hash = initials.charCodeAt(0) + initials.charCodeAt(1);
+    // Handle single character initials by using the same character twice for hash calculation
+    const hash =
+      initials.charCodeAt(0) +
+      (initials.length > 1 ? initials.charCodeAt(1) : initials.charCodeAt(0));
 
     // Use app accent colors with variations
-    const gradients = [
+    const gradients: [string, string][] = [
       [colors.primary, colors.accent],
       [colors.accent, colors.primary],
       [`${colors.primary}CC`, `${colors.accent}CC`], // With opacity
