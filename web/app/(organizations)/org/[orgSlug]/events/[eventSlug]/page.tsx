@@ -355,39 +355,26 @@ export default function OrgEventDetailsPage() {
   ): DayOption[] {
     const uniqueDates = new Set<string>();
 
-    // Always add schedule item dates
-    items.forEach((i) => uniqueDates.add(i.date));
-
-    // Always add event date range days (same logic as mobile)
+    // Mirror mobile generateEventDays logic exactly
     if (startsAt && endsAt) {
-      const startDateStr = startsAt.slice(0, 10);
-      const endDateStr = endsAt.slice(0, 10);
+      const start = new Date(startsAt);
+      const end = new Date(endsAt);
+
+      // Check if it's a single day event by comparing date strings
+      const startDateStr = startsAt.split('T')[0];
+      const endDateStr = endsAt.split('T')[0];
 
       if (startDateStr === endDateStr) {
         // Single day event - only include the start date
         uniqueDates.add(startDateStr);
       } else {
         // Multi-day event - include all days from start to end
-        const [sy, sm, sd] = startsAt
-          .slice(0, 10)
-          .split('-')
-          .map((n) => parseInt(n, 10));
-        const [ey, em, ed] = endsAt
-          .slice(0, 10)
-          .split('-')
-          .map((n) => parseInt(n, 10));
-        const startDate = new Date(sy, (sm || 1) - 1, sd || 1);
-        const endDate = new Date(ey, (em || 1) - 1, ed || 1);
+        const current = new Date(start);
 
-        for (
-          let d = new Date(startDate.getTime());
-          d <= endDate;
-          d.setDate(d.getDate() + 1)
-        ) {
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
-          uniqueDates.add(`${yyyy}-${mm}-${dd}`);
+        while (current <= end) {
+          const currentStr = current.toISOString().split('T')[0];
+          uniqueDates.add(currentStr);
+          current.setDate(current.getDate() + 1);
         }
       }
     }
