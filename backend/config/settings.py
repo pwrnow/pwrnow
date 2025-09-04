@@ -493,10 +493,8 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_ONLY = True
+# SOCIALACCOUNT_ONLY = True
 
-GOOGLE_CALLBACK_URL = env("GOOGLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/google/")
-APPLE_CALLBACK_URL = env("APPLE_CALLBACK_URL", default="http://localhost:8000/v1/auth/apple/")
 # Helper function to read Apple private key from file
 def get_apple_private_key():
     """Read Apple private key from file path specified in environment variable."""
