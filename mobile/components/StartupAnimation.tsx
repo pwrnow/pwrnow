@@ -1,10 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  useColorScheme,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, {
   Line,
   SvgXml,
@@ -23,6 +18,7 @@ import Animated, {
   withDelay,
   runOnJS,
 } from 'react-native-reanimated';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface StartupAnimationProps {
   visible: boolean;
@@ -38,8 +34,7 @@ export default function StartupAnimation({
   visible,
   onEnd,
 }: StartupAnimationProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useThemeColors();
   const { width, height } = useWindowDimensions();
 
   const progress = useSharedValue(0);
@@ -242,7 +237,7 @@ export default function StartupAnimation({
 
   if (!visible) return null;
 
-  const bg = isDark ? '#0A0A0A' : '#FAFAFA';
+  const bg = colors.background;
   const centerX = width / 2;
   const centerY = height / 2;
 

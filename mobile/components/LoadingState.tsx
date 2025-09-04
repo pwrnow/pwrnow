@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { useColorScheme } from 'react-native';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface LoadingStateProps {
   size?: 'small' | 'large';
@@ -8,12 +8,11 @@ interface LoadingStateProps {
 
 export const LoadingState: React.FC<LoadingStateProps> = React.memo(
   ({ size = 'large' }) => {
-    const colorScheme = useColorScheme();
-    const isDark = colorScheme === 'dark';
+    const { colors } = useThemeColors();
 
     return (
       <View className='flex-1 justify-center items-center'>
-        <ActivityIndicator size={size} color={isDark ? '#FFFFFF' : '#000000'} />
+        <ActivityIndicator size={size} color={colors.foreground} />
       </View>
     );
   }

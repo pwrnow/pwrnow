@@ -43,7 +43,7 @@ export const queryConfig = {
   // Network behavior
   network: {
     refetchOnReconnect: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     networkMode: 'online' as const,
   },
 };

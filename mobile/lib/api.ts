@@ -248,7 +248,7 @@ async function fetchWithCredentials(
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
 
     console.log('headers', headers);
-
+    console.log('url', `${getApiUrl()}${url}`);
     try {
       const response = await fetch(`${getApiUrl()}${url}`, {
         ...options,

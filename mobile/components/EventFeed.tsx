@@ -4,13 +4,13 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   View,
-  useColorScheme,
   TouchableOpacity,
 } from 'react-native';
 import { useState } from 'react';
 import { Event } from '../types';
 import EventCard from './EventCard';
 import { t } from '../lib/i18n';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface EventFeedProps {
   events: Event[];
@@ -27,13 +27,15 @@ export default function EventFeed({
   scrollEnabled,
   onClearCategory,
 }: EventFeedProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useThemeColors();
   const [refreshing] = useState(false);
 
   const renderEmptyComponent = () => (
     <View className='p-6 items-center'>
-      <Text className='text-black/70 dark:text-white/70 text-center text-sm'>
+      <Text
+        style={{ color: colors.mutedForeground }}
+        className='text-center text-sm'
+      >
         {selectedCategory === 'wszystkie'
           ? t('noEventsAll')
           : t('noEventsInCategory')}
@@ -44,7 +46,9 @@ export default function EventFeed({
           activeOpacity={0.6}
           className='mt-3'
         >
-          <Text className='text-accentBlue text-sm'>{t('showAllEvents')}</Text>
+          <Text style={{ color: colors.primary }} className='text-sm'>
+            {t('showAllEvents')}
+          </Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -61,14 +65,17 @@ export default function EventFeed({
       keyExtractor={(item) => item.id}
       ListEmptyComponent={renderEmptyComponent}
       ItemSeparatorComponent={() => (
-        <View className='h-px w-full bg-black/10 dark:bg-[#1F1F1F]' />
+        <View
+          style={{ backgroundColor: colors.border }}
+          className='h-px w-full'
+        />
       )}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
       scrollEnabled={scrollEnabled !== false}
       contentContainerStyle={{ paddingBottom: 24 }}
-      className='bg-white dark:bg-black'
+      style={{ backgroundColor: colors.background }}
       refreshControl={undefined}
     />
   );

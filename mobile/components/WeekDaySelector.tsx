@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useColorScheme } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { deviceLocaleTag } from '../lib/i18n';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface DayOption {
   id: string;
@@ -25,8 +25,7 @@ const WeekDaySelectorComponent: React.FC<WeekDaySelectorProps> = ({
   onDaySelect,
   days,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useThemeColors();
 
   const handleDayPress = useCallback(
     async (dayId: string) => {
@@ -53,61 +52,79 @@ const WeekDaySelectorComponent: React.FC<WeekDaySelectorProps> = ({
             <TouchableOpacity
               key={day.id}
               onPress={() => handleDayPress(day.id)}
-              className={`mr-3 px-4 py-3 rounded-xl items-center min-w-[80px] border ${
-                isSelected
+              style={{
+                backgroundColor: isSelected
                   ? isToday
-                    ? 'bg-accentBlue border-accentBlue'
+                    ? colors.primary
                     : isPast
-                    ? 'bg-black/20 dark:bg-white/20 border-black/30 dark:border-white/30'
-                    : 'bg-accentBlue border-accentBlue'
+                    ? colors.muted
+                    : colors.primary
                   : isPast
-                  ? 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10'
+                  ? colors.muted
                   : isToday
-                  ? 'bg-accentBlue/10 border-accentBlue/30'
-                  : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10'
-              }`}
+                  ? colors.primary + '10'
+                  : colors.muted,
+                borderColor: isSelected
+                  ? isToday
+                    ? colors.primary
+                    : isPast
+                    ? colors.border
+                    : colors.primary
+                  : isPast
+                  ? colors.border
+                  : isToday
+                  ? colors.primary + '30'
+                  : colors.border,
+              }}
+              className='mr-3 px-4 py-3 rounded-xl items-center min-w-[80px] border'
               activeOpacity={0.7}
             >
               {isToday && !isSelected && (
-                <View className='absolute -top-1 -right-1 w-3 h-3 bg-accentBlue rounded-full' />
+                <View
+                  style={{ backgroundColor: colors.primary }}
+                  className='absolute -top-1 -right-1 w-3 h-3 rounded-full'
+                />
               )}
 
               <Text
-                className={`text-xs font-groteskMedium mb-1 ${
-                  isSelected
-                    ? 'text-white'
+                style={{
+                  color: isSelected
+                    ? colors.primaryForeground
                     : isPast
-                    ? 'text-black/40 dark:text-white/40'
+                    ? colors.mutedForeground
                     : isToday
-                    ? 'text-accentBlue'
-                    : 'text-black/60 dark:text-white/60'
-                }`}
+                    ? colors.primary
+                    : colors.mutedForeground,
+                }}
+                className='text-xs font-groteskMedium mb-1'
               >
                 {day.dayName}
               </Text>
               <Text
-                className={`text-lg font-groteskSemibold ${
-                  isSelected
-                    ? 'text-white'
+                style={{
+                  color: isSelected
+                    ? colors.primaryForeground
                     : isPast
-                    ? 'text-black/40 dark:text-white/40'
+                    ? colors.mutedForeground
                     : isToday
-                    ? 'text-accentBlue'
-                    : 'text-black dark:text-white'
-                }`}
+                    ? colors.primary
+                    : colors.foreground,
+                }}
+                className='text-lg font-groteskSemibold'
               >
                 {day.dayNumber}
               </Text>
               <Text
-                className={`text-xs font-grotesk ${
-                  isSelected
-                    ? 'text-white/80'
+                style={{
+                  color: isSelected
+                    ? colors.primaryForeground
                     : isPast
-                    ? 'text-black/30 dark:text-white/30'
+                    ? colors.mutedForeground
                     : isToday
-                    ? 'text-accentBlue/80'
-                    : 'text-black/50 dark:text-white/50'
-                }`}
+                    ? colors.primary
+                    : colors.mutedForeground,
+                }}
+                className='text-xs font-grotesk'
               >
                 {day.monthName}
               </Text>

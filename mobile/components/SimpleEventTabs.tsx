@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  useColorScheme,
-  useWindowDimensions,
-  ScrollView,
-} from 'react-native';
+import { View, Text, useWindowDimensions, ScrollView } from 'react-native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -22,6 +16,7 @@ import OrganizationHeader from './OrganizationHeader';
 import EventMetaCard from './EventMetaCard';
 import EventDescription from './EventDescription';
 import VisitPageButton from './VisitPageButton';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 type TabType = 'details' | 'posts' | 'schedule';
 
@@ -54,12 +49,16 @@ const DetailsScene: React.FC<{
   ctaAnimatedStyle?: any;
 }> = React.memo(
   ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle }) => {
+    const { colors } = useThemeColors();
     const { data: event, isLoading, error } = useEventBySlug(eventSlug);
 
     if (isLoading) {
       return (
         <View className='flex-1 justify-center items-center'>
-          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm'>
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className='font-grotesk text-sm'
+          >
             {t('loadingEvent')}
           </Text>
         </View>
@@ -69,7 +68,10 @@ const DetailsScene: React.FC<{
     if (error || !event) {
       return (
         <View className='flex-1 justify-center items-center px-6'>
-          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className='font-grotesk text-sm text-center'
+          >
             {t('failedToLoadEvent')}
           </Text>
         </View>
@@ -131,13 +133,17 @@ const PostsScene: React.FC<{
   onImagePress: (images: string[], initialIndex: number) => void;
 }> = React.memo(
   ({ eventSlug, posts, isLoadingPosts, postsError, onImagePress }) => {
+    const { colors } = useThemeColors();
     const { data: event } = useEventBySlug(eventSlug);
     const { postId } = useLocalSearchParams();
 
     if (isLoadingPosts) {
       return (
         <View className='flex-1 justify-center items-center'>
-          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm'>
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className='font-grotesk text-sm'
+          >
             {t('loadingPosts')}
           </Text>
         </View>
@@ -147,7 +153,10 @@ const PostsScene: React.FC<{
     if (postsError) {
       return (
         <View className='flex-1 justify-center items-center px-6'>
-          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className='font-grotesk text-sm text-center'
+          >
             {t('failedToLoadPosts')}
           </Text>
         </View>
@@ -157,7 +166,10 @@ const PostsScene: React.FC<{
     if (!posts || posts.length === 0) {
       return (
         <View className='flex-1 justify-center items-center px-6'>
-          <Text className='text-black/60 dark:text-white/60 font-grotesk text-sm text-center'>
+          <Text
+            style={{ color: colors.mutedForeground }}
+            className='font-grotesk text-sm text-center'
+          >
             {t('noPosts')}
           </Text>
         </View>
@@ -209,8 +221,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     ctaAnimatedStyle,
   }) => {
     const layout = useWindowDimensions();
-    const colorScheme = useColorScheme();
-    const isDark = colorScheme === 'dark';
+    const { colors } = useThemeColors();
     const { tab } = useLocalSearchParams();
 
     const hasSchedule = (() => {
@@ -284,15 +295,13 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
       <TabBar
         {...props}
         indicatorStyle={{
-          backgroundColor: '#2066DF',
+          backgroundColor: colors.primary,
           height: 2,
         }}
         style={{
-          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          backgroundColor: colors.background,
           borderBottomWidth: 1,
-          borderBottomColor: isDark
-            ? 'rgba(255, 255, 255, 0.1)'
-            : 'rgba(0, 0, 0, 0.1)',
+          borderBottomColor: colors.border,
           elevation: 0,
           shadowOpacity: 0,
         }}
@@ -300,9 +309,9 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           flex: 1,
           paddingVertical: 16,
         }}
-        pressColor='#2066DF20'
-        activeColor={isDark ? '#FFFFFF' : '#000000'}
-        inactiveColor={isDark ? '#FFFFFF80' : '#00000080'}
+        pressColor={colors.primary + '20'}
+        activeColor={colors.foreground}
+        inactiveColor={colors.mutedForeground}
         onTabPress={() => {
           Haptics.selectionAsync();
         }}
@@ -326,7 +335,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           animationEnabled={true}
           lazy={false}
           style={{
-            backgroundColor: isDark ? '#000000' : '#FFFFFF',
+            backgroundColor: colors.background,
           }}
         />
       </View>

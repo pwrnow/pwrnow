@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Alert, Platform, ToastAndroid } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import Animated, {
   FadeInDown,
   useSharedValue,
@@ -20,11 +19,11 @@ import { useEventData } from '../../hooks/useEventData';
 import { useEventActions } from '../../hooks/useEventActions';
 import { t } from '../../lib/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function EventDetailScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = useMemo(() => colorScheme === 'dark', [colorScheme]);
-  const iconPrimary = useMemo(() => (isDark ? '#FFFFFF' : '#000000'), [isDark]);
+  const { colors } = useThemeColors();
+  const iconPrimary = colors.foreground;
   const { eventSlug, postId } = useLocalSearchParams();
   const router = useRouter();
   const analytics = useAnalytics();
@@ -135,7 +134,7 @@ export default function EventDetailScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          backgroundColor: colors.background,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
@@ -156,7 +155,7 @@ export default function EventDetailScreen() {
     <View
       style={{
         flex: 1,
-        backgroundColor: isDark ? '#000000' : '#FFFFFF',
+        backgroundColor: colors.background,
         paddingTop: insets.top,
         paddingBottom: insets.bottom,
         paddingLeft: insets.left,

@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme, View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { NotificationsProvider } from '../providers/notifications';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
@@ -12,7 +12,10 @@ import * as Haptics from 'expo-haptics';
 import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
 import StartupAnimation from '../components/StartupAnimation';
+import AppStartupComponent from '../components/AppStartup';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { SettingsProvider } from '../contexts/SettingsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -21,8 +24,6 @@ SplashScreen.preventAutoHideAsync();
 let hasShownStartupOnce = false;
 
 export default function StackLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const [showStartup, setShowStartup] = useState(() => !hasShownStartupOnce);
   const [loaded, error] = useFonts({
     'Righteous-Regular': require('../assets/fonts/Righteous-Regular.ttf'),
@@ -57,33 +58,49 @@ export default function StackLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NotificationsProvider enabled={!showStartup}>
-          <QueryProvider>
-            <PosthogProvider>
-              {/* Startup overlay animation shown briefly after splash */}
-              <StartupAnimation
-                visible={showStartup}
-                onEnd={handleStartupEnd}
-              />
-              <StatusBar
-                style={isDark ? 'light' : 'dark'}
-                animated
-                translucent={false}
-                backgroundColor={isDark ? '#000000' : '#FFFFFF'}
-              />
-              <RootNavigator />
-            </PosthogProvider>
-          </QueryProvider>
-        </NotificationsProvider>
+        <ThemeProvider>
+          <SettingsProvider>
+            <NotificationsProvider enabled={!showStartup}>
+              <QueryProvider>
+                <PosthogProvider>
+                  {/* Startup overlay animation shown briefly after splash */}
+                  <StartupAnimation
+                    visible={showStartup}
+                    onEnd={handleStartupEnd}
+                  />
+                  <AppStartupComponent>
+                    <ThemedApp />
+                  </AppStartupComponent>
+                </PosthogProvider>
+              </QueryProvider>
+            </NotificationsProvider>
+          </SettingsProvider>
+        </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
 }
 
+// Component that handles theming based on settings
+function ThemedApp() {
+  const { isDark, colors } = useTheme();
+
+  return (
+    <>
+      <StatusBar
+        style={isDark ? 'light' : 'dark'}
+        animated
+        translucent={false}
+        backgroundColor={colors.background}
+      />
+      <RootNavigator />
+    </>
+  );
+}
+
 // Separate this into a new component so it can access the AuthContext
 function RootNavigator() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
   const { isAuthenticated } = useAuth();
 
   return (
@@ -97,23 +114,21 @@ function RootNavigator() {
         headerTransparent: false,
         headerShadowVisible: true,
         headerStyle: {
-          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          backgroundColor: colors.background,
         },
         // Use a slightly off-white tint in dark mode so the back icon isn't pure white
-        headerTintColor: isDark ? '#E5E7EB' : '#000000',
-        contentStyle: { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
+        headerTintColor: colors.foreground,
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
-      {/* Protected Routes - Only for authenticated users */}
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen
-          name='profile'
-          options={{
-            title: 'Profile',
-            headerShown: true,
-          }}
-        />
-      </Stack.Protected>
+      {/* Profile screen - accessible to all users */}
+      <Stack.Screen
+        name='profile'
+        options={{
+          title: 'Profile',
+          headerShown: true,
+        }}
+      />
 
       {/* Public Routes - Always accessible */}
       <Stack.Screen
@@ -142,23 +157,17 @@ function RootNavigator() {
 
 // Profile button component for header
 function ProfileHeaderButton() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { isAuthenticated } = useAuth();
+  const { isDark } = useTheme();
 
   const handlePress = () => {
     Haptics.selectionAsync();
-    if (isAuthenticated) {
-      router.push('/profile');
-    } else {
-      router.push('/signin');
-    }
+    router.push('/profile');
   };
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <TouchableOpacity
-        accessibilityLabel={isAuthenticated ? 'Open profile' : 'Sign in'}
+        accessibilityLabel='Open profile'
         onPressIn={() => {
           Haptics.selectionAsync();
         }}

@@ -9,7 +9,6 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
@@ -34,6 +33,7 @@ import { t, deviceLocaleTag } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import SignInRequiredModal from './SignInRequiredModal';
 import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface EventCardProps {
   event: Event;
@@ -41,9 +41,8 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, index = 0 }: EventCardProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const iconPrimary = isDark ? '#FFFFFF' : '#000000';
+  const { colors } = useThemeColors();
+  const iconPrimary = colors.foreground;
   const [isDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const analytics = useAnalytics();
@@ -299,13 +298,17 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         .damping(18)
         .stiffness(160)}
       layout={LinearTransition.springify().damping(20).stiffness(180)}
-      className='mb-0 bg-white dark:bg-black'
+      style={{ backgroundColor: colors.background }}
+      className='mb-0'
     >
       <Pressable onPress={handleEventLinkPress}>
         {/* Header: org + category */}
         <View className='px-3 pt-4 pb-3'>
           <View className='flex-row items-center gap-3'>
-            <View className='w-10 h-10 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 justify-center items-center'>
+            <View
+              style={{ backgroundColor: colors.muted }}
+              className='w-10 h-10 rounded-full overflow-hidden justify-center items-center'
+            >
               {event.organization.image_url ? (
                 <Image
                   source={{ uri: event.organization.image_url }}
@@ -313,25 +316,41 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                   resizeMode='cover'
                 />
               ) : (
-                <Text className='text-black dark:text-white font-semibold text-sm'>
+                <Text
+                  style={{ color: colors.foreground }}
+                  className='font-semibold text-sm'
+                >
                   {getInitials(event.organization.name)}
                 </Text>
               )}
             </View>
             <View className='flex-1'>
               <Text
-                className='text-black dark:text-white font-semibold text-base leading-5'
+                style={{ color: colors.foreground }}
+                className='font-semibold text-base leading-5'
                 numberOfLines={1}
               >
                 {event.organization.name}
               </Text>
-              <Text className='text-black/65 dark:text-white/65 text-xs leading-4 mt-[1px]'>
+              <Text
+                style={{ color: colors.mutedForeground }}
+                className='text-xs leading-4 mt-[1px]'
+              >
                 {event.category.name}
               </Text>
             </View>
             {event.is_new ? (
-              <View className='px-2.5 py-1.5 rounded-xl bg-accentPink/15 border border-accentPink/30'>
-                <Text className='text-accentPink text-xs font-semibold tracking-[0.5px]'>
+              <View
+                style={{
+                  backgroundColor: colors.accent + '15',
+                  borderColor: colors.accent + '30',
+                }}
+                className='px-2.5 py-1.5 rounded-xl border'
+              >
+                <Text
+                  style={{ color: colors.accent }}
+                  className='text-xs font-semibold tracking-[0.5px]'
+                >
                   {t('newTag')}
                 </Text>
               </View>
@@ -344,8 +363,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           <View>
             <Pressable onPress={handleImagePress}>
               <View
-                className='w-full overflow-hidden bg-black/5 dark:bg-muted'
-                style={{ aspectRatio: imageAspectRatio }}
+                style={{
+                  backgroundColor: colors.muted,
+                  aspectRatio: imageAspectRatio,
+                }}
+                className='w-full overflow-hidden'
               >
                 <Image
                   source={{ uri: event.image_url }}
@@ -365,7 +387,8 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           <View className='flex-row items-start'>
             <View className='flex-1 mr-3'>
               <Text
-                className='text-black dark:text-white font-semibold text-2xl leading-7 mb-2'
+                style={{ color: colors.foreground }}
+                className='font-semibold text-2xl leading-7 mb-2'
                 numberOfLines={3}
               >
                 {event.title}
@@ -385,17 +408,35 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           <View className='gap-2 mb-1.5'>
             <View className='flex-row gap-2'>
               {/* Date range chip */}
-              <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+              <View
+                style={{
+                  backgroundColor: colors.muted,
+                  borderColor: colors.border,
+                }}
+                className='flex-row items-center py-1.5 px-2.5 rounded-full border'
+              >
                 <Feather name='calendar' size={12} color={iconPrimary} />
-                <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                <Text
+                  style={{ color: colors.foreground }}
+                  className='text-xs font-medium ml-1.5'
+                >
                   {formatDateRangeShort(event.starts_at, event.ends_at)}
                 </Text>
               </View>
 
               {/* Time chip */}
-              <View className='flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'>
+              <View
+                style={{
+                  backgroundColor: colors.muted,
+                  borderColor: colors.border,
+                }}
+                className='flex-row items-center py-1.5 px-2.5 rounded-full border'
+              >
                 <Feather name='clock' size={12} color={iconPrimary} />
-                <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                <Text
+                  style={{ color: colors.foreground }}
+                  className='text-xs font-medium ml-1.5'
+                >
                   {formatTimeRangeShort(event.starts_at, event.ends_at)}
                 </Text>
               </View>
@@ -403,9 +444,18 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
             {/* Location chip on its own row */}
             {event.location ? (
-              <View className='self-start flex-row items-center py-1.5 px-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 max-w-full'>
+              <View
+                style={{
+                  backgroundColor: colors.muted,
+                  borderColor: colors.border,
+                }}
+                className='self-start flex-row items-center py-1.5 px-2.5 rounded-full border max-w-full'
+              >
                 <Feather name='map-pin' size={12} color={iconPrimary} />
-                <Text className='text-black dark:text-white text-xs font-medium ml-1.5'>
+                <Text
+                  style={{ color: colors.foreground }}
+                  className='text-xs font-medium ml-1.5'
+                >
                   {event.location}
                 </Text>
               </View>
@@ -415,7 +465,10 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           {/* Description (truncated, no expand in this redesign) */}
           {event.description ? (
             <View className='mb-2'>
-              <Text className='text-black/90 dark:text-white/90 text-base leading-6 font-sans'>
+              <Text
+                style={{ color: colors.foreground }}
+                className='text-base leading-6 font-sans'
+              >
                 {`${event.description.slice(0, 150)}${
                   event.description.length > 150 ? '...' : ''
                 }`}

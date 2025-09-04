@@ -3,6 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Category } from '../types';
 import { useAnalytics } from '../lib/analytics';
 import { t } from '../lib/i18n';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface CategorySelectorProps {
   categories: Category[];
@@ -15,6 +16,7 @@ export default function CategorySelector({
   selectedCategory,
   onCategoryChange,
 }: CategorySelectorProps) {
+  const { colors, isDark } = useThemeColors();
   const analytics = useAnalytics();
   // Ensure 'Wszystkie' is first
   const allCategories =
@@ -50,17 +52,24 @@ export default function CategorySelector({
             <TouchableOpacity
               onPress={() => handlePress(category.slug)}
               activeOpacity={0.8}
-              className={`mr-2 rounded-full border px-3 py-2 ${
-                isActive
-                  ? 'border-accentBlue bg-accentBlue/15'
-                  : 'border-black/10 dark:border-[#1F1F1F] bg-black/5 dark:bg-white/5'
-              }`}
+              style={{
+                backgroundColor: isActive
+                  ? colors.primary + '15' // Primary color with 15% opacity for active
+                  : colors.muted, // Same as event card meta badges
+                borderColor: isActive
+                  ? colors.primary // Primary color for active
+                  : colors.border, // Same as event card meta badges
+              }}
+              className='mr-2 rounded-full border px-3 py-2'
             >
               <Text
+                style={{
+                  color: isActive
+                    ? colors.primary // Primary color for active (like accent elements)
+                    : colors.foreground, // Same as event card meta badges
+                }}
                 className={`${
-                  isActive
-                    ? 'text-black dark:text-white font-semibold'
-                    : 'text-black/80 dark:text-white/80'
+                  isActive ? 'font-semibold' : ''
                 } text-sm tracking-[0.2px]`}
               >
                 {category.name}

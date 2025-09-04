@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { TouchableOpacity, useColorScheme, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -13,6 +13,7 @@ import Animated, {
   Extrapolation,
   runOnJS,
 } from 'react-native-reanimated';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface LikeButtonProps {
   isLiked: boolean;
@@ -35,7 +36,7 @@ export default function LikeButton({
   stopPropagationOnPress = false,
   isAuthenticated = true,
 }: LikeButtonProps) {
-  const colorScheme = useColorScheme();
+  const { colors } = useThemeColors();
 
   // Animation values
   const heartScale = useSharedValue(1);
@@ -243,7 +244,7 @@ export default function LikeButton({
               height: size * 2,
               borderRadius: size,
               borderWidth: 2,
-              borderColor: '#EC2E81',
+              borderColor: colors.accent,
             },
           ]}
         />
@@ -260,7 +261,7 @@ export default function LikeButton({
                 right: -2,
                 bottom: -2,
                 borderRadius: size / 2,
-                backgroundColor: '#FF69B4',
+                backgroundColor: colors.accent,
               },
             ]}
           />
@@ -270,7 +271,7 @@ export default function LikeButton({
         <AntDesign
           name={isLiked ? 'heart' : 'hearto'}
           size={size}
-          color={'#EC2E81'}
+          color={colors.accent}
         />
 
         {/* Floating particles */}
@@ -284,7 +285,7 @@ export default function LikeButton({
             },
           ]}
         >
-          <AntDesign name='heart' size={size / 3} color='#FF69B4' />
+          <AntDesign name='heart' size={size / 3} color={colors.accent} />
         </Animated.View>
 
         <Animated.View
@@ -297,7 +298,7 @@ export default function LikeButton({
             },
           ]}
         >
-          <AntDesign name='heart' size={size / 4} color='#FFB6C1' />
+          <AntDesign name='heart' size={size / 4} color={colors.accent} />
         </Animated.View>
 
         <Animated.View
@@ -310,7 +311,7 @@ export default function LikeButton({
             },
           ]}
         >
-          <AntDesign name='heart' size={size / 5} color='#FF1493' />
+          <AntDesign name='heart' size={size / 5} color={colors.accent} />
         </Animated.View>
       </AnimatedTouchableOpacity>
     </View>

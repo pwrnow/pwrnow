@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  useColorScheme,
   Alert,
   Platform,
   Animated,
@@ -27,6 +26,7 @@ import { authenticate } from '../lib/api';
 import { config } from '../lib/config';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 // Required for expo-auth-session on Android
 WebBrowser.maybeCompleteAuthSession();
@@ -44,8 +44,7 @@ const ACCENT_BLUE = '#2066DF';
 const ACCENT_PINK = '#EC2E81';
 
 export default function SignInScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useThemeColors();
   const { setAuthFromBackend, isLoading, isAuthenticated } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const insets = useSafeAreaInsets();
@@ -203,7 +202,7 @@ export default function SignInScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          backgroundColor: colors.background,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
@@ -215,7 +214,7 @@ export default function SignInScreen() {
         >
           <Text
             style={{
-              color: isDark ? '#FFFFFF' : '#000000',
+              color: colors.foreground,
               fontSize: 18,
               fontFamily: 'SpaceGrotesk-Medium',
             }}
@@ -231,7 +230,7 @@ export default function SignInScreen() {
     <View
       style={{
         flex: 1,
-        backgroundColor: isDark ? '#000000' : '#FFFFFF',
+        backgroundColor: colors.background,
         paddingTop: insets.top,
         paddingBottom: insets.bottom,
         paddingLeft: insets.left,
@@ -251,19 +250,13 @@ export default function SignInScreen() {
             width: 44,
             height: 44,
             borderRadius: 22,
-            backgroundColor: isDark
-              ? 'rgba(255,255,255,0.1)'
-              : 'rgba(0,0,0,0.05)',
+            backgroundColor: colors.muted,
             justifyContent: 'center',
             alignItems: 'center',
           }}
           activeOpacity={0.7}
         >
-          <Feather
-            name='arrow-left'
-            size={20}
-            color={isDark ? '#FFFFFF' : '#000000'}
-          />
+          <Feather name='arrow-left' size={20} color={colors.foreground} />
         </TouchableOpacity>
       </View>
 
@@ -308,7 +301,7 @@ export default function SignInScreen() {
               style={{
                 fontSize: 26,
                 fontWeight: '600',
-                color: isDark ? '#FFFFFF' : '#000000',
+                color: colors.foreground,
                 textAlign: 'center',
                 fontFamily: 'SpaceGrotesk-SemiBold',
                 marginBottom: 12,
@@ -321,7 +314,7 @@ export default function SignInScreen() {
             <Text
               style={{
                 fontSize: 15,
-                color: isDark ? '#9CA3AF' : '#6B7280',
+                color: colors.mutedForeground,
                 textAlign: 'center',
                 fontFamily: 'SpaceGrotesk-Regular',
                 lineHeight: 22,
@@ -346,9 +339,9 @@ export default function SignInScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: colors.card,
                 borderWidth: 1.5,
-                borderColor: isDark ? '#374151' : '#E5E7EB',
+                borderColor: colors.border,
                 borderRadius: 14,
                 paddingVertical: 14,
                 paddingHorizontal: 24,
@@ -406,7 +399,7 @@ export default function SignInScreen() {
                   AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
                 }
                 buttonStyle={
-                  isDark
+                  colors.background === '#000000'
                     ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
                     : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
                 }
@@ -424,7 +417,7 @@ export default function SignInScreen() {
           <Text
             style={{
               fontSize: 13,
-              color: isDark ? '#9CA3AF' : '#6B7280',
+              color: colors.mutedForeground,
               textAlign: 'center',
               fontFamily: 'SpaceGrotesk-Regular',
               marginTop: 28,

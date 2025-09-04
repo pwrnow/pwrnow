@@ -3,7 +3,6 @@ import {
   View,
   ScrollView,
   RefreshControl,
-  useColorScheme,
   Platform,
   ActivityIndicator,
   Text,
@@ -21,12 +20,12 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
 import { useAuth } from '../contexts/AuthContext';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../lib/api';
 
 export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useThemeColors();
   const [selectedCategory, setSelectedCategory] = useState('wszystkie');
   const [refreshing, setRefreshing] = useState(false);
   const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
@@ -98,6 +97,7 @@ export default function HomeScreen() {
     <View
       style={{
         flex: 1,
+        backgroundColor: isDark ? '#000000' : '#FFFFFF',
         // paddingTop: insets.top,
         paddingBottom: insets.bottom,
         paddingLeft: insets.left,
@@ -105,9 +105,9 @@ export default function HomeScreen() {
       }}
     >
       <ScrollView
-        className='bg-white dark:bg-black'
+        style={{ backgroundColor: isDark ? '#000000' : '#FFFFFF' }}
         contentContainerStyle={{
-          backgroundColor: isDark ? 'black' : 'white',
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
         }}
         refreshControl={
           <RefreshControl
@@ -119,11 +119,7 @@ export default function HomeScreen() {
               Platform.OS === 'android' ? [subtleSpinnerColor] : undefined
             }
             progressBackgroundColor={
-              Platform.OS === 'android'
-                ? isDark
-                  ? '#000000'
-                  : '#FFFFFF'
-                : undefined
+              Platform.OS === 'android' ? colors.background : undefined
             }
             title={t('refreshingEvents')}
             titleColor={Platform.OS === 'ios' ? subtleSpinnerColor : undefined}
@@ -131,7 +127,7 @@ export default function HomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View className='bg-white dark:bg-black pb-2'>
+        <View style={{ backgroundColor: colors.background }} className='pb-2'>
           <CategorySelector
             categories={categories}
             selectedCategory={selectedCategory}

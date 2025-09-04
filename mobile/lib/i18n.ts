@@ -127,6 +127,32 @@ const translations: Record<string, TranslationMap> = {
     openLocation: 'Open Location',
     chooseMapApp: 'Choose which app to open the location with:',
     failedToOpenMaps: 'Failed to open maps. Please try again.',
+    // Settings translations
+    profile: 'Profile',
+    notifications: 'Notifications',
+    language: 'Language',
+    theme: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+    english: 'English',
+    polish: 'Polish',
+    notificationsDescription:
+      'Receive push notifications about events and updates',
+    languageDescription: 'Choose your preferred language',
+    themeDescription: 'Choose your preferred theme',
+    signInToAccessProfile: 'Sign in to access your profile',
+    signInToAccessProfileDescription:
+      'Sign in to save your preferences and access personalized features',
+    // Social media translations
+    connectWithUs: 'Connect with us',
+    socialMediaDescription: 'Follow us on social media and get in touch',
+    cannotOpenLink: 'Cannot open this link',
+    contactUsForSupport: 'Need help? Reach out to us on social media',
+    // Team section translations
+    team: 'Team',
+    meetOurTeam: 'Meet our team',
+    teamDescription: 'Learn about the people behind PWr Now',
   },
   pl: {
     all: 'Wszystkie',
@@ -258,11 +284,40 @@ const translations: Record<string, TranslationMap> = {
     openLocation: 'Otwórz Lokalizację',
     chooseMapApp: 'Wybierz aplikację do otwarcia lokalizacji:',
     failedToOpenMaps: 'Nie udało się otworzyć map. Spróbuj ponownie.',
+    // Settings translations
+    profile: 'Profil',
+    notifications: 'Powiadomienia',
+    language: 'Język',
+    theme: 'Motyw',
+    light: 'Jasny',
+    dark: 'Ciemny',
+    system: 'Systemowy',
+    english: 'Angielski',
+    polish: 'Polski',
+    notificationsDescription:
+      'Otrzymuj powiadomienia push o wydarzeniach i aktualizacjach',
+    languageDescription: 'Wybierz preferowany język',
+    themeDescription: 'Wybierz preferowany motyw',
+    signInToAccessProfile: 'Zaloguj się, aby uzyskać dostęp do profilu',
+    signInToAccessProfileDescription:
+      'Zaloguj się, aby zapisać swoje preferencje i uzyskać dostęp do spersonalizowanych funkcji',
+    // Social media translations
+    connectWithUs: 'Skontaktuj się z nami',
+    socialMediaDescription:
+      'Obserwuj nas w mediach społecznościowych i skontaktuj się',
+    cannotOpenLink: 'Nie można otworzyć tego linku',
+    contactUsForSupport:
+      'Potrzebujesz pomocy? Napisz do nas w mediach społecznościowych',
+    // Team section translations
+    team: 'Zespół',
+    meetOurTeam: 'Poznaj nasz zespół',
+    teamDescription: 'Dowiedz się o ludziach stojących za PWr Now',
   },
 };
 
 export const i18n = new I18n(translations);
 
+// Always use system language
 const deviceLanguageCode = getLocales()[0]?.languageCode ?? 'en';
 i18n.locale = deviceLanguageCode;
 i18n.enableFallback = true;

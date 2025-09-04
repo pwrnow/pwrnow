@@ -1,14 +1,9 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { t } from '../lib/i18n';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface SignInRequiredModalProps {
   visible: boolean;
@@ -21,8 +16,7 @@ export default function SignInRequiredModal({
   onClose,
   onSignIn,
 }: SignInRequiredModalProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors } = useThemeColors();
 
   return (
     <Modal
@@ -34,35 +28,55 @@ export default function SignInRequiredModal({
       <View className='flex-1 bg-black/50 justify-center items-center px-6'>
         <Animated.View
           entering={FadeInDown.duration(250)}
-          className='w-full rounded-2xl bg-white dark:bg-black border border-black/10 dark:border-white/10 p-5'
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className='w-full rounded-2xl border p-5'
         >
           <View className='items-center mb-3'>
-            <View className='w-12 h-12 rounded-full bg-accentPink/15 items-center justify-center mb-2'>
-              <Feather name='lock' size={22} color={'#EC2E81'} />
+            <View
+              style={{ backgroundColor: colors.accent + '15' }}
+              className='w-12 h-12 rounded-full items-center justify-center mb-2'
+            >
+              <Feather name='lock' size={22} color={colors.accent} />
             </View>
-            <Text className='text-black dark:text-white text-lg font-semibold text-center'>
+            <Text
+              style={{ color: colors.foreground }}
+              className='text-lg font-semibold text-center'
+            >
               {t('signInRequiredTitle')}
             </Text>
-            <Text className='text-black/70 dark:text-white/70 mt-1 text-center'>
+            <Text
+              style={{ color: colors.mutedForeground }}
+              className='mt-1 text-center'
+            >
               {t('signInRequiredMessage')}
             </Text>
           </View>
           <View className='flex-row gap-3 mt-2'>
             <TouchableOpacity
               onPress={onClose}
-              className='flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10 items-center'
+              style={{ borderColor: colors.border }}
+              className='flex-1 py-3 rounded-xl border items-center'
               activeOpacity={0.8}
             >
-              <Text className='text-black dark:text-white font-semibold'>
+              <Text
+                style={{ color: colors.foreground }}
+                className='font-semibold'
+              >
                 {t('cancel')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onSignIn}
-              className='flex-1 py-3 rounded-xl bg-accentBlue items-center'
+              style={{ backgroundColor: colors.primary }}
+              className='flex-1 py-3 rounded-xl items-center'
               activeOpacity={0.85}
             >
-              <Text className='text-white font-semibold'>{t('signIn')}</Text>
+              <Text
+                style={{ color: colors.primaryForeground }}
+                className='font-semibold'
+              >
+                {t('signIn')}
+              </Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
