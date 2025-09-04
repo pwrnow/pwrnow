@@ -419,6 +419,41 @@ export async function createScheduleItem(
   }
 }
 
+export interface MagicImportRequest {
+  raw_text: string;
+}
+
+export interface MagicImportResponse {
+  id: string;
+  items: Array<{
+    id: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    title: string;
+    description?: string;
+    duration_minutes: number;
+  }>;
+}
+
+export async function parseScheduleWithAI(
+  data: MagicImportRequest
+): Promise<MagicImportResponse> {
+  console.log('🤖 Parsing schedule with AI:', data);
+  try {
+    const response = await fetchWithCredentials('/ai/parse-schedule/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const result = (await response.json()) as MagicImportResponse;
+    console.log('✅ Schedule parsed with AI:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to parse schedule with AI:', error);
+    throw error;
+  }
+}
+
 export async function deleteScheduleItem(itemId: string): Promise<void> {
   console.log('🗑️ Deleting schedule item:', itemId);
   try {

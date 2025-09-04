@@ -14,6 +14,7 @@ import {
   Share2,
   Copy,
   Check,
+  Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ import EventScheduleDaySelector, {
 } from '@/components/event-schedule-day-selector';
 import EventScheduleList from '@/components/event-schedule-list';
 import EventScheduleAddModal from '@/components/event-schedule-add-modal';
+import MagicImportModal from '@/components/magic-import-modal';
 
 export default function OrgEventDetailsPage() {
   const params = useParams();
@@ -58,6 +60,7 @@ export default function OrgEventDetailsPage() {
   const [copied, setCopied] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isMagicImportModalOpen, setIsMagicImportModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -137,15 +140,25 @@ export default function OrgEventDetailsPage() {
   };
 
   const handlePostCreated = (newPost: Post) => {
-    // Refresh event data to get updated posts
-    window.location.reload();
+    // Update event state with the new post instead of reloading
+    if (event) {
+      setEvent({
+        ...event,
+        posts: [newPost, ...(event.posts || [])],
+      });
+    }
     setIsCreatePostModalOpen(false);
     setActiveTab('posts');
   };
 
   const handlePostDeleted = (postId: string) => {
-    // Refresh event data to get updated posts
-    window.location.reload();
+    // Update event state by removing the deleted post
+    if (event) {
+      setEvent({
+        ...event,
+        posts: (event.posts || []).filter((post) => post.id !== postId),
+      });
+    }
   };
 
   const handleCopyLink = async () => {
@@ -190,6 +203,40 @@ export default function OrgEventDetailsPage() {
       toast.success(t('createSuccess'));
     } catch {
       toast.error(t('createError'));
+    }
+  };
+
+  const handleScheduleParsed = async (
+    scheduleItems: Array<{
+      date: string;
+      start_time: string;
+      end_time: string;
+      title: string;
+      description?: string;
+    }>
+  ) => {
+    try {
+      // Create schedule items one by one
+      for (const item of scheduleItems) {
+        const createData = {
+          event_slug: event.slug,
+          date: item.date,
+          start_time: item.start_time,
+          end_time: item.end_time,
+          title: item.title,
+          description: item.description || '',
+        };
+        await createScheduleItem(createData);
+      }
+
+      // Refresh the event data to get the updated schedule
+      window.location.reload();
+      toast.success(
+        `Successfully imported ${scheduleItems.length} schedule items!`
+      );
+    } catch (error) {
+      console.error('Failed to import schedule items:', error);
+      toast.error('Failed to import some schedule items. Please try again.');
     }
   };
 
@@ -569,15 +616,25 @@ export default function OrgEventDetailsPage() {
                 </Card>
               )}
 
-              {canManage && selectedDay && (
-                <div className='flex justify-center pt-2'>
+              {canManage && (
+                <div className='flex justify-center gap-2 pt-2'>
                   <Button
-                    onClick={() => setIsAddModalOpen(true)}
+                    onClick={() => setIsMagicImportModalOpen(true)}
+                    variant='outline'
                     className='cursor-pointer'
                   >
-                    <Plus className='h-4 w-4 mr-2' />
-                    {t('addScheduleItem')}
+                    <Wand2 className='h-4 w-4 mr-2' />
+                    Magic Import
                   </Button>
+                  {selectedDay && (
+                    <Button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className='cursor-pointer'
+                    >
+                      <Plus className='h-4 w-4 mr-2' />
+                      {t('addScheduleItem')}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -603,6 +660,13 @@ export default function OrgEventDetailsPage() {
         onClose={() => setIsCreatePostModalOpen(false)}
         onPostCreated={handlePostCreated}
         eventSlug={event.slug}
+      />
+
+      <MagicImportModal
+        open={isMagicImportModalOpen}
+        onOpenChange={setIsMagicImportModalOpen}
+        eventSlug={event.slug}
+        onScheduleParsed={handleScheduleParsed}
       />
     </div>
   );

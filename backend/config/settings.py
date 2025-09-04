@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'core',
     'users',
     'notifications',
+    'ai',
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -542,3 +543,5 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 }
+
+OPENAI_API_KEY = env("OPENAI_API_KEY", default="")

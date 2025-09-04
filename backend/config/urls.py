@@ -24,6 +24,7 @@ urlpatterns = [
     path('v1/', include('core.urls')),
     path('v1/', include('notifications.urls')),
     path('v1/', include('users.urls')),
+    path('v1/ai/', include('ai.urls')),
 ]
 
 # Serve static and media files during development
