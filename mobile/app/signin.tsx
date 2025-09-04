@@ -383,7 +383,7 @@ export default function SignInScreen() {
                 style={{
                   fontSize: 14,
                   fontWeight: '500',
-                  color: '#1F1F1F',
+                  color: colors.foreground,
                   fontFamily: 'SpaceGrotesk-Medium',
                   letterSpacing: 0.1,
                 }}
