@@ -22,6 +22,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
 import { useAuth } from '../contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api } from '../lib/api';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -82,6 +83,16 @@ export default function HomeScreen() {
       setRefreshing(false);
     }
   };
+
+  // fetch evetns all manyulal and priunt all likes
+  const fetchEventsAndLikes = async () => {
+    const events = await api.events.getEvents();
+    for (const event of events) {
+      console.log('event', event.title, event.liked);
+    }
+  };
+
+  fetchEventsAndLikes();
 
   return (
     <View

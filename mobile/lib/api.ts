@@ -165,6 +165,40 @@ export async function refreshAccessToken(): Promise<string | null> {
   return refreshingPromise;
 }
 
+// Logout from backend
+export async function logout(): Promise<void> {
+  const url = `${getApiUrl()}/auth/logout/`;
+  console.log('logout', url);
+  try {
+    // Read refresh token from secure storage
+    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+
+    // Create an AbortController for timeout similar to other auth calls
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refreshToken || '' }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(
+        'Logout request failed:',
+        response.status,
+        response.statusText
+      );
+      // Don't throw error - we still want to clear local data even if backend logout fails
+    }
+  } catch (error) {
+    console.warn('Logout request error:', error);
+    // Don't throw error - we still want to clear local data even if backend logout fails
+  }
+}
+
 // Helper function to make API requests with credentials and error handling
 async function fetchWithCredentials(
   url: string,
@@ -213,10 +247,11 @@ async function fetchWithCredentials(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
 
+    console.log('headers', headers);
+
     try {
       const response = await fetch(`${getApiUrl()}${url}`, {
         ...options,
-        credentials: 'include',
         headers,
         signal: controller.signal,
       });
