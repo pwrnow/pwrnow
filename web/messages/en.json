@@ -366,7 +366,8 @@
     "createSuccess": "Schedule item created",
     "createError": "Failed to create schedule item",
     "deleteSuccess": "Schedule item deleted",
-    "deleteError": "Failed to delete schedule item"
+    "deleteError": "Failed to delete schedule item",
+    "noSchedule": "No schedule available for this event"
   },
   "PostsList": {
     "justNow": "Just now",

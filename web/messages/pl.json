@@ -355,7 +355,8 @@
     "createSuccess": "Utworzono pozycję w harmonogramie",
     "createError": "Nie udało się utworzyć pozycji",
     "deleteSuccess": "Usunięto pozycję z harmonogramu",
-    "deleteError": "Nie udało się usunąć pozycji"
+    "deleteError": "Nie udało się usunąć pozycji",
+    "noSchedule": "Brak harmonogramu dla tego wydarzenia"
   },
   "PostsList": {
     "justNow": "Przed chwilą",
