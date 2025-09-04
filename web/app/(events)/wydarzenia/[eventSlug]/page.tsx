@@ -13,6 +13,7 @@ import {
 } from '@/lib/structured-data';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { formatLocalizedDate } from '@/lib/utils';
+import { isUpcoming } from '@/lib/organization-utils';
 
 // Enable ISR with 60 second revalidation for SEO and performance
 export const revalidate = 60;
@@ -166,7 +167,11 @@ export default async function EventDetailPage({
       </div>
 
       {/* Event Details */}
-      <EventCard event={event} />
+      <EventCard
+        event={event}
+        orgSlug={event.organization.slug}
+        showManagementActions={true}
+      />
     </>
   );
 }

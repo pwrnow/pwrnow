@@ -5,13 +5,19 @@ import { Organization } from '@/lib/types';
 
 interface OrganizationHeaderProps {
   organization: Organization;
-  getInitials: (name: string) => string;
 }
 
 export default function OrganizationHeader({
   organization,
-  getInitials,
 }: OrganizationHeaderProps) {
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
   return (
     <div className='mb-8 bg-card rounded-lg border overflow-hidden'>
       <div className='bg-gradient-to-r from-primary/10 to-secondary/10 p-6'>

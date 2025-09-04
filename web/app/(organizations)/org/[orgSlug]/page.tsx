@@ -13,12 +13,7 @@ import EventCard from '@/components/event-card';
 import EventsEmptyState from '@/components/events-empty-state';
 import OrganizationPageSkeleton from '@/components/organization-page-skeleton';
 import ErrorState from '@/components/error-state';
-import {
-  getInitials,
-  isUpcoming,
-  handleMapLinkClick,
-  truncateDescription,
-} from '@/lib/organization-utils';
+import { isUpcoming } from '@/lib/organization-utils';
 
 export default function OrganizationPage() {
   const params = useParams();
@@ -115,10 +110,7 @@ export default function OrganizationPage() {
   return (
     <div className='w-full mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-8'>
       {/* Header */}
-      <OrganizationHeader
-        organization={organization}
-        getInitials={getInitials}
-      />
+      <OrganizationHeader organization={organization} />
 
       {/* Statistics */}
       <OrganizationStats events={events} isUpcoming={isUpcoming} />
@@ -157,11 +149,8 @@ export default function OrganizationPage() {
                 key={event.id}
                 event={event}
                 orgSlug={orgSlug}
-                getInitials={getInitials}
-                handleMapLinkClick={handleMapLinkClick}
-                truncateDescription={truncateDescription}
-                isUpcoming={isUpcoming}
                 onEventDeleted={handleEventDeleted}
+                showManagementActions={true}
               />
             ))}
           </div>

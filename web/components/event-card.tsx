@@ -41,28 +41,59 @@ import { toast } from 'sonner';
 
 interface EventCardProps {
   event: Event;
-  orgSlug: string;
-  getInitials: (name: string) => string;
-  handleMapLinkClick: (location: string) => void;
-  truncateDescription: (text: string, maxLength: number) => string;
-  isUpcoming: (dateString: string) => boolean;
+  orgSlug?: string;
   onEventDeleted?: (eventSlug: string) => void;
+  showManagementActions?: boolean;
 }
 
 export default function EventCard({
   event,
   orgSlug,
-  getInitials,
-  handleMapLinkClick,
-  truncateDescription,
-  isUpcoming,
   onEventDeleted,
+  showManagementActions = false,
 }: EventCardProps) {
   const router = useRouter();
   const t = useTranslations('OrganizationPage');
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Utility functions built into the component
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
+
+  const handleMapLinkClick = (location: string): void => {
+    if (!location) return;
+
+    // Check if the user is on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // Encode the location for the URL
+    const encodedLocation = encodeURIComponent(location);
+
+    // Create the appropriate maps URL
+    const mapsUrl = isIOS
+      ? `maps://?q=${encodedLocation}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+
+    // Open the maps URL in a new tab
+    window.open(mapsUrl, '_blank');
+  };
+
+  const truncateDescription = (text: string, maxLength: number): string => {
+    if (!text || text.length <= maxLength) return text;
+    return text.slice(0, maxLength).trim() + '...';
+  };
+
+  const isUpcoming = (dateString: string): boolean => {
+    return new Date(dateString) > new Date();
+  };
 
   const isEventToday =
     new Date(event.starts_at).toDateString() === new Date().toDateString();
@@ -241,29 +272,31 @@ export default function EventCard({
 
           {/* Action Buttons - Pushed to bottom */}
           <div className='mt-auto pt-4 space-y-2'>
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  router.push(`/org/${orgSlug}/events/${event.slug}`)
-                }
-                className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
-              >
-                <Settings className='h-4 w-4' />
-                {t('manageEvent')}
-              </Button>
+            {showManagementActions && orgSlug ? (
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    router.push(`/org/${orgSlug}/events/${event.slug}`)
+                  }
+                  className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
+                >
+                  <Settings className='h-4 w-4' />
+                  {t('manageEvent')}
+                </Button>
 
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleDeleteClick}
-                className='text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30'
-                title={t('deleteEvent')}
-              >
-                <Trash2 className='h-4 w-4' />
-              </Button>
-            </div>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleDeleteClick}
+                  className='text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30'
+                  title={t('deleteEvent')}
+                >
+                  <Trash2 className='h-4 w-4' />
+                </Button>
+              </div>
+            ) : null}
 
             {event.url && (
               <a href={event.url} target='_blank' rel='noopener noreferrer'>
