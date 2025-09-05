@@ -123,7 +123,7 @@ export const useEventActions = (
   const handleExternalLink = useCallback(
     async (ctaScale: any) => {
       try {
-        ctaScale.value = Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (event?.url) {
           await Linking.openURL(event.url);
         }
