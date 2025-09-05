@@ -166,7 +166,8 @@ export default function EventDetailScreen() {
 
   // Error handling: navigate back and show quick message
   useEffect(() => {
-    if (eventError) {
+    console.log('eventError', eventError);
+    if (eventError && !isLoading && !event) {
       // Navigate back to main immediately
       if (router.canGoBack()) {
         router.back();
@@ -185,7 +186,7 @@ export default function EventDetailScreen() {
         Alert.alert(t('errorTitle'), message);
       }
     }
-  }, [eventError, router]);
+  }, [eventError, isLoading, event, router]);
 
   // Posts are now included in the main event query, so no separate error handling needed
 

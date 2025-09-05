@@ -10,11 +10,7 @@ export const queryConfig = {
 
   // Garbage collection time (how long data stays in cache)
   gcTime: {
-    default: 24 * 60 * 60 * 1000, // 24 hours
-    events: 24 * 60 * 60 * 1000, // 24 hours
-    categories: 24 * 60 * 60 * 1000, // 24 hours
-    eventDetails: 24 * 60 * 60 * 1000, // 24 hours
-    posts: 24 * 60 * 60 * 1000, // 24 hours
+    default: 2 * 24 * 60 * 60 * 1000, // 2 days
   },
 
   // Retry settings
