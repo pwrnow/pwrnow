@@ -8,6 +8,7 @@ export const useEventData = (eventSlug?: string) => {
     data: event,
     isLoading: isLoadingEvent,
     error: eventError,
+    refetch: refetchEvent,
   } = useEventBySlug(eventSlug);
 
   // Generate event days from event dates
@@ -80,5 +81,8 @@ export const useEventData = (eventSlug?: string) => {
 
     // Errors
     eventError,
+
+    // Actions
+    refetch: refetchEvent,
   };
 };

@@ -17,6 +17,7 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { SettingsProvider } from '../contexts/SettingsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAppRefetch } from '../hooks/useAppRefetch';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -84,6 +85,9 @@ export default function StackLayout() {
 // Component that handles theming based on settings
 function ThemedApp() {
   const { isDark, colors } = useTheme();
+
+  // Initialize app refetch functionality
+  useAppRefetch();
 
   return (
     <>

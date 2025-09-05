@@ -7,6 +7,7 @@ export function useEvents() {
   return useQuery<Event[]>({
     queryKey: queryKeys.events,
     queryFn: () => api.events.getEvents(),
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -14,6 +15,7 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: queryKeys.categories,
     queryFn: () => api.categories.getCategories(),
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -22,6 +24,7 @@ export function useEventBySlug(slug?: string) {
     queryKey: slug ? queryKeys.eventBySlug(slug) : ['event', ''],
     queryFn: () => api.events.getEventBySlug(slug as string),
     enabled: typeof slug === 'string' && slug.length > 0,
+    refetchOnWindowFocus: true,
   });
 }
 
