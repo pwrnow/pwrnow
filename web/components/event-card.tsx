@@ -136,7 +136,7 @@ export default function EventCard({
   };
 
   return (
-    <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card flex flex-col h-full'>
+    <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card flex flex-col h-full mb-2'>
       {/* Verification Status Bar */}
       {showManagementActions && orgSlug ? (
         <div
