@@ -33,6 +33,7 @@ interface Props {
   postsError?: any; // Optional since posts are now included in main event query
   eventDays: any[];
   itemsByDay: Record<string, any[]>;
+  hasSchedule: boolean;
   onMapPress?: () => void;
   onExternalLink?: () => void;
   onImagePress: (images: string[], initialIndex: number) => void;
@@ -215,6 +216,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     postsError,
     eventDays,
     itemsByDay,
+    hasSchedule,
     onMapPress,
     onExternalLink,
     onImagePress,
@@ -226,7 +228,6 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
 
     // Always show schedule tab for events - even if no schedule items exist
     // This allows users to see event days and potentially add schedule items
-    const hasSchedule = true;
     const routes: Route[] = [
       { key: 'details', title: t('details'), icon: 'info' },
       { key: 'posts', title: t('posts'), icon: 'message-circle' },

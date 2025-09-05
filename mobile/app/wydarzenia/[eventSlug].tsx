@@ -45,8 +45,15 @@ export default function EventDetailScreen() {
   const eventSlugString = typeof eventSlug === 'string' ? eventSlug : undefined;
 
   // Custom hooks for data and actions
-  const { event, posts, eventDays, scheduleByDay, isLoading, eventError } =
-    useEventData(eventSlugString);
+  const {
+    event,
+    posts,
+    eventDays,
+    scheduleByDay,
+    isLoading,
+    eventError,
+    hasSchedule,
+  } = useEventData(eventSlugString);
 
   const { handleHeartPress, handleMapPress, handleExternalLink } =
     useEventActions(event, setShowAuthModal);
@@ -199,6 +206,7 @@ export default function EventDetailScreen() {
           postsError={undefined} // No separate posts error since we use single query
           eventDays={eventDays}
           itemsByDay={scheduleByDay}
+          hasSchedule={hasSchedule || false}
           onMapPress={handleMapPress}
           onExternalLink={handleExternalLinkWithAnimation}
           onImagePress={handleImagePress}

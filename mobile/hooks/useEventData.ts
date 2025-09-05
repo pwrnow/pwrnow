@@ -17,6 +17,12 @@ export const useEventData = (eventSlug?: string) => {
 
   // Extract posts and schedule from event data
   const posts = event?.posts || [];
+  const schedule = event?.schedule;
+
+  // Check if schedule has any items
+  const hasSchedule = useMemo(() => {
+    return schedule && schedule.items && schedule.items.length > 0;
+  }, [schedule]);
 
   // Group schedule items by day id
   const scheduleByDay = useMemo(() => {
@@ -32,10 +38,7 @@ export const useEventData = (eventSlug?: string) => {
       }>
     > = {};
 
-    const schedule = event?.schedule;
-    if (!schedule || !schedule.items) {
-      return grouped;
-    }
+    if (!schedule || !schedule.items) return grouped;
 
     for (const item of schedule.items) {
       const dayId = item.date; // YYYY-MM-DD
@@ -61,7 +64,7 @@ export const useEventData = (eventSlug?: string) => {
     }
 
     return grouped;
-  }, [event?.schedule]);
+  }, [schedule]);
 
   return {
     // Data
@@ -69,6 +72,7 @@ export const useEventData = (eventSlug?: string) => {
     posts,
     eventDays,
     scheduleByDay,
+    hasSchedule,
 
     // Loading states - now only one loading state since we use single query
     isLoading: isLoadingEvent,
