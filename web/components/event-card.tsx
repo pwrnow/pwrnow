@@ -138,25 +138,27 @@ export default function EventCard({
   return (
     <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card flex flex-col h-full'>
       {/* Verification Status Bar */}
-      <div
-        className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
-          event.verified
-            ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
-            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-        }`}
-      >
-        {event.verified ? (
-          <>
-            <ShieldCheck className='h-3 w-3' />
-            {t('approved')}
-          </>
-        ) : (
-          <>
-            <Clock3 className='h-3 w-3' />
-            {t('pendingVerification')}
-          </>
-        )}
-      </div>
+      {showManagementActions && orgSlug ? (
+        <div
+          className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
+            event.verified
+              ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+          }`}
+        >
+          {event.verified ? (
+            <>
+              <ShieldCheck className='h-3 w-3' />
+              {t('approved')}
+            </>
+          ) : (
+            <>
+              <Clock3 className='h-3 w-3' />
+              {t('pendingVerification')}
+            </>
+          )}
+        </div>
+      ) : null}
 
       <div className='flex flex-col flex-1'>
         {/* Organization Header */}
