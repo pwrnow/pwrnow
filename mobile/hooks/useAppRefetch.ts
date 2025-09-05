@@ -22,9 +22,7 @@ export function useAppRefetch() {
         console.log('App became active, refetching all data...');
 
         // Refetch all queries in parallel
-        queryClient.refetchQueries({
-          type: 'active', // Only refetch active queries
-        });
+        queryClient.refetchQueries();
       }
     };
 
@@ -41,9 +39,7 @@ export function useAppRefetch() {
   // Return a manual refetch function for programmatic use
   const refetchAll = () => {
     console.log('Manually refetching all data...');
-    return queryClient.refetchQueries({
-      type: 'active',
-    });
+    return queryClient.refetchQueries();
   };
 
   // Return a function to refetch specific data types
