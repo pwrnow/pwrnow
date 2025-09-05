@@ -9,7 +9,7 @@ import { Organization, Event } from '@/lib/types';
 import { useTranslations } from 'next-intl';
 import OrganizationHeader from '@/components/organization-header';
 import OrganizationStats from '@/components/organization-stats';
-import EventCard from '@/components/event-card';
+import OrgEventCard from '@/components/org-event-card';
 import EventsEmptyState from '@/components/events-empty-state';
 import OrganizationPageSkeleton from '@/components/organization-page-skeleton';
 import ErrorState from '@/components/error-state';
@@ -145,12 +145,32 @@ export default function OrganizationPage() {
         <div className='w-full'>
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {sortedEvents.map((event) => (
-              <EventCard
+              <OrgEventCard
                 key={event.id}
                 event={event}
                 orgSlug={orgSlug}
                 onEventDeleted={handleEventDeleted}
                 showManagementActions={true}
+                getInitials={(name: string) =>
+                  name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                }
+                handleMapLinkClick={(location: string) => {
+                  const encodedLocation = encodeURIComponent(location);
+                  window.open(
+                    `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+                    '_blank'
+                  );
+                }}
+                truncateDescription={(text: string, maxLength: number) =>
+                  text.length > maxLength
+                    ? text.substring(0, maxLength) + '...'
+                    : text
+                }
+                isUpcoming={isUpcoming}
               />
             ))}
           </div>
