@@ -5,11 +5,7 @@ export const queryConfig = {
   // Cache duration settings
   staleTime: {
     // How long data is considered fresh (will not trigger refetch)
-    default: 5 * 60 * 1000, // 5 minutes
-    events: 5 * 60 * 1000, // 5 minutes
-    categories: 30 * 60 * 1000, // 30 minutes
-    eventDetails: 5 * 60 * 1000, // 10 minutes
-    posts: 5 * 60 * 1000, // 5 minutes
+    default: 0, // 5 minutes
   },
 
   // Garbage collection time (how long data stays in cache)
@@ -43,7 +39,7 @@ export const queryConfig = {
   // Network behavior
   network: {
     refetchOnReconnect: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     networkMode: 'online' as const,
   },
 };

@@ -127,11 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await queryClient.invalidateQueries();
 
     // Clear the persisted cache from AsyncStorage directly
-    try {
-      await AsyncStorage.removeItem(queryConfig.persistence.storageKey);
-    } catch (error) {
-      console.warn('Failed to clear AsyncStorage cache:', error);
-    }
+    // try {
+    //   await AsyncStorage.removeItem(queryConfig.persistence.storageKey);
+    // } catch (error) {
+    //   console.warn('Failed to clear AsyncStorage cache:', error);
+    // }
 
     // Clear secure storage
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);

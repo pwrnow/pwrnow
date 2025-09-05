@@ -4,7 +4,8 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, AppState, Platform } from 'react-native';
+import type { AppStateStatus } from 'react-native';
 import { NotificationsProvider } from '../providers/notifications';
 import { Feather } from '@expo/vector-icons';
 import Logo from '../components/Logo';
@@ -12,12 +13,13 @@ import * as Haptics from 'expo-haptics';
 import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
 import StartupAnimation from '../components/StartupAnimation';
-import AppStartupComponent from '../components/AppStartup';
+import { api } from '../lib/api';
+import { queryKeys } from '../lib/queryKeys';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { SettingsProvider } from '../contexts/SettingsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useAppRefetch } from '../hooks/useAppRefetch';
+import { focusManager, useQueryClient } from '@tanstack/react-query';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -69,9 +71,7 @@ export default function StackLayout() {
                     visible={showStartup}
                     onEnd={handleStartupEnd}
                   />
-                  <AppStartupComponent>
-                    <ThemedApp />
-                  </AppStartupComponent>
+                  <ThemedApp />
                 </PosthogProvider>
               </QueryProvider>
             </NotificationsProvider>
@@ -85,9 +85,18 @@ export default function StackLayout() {
 // Component that handles theming based on settings
 function ThemedApp() {
   const { isDark, colors } = useTheme();
+  const queryClient = useQueryClient();
 
-  // Initialize app refetch functionality
-  useAppRefetch();
+  async function onAppStateChange(status: AppStateStatus) {
+    if (Platform.OS !== 'web') {
+      focusManager.setFocused(status === 'active');
+    }
+  }
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', onAppStateChange);
+    return () => subscription.remove();
+  }, [queryClient]);
 
   return (
     <>

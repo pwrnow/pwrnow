@@ -42,12 +42,15 @@ export default function HomeScreen() {
     status: eventsStatus,
     fetchStatus,
   } = useEvents();
-  const { data: fetchedCategories = [] } = useCategories();
+  const {
+    data: fetchedCategories = [],
+    isFetching: isFetchingCategories,
+    isRefetching: isRefetchingCategories,
+  } = useCategories();
 
   // Prefetch event details when events are loaded (only once)
   useEffect(() => {
     if (events.length > 0 && !hasPrefetchedRef.current) {
-      hasPrefetchedRef.current = true;
       // Prefetch details for all events with a delay between each request
       const eventSlugs = events.map((event) => event.slug);
       prefetchAllEventDetails(eventSlugs, 500).catch((error) => {
@@ -73,8 +76,7 @@ export default function HomeScreen() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setRefreshing(true);
-      hasPrefetchedRef.current = false; // Reset prefetch flag on refresh
-      await queryClient.invalidateQueries({ queryKey: queryKeys.events });
+      await queryClient.refetchQueries();
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.error('Error refreshing events:', error);
@@ -82,17 +84,6 @@ export default function HomeScreen() {
       setRefreshing(false);
     }
   };
-
-  // fetch evetns all manyulal and priunt all likes
-  // const fetchEventsAndLikes = async () => {
-  //   const events = await api.events.getEvents();
-  //   for (const event of events) {
-  //     console.log('event', event.title, event.liked);
-  //     console.log('event.schedule', event.schedule);
-  //   }
-  // };
-
-  // fetchEventsAndLikes();
 
   return (
     <View

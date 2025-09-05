@@ -7,7 +7,7 @@ export function useEvents() {
   return useQuery<Event[]>({
     queryKey: queryKeys.events,
     queryFn: () => api.events.getEvents(),
-    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider stale to allow refetching
   });
 }
 
@@ -15,7 +15,7 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: queryKeys.categories,
     queryFn: () => api.categories.getCategories(),
-    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider stale to allow refetching
   });
 }
 
@@ -24,7 +24,6 @@ export function useEventBySlug(slug?: string) {
     queryKey: slug ? queryKeys.eventBySlug(slug) : ['event', ''],
     queryFn: () => api.events.getEventBySlug(slug as string),
     enabled: typeof slug === 'string' && slug.length > 0,
-    refetchOnWindowFocus: true,
   });
 }
 
@@ -159,7 +158,7 @@ export function usePrefetchEventDetails() {
     await queryClient.prefetchQuery({
       queryKey: queryKeys.eventBySlug(eventSlug),
       queryFn: () => api.events.getEventBySlug(eventSlug),
-      staleTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 0, // Always consider stale to allow refetching
     });
   };
 
@@ -172,11 +171,6 @@ export function usePrefetchEventDetails() {
 
       try {
         await prefetchEventDetails(eventSlug);
-        console.log(
-          `Prefetched details for event ${i + 1}/${
-            eventSlugs.length
-          }: ${eventSlug}`
-        );
       } catch (error) {
         console.warn(
           `Failed to prefetch details for event ${eventSlug}:`,

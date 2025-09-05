@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { generateEventDays } from '../../components/WeekDaySelector';
 import { View, Alert, Platform, ToastAndroid } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, {
@@ -15,7 +16,7 @@ import SignInRequiredModal from '../../components/SignInRequiredModal';
 import ImageView from 'react-native-image-viewing';
 import { useAnalytics } from '../../lib/analytics';
 import { useAuth } from '../../contexts/AuthContext';
-import { useEventData } from '../../hooks/useEventData';
+import { useEventBySlug } from '../../lib/queries';
 import { useEventActions } from '../../hooks/useEventActions';
 import { t } from '../../lib/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,16 +45,69 @@ export default function EventDetailScreen() {
   // Ensure eventSlug is always a string or undefined consistently
   const eventSlugString = typeof eventSlug === 'string' ? eventSlug : undefined;
 
-  // Custom hooks for data and actions
+  // Direct React Query usage
   const {
-    event,
-    posts,
-    eventDays,
-    scheduleByDay,
+    data: event,
     isLoading,
-    eventError,
-    hasSchedule,
-  } = useEventData(eventSlugString);
+    error: eventError,
+    refetch: refetchEvent,
+  } = useEventBySlug(eventSlugString);
+
+  // Extract posts and schedule from event data
+  const posts = event?.posts || [];
+  const schedule = event?.schedule;
+
+  // Generate event days from event dates
+  const eventDays = useMemo(() => {
+    return event ? generateEventDays(event.starts_at, event.ends_at) : [];
+  }, [event?.starts_at, event?.ends_at]);
+
+  // Check if schedule has any items
+  const hasSchedule = useMemo(() => {
+    return schedule && schedule.items && schedule.items.length > 0;
+  }, [schedule]);
+
+  // Group schedule items by day id
+  const scheduleByDay = useMemo(() => {
+    const grouped: Record<
+      string,
+      Array<{
+        id: string;
+        time: string;
+        title: string;
+        description: string | null;
+        duration: string;
+        endTime: string;
+      }>
+    > = {};
+
+    if (!schedule || !schedule.items) return grouped;
+
+    for (const item of schedule.items) {
+      const dayId = item.date; // YYYY-MM-DD
+      const time = item.start_time.slice(0, 5); // HH:MM
+      const endTime = item.end_time.slice(0, 5); // HH:MM
+
+      if (!grouped[dayId]) grouped[dayId] = [];
+      grouped[dayId].push({
+        id: item.id,
+        time,
+        title: item.title,
+        description: item.description,
+        duration: item.duration,
+        endTime,
+      });
+    }
+
+    // Sort each day's items by start time
+    for (const day of Object.keys(grouped)) {
+      grouped[day].sort((a, b) =>
+        a.time < b.time ? -1 : a.time > b.time ? 1 : 0
+      );
+    }
+
+    return grouped;
+  }, [schedule]);
 
   const { handleHeartPress, handleMapPress, handleExternalLink } =
     useEventActions(event, setShowAuthModal);
@@ -202,8 +256,6 @@ export default function EventDetailScreen() {
         <SimpleEventTabs
           eventSlug={eventSlug as string}
           posts={posts}
-          isLoadingPosts={false} // We handle loading at the top level
-          postsError={undefined} // No separate posts error since we use single query
           eventDays={eventDays}
           itemsByDay={scheduleByDay}
           hasSchedule={hasSchedule || false}
