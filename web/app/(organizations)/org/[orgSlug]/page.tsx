@@ -150,7 +150,6 @@ export default function OrganizationPage() {
                 event={event}
                 orgSlug={orgSlug}
                 onEventDeleted={handleEventDeleted}
-                showManagementActions={true}
                 getInitials={(name: string) =>
                   name
                     .split(' ')

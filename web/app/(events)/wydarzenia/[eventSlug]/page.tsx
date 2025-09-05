@@ -167,28 +167,7 @@ export default async function EventDetailPage({
       </div>
 
       {/* Event Details */}
-      <EventCard
-        event={event}
-        orgSlug={event.organization.slug}
-        getInitials={(name: string) =>
-          name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-        }
-        handleMapLinkClick={(location: string) => {
-          const encodedLocation = encodeURIComponent(location);
-          window.open(
-            `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
-            '_blank'
-          );
-        }}
-        truncateDescription={(text: string, maxLength: number) =>
-          text.length > maxLength ? text.substring(0, maxLength) + '...' : text
-        }
-        isUpcoming={isUpcoming}
-      />
+      <EventCard event={event} />
     </>
   );
 }
