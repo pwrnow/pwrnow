@@ -22,7 +22,12 @@ export function useAppRefetch() {
         console.log('App became active, refetching all data...');
 
         // Refetch all queries in parallel
-        queryClient.refetchQueries();
+        queryClient.refetchQueries({
+          type: 'active', // Only refetch active queries
+        });
+
+        // Also refetch individual events that are currently active
+        refetchIndividualEvents();
       }
     };
 
@@ -39,7 +44,9 @@ export function useAppRefetch() {
   // Return a manual refetch function for programmatic use
   const refetchAll = () => {
     console.log('Manually refetching all data...');
-    queryClient.refetchQueries();
+    return queryClient.refetchQueries({
+      type: 'active',
+    });
   };
 
   // Return a function to refetch specific data types
@@ -64,10 +71,42 @@ export function useAppRefetch() {
     });
   };
 
+  // Refetch all individual events that are currently active
+  const refetchIndividualEvents = () => {
+    console.log('Refetching individual events...');
+
+    // Get all active queries and filter for event-related ones
+    const activeQueries = queryClient.getQueryCache().findAll({
+      type: 'active',
+    });
+
+    // Find all individual event queries (eventBySlug, eventPosts, eventSchedule)
+    const eventQueries = activeQueries.filter((query) => {
+      const queryKey = query.queryKey;
+      return (
+        Array.isArray(queryKey) &&
+        queryKey.length >= 2 &&
+        queryKey[0] === 'event' &&
+        typeof queryKey[1] === 'string' // This is the slug
+      );
+    });
+
+    // Refetch each individual event query
+    const refetchPromises = eventQueries.map((query) => {
+      console.log(`Refetching individual event query:`, query.queryKey);
+      return queryClient.refetchQueries({
+        queryKey: query.queryKey,
+      });
+    });
+
+    return Promise.all(refetchPromises);
+  };
+
   return {
     refetchAll,
     refetchEvents,
     refetchCategories,
     refetchEventBySlug,
+    refetchIndividualEvents,
   };
 }
