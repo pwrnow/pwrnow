@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.utils.translation import gettext_lazy as _
@@ -7,6 +7,7 @@ from core.authentication import get_current_organization
 from core.serializers import ScheduleSerializer
 from .serializers import ScheduleParseRequestSerializer
 from .services import ScheduleParsingService
+from .throttles import OrganizationRateThrottle
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([OrganizationRateThrottle])
 def parse_schedule(request):
     """
     Parse raw schedule text using AI.

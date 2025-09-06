@@ -401,5 +401,29 @@
     "creating": "Creating...",
     "postCreated": "Post has been created",
     "createError": "Failed to create post"
+  },
+  "MagicImportModal": {
+    "title": "Magic Import Schedule",
+    "description": "Paste your raw schedule text (from Excel, Word, or any document) and let AI parse it into structured schedule items.",
+    "scheduleTextLabel": "Schedule Text",
+    "scheduleTextPlaceholder": "Paste your schedule text here... For example:\n\nMonday, Jan 15\n9:00 AM - 10:00 AM: Opening Ceremony\n10:30 AM - 12:00 PM: Keynote Presentation\n12:00 PM - 1:00 PM: Lunch Break\n\nTuesday, Jan 16\n9:00 AM - 10:30 AM: Workshop Session 1\n11:00 AM - 12:30 PM: Panel Discussion",
+    "tipsTitle": "Tips for better results:",
+    "tipIncludeDates": "Include dates and times for each item",
+    "tipClearTitles": "Use clear titles for sessions",
+    "tipSeparateDays": "Separate different days clearly",
+    "tipIncludeDescriptions": "Include descriptions when available",
+    "previewTitle": "Parsed Schedule Preview",
+    "itemsFound": "{count} items found",
+    "cancel": "Cancel",
+    "parseSchedule": "Parse Schedule",
+    "parsing": "Parsing...",
+    "tryAgain": "Try Again",
+    "acceptImport": "Accept & Import",
+    "enterTextError": "Please enter some schedule text to parse",
+    "parsedSuccess": "Successfully parsed {count} schedule items",
+    "parseFailed": "Failed to parse schedule",
+    "parseFailedTryAgain": "Failed to parse schedule. Please try again.",
+    "importSuccess": "Schedule imported successfully!",
+    "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later."
   }
 }

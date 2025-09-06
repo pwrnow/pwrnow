@@ -11,22 +11,39 @@ logger = logging.getLogger(__name__)
 class ScheduleParsingService:
     """Service for parsing schedule text using AI with LangChain."""
 
-    # Hardcoded configuration
-    MODEL_NAME = "gpt-5-nano"
-    TEMPERATURE = 0.3
-    MAX_TOKENS = 4000
+    # Provider configurations
+    PROVIDER_CONFIGS = {
+        'openai': {
+            'model_name': 'gpt-4o-mini',
+            'temperature': 0.3,
+            'max_tokens': 4000,
+        },
+        'gemini': {
+            'model_name': 'gemini-2.0-flash',
+            'temperature': 0.3,
+            'max_tokens': 4000,
+        }
+    }
+    
+    # Default provider
+    DEFAULT_PROVIDER = 'openai'
+
+#TODO: add the date check to the prompt
 
     # Hardcoded templates in English
-    SYSTEM_MESSAGE = """You are an expert at parsing event schedules from raw text. Your task is to extract schedule items and format them as structured JSON data.
+    SYSTEM_MESSAGE = """You are an expert at parsing event schedules from raw text in any language. Your task is to extract schedule items and format them as structured JSON data.
 
 Guidelines:
 1. Extract all schedule items with dates, times, titles, and descriptions
 2. Parse dates in various formats (MM/DD/YYYY, DD/MM/YYYY, "Monday", "Jan 15", etc.)
-3. Parse times in various formats (9:00 AM, 14:30, "2:30 PM", etc.)
-4. If no date is specified, try to infer from context or use the event date range
+3. Parse times in various formats (9:00 AM, 14:30, "2:30 PM", "od 9 do 12", "do 20", etc.)
+4. If no date is specified, use today's date
 5. If no end time is specified, estimate duration based on title/description
 6. Clean up titles and descriptions, removing unnecessary formatting
 7. Return ONLY valid JSON array, no other text
+8. Handle Polish time expressions: "od X do Y" means "from X to Y", "do X" means "until X"
+9. For text like "sniadanie od 9 do 12 a potem zabawa do 20", create two schedule items
+10. Always return at least one schedule item if there's any time information in the text
 
 Expected JSON format:
 [
@@ -51,26 +68,44 @@ Raw Schedule Text:
 Please extract all schedule items and return them as a JSON array following the format specified in the system message."""
 
     def __init__(self):
-        """Initialize the service with LangChain."""
+        """Initialize the service with LangChain using the configured provider."""
+        self.provider = getattr(settings, 'AI_PROVIDER', self.DEFAULT_PROVIDER)
+        
+        if self.provider not in self.PROVIDER_CONFIGS:
+            raise ValueError(f"Unsupported provider: {self.provider}. Supported providers: {list(self.PROVIDER_CONFIGS.keys())}")
+        
+        config = self.PROVIDER_CONFIGS[self.provider]
+        
         try:
-            from langchain_openai import ChatOpenAI
             from langchain.schema import SystemMessage, HumanMessage
-
-            # Initialize OpenAI with hardcoded configuration
-            self.llm = ChatOpenAI(
-                model=self.MODEL_NAME,
-                temperature=self.TEMPERATURE,
-                max_tokens=self.MAX_TOKENS,
-                openai_api_key=getattr(settings, 'OPENAI_API_KEY', None)
-            )
+            
+            if self.provider == 'openai':
+                from langchain_openai import ChatOpenAI
+                self.llm = ChatOpenAI(
+                    model=config['model_name'],
+                    temperature=config['temperature'],
+                    max_tokens=config['max_tokens'],
+                    openai_api_key=getattr(settings, 'OPENAI_API_KEY', None)
+                )
+            elif self.provider == 'gemini':
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                self.llm = ChatGoogleGenerativeAI(
+                    model=config['model_name'],
+                    temperature=config['temperature'],
+                    max_tokens=config['max_tokens'],
+                    google_api_key=getattr(settings, 'GEMINI_API_KEY', None)
+                )
 
             self.SystemMessage = SystemMessage
             self.HumanMessage = HumanMessage
 
-        except ImportError:
-            raise ImportError("LangChain packages are required. Install with: pip install langchain langchain-openai")
+        except ImportError as e:
+            if self.provider == 'openai':
+                raise ImportError("LangChain OpenAI packages are required. Install with: pip install langchain langchain-openai")
+            elif self.provider == 'gemini':
+                raise ImportError("LangChain Google GenAI packages are required. Install with: pip install langchain langchain-google-genai google-generativeai")
         except Exception as e:
-            logger.error(f"Failed to initialize LangChain: {str(e)}")
+            logger.error(f"Failed to initialize LangChain for provider {self.provider}: {str(e)}")
             raise
 
     def parse_schedule(self, raw_text: str, organization, user=None) -> Dict[str, Any]:
@@ -78,11 +113,12 @@ Please extract all schedule items and return them as a JSON array following the 
         start_time = time.time()
 
         # Create processing log
+        config = self.PROVIDER_CONFIGS[self.provider]
         log = AIProcessingLog.objects.create(
-            provider_name='openai',
+            provider_name=self.provider,
             input_text=raw_text,
             prompt_used=self.PROMPT_TEMPLATE,
-            model_used=self.MODEL_NAME,
+            model_used=config['model_name'],
             status='processing',
             organization=organization,
             user=user
@@ -150,17 +186,49 @@ Please extract all schedule items and return them as a JSON array following the 
     def _parse_ai_response(self, response: str) -> List[Dict[str, Any]]:
         """Parse AI response into structured schedule items."""
         try:
-            # Try to parse as JSON first
-            if response.strip().startswith('{') or response.strip().startswith('['):
-                return json.loads(response)
+            text = response.strip()
 
-            # If not JSON, try to extract JSON from the response
+            # Strip code fences like ```json ... ``` or ``` ... ```
+            if text.startswith("```"):
+                import re
+                fence_match = re.search(r"^```[a-zA-Z0-9_-]*\s*([\s\S]*?)\n```", text)
+                if fence_match:
+                    text = fence_match.group(1).strip()
+
+            # Direct JSON content
+            if text.startswith('{') or text.startswith('['):
+                result = json.loads(text)
+                if isinstance(result, dict):
+                    return [result]
+                if isinstance(result, list):
+                    return result
+                return []
+
+            # Search for a JSON array first
             import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
+            array_match = re.search(r"\[[\s\S]*\]", text)
+            if array_match:
+                try:
+                    result = json.loads(array_match.group())
+                    if isinstance(result, dict):
+                        return [result]
+                    if isinstance(result, list):
+                        return result
+                except json.JSONDecodeError:
+                    pass
 
-            # Fallback: return empty list
+            # Search for a JSON object
+            object_match = re.search(r"\{[\s\S]*\}", text)
+            if object_match:
+                try:
+                    result = json.loads(object_match.group())
+                    if isinstance(result, dict):
+                        return [result]
+                    if isinstance(result, list):
+                        return result
+                except json.JSONDecodeError:
+                    pass
+
             logger.warning("Could not parse AI response as JSON")
             return []
 

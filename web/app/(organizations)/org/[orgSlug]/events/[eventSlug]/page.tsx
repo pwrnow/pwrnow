@@ -685,7 +685,15 @@ export default function OrgEventDetailsPage() {
             )}
 
             {canManage && selectedDay && (
-              <div className='flex justify-center pt-2'>
+              <div className='flex justify-center gap-3 pt-2'>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsMagicImportModalOpen(true)}
+                  className='cursor-pointer'
+                >
+                  <Wand2 className='h-4 w-4 mr-2' />
+                  Magic Import
+                </Button>
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
                   className='cursor-pointer'

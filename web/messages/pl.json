@@ -390,5 +390,29 @@
     "creating": "Tworzenie...",
     "postCreated": "Post został utworzony",
     "createError": "Nie udało się utworzyć postu"
+  },
+  "MagicImportModal": {
+    "title": "Magiczny Import Harmonogramu",
+    "description": "Wklej surowy tekst harmonogramu (z Excela, Worda lub innego dokumentu), a AI zamieni go na ustrukturyzowane pozycje.",
+    "scheduleTextLabel": "Tekst harmonogramu",
+    "scheduleTextPlaceholder": "Wklej tutaj tekst harmonogramu... Na przykład:\n\nPoniedziałek, 15 stycznia\n9:00 - 10:00: Ceremonia otwarcia\n10:30 - 12:00: Wystąpienie główne\n12:00 - 13:00: Przerwa obiadowa\n\nWtorek, 16 stycznia\n9:00 - 10:30: Warsztat 1\n11:00 - 12:30: Panel dyskusyjny",
+    "tipsTitle": "Wskazówki dla lepszych rezultatów:",
+    "tipIncludeDates": "Dodaj daty i godziny do każdej pozycji",
+    "tipClearTitles": "Używaj czytelnych tytułów sesji",
+    "tipSeparateDays": "Wyraźnie oddzielaj różne dni",
+    "tipIncludeDescriptions": "Dodawaj opisy, jeśli są dostępne",
+    "previewTitle": "Podgląd przetworzonego harmonogramu",
+    "itemsFound": "Znaleziono pozycji: {count}",
+    "cancel": "Anuluj",
+    "parseSchedule": "Przetwórz harmonogram",
+    "parsing": "Przetwarzanie...",
+    "tryAgain": "Spróbuj ponownie",
+    "acceptImport": "Akceptuj i zaimportuj",
+    "enterTextError": "Wpisz tekst harmonogramu do przetworzenia",
+    "parsedSuccess": "Pomyślnie przetworzono {count} pozycji",
+    "parseFailed": "Nie udało się przetworzyć harmonogramu",
+    "parseFailedTryAgain": "Nie udało się przetworzyć harmonogramu. Spróbuj ponownie.",
+    "importSuccess": "Harmonogram został pomyślnie zaimportowany!",
+    "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później."
   }
 }

@@ -14,8 +14,18 @@ class AIProcessingLog(models.Model):
         ('failed', 'Failed'),
     ]
 
+    PROVIDER_CHOICES = [
+        ('openai', 'OpenAI'),
+        ('gemini', 'Google Gemini'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    provider_name = models.CharField(max_length=50, default='openai')
+    provider_name = models.CharField(
+        max_length=50, 
+        choices=PROVIDER_CHOICES,
+        default='openai',
+        help_text=_('AI provider used for processing')
+    )
 
     # Request data
     input_text = models.TextField()

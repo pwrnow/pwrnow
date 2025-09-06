@@ -278,7 +278,13 @@ REST_FRAMEWORK = {
     #     'burst': '60/minute',  # Burst rate: 60 requests per minute
     #     'sustained': '1000/hour',  # Sustained rate: 1000 requests per hour
     # },
+
+    'DEFAULT_THROTTLE_RATES': {
+        'ai_parse': '10000/hour' if DEBUG else '5/hour',
+    }
 }
+
+
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
@@ -545,3 +551,5 @@ SIMPLE_JWT = {
 }
 
 OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+AI_PROVIDER = env("AI_PROVIDER", default="openai")  # "openai" or "gemini"
