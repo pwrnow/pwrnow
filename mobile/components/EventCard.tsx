@@ -32,8 +32,10 @@ import { useCalendar } from '../hooks/useCalendar';
 import { t, deviceLocaleTag } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import SignInRequiredModal from './SignInRequiredModal';
+import FirstLikeModal from './FirstLikeModal';
 import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useEventActions } from '../hooks/useEventActions';
 
 interface EventCardProps {
   event: Event;
@@ -51,9 +53,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { handleAddToCalendar } = useCalendar({ event });
 
-  // React Query mutations for like/unlike
-  const likeMutation = useLikeEvent();
-  const unlikeMutation = useUnlikeEvent();
+  // Use the event actions hook
+  const { handleHeartPress, showFirstLikeModal, setShowFirstLikeModal } =
+    useEventActions(event, setShowAuthModal);
 
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,27 +112,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   };
 
   const imageAspectRatio = getAspectRatio(event.aspect_ratio);
-
-  const handleHeartPress = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
-
-    const nextLiked = !event.liked;
-    analytics.trackEventFavoriteToggled(event as any, nextLiked);
-
-    try {
-      if (nextLiked) {
-        await likeMutation.mutateAsync(event.slug);
-      } else {
-        await unlikeMutation.mutateAsync(event.slug);
-      }
-    } catch (e) {
-      console.error('Like/unlike failed:', e);
-    }
-  };
 
   // Calendar functionality moved to useCalendar hook
 
@@ -483,6 +464,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               setShowAuthModal(false);
               router.push('/signin' as any);
             }}
+          />
+
+          <FirstLikeModal
+            visible={showFirstLikeModal}
+            onClose={() => setShowFirstLikeModal(false)}
+            eventTitle={event.title}
           />
         </Pressable>
       </Pressable>

@@ -155,6 +155,16 @@ const translations: Record<string, TranslationMap> = {
     team: 'Team',
     meetOurTeam: 'Meet our team',
     teamDescription: 'Learn about the people behind PWr Now',
+    // First like modal translations
+    firstLikeTitle: 'Nice! You liked an event!',
+    firstLikeSubtitle: "Here's what you get:",
+    firstLikeBenefit1Title: 'Reminders',
+    firstLikeBenefit1Description: 'Get notified before events start',
+    firstLikeBenefit2Title: 'Updates',
+    firstLikeBenefit2Description: 'Get posts and info about events you like',
+    firstLikeBenefit3Title: 'Help organizers',
+    firstLikeBenefit3Description: 'Show which events are interesting',
+    firstLikeContinue: 'Got it!',
   },
   pl: {
     all: 'Wszystkie',
@@ -316,6 +326,16 @@ const translations: Record<string, TranslationMap> = {
     team: 'Zespół',
     meetOurTeam: 'Poznaj nasz zespół',
     teamDescription: 'Dowiedz się o ludziach stojących za PWr Now',
+    // First like modal translations
+    firstLikeTitle: 'Fajnie! Polubiłeś wydarzenie!',
+    firstLikeSubtitle: 'Oto co dostaniesz:',
+    firstLikeBenefit1Title: 'Przypomnienia',
+    firstLikeBenefit1Description: 'Powiadomienia przed wydarzeniami',
+    firstLikeBenefit2Title: 'Aktualizacje',
+    firstLikeBenefit2Description: 'Posty i info o polubionych wydarzeniach',
+    firstLikeBenefit3Title: 'Pomóż organizatorom',
+    firstLikeBenefit3Description: 'Pokaż które wydarzenia są interesujące',
+    firstLikeContinue: 'Okej!',
   },
 };
 

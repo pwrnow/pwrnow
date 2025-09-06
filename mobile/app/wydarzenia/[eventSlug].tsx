@@ -13,6 +13,7 @@ import { SimpleEventTabs } from '../../components/SimpleEventTabs';
 import { LoadingState } from '../../components/LoadingState';
 import { ErrorState } from '../../components/ErrorState';
 import SignInRequiredModal from '../../components/SignInRequiredModal';
+import FirstLikeModal from '../../components/FirstLikeModal';
 import ImageView from 'react-native-image-viewing';
 import { useAnalytics } from '../../lib/analytics';
 import { useAuth } from '../../contexts/AuthContext';
@@ -109,8 +110,13 @@ export default function EventDetailScreen() {
     return grouped;
   }, [schedule]);
 
-  const { handleHeartPress, handleMapPress, handleExternalLink } =
-    useEventActions(event, setShowAuthModal);
+  const {
+    handleHeartPress,
+    handleMapPress,
+    handleExternalLink,
+    showFirstLikeModal,
+    setShowFirstLikeModal,
+  } = useEventActions(event, setShowAuthModal);
 
   // CTA animated style
   const ctaAnimatedStyle = useAnimatedStyle(() => ({
@@ -231,6 +237,12 @@ export default function EventDetailScreen() {
           setShowAuthModal(false);
           router.push('/signin' as any);
         }}
+      />
+
+      <FirstLikeModal
+        visible={showFirstLikeModal}
+        onClose={() => setShowFirstLikeModal(false)}
+        eventTitle={event.title}
       />
 
       <ImageView
