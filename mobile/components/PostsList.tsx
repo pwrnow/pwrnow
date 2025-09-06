@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { Post } from '../types';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface Props {
   posts: Post[];
@@ -20,8 +21,9 @@ const PostsList: React.FC<Props> = ({
   onImagePress,
   focusPostId,
 }) => {
+  const { colors } = useThemeColors();
   const scrollViewRef = useRef<ScrollView>(null);
-  const postRefs = useRef<{ [key: string]: View | null }>({});
+  const postRefs = useRef<{ [key: string]: any }>({});
 
   // Scroll to focused post when focusPostId changes
   useEffect(() => {
@@ -266,8 +268,14 @@ const PostsList: React.FC<Props> = ({
                   resizeMode='cover'
                 />
                 {index === 2 && images.length > 4 && (
-                  <View className='absolute inset-0 bg-black/50 rounded-lg items-center justify-center'>
-                    <Text className='text-white font-groteskSemibold text-sm'>
+                  <View
+                    className='absolute inset-0 rounded-lg items-center justify-center'
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                  >
+                    <Text
+                      className='font-groteskSemibold text-sm'
+                      style={{ color: colors.background }}
+                    >
                       +{images.length - 4}
                     </Text>
                   </View>
@@ -331,8 +339,14 @@ const PostsList: React.FC<Props> = ({
                   resizeMode='cover'
                 />
                 {index === 1 && images.length > 4 && (
-                  <View className='absolute inset-0 bg-black/50 rounded-lg items-center justify-center'>
-                    <Text className='text-white font-groteskSemibold text-sm'>
+                  <View
+                    className='absolute inset-0 rounded-lg items-center justify-center'
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                  >
+                    <Text
+                      className='font-groteskSemibold text-sm'
+                      style={{ color: colors.background }}
+                    >
                       +{images.length - 4}
                     </Text>
                   </View>
@@ -365,10 +379,18 @@ const PostsList: React.FC<Props> = ({
                 postRefs.current[post.id] = ref;
               }}
               entering={FadeInDown.duration(200).delay(index * 50)}
-              className='bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-xl p-3 mb-2'
+              className='rounded-xl p-3 mb-2'
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: 1,
+              }}
             >
-              <View className='flex-row items-center mb-2'>
-                <View className='w-8 h-8 rounded-full overflow-hidden bg-accentBlue/20 items-center justify-center mr-3'>
+              <View className='flex-row items-center mb-4'>
+                <View
+                  className='w-8 h-8 rounded-full overflow-hidden items-center justify-center mr-3'
+                  style={{ backgroundColor: `${colors.accent}20` }}
+                >
                   {organizationImageUrl ? (
                     <Image
                       source={{ uri: organizationImageUrl }}
@@ -376,23 +398,35 @@ const PostsList: React.FC<Props> = ({
                       resizeMode='cover'
                     />
                   ) : (
-                    <Text className='text-accentBlue font-groteskSemibold text-xs'>
+                    <Text
+                      className='font-groteskSemibold text-xs'
+                      style={{ color: colors.accent }}
+                    >
                       {getInitials(authorName)}
                     </Text>
                   )}
                 </View>
                 <View className='flex-1'>
-                  <Text className='text-black dark:text-white font-groteskMedium text-sm'>
+                  <Text
+                    className='font-groteskMedium text-sm'
+                    style={{ color: colors.foreground }}
+                  >
                     {authorName}
                   </Text>
-                  <Text className='text-black/50 dark:text-white/50 font-grotesk text-xs'>
+                  <Text
+                    className='font-grotesk text-xs'
+                    style={{ color: colors.mutedForeground }}
+                  >
                     {formatPostTime(timestamp)}
                   </Text>
                 </View>
               </View>
 
               {content && (
-                <Text className='text-black/90 dark:text-white/90 font-grotesk text-sm leading-5'>
+                <Text
+                  className='font-grotesk text-sm leading-5'
+                  style={{ color: colors.foreground }}
+                >
                   {content}
                 </Text>
               )}

@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { t } from '../lib/i18n';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface ScheduleItem {
   id: string;
@@ -16,7 +17,6 @@ interface ScheduleItem {
 interface Props {
   dayId: string; // YYYY-MM-DD
   items: ScheduleItem[];
-  isDark: boolean;
 }
 
 const isEventPast = (dayId: string, time: string, endTime: string) => {
@@ -32,19 +32,29 @@ const isEventCurrent = (dayId: string, time: string, endTime: string) => {
   return now >= startDateTime && now <= endDateTime;
 };
 
-const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
+const ScheduleListComponent: React.FC<Props> = ({ dayId, items }) => {
+  const { colors, isDark } = useThemeColors();
   // Show empty state if no items for this day
   if (items.length === 0) {
     return (
       <View className='flex-1 justify-center items-center py-12'>
         <View className='items-center'>
-          <View className='w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full items-center justify-center mb-4'>
-            <Feather name='calendar' size={24} color='#9CA3AF' />
+          <View
+            className='w-16 h-16 rounded-full items-center justify-center mb-4'
+            style={{ backgroundColor: colors.muted }}
+          >
+            <Feather name='calendar' size={24} color={colors.mutedForeground} />
           </View>
-          <Text className='font-groteskSemibold text-lg text-black dark:text-white mb-2'>
+          <Text
+            className='font-groteskSemibold text-lg mb-2'
+            style={{ color: colors.foreground }}
+          >
             {t('noScheduleItems')}
           </Text>
-          <Text className='font-grotesk text-sm text-black/60 dark:text-white/60 text-center px-8'>
+          <Text
+            className='font-grotesk text-sm text-center px-8'
+            style={{ color: colors.mutedForeground }}
+          >
             {t('noScheduleItemsDescription')}
           </Text>
         </View>
@@ -62,15 +72,16 @@ const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
           <Animated.View
             key={item.id}
             entering={FadeInDown.duration(200).delay(index * 40)}
-            className={`rounded-xl mb-2 p-3 border relative ${
-              current
-                ? 'bg-accentBlue/10 border-accentBlue/30'
+            className='rounded-xl mb-2 p-3 border relative'
+            style={{
+              backgroundColor: current
+                ? `${colors.accent}10`
                 : past
-                ? 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10'
-                : 'bg-white dark:bg-black border-black/10 dark:border-white/10'
-            }`}
-            style={
-              !current && !past && !isDark
+                ? colors.muted
+                : colors.card,
+              borderColor: current ? `${colors.accent}30` : colors.border,
+              borderWidth: 1,
+              ...(!current && !past && !isDark
                 ? {
                     shadowColor: '#000',
                     shadowOpacity: 0.04,
@@ -78,42 +89,54 @@ const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
                     shadowOffset: { width: 0, height: 1 },
                     elevation: 2,
                   }
-                : undefined
-            }
+                : {}),
+            }}
           >
             {current && (
-              <View className='absolute -left-0.5 top-4 w-1 h-6 bg-accentBlue rounded-full' />
+              <View
+                className='absolute -left-0.5 top-4 w-1 h-6 rounded-full'
+                style={{ backgroundColor: colors.accent }}
+              />
             )}
 
             <View className='flex-row'>
               <View className='w-16 mr-3'>
                 <View
-                  className={`rounded-lg px-2 py-1.5 border ${
-                    current
-                      ? 'bg-accentBlue border-accentBlue'
+                  className='rounded-lg px-2 py-1.5 border'
+                  style={{
+                    backgroundColor: current
+                      ? colors.accent
                       : past
-                      ? 'bg-black/10 dark:bg-white/10 border-black/20 dark:border-white/20'
-                      : 'bg-accentBlue/15 border-accentBlue/30'
-                  }`}
+                      ? colors.muted
+                      : `${colors.accent}15`,
+                    borderColor: current
+                      ? colors.accent
+                      : past
+                      ? colors.border
+                      : `${colors.accent}30`,
+                    borderWidth: 1,
+                  }}
                 >
                   <Text
-                    className={`font-groteskSemibold text-xs text-center ${
-                      current
-                        ? 'text-white'
+                    className='font-groteskSemibold text-xs text-center'
+                    style={{
+                      color: current
+                        ? colors.accentForeground
                         : past
-                        ? 'text-black/40 dark:text-white/40'
-                        : 'text-accentBlue'
-                    }`}
+                        ? colors.mutedForeground
+                        : colors.accent,
+                    }}
                   >
                     {item.time}
                   </Text>
                 </View>
                 <Text
-                  className={`font-grotesk text-xs text-center mt-1 ${
-                    past
-                      ? 'text-black/30 dark:text-white/30'
-                      : 'text-black/50 dark:text-white/50'
-                  }`}
+                  className='font-grotesk text-xs text-center mt-1'
+                  style={{
+                    color: past
+                      ? colors.mutedForeground
+                      : colors.mutedForeground,
+                  }}
                 >
                   {item.duration}
                 </Text>
@@ -122,35 +145,47 @@ const ScheduleListComponent: React.FC<Props> = ({ dayId, items, isDark }) => {
               <View className='flex-1'>
                 <View className='flex-row items-start justify-between mb-1.5'>
                   <Text
-                    className={`font-groteskSemibold text-sm flex-1 leading-5 ${
-                      current
-                        ? 'text-accentBlue'
+                    className='font-groteskSemibold text-sm flex-1 leading-5'
+                    style={{
+                      color: current
+                        ? colors.accent
                         : past
-                        ? 'text-black/50 dark:text-white/50'
-                        : 'text-black dark:text-white'
-                    }`}
+                        ? colors.mutedForeground
+                        : colors.foreground,
+                    }}
                   >
                     {item.title}
                   </Text>
                   {current && (
-                    <View className='ml-2 px-2 py-0.5 bg-accentBlue rounded-full'>
-                      <Text className='text-white text-xs font-groteskSemibold'>
+                    <View
+                      className='ml-2 px-2 py-0.5 rounded-full'
+                      style={{ backgroundColor: colors.accent }}
+                    >
+                      <Text
+                        className='text-xs font-groteskSemibold'
+                        style={{ color: colors.accentForeground }}
+                      >
                         {t('live')}
                       </Text>
                     </View>
                   )}
                   {past && (
                     <View className='ml-2'>
-                      <Feather name='check-circle' size={14} color='#10B981' />
+                      <Feather
+                        name='check-circle'
+                        size={14}
+                        color={colors.accent}
+                      />
                     </View>
                   )}
                 </View>
                 <Text
-                  className={`font-grotesk text-xs leading-4 mb-1.5 ${
-                    past
-                      ? 'text-black/40 dark:text-white/40'
-                      : 'text-black/75 dark:text-white/75'
-                  }`}
+                  className='font-grotesk text-xs leading-4 mb-1.5'
+                  style={{
+                    color: past
+                      ? colors.mutedForeground
+                      : colors.mutedForeground,
+                  }}
                 >
                   {item.description}
                 </Text>

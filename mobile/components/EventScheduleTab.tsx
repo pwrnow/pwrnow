@@ -92,11 +92,7 @@ export default function EventScheduleTab({
           paddingHorizontal: 16,
         }}
       >
-        <MemoizedScheduleList
-          dayId={selectedDay}
-          items={currentDayItems}
-          isDark={isDark}
-        />
+        <MemoizedScheduleList dayId={selectedDay} items={currentDayItems} />
       </ScrollView>
     </View>
   );
