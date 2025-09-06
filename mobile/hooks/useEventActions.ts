@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -6,6 +6,10 @@ import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useAnalytics } from '../lib/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { t } from '../lib/i18n';
+import {
+  hasSeenFirstLikeModal,
+  markFirstLikeModalAsSeen,
+} from '../lib/firstLikeStorage';
 
 export const useEventActions = (
   event: any,
@@ -14,6 +18,7 @@ export const useEventActions = (
   const router = useRouter();
   const analytics = useAnalytics();
   const { isAuthenticated } = useAuth();
+  const [showFirstLikeModal, setShowFirstLikeModal] = useState(false);
 
   // React Query mutations for like/unlike
   const likeMutation = useLikeEvent();
@@ -33,6 +38,13 @@ export const useEventActions = (
 
     if (nextLiked) {
       likeMutation.mutate(event.slug);
+
+      // Check if this is the first like and show modal
+      const hasSeenModal = await hasSeenFirstLikeModal();
+      if (!hasSeenModal) {
+        setShowFirstLikeModal(true);
+        await markFirstLikeModalAsSeen();
+      }
     } else {
       unlikeMutation.mutate(event.slug);
     }
@@ -138,5 +150,7 @@ export const useEventActions = (
     handleHeartPress,
     handleMapPress,
     handleExternalLink,
+    showFirstLikeModal,
+    setShowFirstLikeModal,
   };
 };
