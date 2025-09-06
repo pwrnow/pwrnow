@@ -105,15 +105,15 @@ const ScheduleListComponent: React.FC<Props> = ({ dayId, items }) => {
                   className='rounded-lg px-2 py-1.5 border'
                   style={{
                     backgroundColor: current
-                      ? colors.accent
+                      ? '#2066DF' // Keep blue for current events
                       : past
                       ? colors.muted
-                      : `${colors.accent}15`,
+                      : '#2066DF15', // Keep blue background for future events
                     borderColor: current
-                      ? colors.accent
+                      ? '#2066DF' // Keep blue border for current events
                       : past
                       ? colors.border
-                      : `${colors.accent}30`,
+                      : '#2066DF30', // Keep blue border for future events
                     borderWidth: 1,
                   }}
                 >
@@ -121,10 +121,10 @@ const ScheduleListComponent: React.FC<Props> = ({ dayId, items }) => {
                     className='font-groteskSemibold text-xs text-center'
                     style={{
                       color: current
-                        ? colors.accentForeground
+                        ? '#FFFFFF' // White text for current events
                         : past
                         ? colors.mutedForeground
-                        : colors.accent,
+                        : '#2066DF', // Blue text for future events
                     }}
                   >
                     {item.time}
