@@ -454,6 +454,26 @@ export async function parseScheduleWithAI(
   }
 }
 
+export interface ParseAvailabilityResponse {
+  available: boolean;
+  remaining: number;
+  limit: number;
+  retry_after_seconds: number;
+}
+
+export async function getParseScheduleAvailability(): Promise<ParseAvailabilityResponse> {
+  try {
+    const response = await fetchWithCredentials('/ai/parse-schedule/availability/', {
+      method: 'GET',
+    });
+    const result = (await response.json()) as ParseAvailabilityResponse;
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to fetch parse availability:', error);
+    throw error;
+  }
+}
+
 export async function deleteScheduleItem(itemId: string): Promise<void> {
   console.log('🗑️ Deleting schedule item:', itemId);
   try {

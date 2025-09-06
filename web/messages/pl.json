@@ -356,7 +356,8 @@
     "createError": "Nie udało się utworzyć pozycji",
     "deleteSuccess": "Usunięto pozycję z harmonogramu",
     "deleteError": "Nie udało się usunąć pozycji",
-    "noSchedule": "Brak harmonogramu dla tego wydarzenia"
+    "noSchedule": "Brak harmonogramu dla tego wydarzenia",
+    "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później."
   },
   "PostsList": {
     "justNow": "Przed chwilą",

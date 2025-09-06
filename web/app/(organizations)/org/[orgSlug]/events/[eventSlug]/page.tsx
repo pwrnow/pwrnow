@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +29,7 @@ import {
   getCurrentOrganization,
   createScheduleItem,
   deleteScheduleItem,
+  getParseScheduleAvailability,
 } from '@/lib/api';
 import { Event, Organization, Post, Schedule, ScheduleItem } from '@/lib/types';
 import { EventBadge } from '@/components/event-badge';
@@ -61,6 +63,8 @@ export default function OrgEventDetailsPage() {
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMagicImportModalOpen, setIsMagicImportModalOpen] = useState(false);
+  const [parseAvailable, setParseAvailable] = useState<boolean | null>(null);
+  const [parseUnavailableMessage, setParseUnavailableMessage] = useState<string>('');
 
   useEffect(() => {
     async function loadData() {
@@ -116,6 +120,28 @@ export default function OrgEventDetailsPage() {
       setSelectedDay('');
     }
   }, [event?.slug]); // Only depend on event slug, not schedule
+
+  // Check AI parse availability when schedule tab becomes active
+  useEffect(() => {
+    async function checkAvailability() {
+      try {
+        const res = await getParseScheduleAvailability();
+        setParseAvailable(res.available);
+        if (!res.available) {
+          setParseUnavailableMessage(t('rateLimited'));
+        } else {
+          setParseUnavailableMessage('');
+        }
+      } catch {
+        // If checking fails, do not block the button
+        setParseAvailable(true);
+        setParseUnavailableMessage('');
+      }
+    }
+    if (activeTab === 'schedule') {
+      checkAvailability();
+    }
+  }, [activeTab, t]);
 
   const getInitials = (name: string) =>
     name
@@ -686,14 +712,29 @@ export default function OrgEventDetailsPage() {
 
             {canManage && selectedDay && (
               <div className='flex justify-center gap-3 pt-2'>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsMagicImportModalOpen(true)}
-                  className='cursor-pointer'
-                >
-                  <Wand2 className='h-4 w-4 mr-2' />
-                  Magic Import
-                </Button>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant='outline'
+                        onClick={() => {
+                          if (parseAvailable === false) return;
+                          setIsMagicImportModalOpen(true);
+                        }}
+                        aria-disabled={parseAvailable === false}
+                        className={`cursor-pointer ${parseAvailable === false ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Wand2 className='h-4 w-4 mr-2' />
+                        Magic Import
+                      </Button>
+                    </TooltipTrigger>
+                    {parseAvailable === false && (
+                      <TooltipContent>
+                        {parseUnavailableMessage}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
                   className='cursor-pointer'

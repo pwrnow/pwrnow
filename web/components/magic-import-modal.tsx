@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,6 +17,8 @@ import {
   parseScheduleWithAI,
   MagicImportRequest,
   MagicImportResponse,
+  getParseScheduleAvailability,
+  ParseAvailabilityResponse,
 } from '@/lib/api';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
@@ -50,6 +52,48 @@ export default function MagicImportModal({
     null
   );
   const [showPreview, setShowPreview] = useState(false);
+  const [availability, setAvailability] = useState<ParseAvailabilityResponse | null>(null);
+  const availabilityTimerRef = useRef<number | null>(null);
+
+  const clearAvailabilityTimer = () => {
+    if (availabilityTimerRef.current !== null) {
+      window.clearTimeout(availabilityTimerRef.current);
+      availabilityTimerRef.current = null;
+    }
+  };
+
+  const scheduleAvailabilityCheck = (seconds: number) => {
+    clearAvailabilityTimer();
+    const delayMs = Math.max(1000, Math.floor(seconds * 1000));
+    availabilityTimerRef.current = window.setTimeout(async () => {
+      await fetchAvailability();
+    }, delayMs);
+  };
+
+  const fetchAvailability = async () => {
+    try {
+      const result = await getParseScheduleAvailability();
+      setAvailability(result);
+      if (!result.available) {
+        scheduleAvailabilityCheck(result.retry_after_seconds > 0 ? result.retry_after_seconds + 1 : 60);
+      } else {
+        clearAvailabilityTimer();
+      }
+    } catch (err) {
+      // On error, try again later but don't block the user unnecessarily
+      scheduleAvailabilityCheck(60);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchAvailability();
+    } else {
+      clearAvailabilityTimer();
+      setAvailability(null);
+    }
+    return () => clearAvailabilityTimer();
+  }, [open]);
 
   const handleParse = async () => {
     if (!rawText.trim()) {
@@ -76,6 +120,8 @@ export default function MagicImportModal({
       console.error('Magic import error:', error);
       if (error instanceof ApiError && error.status === 429) {
         toast.error(t('rateLimited'));
+        // Refresh availability to know when to enable the button again
+        fetchAvailability();
       } else {
         toast.error(t('parseFailedTryAgain'));
       }
@@ -190,7 +236,11 @@ export default function MagicImportModal({
               </Button>
               <Button
                 onClick={handleParse}
-                disabled={isLoading || !rawText.trim()}
+                disabled={
+                  isLoading ||
+                  !rawText.trim() ||
+                  (availability !== null && !availability.available)
+                }
               >
                 {isLoading ? (
                   <>
@@ -204,6 +254,11 @@ export default function MagicImportModal({
                   </>
                 )}
               </Button>
+              {availability && !availability.available && (
+                <p className='text-xs text-muted-foreground'>
+                  {t('rateLimited')}
+                </p>
+              )}
             </>
           ) : (
             <>

@@ -367,7 +367,9 @@
     "createError": "Failed to create schedule item",
     "deleteSuccess": "Schedule item deleted",
     "deleteError": "Failed to delete schedule item",
-    "noSchedule": "No schedule available for this event"
+    "noSchedule": "No schedule available for this event",
+    "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later."
+
   },
   "PostsList": {
     "justNow": "Just now",

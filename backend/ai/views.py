@@ -9,6 +9,8 @@ from .serializers import ScheduleParseRequestSerializer
 from .services import ScheduleParsingService
 from .throttles import OrganizationRateThrottle
 import logging
+import time
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -82,3 +84,62 @@ def parse_schedule(request):
             {'error': _('Failed to parse schedule. Please try again or contact support.')},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def parse_schedule_availability(request):
+    """
+    Returns whether the current organization can use AI parse now,
+    remaining requests in the current window, total limit, and retry-after seconds.
+    This does not consume a request.
+    """
+    current_org = get_current_organization(request)
+    if not current_org:
+        return Response(
+            {'error': _('Organization authentication required.')},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    throttle = OrganizationRateThrottle()
+    cache_key = throttle.get_cache_key(request, None)
+    if cache_key is None:
+        return Response(
+            {'error': _('Organization authentication required.')},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # Load history from cache without mutating it
+    history = cache.get(cache_key, [])
+
+    # Parse rate "N/period"
+    rate = throttle.get_rate()
+    num_requests, duration = throttle.parse_rate(rate) if rate else (None, None)
+
+    # If no rate configured, treat as unlimited
+    if not rate or num_requests is None or duration is None:
+        return Response({
+            'available': True,
+            'remaining': 999999,
+            'limit': 0,
+            'retry_after_seconds': 0,
+        })
+
+    now = time.time()
+    # Prune outdated entries
+    recent_history = [ts for ts in history if ts > now - duration]
+    remaining = max(0, num_requests - len(recent_history))
+    available = remaining > 0
+
+    retry_after_seconds = 0
+    if not available and recent_history:
+        oldest_within_window = recent_history[-1]
+        wait = int(duration - (now - oldest_within_window))
+        retry_after_seconds = max(0, wait)
+
+    return Response({
+        'available': available,
+        'remaining': remaining if available else 0,
+        'limit': num_requests,
+        'retry_after_seconds': retry_after_seconds,
+    }, status=status.HTTP_200_OK)
