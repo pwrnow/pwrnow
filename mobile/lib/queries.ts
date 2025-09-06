@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCachedQuery } from './cachedQuery';
 import { api } from './api';
 import { queryKeys } from './queryKeys';
 import type { Event, Category, Post } from '../types';
 
 export function useEvents() {
-  return useQuery<Event[]>({
+  return useCachedQuery<Event[]>({
     queryKey: queryKeys.events,
     queryFn: () => api.events.getEvents(),
     staleTime: 0, // Always consider stale to allow refetching
@@ -12,7 +13,7 @@ export function useEvents() {
 }
 
 export function useCategories() {
-  return useQuery<Category[]>({
+  return useCachedQuery<Category[]>({
     queryKey: queryKeys.categories,
     queryFn: () => api.categories.getCategories(),
     staleTime: 0, // Always consider stale to allow refetching
@@ -20,7 +21,7 @@ export function useCategories() {
 }
 
 export function useEventBySlug(slug?: string) {
-  return useQuery<Event>({
+  return useCachedQuery<Event>({
     queryKey: slug ? queryKeys.eventBySlug(slug) : ['event', ''],
     queryFn: () => api.events.getEventBySlug(slug as string),
     enabled: typeof slug === 'string' && slug.length > 0,
@@ -157,7 +158,28 @@ export function usePrefetchEventDetails() {
     // Prefetch event details (now includes posts and schedule)
     await queryClient.prefetchQuery({
       queryKey: queryKeys.eventBySlug(eventSlug),
-      queryFn: () => api.events.getEventBySlug(eventSlug),
+      queryFn: async () => {
+        try {
+          const data = await api.events.getEventBySlug(eventSlug);
+          // Cache the data using our cache manager
+          const { cacheManager } = await import('./cacheManager');
+          await cacheManager.set(
+            queryKeys.eventBySlug(eventSlug) as unknown as string[],
+            data
+          );
+          return data;
+        } catch (error) {
+          // If network fails, try to get from cache
+          const { cacheManager } = await import('./cacheManager');
+          const cachedData = await cacheManager.get(
+            queryKeys.eventBySlug(eventSlug) as unknown as string[]
+          );
+          if (cachedData) {
+            return cachedData;
+          }
+          throw error;
+        }
+      },
       staleTime: 0, // Always consider stale to allow refetching
     });
   };

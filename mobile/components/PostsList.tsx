@@ -352,7 +352,7 @@ const PostsList: React.FC<Props> = ({
       className='flex-1'
       contentContainerStyle={{ paddingBottom: 24 }}
     >
-      <View className='space-y-3'>
+      <View className='space-y-4'>
         {posts.map((post, index) => {
           const images = post.images || [];
           const authorName = post.organization?.name || '';
