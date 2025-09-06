@@ -85,18 +85,6 @@ export default function StackLayout() {
 // Component that handles theming based on settings
 function ThemedApp() {
   const { isDark, colors } = useTheme();
-  const queryClient = useQueryClient();
-
-  async function onAppStateChange(status: AppStateStatus) {
-    if (Platform.OS !== 'web') {
-      focusManager.setFocused(status === 'active');
-    }
-  }
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', onAppStateChange);
-    return () => subscription.remove();
-  }, [queryClient]);
 
   return (
     <>
