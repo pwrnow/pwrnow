@@ -160,6 +160,7 @@ class PushNotification(models.Model):
             models.Index(fields=['device']),
             models.Index(fields=['sent_at']),
             models.Index(fields=['status', 'delivered_at'], name='pn_status_delivered_idx'),
+            models.Index(fields=['device', 'data'], name='pn_device_data_idx'),
         ]
 
     def __str__(self):

@@ -351,6 +351,7 @@ class ExpoPushNotificationService:
     def send_event_reminders_for_events(self, events):
         """
         Send 24h-before reminders to users who liked the events.
+        Ensures only one notification per event per user is sent.
 
         Returns dict: {'sent': int, 'failed': int, 'total': int}
         """
@@ -380,6 +381,18 @@ class ExpoPushNotificationService:
             for event in events:
                 for device in devices:
                     try:
+                        # Check if we already sent a reminder notification for this event to this device
+                        existing_notification = PushNotification.objects.filter(
+                            device=device,
+                            data__type='event_reminder_24h',
+                            data__event_id=str(event.id),
+                            status__in=['sent', 'delivered']
+                        ).exists()
+
+                        if existing_notification:
+                            logger.info(f"Reminder notification already sent for event {event.id} to device {device.id}, skipping")
+                            continue
+
                         lang = getattr(device, 'preferred_language', 'pl') or 'pl'
                         title, body, subtitle = self._build_event_reminder_content(event, lang)
                         notification_data = {
@@ -413,6 +426,7 @@ class ExpoPushNotificationService:
                         continue
 
             if not all_notifications_data:
+                logger.info("No new reminder notifications to send (all already sent)")
                 return {'sent': 0, 'failed': 0, 'total': 0}
 
             result = self.send_multiple_notifications(all_notifications_data)
