@@ -421,6 +421,9 @@ export async function createScheduleItem(
 
 export interface MagicImportRequest {
   raw_text: string;
+  event_title?: string;
+  event_start_date?: string;
+  event_end_date?: string;
 }
 
 export interface MagicImportResponse {
@@ -470,6 +473,29 @@ export async function getParseScheduleAvailability(): Promise<ParseAvailabilityR
     return result;
   } catch (error) {
     console.error('❌ Failed to fetch parse availability:', error);
+    throw error;
+  }
+}
+
+export interface FeatureAccessResponse {
+  features: {
+    [featureName: string]: boolean;
+  };
+}
+
+export async function checkFeatureAccess(features?: string[]): Promise<FeatureAccessResponse> {
+  try {
+    const url = features && features.length > 0 
+      ? `/ai/feature-access/?${features.map(f => `features=${encodeURIComponent(f)}`).join('&')}`
+      : '/ai/feature-access/';
+    
+    const response = await fetchWithCredentials(url, {
+      method: 'GET',
+    });
+    const result = (await response.json()) as FeatureAccessResponse;
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to check feature access:', error);
     throw error;
   }
 }

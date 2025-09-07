@@ -368,7 +368,8 @@
     "deleteSuccess": "Schedule item deleted",
     "deleteError": "Failed to delete schedule item",
     "noSchedule": "No schedule available for this event",
-    "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later."
+    "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later.",
+    "featureNotAvailable": "Magic parsing feature is not available for your organization."
 
   },
   "PostsList": {

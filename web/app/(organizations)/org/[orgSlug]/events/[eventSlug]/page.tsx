@@ -30,6 +30,7 @@ import {
   createScheduleItem,
   deleteScheduleItem,
   getParseScheduleAvailability,
+  checkFeatureAccess,
 } from '@/lib/api';
 import { Event, Organization, Post, Schedule, ScheduleItem } from '@/lib/types';
 import { EventBadge } from '@/components/event-badge';
@@ -65,6 +66,7 @@ export default function OrgEventDetailsPage() {
   const [isMagicImportModalOpen, setIsMagicImportModalOpen] = useState(false);
   const [parseAvailable, setParseAvailable] = useState<boolean | null>(null);
   const [parseUnavailableMessage, setParseUnavailableMessage] = useState<string>('');
+  const [hasMagicParsingAccess, setHasMagicParsingAccess] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadData() {
@@ -121,10 +123,22 @@ export default function OrgEventDetailsPage() {
     }
   }, [event?.slug]); // Only depend on event slug, not schedule
 
-  // Check AI parse availability when schedule tab becomes active
+  // Check AI parse availability and feature access when schedule tab becomes active
   useEffect(() => {
     async function checkAvailability() {
       try {
+        // Check feature access first
+        const featureAccess = await checkFeatureAccess(['magic_parsing']);
+        const hasAccess = featureAccess.features.magic_parsing;
+        setHasMagicParsingAccess(hasAccess);
+        
+        if (!hasAccess) {
+          setParseAvailable(false);
+          setParseUnavailableMessage(t('featureNotAvailable'));
+          return;
+        }
+        
+        // If feature access is granted, check rate limiting
         const res = await getParseScheduleAvailability();
         setParseAvailable(res.available);
         if (!res.available) {
@@ -136,6 +150,7 @@ export default function OrgEventDetailsPage() {
         // If checking fails, do not block the button
         setParseAvailable(true);
         setParseUnavailableMessage('');
+        setHasMagicParsingAccess(true);
       }
     }
     if (activeTab === 'schedule') {
@@ -712,29 +727,31 @@ export default function OrgEventDetailsPage() {
 
             {canManage && selectedDay && (
               <div className='flex justify-center gap-3 pt-2'>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='outline'
+                {hasMagicParsingAccess && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='outline'
                         onClick={() => {
-                          if (parseAvailable === false) return;
+                          if (parseAvailable === false || !hasMagicParsingAccess) return;
                           setIsMagicImportModalOpen(true);
                         }}
-                        aria-disabled={parseAvailable === false}
-                        className={`cursor-pointer ${parseAvailable === false ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <Wand2 className='h-4 w-4 mr-2' />
-                        Magic Import
-                      </Button>
-                    </TooltipTrigger>
-                    {parseAvailable === false && (
-                      <TooltipContent>
-                        {parseUnavailableMessage}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                        aria-disabled={parseAvailable === false || !hasMagicParsingAccess}
+                        className={`cursor-pointer ${(parseAvailable === false || !hasMagicParsingAccess) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <Wand2 className='h-4 w-4 mr-2' />
+                          Magic Import
+                        </Button>
+                      </TooltipTrigger>
+                      {(parseAvailable === false || !hasMagicParsingAccess) && (
+                        <TooltipContent>
+                          {parseUnavailableMessage}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
                   className='cursor-pointer'
@@ -768,6 +785,9 @@ export default function OrgEventDetailsPage() {
         open={isMagicImportModalOpen}
         onOpenChange={setIsMagicImportModalOpen}
         eventSlug={event.slug}
+        eventTitle={event.title}
+        eventStartDate={event.starts_at}
+        eventEndDate={event.ends_at}
         onScheduleParsed={handleScheduleParsed}
       />
     </div>

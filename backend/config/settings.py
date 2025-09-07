@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'users',
     'notifications',
     'ai',
+    'feature_access',
 
     'rest_framework',
     'rest_framework.authtoken',

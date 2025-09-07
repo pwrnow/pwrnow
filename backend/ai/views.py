@@ -8,6 +8,7 @@ from core.serializers import ScheduleSerializer
 from .serializers import ScheduleParseRequestSerializer
 from .services import ScheduleParsingService
 from .throttles import OrganizationRateThrottle
+from feature_access.utils import has_feature_access
 import logging
 import time
 from django.core.cache import cache
@@ -32,6 +33,13 @@ def parse_schedule(request):
             {'error': _('Organization authentication required.')},
             status=status.HTTP_401_UNAUTHORIZED
         )
+    
+    # Check if organization has access to magic parsing feature
+    if not has_feature_access(current_org, 'magic_parsing'):
+        return Response(
+            {'error': _('Magic parsing feature is not available for your organization.')},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
     serializer = ScheduleParseRequestSerializer(data=request.data)
     if not serializer.is_valid():
@@ -43,7 +51,10 @@ def parse_schedule(request):
         result = parsing_service.parse_schedule(
             raw_text=serializer.validated_data['raw_text'],
             organization=current_org,
-            user=request.user if request.user.is_authenticated else None
+            user=request.user if request.user.is_authenticated else None,
+            event_title=serializer.validated_data.get('event_title'),
+            event_start_date=serializer.validated_data.get('event_start_date'),
+            event_end_date=serializer.validated_data.get('event_end_date')
         )
 
         if not result['success']:
@@ -100,6 +111,13 @@ def parse_schedule_availability(request):
             {'error': _('Organization authentication required.')},
             status=status.HTTP_401_UNAUTHORIZED
         )
+    
+    # Check if organization has access to magic parsing feature
+    if not has_feature_access(current_org, 'magic_parsing'):
+        return Response(
+            {'error': _('Magic parsing feature is not available for your organization.')},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
     throttle = OrganizationRateThrottle()
     cache_key = throttle.get_cache_key(request, None)
@@ -142,4 +160,41 @@ def parse_schedule_availability(request):
         'remaining': remaining if available else 0,
         'limit': num_requests,
         'retry_after_seconds': retry_after_seconds,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def check_feature_access(request):
+    """
+    Check if the current organization has access to specific features.
+    Returns a dictionary of feature names and their access status.
+    """
+    current_org = get_current_organization(request)
+    if not current_org:
+        return Response(
+            {'error': _('Organization authentication required.')},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Get requested features from query parameters
+    requested_features = request.GET.getlist('features', [])
+    
+    # If no features specified, return all available features
+    if not requested_features:
+        from feature_access.utils import get_organization_features
+        available_features = get_organization_features(current_org)
+        return Response({
+            'features': {
+                'magic_parsing': 'magic_parsing' in available_features
+            }
+        })
+    
+    # Check specific features
+    feature_access = {}
+    for feature_name in requested_features:
+        feature_access[feature_name] = has_feature_access(current_org, feature_name)
+    
+    return Response({
+        'features': feature_access
     }, status=status.HTTP_200_OK)

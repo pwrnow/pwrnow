@@ -28,6 +28,9 @@ interface MagicImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventSlug: string;
+  eventTitle?: string;
+  eventStartDate?: string;
+  eventEndDate?: string;
   onScheduleParsed: (
     scheduleItems: Array<{
       date: string;
@@ -43,6 +46,9 @@ export default function MagicImportModal({
   open,
   onOpenChange,
   eventSlug,
+  eventTitle,
+  eventStartDate,
+  eventEndDate,
   onScheduleParsed,
 }: MagicImportModalProps) {
   const t = useTranslations('MagicImportModal');
@@ -105,6 +111,9 @@ export default function MagicImportModal({
     try {
       const request: MagicImportRequest = {
         raw_text: rawText.trim(),
+        event_title: eventTitle,
+        event_start_date: eventStartDate,
+        event_end_date: eventEndDate,
       };
 
       const result = await parseScheduleWithAI(request);

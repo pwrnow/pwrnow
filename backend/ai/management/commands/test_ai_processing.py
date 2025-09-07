@@ -110,7 +110,10 @@ class Command(BaseCommand):
             result = parsing_service.parse_schedule(
                 raw_text=sample_text,
                 organization=organization,
-                user=user
+                user=user,
+                event_title=None,
+                event_start_date=None,
+                event_end_date=None
             )
 
             # Display results

@@ -357,7 +357,8 @@
     "deleteSuccess": "Usunięto pozycję z harmonogramu",
     "deleteError": "Nie udało się usunąć pozycji",
     "noSchedule": "Brak harmonogramu dla tego wydarzenia",
-    "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później."
+    "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później.",
+    "featureNotAvailable": "Funkcja magicznego parsowania nie jest dostępna dla Twojej organizacji."
   },
   "PostsList": {
     "justNow": "Przed chwilą",

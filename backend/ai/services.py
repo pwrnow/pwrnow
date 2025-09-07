@@ -108,16 +108,19 @@ Please extract all schedule items and return them as a JSON array following the 
             logger.error(f"Failed to initialize LangChain for provider {self.provider}: {str(e)}")
             raise
 
-    def parse_schedule(self, raw_text: str, organization, user=None) -> Dict[str, Any]:
+    def parse_schedule(self, raw_text: str, organization, user=None, event_title=None, event_start_date=None, event_end_date=None) -> Dict[str, Any]:
         """Parse raw schedule text into structured format."""
         start_time = time.time()
+
+        # Format the prompt first
+        prompt = self._format_prompt(raw_text, event_title, event_start_date, event_end_date)
 
         # Create processing log
         config = self.PROVIDER_CONFIGS[self.provider]
         log = AIProcessingLog.objects.create(
             provider_name=self.provider,
             input_text=raw_text,
-            prompt_used=self.PROMPT_TEMPLATE,
+            prompt_used=prompt,
             model_used=config['model_name'],
             status='processing',
             organization=organization,
@@ -125,8 +128,6 @@ Please extract all schedule items and return them as a JSON array following the 
         )
 
         try:
-            # Format the prompt
-            prompt = self._format_prompt(raw_text)
 
             # Process with AI using LangChain
             messages = [
@@ -171,15 +172,15 @@ Please extract all schedule items and return them as a JSON array following the 
                 'processing_time_ms': processing_time
             }
 
-    def _format_prompt(self, raw_text: str) -> str:
-        """Format the prompt template with the raw text."""
+    def _format_prompt(self, raw_text: str, event_title: str = None, event_start_date: str = None, event_end_date: str = None) -> str:
+        """Format the prompt template with the raw text and event information."""
         prompt = self.PROMPT_TEMPLATE
 
-        # Replace placeholders
+        # Replace placeholders with actual values or fallback to empty strings
         prompt = prompt.replace('{raw_text}', raw_text)
-        prompt = prompt.replace('{event_title}', '')
-        prompt = prompt.replace('{event_start_date}', '')
-        prompt = prompt.replace('{event_end_date}', '')
+        prompt = prompt.replace('{event_title}', event_title or '')
+        prompt = prompt.replace('{event_start_date}', event_start_date or '')
+        prompt = prompt.replace('{event_end_date}', event_end_date or '')
 
         return prompt
 
