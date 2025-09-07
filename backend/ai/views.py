@@ -63,31 +63,47 @@ def parse_schedule(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Create a mock schedule object with the parsed items
-        from datetime import date, time
-
-        # Create a temporary schedule object for serialization
-        mock_schedule = type('MockSchedule', (), {
-            'id': 'temp-schedule-id',
-            'items': []
-        })()
-
-        # Convert parsed items to ScheduleItem-like objects
-        for item_data in result['schedule_items']:
-            mock_item = type('MockScheduleItem', (), {
-                'id': f"temp-item-{len(mock_schedule.items)}",
-                'date': date.fromisoformat(item_data['date']),
-                'start_time': time.fromisoformat(item_data['start_time']),
-                'end_time': time.fromisoformat(item_data['end_time']),
+        # Return the parsed items directly in the expected format
+        # Calculate duration for each item
+        from datetime import datetime, timedelta
+        
+        formatted_items = []
+        for i, item_data in enumerate(result['schedule_items']):
+            # Calculate duration in minutes
+            start_time_str = item_data['start_time']
+            end_time_str = item_data['end_time']
+            
+            # Handle 24:00 format (convert to 00:00 next day)
+            if end_time_str == '24:00':
+                end_time_str = '00:00'
+                end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                end_datetime = datetime.combine(datetime.today(), end_time) + timedelta(days=1)
+            else:
+                end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                end_datetime = datetime.combine(datetime.today(), end_time)
+            
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            start_datetime = datetime.combine(datetime.today(), start_time)
+            
+            duration_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
+            
+            formatted_item = {
+                'id': f"temp-item-{i}",
+                'date': item_data['date'],
+                'start_time': item_data['start_time'],
+                'end_time': end_time_str,  # Use the processed end_time_str
                 'title': item_data['title'],
                 'description': item_data.get('description', ''),
-                'duration_minutes': 0  # Will be calculated by serializer
-            })()
-            mock_schedule.items.append(mock_item)
+                'duration_minutes': duration_minutes
+            }
+            formatted_items.append(formatted_item)
 
-        # Serialize the schedule
-        schedule_serializer = ScheduleSerializer(mock_schedule, context={'request': request})
-        return Response(schedule_serializer.data, status=status.HTTP_200_OK)
+        # Return in the expected format
+        response_data = {
+            'id': 'temp-schedule-id',
+            'items': formatted_items
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
     except Exception as e:
         logger.error(f"Schedule parsing error: {str(e)}")
