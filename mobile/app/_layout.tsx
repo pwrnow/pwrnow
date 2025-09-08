@@ -12,6 +12,7 @@ import Logo from '../components/Logo';
 import * as Haptics from 'expo-haptics';
 import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
+import { OfflineProvider } from '../providers/offline';
 import StartupAnimation from '../components/StartupAnimation';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
@@ -65,14 +66,16 @@ export default function StackLayout() {
           <SettingsProvider>
             <NotificationsProvider enabled={!showStartup}>
               <QueryProvider>
-                <PosthogProvider>
-                  {/* Startup overlay animation shown briefly after splash */}
-                  <StartupAnimation
-                    visible={showStartup}
-                    onEnd={handleStartupEnd}
-                  />
-                  <ThemedApp />
-                </PosthogProvider>
+                <OfflineProvider>
+                  <PosthogProvider>
+                    {/* Startup overlay animation shown briefly after splash */}
+                    <StartupAnimation
+                      visible={showStartup}
+                      onEnd={handleStartupEnd}
+                    />
+                    <ThemedApp />
+                  </PosthogProvider>
+                </OfflineProvider>
               </QueryProvider>
             </NotificationsProvider>
           </SettingsProvider>

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Image, Dimensions } from 'react-native';
+import { View, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import CachedImage from './CachedImage';
 
 interface Props {
   imageUrl: string;
@@ -14,11 +15,14 @@ export const EventHeroImage: React.FC<Props> = ({ imageUrl, aspectRatio }) => {
 
   return (
     <View className='relative mx-4 mt-2'>
-      <Image
+      <CachedImage
         source={{ uri: imageUrl }}
-        className='w-full rounded-xl'
-        style={{ height: screenWidth * 0.5 }}
-        resizeMode='cover'
+        style={{ 
+          width: '100%', 
+          height: screenWidth * 0.5,
+          borderRadius: 12,
+        }}
+        contentFit='cover'
       />
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.6)']}

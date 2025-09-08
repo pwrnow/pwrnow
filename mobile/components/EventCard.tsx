@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import CachedImage from './CachedImage';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
@@ -290,11 +291,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               style={{ backgroundColor: colors.muted }}
               className='w-10 h-10 rounded-full overflow-hidden justify-center items-center'
             >
-              {event.organization.image_url ? (
-                <Image
+              {event.organization?.image_url ? (
+                <CachedImage
                   source={{ uri: event.organization.image_url }}
-                  className='w-full h-full'
-                  resizeMode='cover'
+                  style={{ width: '100%', height: '100%' }}
+                  contentFit='cover'
                 />
               ) : (
                 <Text
@@ -350,12 +351,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 }}
                 className='w-full overflow-hidden'
               >
-                <Image
+                <CachedImage
                   source={{ uri: event.image_url }}
-                  onLoadStart={() => setIsImageLoading(true)}
-                  onLoadEnd={() => setIsImageLoading(false)}
-                  className='w-full h-full'
-                  resizeMode='cover'
+                  style={{ width: '100%', height: '100%' }}
+                  contentFit='cover'
+                  onLoad={() => setIsImageLoading(false)}
+                  onError={() => setIsImageLoading(false)}
                 />
               </View>
             </Pressable>

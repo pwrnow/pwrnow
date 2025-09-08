@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { Post } from '../types';
 import { useThemeColors } from '../hooks/useThemeColors';
+import CachedImage from './CachedImage';
 
 interface Props {
   posts: Post[];
@@ -135,11 +136,14 @@ const PostsList: React.FC<Props> = ({
         onPress={() => onImagePress([image.url], index)}
         activeOpacity={0.8}
       >
-        <Image
+        <CachedImage
           source={{ uri: image.url }}
-          className='w-full rounded-lg'
-          style={{ aspectRatio: displayRatio }}
-          resizeMode='cover'
+          style={{ 
+            width: '100%', 
+            aspectRatio: displayRatio,
+            borderRadius: 8,
+          }}
+          contentFit='cover'
         />
       </TouchableOpacity>
     );
@@ -162,16 +166,17 @@ const PostsList: React.FC<Props> = ({
             }
             activeOpacity={0.8}
           >
-            <Image
+            <CachedImage
               source={{ uri: image.url }}
-              className='w-full rounded-lg'
               style={{
+                width: '100%',
                 aspectRatio: Math.min(
                   Math.max(parseAspectRatio(image.aspect_ratio), 0.8),
                   1.3
                 ),
+                borderRadius: 8,
               }}
-              resizeMode='cover'
+              contentFit='cover'
             />
           </TouchableOpacity>
         ))}
@@ -200,13 +205,14 @@ const PostsList: React.FC<Props> = ({
               }
               activeOpacity={0.8}
             >
-              <Image
+              <CachedImage
                 source={{ uri: image.url }}
-                className='w-full rounded-lg'
                 style={{
+                  width: '100%',
                   aspectRatio: orientation === 'portrait' ? 0.85 : 1.1,
+                  borderRadius: 8,
                 }}
-                resizeMode='cover'
+                contentFit='cover'
               />
             </TouchableOpacity>
           );
@@ -233,16 +239,17 @@ const PostsList: React.FC<Props> = ({
           }
           activeOpacity={0.8}
         >
-          <Image
+          <CachedImage
             source={{ uri: displayImages[0].url }}
-            className='w-full rounded-lg'
             style={{
+              width: '100%',
               aspectRatio: Math.min(
                 Math.max(parseAspectRatio(displayImages[0].aspect_ratio), 0.8),
                 1.6
               ),
+              borderRadius: 8,
             }}
-            resizeMode='cover'
+            contentFit='cover'
           />
         </TouchableOpacity>
 
@@ -261,11 +268,14 @@ const PostsList: React.FC<Props> = ({
                 }
                 activeOpacity={0.8}
               >
-                <Image
+                <CachedImage
                   source={{ uri: image.url }}
-                  className='w-full rounded-lg'
-                  style={{ aspectRatio: 1 }}
-                  resizeMode='cover'
+                  style={{ 
+                    width: '100%', 
+                    aspectRatio: 1,
+                    borderRadius: 8,
+                  }}
+                  contentFit='cover'
                 />
                 {index === 2 && images.length > 4 && (
                   <View
@@ -307,14 +317,17 @@ const PostsList: React.FC<Props> = ({
                 )
               }
               activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: image.url }}
-                className='w-full rounded-lg'
-                style={{ aspectRatio: 1.1 }}
-                resizeMode='cover'
-              />
-            </TouchableOpacity>
+              >
+                <CachedImage
+                  source={{ uri: image.url }}
+                  style={{ 
+                    width: '100%', 
+                    aspectRatio: 1.1,
+                    borderRadius: 8,
+                  }}
+                  contentFit='cover'
+                />
+              </TouchableOpacity>
           ))}
         </View>
 
@@ -332,11 +345,14 @@ const PostsList: React.FC<Props> = ({
                 }
                 activeOpacity={0.8}
               >
-                <Image
+                <CachedImage
                   source={{ uri: image.url }}
-                  className='w-full rounded-lg'
-                  style={{ aspectRatio: 1 }}
-                  resizeMode='cover'
+                  style={{ 
+                    width: '100%', 
+                    aspectRatio: 1,
+                    borderRadius: 8,
+                  }}
+                  contentFit='cover'
                 />
                 {index === 1 && images.length > 4 && (
                   <View
@@ -392,10 +408,10 @@ const PostsList: React.FC<Props> = ({
                   style={{ backgroundColor: `${colors.accent}20` }}
                 >
                   {organizationImageUrl ? (
-                    <Image
+                    <CachedImage
                       source={{ uri: organizationImageUrl }}
-                      className='w-full h-full'
-                      resizeMode='cover'
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit='cover'
                     />
                   ) : (
                     <Text

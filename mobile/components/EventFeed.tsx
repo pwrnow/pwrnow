@@ -6,11 +6,12 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Event } from '../types';
 import EventCard from './EventCard';
 import { t } from '../lib/i18n';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { useImagePreloading } from '../hooks/useImagePreloading';
 
 interface EventFeedProps {
   events: Event[];
@@ -29,6 +30,14 @@ export default function EventFeed({
 }: EventFeedProps) {
   const { colors } = useThemeColors();
   const [refreshing] = useState(false);
+  const { preloadEventImages } = useImagePreloading();
+
+  // Preload images when events change
+  useEffect(() => {
+    if (events.length > 0) {
+      preloadEventImages(events);
+    }
+  }, [events, preloadEventImages]);
 
   const renderEmptyComponent = () => (
     <View className='p-6 items-center'>
