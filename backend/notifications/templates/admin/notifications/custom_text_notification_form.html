@@ -1,0 +1,196 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='notifications' %}">{% trans 'Notifications' %}</a>
+&rsaquo; <a href="{% url 'admin:notifications_device_changelist' %}">{% trans 'Devices' %}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module aligned">
+    <h2>{% if is_broadcast %}All Active Devices{% else %}Selected Devices{% endif %}</h2>
+    <p>This notification will be sent to <strong>{{ device_count }}</strong> active device(s) with notifications enabled{% if is_broadcast %} (broadcast to all devices){% endif %}:</p>
+    
+    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0; background: #f9f9f9;">
+        {% for device in devices %}
+        <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
+            <strong>{{ device.device_name|default:"Unknown Device" }}</strong> 
+            ({{ device.platform|upper }}) 
+            - {{ device.user.email|default:"Anonymous" }}
+            {% if device.preferred_language %}
+                - Language: {{ device.preferred_language }}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<form method="post" action="">
+    {% csrf_token %}
+    
+    <!-- Hidden fields to preserve the action and selected items -->
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="apply" value="1">
+    {% for item in queryset %}
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ item.pk }}">
+    {% endfor %}
+    
+    <div class="module aligned">
+        <h2>Notification Content</h2>
+        
+        <div class="form-row">
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="required">{{ form.title.label }}:</label>
+                {{ form.title }}
+                {% if form.title.help_text %}
+                    <p class="help">{{ form.title.help_text }}</p>
+                {% endif %}
+                {% if form.title.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.title.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="{{ form.body.id_for_label }}" class="required">{{ form.body.label }}:</label>
+                {{ form.body }}
+                {% if form.body.help_text %}
+                    <p class="help">{{ form.body.help_text }}</p>
+                {% endif %}
+                {% if form.body.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.body.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="{{ form.subtitle.id_for_label }}">{{ form.subtitle.label }}:</label>
+                {{ form.subtitle }}
+                {% if form.subtitle.help_text %}
+                    <p class="help">{{ form.subtitle.help_text }}</p>
+                {% endif %}
+                {% if form.subtitle.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.subtitle.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        
+        <div class="form-row">
+            <div>
+                <label for="{{ form.include_deep_link.id_for_label }}">{{ form.include_deep_link.label }}:</label>
+                {{ form.include_deep_link }}
+                {% if form.include_deep_link.help_text %}
+                    <p class="help">{{ form.include_deep_link.help_text }}</p>
+                {% endif %}
+                {% if form.include_deep_link.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.include_deep_link.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="submit-row">
+        <input type="submit" value="Send Notification" class="default" name="_send">
+        <a href="{% url 'admin:notifications_device_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+
+<div class="module">
+    <h2>Live Preview</h2>
+    <div style="background: #f8f8f8; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+        <div style="font-weight: bold; margin-bottom: 5px;">📱 Notification Preview:</div>
+        <div style="background: white; border: 1px solid #ccc; padding: 10px; border-radius: 3px;">
+            <div style="font-weight: bold; color: #333;">Title: <span id="preview-title">[Your custom title will appear here]</span></div>
+            <div style="color: #666; font-size: 0.9em; margin: 5px 0;">Subtitle: <span id="preview-subtitle">[Your custom subtitle will appear here]</span></div>
+            <div style="color: #555;">Body: <span id="preview-body">[Your custom message will appear here]</span></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-row {
+    margin-bottom: 15px;
+}
+.form-row label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.form-row input[type="text"], .form-row textarea, .form-row select {
+    width: 100%;
+    max-width: 500px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+.form-row textarea {
+    height: 100px;
+    resize: vertical;
+}
+.help {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+.errorlist {
+    color: #ba2121;
+    margin: 5px 0;
+}
+.errorlist li {
+    list-style: none;
+}
+</style>
+
+<script>
+// Live preview functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('#{{ form.title.id_for_label }}');
+    const subtitleInput = document.querySelector('#{{ form.subtitle.id_for_label }}');
+    const bodyInput = document.querySelector('#{{ form.body.id_for_label }}');
+    
+    function updatePreview() {
+        const title = titleInput.value || '[Your custom title will appear here]';
+        const subtitle = subtitleInput.value || '[Your custom subtitle will appear here]';
+        const body = bodyInput.value || '[Your custom message will appear here]';
+        
+        document.getElementById('preview-title').textContent = title;
+        document.getElementById('preview-subtitle').textContent = subtitle;
+        document.getElementById('preview-body').textContent = body;
+    }
+    
+    if (titleInput) titleInput.addEventListener('input', updatePreview);
+    if (subtitleInput) subtitleInput.addEventListener('input', updatePreview);
+    if (bodyInput) bodyInput.addEventListener('input', updatePreview);
+    
+    // Initial preview
+    updatePreview();
+});
+</script>
+{% endblock %}
