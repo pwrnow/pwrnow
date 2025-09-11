@@ -2,24 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCachedQuery } from './cachedQuery';
 import { api } from './api';
 import { queryKeys } from './queryKeys';
-import { offlineManager } from './offlineManager';
 import type { Event, Category, Post } from '../types';
 
 export function useEvents() {
   return useCachedQuery<Event[]>({
     queryKey: queryKeys.events,
-    queryFn: async () => {
-      try {
-        return await api.events.getEvents();
-      } catch (error) {
-        // Fallback to cached data if network fails
-        const cachedEvents = await offlineManager.getCachedEvents();
-        if (cachedEvents.length > 0) {
-          return cachedEvents;
-        }
-        throw error;
-      }
-    },
+    queryFn: () => api.events.getEvents(),
     staleTime: 0, // Always consider stale to allow refetching
   });
 }
@@ -27,18 +15,7 @@ export function useEvents() {
 export function useCategories() {
   return useCachedQuery<Category[]>({
     queryKey: queryKeys.categories,
-    queryFn: async () => {
-      try {
-        return await api.categories.getCategories();
-      } catch (error) {
-        // Fallback to cached data if network fails
-        const cachedCategories = await offlineManager.getCachedCategories();
-        if (cachedCategories.length > 0) {
-          return cachedCategories;
-        }
-        throw error;
-      }
-    },
+    queryFn: () => api.categories.getCategories(),
     staleTime: 0, // Always consider stale to allow refetching
   });
 }
@@ -46,18 +23,7 @@ export function useCategories() {
 export function useEventBySlug(slug?: string) {
   return useCachedQuery<Event>({
     queryKey: slug ? queryKeys.eventBySlug(slug) : ['event', ''],
-    queryFn: async () => {
-      try {
-        return await api.events.getEventBySlug(slug as string);
-      } catch (error) {
-        // Fallback to cached data if network fails
-        const cachedEvent = await offlineManager.getCachedEvent(slug as string);
-        if (cachedEvent) {
-          return cachedEvent;
-        }
-        throw error;
-      }
-    },
+    queryFn: () => api.events.getEventBySlug(slug as string),
     enabled: typeof slug === 'string' && slug.length > 0,
   });
 }
@@ -192,28 +158,7 @@ export function usePrefetchEventDetails() {
     // Prefetch event details (now includes posts and schedule)
     await queryClient.prefetchQuery({
       queryKey: queryKeys.eventBySlug(eventSlug),
-      queryFn: async () => {
-        try {
-          const data = await api.events.getEventBySlug(eventSlug);
-          // Cache the data using our cache manager
-          const { cacheManager } = await import('./cacheManager');
-          await cacheManager.set(
-            queryKeys.eventBySlug(eventSlug) as unknown as string[],
-            data
-          );
-          return data;
-        } catch (error) {
-          // If network fails, try to get from cache
-          const { cacheManager } = await import('./cacheManager');
-          const cachedData = await cacheManager.get(
-            queryKeys.eventBySlug(eventSlug) as unknown as string[]
-          );
-          if (cachedData) {
-            return cachedData;
-          }
-          throw error;
-        }
-      },
+      queryFn: () => api.events.getEventBySlug(eventSlug),
       staleTime: 0, // Always consider stale to allow refetching
     });
   };

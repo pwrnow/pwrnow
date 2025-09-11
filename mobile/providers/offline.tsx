@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { offlineManager } from '../lib/offlineManager';
 import { initializeNetworkState, isOnline } from '../lib/network';
-import OfflineNotification from '../components/OfflineNotification';
 import OfflineScreen from '../components/OfflineScreen';
 
 interface OfflineContextType {
@@ -22,7 +21,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const [isOffline, setIsOffline] = useState(false);
   const [hasCachedData, setHasCachedData] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [showOfflineNotification, setShowOfflineNotification] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Initialize offline state
@@ -45,16 +43,17 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       const cachedData = await offlineManager.hasCachedData();
       setHasCachedData(cachedData);
       
-      // If online, sync data
+      // Professional offline logic:
+      // 1. If online: cache all data silently and show events (no messages)
+      // 2. If offline with cache: show cached events (no messages)
+      // 3. If offline without cache: show offline screen with pull-to-refresh
       if (online) {
-        console.log('App started online, syncing data...');
+        // Online: silently cache data and show events
         await syncData();
-      } else if (cachedData) {
-        console.log('App started offline with cached data');
-        setShowOfflineNotification(true);
-      } else {
-        console.log('App started offline without cached data');
+      } else if (!cachedData) {
+        // Offline without cache: will show offline screen
       }
+      // Offline with cache: silently show cached data (no messages)
     } catch (error) {
       console.error('Failed to initialize offline state:', error);
     } finally {
@@ -66,11 +65,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     try {
       const result = await offlineManager.syncData();
       if (result.success) {
-        console.log(`Sync successful: ${result.eventsCount} events, ${result.imagesCount} images`);
         setHasCachedData(true);
-        setShowOfflineNotification(false);
-      } else {
-        console.warn('Sync failed:', result.error);
       }
     } catch (error) {
       console.error('Sync error:', error);
@@ -92,15 +87,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     }
   };
 
-  const handleDismissNotification = () => {
-    setShowOfflineNotification(false);
-  };
-
   const handleRefresh = async () => {
     await refreshData();
   };
 
-  // Show offline screen if no internet and no cached data
+  // Extreme scenario: Show offline screen only when offline AND no cached data
   if (isOffline && !hasCachedData && !isInitializing) {
     return (
       <OfflineContext.Provider
@@ -117,6 +108,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     );
   }
 
+  // Normal operation: show app content (online with fresh data, or offline with cached data)
   return (
     <OfflineContext.Provider
       value={{
@@ -128,12 +120,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       }}
     >
       {children}
-      <OfflineNotification
-        visible={showOfflineNotification}
-        onDismiss={handleDismissNotification}
-        onRefresh={handleRefresh}
-        hasCachedData={hasCachedData}
-      />
     </OfflineContext.Provider>
   );
 }

@@ -19,14 +19,13 @@ The app now supports full offline functionality with intelligent caching of even
 - **Categories**: Cached alongside events for complete offline experience
 
 ### 3. Offline UI Components
-- **OfflineNotification**: Dismissible popup when offline with cached data
-- **OfflineScreen**: Full-screen message when offline without cached data
+- **OfflineScreen**: Full-screen message when offline without cached data (extreme scenario only)
 - **CachedImage**: Smart image component that uses cached images when offline
 
-### 4. Smart Data Flow
-- **Online**: Downloads fresh data and caches it locally (including all images)
-- **Offline with Cache**: Uses cached data and shows notification
-- **Offline without Cache**: Shows offline screen with refresh button
+### 4. Professional Data Flow
+- **Online**: Silently downloads and caches all data (events + images), shows events without any messages
+- **Offline with Cache**: Silently shows cached events without any notifications or messages
+- **Offline without Cache**: Shows offline screen with pull-to-refresh option (extreme scenario)
 
 ### 5. Optimized Image Caching Strategy
 - **Proactive Preloading**: Images cached during initial sync for main page display
@@ -64,17 +63,7 @@ The app now supports full offline functionality with intelligent caching of even
 
 ### UI Components
 
-#### 1. OfflineNotification
-```tsx
-<OfflineNotification
-  visible={showNotification}
-  onDismiss={handleDismiss}
-  onRefresh={handleRefresh}
-  hasCachedData={hasCachedData}
-/>
-```
-
-#### 2. OfflineScreen
+#### 1. OfflineScreen
 ```tsx
 <OfflineScreen
   onRefresh={handleRefresh}
@@ -82,7 +71,7 @@ The app now supports full offline functionality with intelligent caching of even
 />
 ```
 
-#### 3. CachedImage
+#### 2. CachedImage
 ```tsx
 <CachedImage
   source={{ uri: imageUrl }}
@@ -96,9 +85,9 @@ The app now supports full offline functionality with intelligent caching of even
 ### App Initialization
 The app automatically handles offline state during startup:
 
-1. **Online**: Downloads and caches events + images
-2. **Offline with Cache**: Uses cached data, shows notification
-3. **Offline without Cache**: Shows offline screen
+1. **Online**: Silently downloads and caches events + images, shows events without messages
+2. **Offline with Cache**: Silently shows cached events without any notifications
+3. **Offline without Cache**: Shows offline screen with pull-to-refresh (extreme scenario)
 
 ### Manual Refresh
 Users can manually refresh data:

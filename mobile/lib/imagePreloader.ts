@@ -42,7 +42,7 @@ export class ImagePreloader {
   /**
    * Preload images for a specific event (high priority)
    */
-  async preloadEventImages(event: Event): Promise<void> {
+  async preloadSingleEventImages(event: Event): Promise<void> {
     try {
       if (!event || typeof event !== 'object') {
         console.log('Invalid event provided for preloading');
@@ -57,7 +57,7 @@ export class ImagePreloader {
 
       await this.preloadImages(imageUrls, 'high');
     } catch (error) {
-      console.error('Error in preloadEventImages (single event):', error);
+      console.error('Error in preloadSingleEventImages:', error);
       throw error;
     }
   }
@@ -128,7 +128,6 @@ export class ImagePreloader {
         return;
       }
 
-      console.log(`Preloading ${uncachedUrls.length} images with ${priority} priority`);
 
       // Adjust batch size based on priority
       const batchSize = priority === 'high' ? 5 : priority === 'medium' ? 3 : 2;
@@ -157,7 +156,6 @@ export class ImagePreloader {
         }
       }
 
-      console.log(`Completed preloading ${uncachedUrls.length} images`);
     } finally {
       this.isPreloading = false;
     }

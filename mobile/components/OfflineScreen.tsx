@@ -47,7 +47,7 @@ export const OfflineScreen: React.FC<OfflineScreenProps> = ({
             { color: colors.mutedForeground },
           ]}
         >
-          Please check your internet connection and try again.
+          You're not connected to the internet. Pull down to refresh when you have a connection.
         </Text>
 
         <TouchableOpacity

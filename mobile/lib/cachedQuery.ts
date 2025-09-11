@@ -49,7 +49,6 @@ export function useCachedQuery<TData = unknown, TError = Error>(
       const cachedData = await cacheManager.get<TData>(cacheKey as string[]);
 
       if (cachedData) {
-        console.log(`Using cached data for query: ${JSON.stringify(queryKey)}`);
         return cachedData;
       }
 
