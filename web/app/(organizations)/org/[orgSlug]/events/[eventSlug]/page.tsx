@@ -126,9 +126,11 @@ export default function OrgEventDetailsPage() {
   // Check AI parse availability and feature access when schedule tab becomes active
   useEffect(() => {
     async function checkAvailability() {
+      if (!event?.slug) return;
+      
       try {
         // Check feature access first
-        const featureAccess = await checkFeatureAccess(['magic_parsing']);
+        const featureAccess = await checkFeatureAccess(event.slug, ['magic_parsing']);
         const hasAccess = featureAccess.features.magic_parsing;
         setHasMagicParsingAccess(hasAccess);
         
@@ -139,7 +141,7 @@ export default function OrgEventDetailsPage() {
         }
         
         // If feature access is granted, check rate limiting
-        const res = await getParseScheduleAvailability();
+        const res = await getParseScheduleAvailability(event.slug);
         setParseAvailable(res.available);
         if (!res.available) {
           setParseUnavailableMessage(t('rateLimited'));

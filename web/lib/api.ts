@@ -421,6 +421,7 @@ export async function createScheduleItem(
 
 export interface MagicImportRequest {
   raw_text: string;
+  event_slug: string;
   event_title?: string;
   event_start_date?: string;
   event_end_date?: string;
@@ -464,9 +465,9 @@ export interface ParseAvailabilityResponse {
   retry_after_seconds: number;
 }
 
-export async function getParseScheduleAvailability(): Promise<ParseAvailabilityResponse> {
+export async function getParseScheduleAvailability(eventSlug: string): Promise<ParseAvailabilityResponse> {
   try {
-    const response = await fetchWithCredentials('/ai/parse-schedule/availability/', {
+    const response = await fetchWithCredentials(`/ai/parse-schedule/availability/?event_slug=${encodeURIComponent(eventSlug)}`, {
       method: 'GET',
     });
     const result = (await response.json()) as ParseAvailabilityResponse;
@@ -483,11 +484,12 @@ export interface FeatureAccessResponse {
   };
 }
 
-export async function checkFeatureAccess(features?: string[]): Promise<FeatureAccessResponse> {
+export async function checkFeatureAccess(eventSlug: string, features?: string[]): Promise<FeatureAccessResponse> {
   try {
+    const baseUrl = `/ai/feature-access/?event_slug=${encodeURIComponent(eventSlug)}`;
     const url = features && features.length > 0 
-      ? `/ai/feature-access/?${features.map(f => `features=${encodeURIComponent(f)}`).join('&')}`
-      : '/ai/feature-access/';
+      ? `${baseUrl}&${features.map(f => `features=${encodeURIComponent(f)}`).join('&')}`
+      : baseUrl;
     
     const response = await fetchWithCredentials(url, {
       method: 'GET',

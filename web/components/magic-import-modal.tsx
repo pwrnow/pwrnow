@@ -78,7 +78,7 @@ export default function MagicImportModal({
 
   const fetchAvailability = async () => {
     try {
-      const result = await getParseScheduleAvailability();
+      const result = await getParseScheduleAvailability(eventSlug);
       setAvailability(result);
       if (!result.available) {
         scheduleAvailabilityCheck(result.retry_after_seconds > 0 ? result.retry_after_seconds + 1 : 60);
@@ -111,6 +111,7 @@ export default function MagicImportModal({
     try {
       const request: MagicImportRequest = {
         raw_text: rawText.trim(),
+        event_slug: eventSlug,
         event_title: eventTitle,
         event_start_date: eventStartDate,
         event_end_date: eventEndDate,
