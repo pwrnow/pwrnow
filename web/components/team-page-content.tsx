@@ -9,7 +9,7 @@ const teamMembers = [
     id: 1,
     name: "Michał Mendzelewski",
     description: "Full-Stack Developer & Co-Founder with expertise in modern web technologies and backend systems. Architected PWr Now's scalable infrastructure using React, Next.js, and Django. Passionate about clean code, performance optimization, and delivering exceptional user experiences. Experienced in leading technical projects from conception to deployment.",
-    image: "team_pics/mendzelewski.png",
+    image: null,
     social: {
       github: "https://github.com/michallm",
       linkedin: "https://linkedin.com/in/michal",
@@ -48,9 +48,9 @@ export default function TeamPageContent() {
       {/* Simple Hero Section */}
       <section className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl lg:text-6xl font-bold text-foreground">
-              {t('hero.title')}
-            </h1>
+          <h1 className="text-5xl lg:text-6xl font-bold gradient-text animate-slide-up">
+            {t('hero.title')}
+          </h1>
         </div>
       </section>
 
@@ -59,11 +59,19 @@ export default function TeamPageContent() {
         <div className="max-w-6xl mx-auto">
           <div className="space-y-24">
             {teamMembers.map((member, index) => (
-              <TeamMemberCard
+              <div
                 key={member.id}
-                member={member}
-                index={index}
-              />
+                className="animate-slide-up"
+                style={{
+                  animationDelay: `${index * 0.2}s`,
+                  animationFillMode: 'both'
+                }}
+              >
+                <TeamMemberCard
+                  member={member}
+                  index={index}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -72,14 +80,14 @@ export default function TeamPageContent() {
       {/* Call to Action */}
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
-            <div className="relative bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm border border-border/50 rounded-3xl p-12 lg:p-16 text-center">
+          <div className="relative bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm border border-border/50 rounded-3xl p-12 lg:p-16 text-center animate-slide-up" style={{ animationDelay: '0.8s', animationFillMode: 'both' }}>
             <div className="mb-8">
-                <h3 className="text-3xl lg:text-4xl font-bold mb-6 text-foreground">
-                  {t('cta.title')}
-                </h3>
-                <p className="text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                  {t('cta.subtitle')}
-                </p>
+              <h3 className="text-3xl lg:text-4xl font-bold mb-6 text-foreground">
+                {t('cta.title')}
+              </h3>
+              <p className="text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                {t('cta.subtitle')}
+              </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -107,7 +115,7 @@ function TeamMemberCard({ member, index }: { member: typeof teamMembers[0], inde
       <div className={`relative flex flex-col ${!isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-12 lg:gap-20 items-center`}>
         {/* Image Section - only show if image exists */}
         {member.image && (
-          <div className="relative flex-shrink-0">
+          <div className="relative flex-shrink-0 animate-float-gentle" style={{ animationDelay: `${index * 0.5}s` }}>
           <div className="relative w-80 h-96 lg:w-80 lg:h-96">
               {/* Simple border */}
               <div className="absolute inset-0 rounded-3xl border-2 border-border/20" />
