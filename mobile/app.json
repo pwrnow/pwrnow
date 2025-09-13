@@ -23,7 +23,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": ["pl", "en"],
-        "CFBundleDevelopmentRegion": "pl"
+        "CFBundleDevelopmentRegion": "pl",
+        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń."
       },
       "icon": {
         "light": "./assets/icon-light.png",
@@ -46,7 +47,8 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.READ_CALENDAR",
-        "android.permission.WRITE_CALENDAR"
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.CAMERA"
       ],
       "intentFilters": [
         {

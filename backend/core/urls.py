@@ -15,4 +15,5 @@ router.register(r'schedule-items', views.ScheduleItemViewSet, basename='schedule
 urlpatterns = [
     path('', include(router.urls)),
     path('events/<slug:slug>/likes/', views.event_like, name='event-like'),
+    path('scan-qr/', views.scan_qr_code, name='scan-qr'),
 ]

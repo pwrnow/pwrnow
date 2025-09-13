@@ -27,6 +27,7 @@ const translations: Record<string, TranslationMap> = {
     expand: 'Expand',
     visitPage: 'Visit page',
     newTag: 'NEW',
+    confirmedParticipation: 'CONFIRMED',
     // Event detail page translations
     eventDescription: 'Event description',
     posts: 'Posts',
@@ -165,6 +166,34 @@ const translations: Record<string, TranslationMap> = {
     firstLikeBenefit3Title: 'Help organizers',
     firstLikeBenefit3Description: 'Show which events are interesting',
     firstLikeContinue: 'Got it!',
+    // QR Scanner translations
+    qrScanner: 'QR Scanner',
+    requestingCameraPermission: 'Requesting camera permission...',
+    cameraPermissionRequired: 'Camera Permission Required',
+    cameraPermissionMessage:
+      'This app needs access to your camera to scan QR codes for event participation.',
+    goBack: 'Go Back',
+    authenticationRequired: 'Authentication Required',
+    qrScannerAuthMessage:
+      'You need to be signed in to scan QR codes and confirm event participation.',
+    qrScannerInstructions:
+      'Point your camera at the QR code to confirm participation',
+    processing: 'Processing...',
+    back: 'Back',
+    scanAgain: 'Scan Again',
+    success: 'Success',
+    qrScanError: 'Failed to scan QR code. Please try again.',
+    tryAgain: 'Try Again',
+    // QR Scan Feedback translations
+    participationConfirmed: 'Participation Confirmed!',
+    alreadyConfirmed: 'Already Confirmed',
+    invalidQRCode: 'Invalid QR Code',
+    participationConfirmedMessage:
+      'Your participation has been successfully confirmed!',
+    alreadyConfirmedMessage:
+      'You have already confirmed participation for this event.',
+    invalidQRCodeMessage: 'This QR code is invalid or has expired.',
+    errorMessage: 'An error occurred while processing your request.',
   },
   pl: {
     all: 'Wszystkie',
@@ -189,6 +218,7 @@ const translations: Record<string, TranslationMap> = {
     expand: 'Rozwiń',
     visitPage: 'Odwiedź stronę',
     newTag: 'NOWE',
+    confirmedParticipation: 'POTWIERDZONE',
     // Event detail page translations
     eventDescription: 'Opis wydarzenia',
     posts: 'Posty',
@@ -336,6 +366,33 @@ const translations: Record<string, TranslationMap> = {
     firstLikeBenefit3Title: 'Pomóż organizatorom',
     firstLikeBenefit3Description: 'Pokaż które wydarzenia są interesujące',
     firstLikeContinue: 'Okej!',
+    // QR Scanner translations
+    qrScanner: 'Skaner QR',
+    requestingCameraPermission: 'Żądanie uprawnień kamery...',
+    cameraPermissionRequired: 'Wymagane uprawnienia kamery',
+    cameraPermissionMessage:
+      'Ta aplikacja potrzebuje dostępu do kamery, aby skanować kody QR w celu potwierdzenia uczestnictwa w wydarzeniu.',
+    goBack: 'Wróć',
+    authenticationRequired: 'Wymagane uwierzytelnienie',
+    qrScannerAuthMessage:
+      'Musisz być zalogowany, aby skanować kody QR i potwierdzać uczestnictwo w wydarzeniach.',
+    qrScannerInstructions:
+      'Wskaż kamerą na kod QR, aby potwierdzić uczestnictwo',
+    processing: 'Przetwarzanie...',
+    back: 'Wstecz',
+    scanAgain: 'Skanuj ponownie',
+    success: 'Sukces',
+    qrScanError: 'Nie udało się zeskanować kodu QR. Spróbuj ponownie.',
+    tryAgain: 'Spróbuj ponownie',
+    // QR Scan Feedback translations
+    participationConfirmed: 'Uczestnictwo Potwierdzone!',
+    alreadyConfirmed: 'Już Potwierdzone',
+    invalidQRCode: 'Nieprawidłowy Kod QR',
+    participationConfirmedMessage:
+      'Twoje uczestnictwo zostało pomyślnie potwierdzone!',
+    alreadyConfirmedMessage: 'Już potwierdziłeś uczestnictwo w tym wydarzeniu.',
+    invalidQRCodeMessage: 'Ten kod QR jest nieprawidłowy lub wygasł.',
+    errorMessage: 'Wystąpił błąd podczas przetwarzania Twojego żądania.',
   },
 };
 

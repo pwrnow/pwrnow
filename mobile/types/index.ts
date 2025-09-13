@@ -24,6 +24,7 @@ export interface Event {
   is_new?: boolean;
   aspect_ratio?: string | null;
   liked?: boolean;
+  participation_status?: boolean;
   organization: Organization;
   category: Category;
   posts?: Post[];

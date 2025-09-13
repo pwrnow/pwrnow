@@ -7,7 +7,7 @@ from django.utils.text import Truncator
 from django.conf import settings
 from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -640,3 +640,193 @@ class ScheduleItemAdmin(admin.ModelAdmin):
     @admin.display(description='Event', ordering='schedule__event__title')
     def event_display(self, obj):
         return obj.schedule.event
+
+
+class QRCodeInline(admin.TabularInline):
+    model = QRCode
+    extra = 0
+    fields = ['name', 'code', 'is_active', 'usage_count', 'last_used_at']
+    readonly_fields = ['usage_count', 'last_used_at']
+
+
+@admin.register(QRCode)
+class QRCodeAdmin(admin.ModelAdmin):
+    list_display = ['event', 'name', 'code', 'is_active', 'usage_count', 'last_used_display', 'qr_code_preview']
+    list_filter = ['is_active', 'event', 'created_at', 'last_used_at']
+    search_fields = ['event__title', 'name', 'code']
+    autocomplete_fields = ['event']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'usage_count', 'last_used_at', 'qr_code_preview']
+    list_editable = ['is_active']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('event', 'name', 'code')
+        }),
+        ('Status & Usage', {
+            'fields': ('is_active', 'usage_count', 'last_used_at')
+        }),
+        ('QR Code', {
+            'fields': ('qr_code_preview',),
+            'description': 'QR code image for this code'
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Last Used', ordering='last_used_at')
+    def last_used_display(self, obj):
+        if obj.last_used_at:
+            from django.utils import timezone
+            now = timezone.now()
+            time_diff = now - obj.last_used_at
+
+            if time_diff.days > 0:
+                return format_html(
+                    '<span title="{}">{} days ago</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    time_diff.days
+                )
+            elif time_diff.seconds > 3600:
+                hours = time_diff.seconds // 3600
+                return format_html(
+                    '<span title="{}">{} hours ago</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    hours
+                )
+            elif time_diff.seconds > 60:
+                minutes = time_diff.seconds // 60
+                return format_html(
+                    '<span title="{}">{} minutes ago</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    minutes
+                )
+            else:
+                return format_html(
+                    '<span title="{}">Just now</span>',
+                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S')
+                )
+        else:
+            return format_html('<span style="color: #999;">Never used</span>')
+
+    @admin.display(description='QR Code')
+    def qr_code_preview(self, obj):
+        try:
+            import qrcode
+            from io import BytesIO
+            from django.core.files.base import ContentFile
+            from django.utils.html import format_html
+
+            # Generate QR code
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(obj.code)
+            qr.make(fit=True)
+
+            # Create image
+            img = qr.make_image(fill_color="black", back_color="white")
+
+            # Convert to base64 for display
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            buffer.seek(0)
+
+            import base64
+            img_str = base64.b64encode(buffer.getvalue()).decode()
+
+            return format_html(
+                '<img src="data:image/png;base64,{}" width="100" height="100" style="border: 1px solid #ddd;" />',
+                img_str
+            )
+        except ImportError:
+            return format_html('<span style="color: #999;">QR code library not installed</span>')
+        except Exception as e:
+            return format_html('<span style="color: #dc3545;">Error: {}</span>', str(e))
+
+    actions = ['generate_qr_codes', 'activate_qr_codes', 'deactivate_qr_codes']
+
+    def generate_qr_codes(self, request, queryset):
+        """Generate QR code images for selected QR codes."""
+        try:
+            import qrcode
+            from io import BytesIO
+            from django.core.files.base import ContentFile
+
+            generated_count = 0
+            for qr_code in queryset:
+                # Generate QR code
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(qr_code.code)
+                qr.make(fit=True)
+
+                # Create image
+                img = qr.make_image(fill_color="black", back_color="white")
+
+                # Save to file
+                buffer = BytesIO()
+                img.save(buffer, format='PNG')
+                buffer.seek(0)
+
+                # You could save this to a file or return it as a download
+                # For now, we'll just mark as processed
+                generated_count += 1
+
+            self.message_user(request, f'Generated QR codes for {generated_count} items.')
+        except ImportError:
+            self.message_user(request, 'QR code library not installed. Please install qrcode[pil].', level=messages.ERROR)
+        except Exception as e:
+            self.message_user(request, f'Error generating QR codes: {str(e)}', level=messages.ERROR)
+    generate_qr_codes.short_description = "Generate QR code images"
+
+    def activate_qr_codes(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'{updated} QR codes activated.')
+    activate_qr_codes.short_description = "Activate selected QR codes"
+
+    def deactivate_qr_codes(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'{updated} QR codes deactivated.')
+    deactivate_qr_codes.short_description = "Deactivate selected QR codes"
+
+
+@admin.register(EventParticipation)
+class EventParticipationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'event', 'participation_type', 'qr_code', 'confirmed_at']
+    list_filter = ['participation_type', 'confirmed_at', 'event', 'qr_code']
+    search_fields = ['user__email', 'event__title', 'qr_code__name', 'notes']
+    autocomplete_fields = ['user', 'event', 'qr_code']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'confirmed_at']
+    ordering = ['-confirmed_at']
+
+    fieldsets = (
+        ('Participation Details', {
+            'fields': ('user', 'event', 'participation_type', 'qr_code')
+        }),
+        ('Confirmation', {
+            'fields': ('confirmed_at', 'notes')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'user', 'event', 'qr_code'
+        )
+
+
+# Add QRCodeInline to EventAdmin after it's defined
+EventAdmin.inlines = [QRCodeInline]

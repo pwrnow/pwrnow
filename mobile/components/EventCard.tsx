@@ -321,22 +321,35 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 {event.category.name}
               </Text>
             </View>
-            {event.is_new ? (
-              <View
-                style={{
-                  backgroundColor: colors.accent + '15',
-                  borderColor: colors.accent + '30',
-                }}
-                className='px-2.5 py-1.5 rounded-xl border'
-              >
-                <Text
-                  style={{ color: colors.accent }}
-                  className='text-xs font-semibold tracking-[0.5px]'
+            <View className='flex-row gap-2'>
+              {event.participation_status ? (
+                <View
+                  style={{
+                    backgroundColor: '#10B981' + '15',
+                    borderColor: '#10B981' + '30',
+                  }}
+                  className='w-8 h-8 rounded-full border items-center justify-center'
                 >
-                  {t('newTag')}
-                </Text>
-              </View>
-            ) : null}
+                  <Feather name='check-circle' size={16} color='#10B981' />
+                </View>
+              ) : null}
+              {event.is_new ? (
+                <View
+                  style={{
+                    backgroundColor: colors.accent + '15',
+                    borderColor: colors.accent + '30',
+                  }}
+                  className='px-2.5 py-1.5 rounded-xl border'
+                >
+                  <Text
+                    style={{ color: colors.accent }}
+                    className='text-xs font-semibold tracking-[0.5px]'
+                  >
+                    {t('newTag')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </View>
         </View>
 

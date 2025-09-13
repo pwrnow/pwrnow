@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem
+from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem, EventParticipation
 from .serializers import (
     EventSerializer,
     EventDetailSerializer,
@@ -19,6 +19,7 @@ from .serializers import (
     ScheduleSerializer,
     ScheduleItemSerializer,
     ScheduleItemCreateSerializer,
+    QRCodeScanSerializer,
 )
 from .authentication import (
     authenticate_organization,
@@ -230,6 +231,19 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
                 publication_date__lte=today
             )
 
+        # Add participation status annotation for authenticated users
+        request = self.request
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            from django.db.models import Exists, OuterRef
+            queryset = queryset.annotate(
+                user_participation_exists=Exists(
+                    EventParticipation.objects.filter(
+                        user=request.user,
+                        event=OuterRef('pk')
+                    )
+                )
+            )
+
         # Simpler ordering - avoid complex CASE statements
         return queryset.extra(
             select={
@@ -405,3 +419,63 @@ def event_like(request, slug):
     # DELETE
     Like.objects.filter(user=request.user, event=event).delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def scan_qr_code(request):
+    """
+    Scan a QR code and confirm participation in an event.
+    This endpoint is used by the mobile app QR scanner.
+    """
+    serializer = QRCodeScanSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    qr_code = serializer.validated_data['code']
+
+    # Check if user already has participation for this event
+    existing_participation = EventParticipation.objects.filter(
+        user=request.user,
+        event=qr_code.event
+    ).first()
+
+    if existing_participation:
+        return Response({
+            'error': 'You have already confirmed participation for this event.',
+            'participation': {
+                'id': str(existing_participation.id),
+                'event_title': existing_participation.event.title,
+                'confirmed_at': existing_participation.confirmed_at,
+            }
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create participation confirmation
+    participation = EventParticipation.objects.create(
+        user=request.user,
+        event=qr_code.event,
+        qr_code=qr_code,
+        participation_type=EventParticipation.ParticipationType.QR_SCAN
+    )
+
+    # Update QR code usage statistics
+    qr_code.usage_count += 1
+    qr_code.last_used_at = timezone.now()
+    qr_code.save(update_fields=['usage_count', 'last_used_at'])
+
+    # Return success response
+    return Response({
+        'success': True,
+        'message': 'Participation confirmed successfully!',
+        'participation': {
+            'id': str(participation.id),
+            'event_title': qr_code.event.title,
+            'confirmed_at': participation.confirmed_at,
+        },
+        'event': {
+            'title': qr_code.event.title,
+            'slug': qr_code.event.slug,
+            'starts_at': qr_code.event.starts_at,
+            'ends_at': qr_code.event.ends_at,
+        }
+    }, status=status.HTTP_201_CREATED)

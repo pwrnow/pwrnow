@@ -471,3 +471,120 @@ class ScheduleItem(models.Model):
         end_dt = datetime.combine(self.date, self.end_time)
         delta = end_dt - start_dt
         return max(0, int(delta.total_seconds() // 60))
+
+
+class QRCode(models.Model):
+    """QR codes for event participation confirmation."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='qr_codes'
+    )
+    name = models.CharField(
+        max_length=100,
+        help_text="Human-readable name for this QR code (e.g., 'Entrance Gate A', 'VIP Check-in')"
+    )
+    code = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="Unique code that will be encoded in the QR code"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this QR code is currently active and can be scanned"
+    )
+    usage_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of times this QR code has been scanned"
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="When this QR code was last scanned"
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event', 'is_active']),
+            models.Index(fields=['code']),
+            models.Index(fields=['last_used_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.event.title} - {self.name} ({self.code})"
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            # Generate a unique code if not provided
+            import secrets
+            import string
+            while True:
+                self.code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+                if not QRCode.objects.filter(code=self.code).exists():
+                    break
+        super().save(*args, **kwargs)
+
+
+class EventParticipation(models.Model):
+    """Track user participation confirmations for events."""
+
+    class ParticipationType(models.TextChoices):
+        QR_SCAN = 'qr_scan', _('QR Code Scan')
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='event_participations'
+    )
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='participations'
+    )
+    qr_code = models.ForeignKey(
+        QRCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='participations',
+        help_text="QR code that was scanned (if applicable)"
+    )
+    participation_type = models.CharField(
+        max_length=30,
+        choices=ParticipationType.choices,
+        default=ParticipationType.QR_SCAN,
+        help_text="Type of participation confirmation"
+    )
+    confirmed_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text="When the participation was confirmed"
+    )
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Additional notes about the participation confirmation"
+    )
+
+    class Meta:
+        unique_together = (('user', 'event'),)
+        ordering = ['-confirmed_at']
+        indexes = [
+            models.Index(fields=['user', 'event']),
+            models.Index(fields=['event', 'confirmed_at']),
+            models.Index(fields=['participation_type', 'confirmed_at']),
+            models.Index(fields=['qr_code', 'confirmed_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.event.title} ({self.get_participation_type_display()})"

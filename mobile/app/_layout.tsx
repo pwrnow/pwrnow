@@ -20,6 +20,7 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { SettingsProvider } from '../contexts/SettingsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { focusManager, useQueryClient } from '@tanstack/react-query';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -151,6 +152,7 @@ function RootNavigator() {
         name='index'
         options={{
           headerShown: true,
+          headerLeft: () => <QRScannerHeaderButton />,
           headerRight: () => <ProfileHeaderButton />,
         }}
       />
@@ -167,7 +169,41 @@ function RootNavigator() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name='qr-scanner'
+        options={{
+          title: 'QR Scanner',
+          headerShown: false,
+        }}
+      />
     </Stack>
+  );
+}
+
+// QR Scanner button component for header
+function QRScannerHeaderButton() {
+  const { isDark } = useTheme();
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/qr-scanner');
+  };
+
+  return (
+    <TouchableOpacity
+      accessibilityLabel='Open QR Scanner'
+      onPressIn={() => {
+        Haptics.selectionAsync();
+      }}
+      onPress={handlePress}
+      style={{ padding: 6, borderRadius: 9999 }}
+    >
+      <Ionicons
+        name='qr-code-outline'
+        size={24}
+        color={isDark ? '#FFFFFF' : '#000000'}
+      />
+    </TouchableOpacity>
   );
 }
 

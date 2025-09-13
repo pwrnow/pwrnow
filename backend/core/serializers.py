@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation
 from .translation_utils import get_language_from_request, get_translated_field
 
 import logging
@@ -73,6 +73,7 @@ class EventSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     is_new = serializers.SerializerMethodField()
     liked = serializers.SerializerMethodField()
+    participation_status = serializers.SerializerMethodField()
     posts = serializers.SerializerMethodField()
     schedule = serializers.SerializerMethodField()
 
@@ -81,7 +82,7 @@ class EventSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'aspect_ratio',
-            'organization', 'category', 'is_new', 'liked', 'posts', 'schedule'
+            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule'
         ]
 
     def get_title(self, obj):
@@ -122,6 +123,23 @@ class EventSerializer(serializers.ModelSerializer):
         logger.info(f"Checking if user {user.id} liked event {obj.id}")
         # Efficient existence check
         return Like.objects.filter(user_id=user.id, event_id=obj.id).exists()
+
+    def get_participation_status(self, obj):
+        """Check if the current user has confirmed participation for this event."""
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+
+        # Use annotated field if available (from optimized queryset)
+        if hasattr(obj, 'user_participation_exists'):
+            return obj.user_participation_exists
+
+        # Fallback to direct query if annotation not available
+        return EventParticipation.objects.filter(
+            user_id=user.id,
+            event_id=obj.id
+        ).exists()
 
     def get_posts(self, obj):
         """Get posts for the event."""
@@ -433,3 +451,20 @@ class ScheduleItemCreateSerializer(serializers.Serializer):
             description=description,
         )
         return item
+
+
+class QRCodeScanSerializer(serializers.Serializer):
+    """Serializer for QR code scanning."""
+    code = serializers.CharField(
+        max_length=50,
+        required=True,
+        help_text="QR code that was scanned"
+    )
+
+    def validate_code(self, value):
+        """Validate that the QR code exists and is active."""
+        try:
+            qr_code = QRCode.objects.get(code=value, is_active=True)
+            return qr_code
+        except QRCode.DoesNotExist:
+            raise serializers.ValidationError("Invalid or inactive QR code.")

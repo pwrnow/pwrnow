@@ -6,6 +6,7 @@ import {
   Platform,
   ActivityIndicator,
   Text,
+  TouchableOpacity,
 } from 'react-native';
 import EventFeed from '../components/EventFeed';
 import { Event, Category } from '../types';
@@ -23,6 +24,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../lib/api';
+import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const { colors, isDark } = useThemeColors();
@@ -34,6 +37,7 @@ export default function HomeScreen() {
   const { prefetchAllEventDetails } = usePrefetchEventDetails();
   const insets = useSafeAreaInsets();
   const hasPrefetchedRef = useRef(false);
+  const router = useRouter();
 
   const {
     data: events = [],

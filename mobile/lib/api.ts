@@ -366,6 +366,18 @@ export const eventsApi = {
       method: 'DELETE',
     });
   },
+
+  // Scan QR code for event participation
+  async scanQRCode(code: string): Promise<any> {
+    const response = await fetchWithCredentials('/scan-qr/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ code }),
+    });
+    return await response.json();
+  },
 };
 
 // Categories API
