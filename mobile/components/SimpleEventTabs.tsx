@@ -16,9 +16,10 @@ import OrganizationHeader from './OrganizationHeader';
 import EventMetaCard from './EventMetaCard';
 import EventDescription from './EventDescription';
 import VisitPageButton from './VisitPageButton';
+import EventMapTab from './EventMapTab';
 import { useThemeColors } from '../hooks/useThemeColors';
 
-type TabType = 'details' | 'posts' | 'schedule';
+type TabType = 'details' | 'posts' | 'schedule' | 'map';
 
 interface Route {
   key: TabType;
@@ -208,6 +209,21 @@ const ScheduleScene: React.FC<{
   return <EventScheduleTab eventDays={eventDays} itemsByDay={itemsByDay} />;
 });
 
+// Map Scene Component
+const MapScene: React.FC<{
+  eventSlug: string;
+}> = React.memo(({ eventSlug }) => {
+  const { data: event, isLoading, error } = useEventBySlug(eventSlug);
+
+  return (
+    <EventMapTab
+      eventMap={event?.event_map || null}
+      isLoading={isLoading}
+      error={error}
+    />
+  );
+});
+
 export const SimpleEventTabs: React.FC<Props> = React.memo(
   ({
     eventSlug,
@@ -225,6 +241,13 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     const layout = useWindowDimensions();
     const { colors } = useThemeColors();
     const { tab } = useLocalSearchParams();
+    const { data: event } = useEventBySlug(eventSlug);
+
+    // Check if event has a map with active locations
+    const hasMap =
+      event?.event_map &&
+      event.event_map.is_active &&
+      event.event_map.locations?.some((loc) => loc.is_active);
 
     // Always show schedule tab for events - even if no schedule items exist
     // This allows users to see event days and potentially add schedule items
@@ -236,6 +259,9 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
             { key: 'schedule', title: t('schedule'), icon: 'calendar' },
           ] as Route[])
         : ([] as Route[])),
+      ...(hasMap
+        ? ([{ key: 'map', title: t('map'), icon: 'map-pin' }] as Route[])
+        : ([] as Route[])),
     ];
 
     const [index, setIndex] = useState(() => {
@@ -243,6 +269,8 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
       if (tab === 'posts') return 1;
       if (tab === 'schedule' && hasSchedule)
         return routes.findIndex((r) => r.key === 'schedule');
+      if (tab === 'map' && hasMap)
+        return routes.findIndex((r) => r.key === 'map');
       return 0;
     });
 
@@ -251,9 +279,11 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
       if (tab === 'posts') setIndex(1);
       else if (tab === 'schedule' && hasSchedule)
         setIndex(routes.findIndex((r) => r.key === 'schedule'));
+      else if (tab === 'map' && hasMap)
+        setIndex(routes.findIndex((r) => r.key === 'map'));
       else setIndex(0);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tab, hasSchedule]);
+    }, [tab, hasSchedule, hasMap]);
 
     // Create scene map
     const renderScene = ({ route }: any) => {
@@ -281,6 +311,8 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           return (
             <ScheduleScene eventDays={eventDays} itemsByDay={itemsByDay} />
           );
+        case 'map':
+          return <MapScene eventSlug={eventSlug} />;
         default:
           return null;
       }

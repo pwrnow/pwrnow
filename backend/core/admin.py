@@ -7,7 +7,7 @@ from django.utils.text import Truncator
 from django.conf import settings
 from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -828,5 +828,116 @@ class EventParticipationAdmin(admin.ModelAdmin):
         )
 
 
-# Add QRCodeInline to EventAdmin after it's defined
+# Add inlines to EventAdmin after they're defined
 EventAdmin.inlines = [QRCodeInline]
+
+
+class EventMapInline(admin.StackedInline):
+    model = EventMap
+    extra = 0
+    fields = ['title', 'description', 'is_active']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'locations_count']
+
+
+class EventMapLocationInline(admin.TabularInline):
+    model = EventMapLocation
+    extra = 0
+    fields = ['name', 'description', 'latitude', 'longitude', 'address', 'order_index', 'image', 'is_active']
+    ordering = ['order_index']
+
+
+@admin.register(EventMap)
+class EventMapAdmin(admin.ModelAdmin):
+    list_display = ['event', 'title', 'locations_count', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['event__title', 'title', 'description']
+    autocomplete_fields = ['event']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'locations_count']
+    list_editable = ['is_active']
+    inlines = [EventMapLocationInline]
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('event', 'title', 'description')
+        }),
+        ('Status', {
+            'fields': ('is_active', 'locations_count')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Locations')
+    def locations_count(self, obj):
+        count = obj.locations_count
+        url = reverse('admin:core_eventmaplocation_changelist') + f'?event_map__id__exact={obj.id}'
+        return format_html('<a href="{}">{} locations</a>', url, count)
+
+
+@admin.register(EventMapLocation)
+class EventMapLocationAdmin(admin.ModelAdmin):
+    list_display = ['name', 'event_map', 'address', 'coordinates', 'image_preview', 'order_index', 'is_active', 'created_at']
+    list_filter = ['is_active', 'event_map__event', 'created_at']
+    search_fields = ['name', 'description', 'address', 'event_map__event__title']
+    autocomplete_fields = ['event_map']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'coordinates', 'image_preview']
+    list_editable = ['order_index', 'is_active']
+    ordering = ['event_map', 'order_index']
+
+    fieldsets = (
+        ('Location Information', {
+            'fields': ('event_map', 'name', 'description', 'address')
+        }),
+        ('Coordinates', {
+            'fields': ('latitude', 'longitude', 'coordinates')
+        }),
+        ('Display', {
+            'fields': ('order_index', 'is_active', 'image', 'image_preview')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    @admin.display(description='Coordinates')
+    def coordinates(self, obj):
+        if obj.latitude and obj.longitude:
+            lat = float(obj.latitude)
+            lng = float(obj.longitude)
+            coords_text = f"{lat:.6f}, {lng:.6f}"
+            return format_html(
+                '<span style="font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px;">{}</span>',
+                coords_text
+            )
+        return format_html('<span style="color: #999;">Not set</span>')
+
+    @admin.display(description='Image Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="40" height="40" style="object-fit: cover; border-radius: 4px;" />', obj.image.url)
+        return format_html('<span style="color: #999;">No image</span>')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'event_map__event'
+        )
+
+    actions = ['activate_locations', 'deactivate_locations']
+
+    def activate_locations(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'{updated} locations activated.')
+    activate_locations.short_description = "Activate selected locations"
+
+    def deactivate_locations(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'{updated} locations deactivated.')
+    deactivate_locations.short_description = "Deactivate selected locations"
+
+
+# Add EventMapInline to EventAdmin after it's defined
+EventAdmin.inlines.append(EventMapInline)

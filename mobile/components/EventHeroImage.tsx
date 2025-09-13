@@ -17,8 +17,8 @@ export const EventHeroImage: React.FC<Props> = ({ imageUrl, aspectRatio }) => {
     <View className='relative mx-4 mt-2'>
       <CachedImage
         source={{ uri: imageUrl }}
-        style={{ 
-          width: '100%', 
+        style={{
+          width: '100%',
           height: screenWidth * 0.5,
           borderRadius: 12,
         }}

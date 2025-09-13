@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem, EventParticipation
+from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem, EventParticipation, EventMap, EventMapLocation
 from .serializers import (
     EventSerializer,
     EventDetailSerializer,
@@ -20,6 +20,10 @@ from .serializers import (
     ScheduleItemSerializer,
     ScheduleItemCreateSerializer,
     QRCodeScanSerializer,
+    EventMapSerializer,
+    EventMapCreateSerializer,
+    EventMapLocationSerializer,
+    EventMapLocationCreateSerializer,
 )
 from .authentication import (
     authenticate_organization,
@@ -479,3 +483,175 @@ def scan_qr_code(request):
             'ends_at': qr_code.event.ends_at,
         }
     }, status=status.HTTP_201_CREATED)
+
+
+class EventMapViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing event maps.
+    Only authenticated organizations can create/update/delete maps for their own events.
+    """
+    queryset = EventMap.objects.all()
+    serializer_class = EventMapSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_queryset(self):
+        """Filter maps based on authentication and permissions."""
+        queryset = EventMap.objects.select_related('event').prefetch_related('locations')
+
+        # For public access, only show active maps for verified events
+        if not self.request.user.is_authenticated:
+            return queryset.filter(is_active=True, event__verified=True)
+
+        # For authenticated users, show all maps they have access to
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(self.request)
+            if current_org:
+                # Show maps for events owned by the organization
+                return queryset.filter(event__organization=current_org)
+        except Exception:
+            pass
+
+        # Fallback to public access
+        return queryset.filter(is_active=True, event__verified=True)
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
+        if self.action == 'create':
+            return EventMapCreateSerializer
+        return EventMapSerializer
+
+    def perform_create(self, serializer):
+        """Create event map with organization authentication."""
+        from .authentication import get_current_organization
+        organization = get_current_organization(self.request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        # The serializer handles the actual creation
+        return serializer.save()
+
+    @action(detail=True, methods=['post'], url_path='add-location')
+    def add_location(self, request, pk=None):
+        """Add a location to an existing event map."""
+        event_map = self.get_object()
+
+        # Check if organization owns the event
+        from .authentication import get_current_organization
+        organization = get_current_organization(request)
+        if not organization or str(event_map.event.organization_id) != str(organization.id):
+            return Response(
+                {'error': _('You do not have permission to modify this event map.')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = EventMapLocationCreateSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            # Override the event_slug validation since we already have the event_map
+            validated_data = serializer.validated_data.copy()
+            validated_data['event_slug'] = event_map.event.slug
+
+            location = EventMapLocation.objects.create(
+                event_map=event_map,
+                name=validated_data['name'],
+                description=validated_data.get('description') or None,
+                latitude=validated_data['latitude'],
+                longitude=validated_data['longitude'],
+                address=validated_data.get('address') or None,
+                order_index=validated_data.get('order_index', 0),
+                is_active=True
+            )
+
+            return Response(
+                EventMapLocationSerializer(location).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'], url_path='locations')
+    def get_locations(self, request, pk=None):
+        """Get all locations for an event map."""
+        event_map = self.get_object()
+        locations = event_map.locations.filter(is_active=True).order_by('order_index')
+        serializer = EventMapLocationSerializer(locations, many=True)
+        return Response(serializer.data)
+
+
+class EventMapLocationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing individual event map locations.
+    """
+    queryset = EventMapLocation.objects.all()
+    serializer_class = EventMapLocationSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get_queryset(self):
+        """Filter locations based on authentication and permissions."""
+        queryset = EventMapLocation.objects.select_related('event_map__event')
+
+        # For public access, only show active locations for verified events
+        if not self.request.user.is_authenticated:
+            return queryset.filter(is_active=True, event_map__is_active=True, event_map__event__verified=True)
+
+        # For authenticated users, show locations they have access to
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(self.request)
+            if current_org:
+                # Show locations for events owned by the organization
+                return queryset.filter(event_map__event__organization=current_org)
+        except Exception:
+            pass
+
+        # Fallback to public access
+        return queryset.filter(is_active=True, event_map__is_active=True, event_map__event__verified=True)
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
+        if self.action == 'create':
+            return EventMapLocationCreateSerializer
+        return EventMapLocationSerializer
+
+    def perform_create(self, serializer):
+        """Create event map location with organization authentication."""
+        from .authentication import get_current_organization
+        organization = get_current_organization(self.request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        # The serializer handles the actual creation
+        return serializer.save()
+
+    def perform_update(self, serializer):
+        """Update event map location with organization authentication."""
+        from .authentication import get_current_organization
+        organization = get_current_organization(self.request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        # Check if organization owns the event
+        if str(serializer.instance.event_map.event.organization_id) != str(organization.id):
+            raise serializers.ValidationError(_('You do not have permission to modify this event map location.'))
+
+        return serializer.save()
+
+    def perform_destroy(self, instance):
+        """Delete event map location with organization authentication."""
+        from .authentication import get_current_organization
+        organization = get_current_organization(self.request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        # Check if organization owns the event
+        if str(instance.event_map.event.organization_id) != str(organization.id):
+            raise serializers.ValidationError(_('You do not have permission to delete this event map location.'))
+
+        instance.delete()

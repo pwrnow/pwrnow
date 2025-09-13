@@ -9,6 +9,27 @@ export interface Category {
   slug: string;
 }
 
+export interface EventMapLocation {
+  id: string;
+  name: string;
+  description: string | null;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  order_index: number;
+  image: string | null;
+  is_active: boolean;
+}
+
+export interface EventMap {
+  id: string;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+  locations: EventMapLocation[];
+  locations_count: number;
+}
+
 export interface Event {
   id: string;
   slug: string;
@@ -40,6 +61,7 @@ export interface Event {
       duration: string;
     }>;
   } | null;
+  event_map?: EventMap | null;
 }
 
 export interface PostImage {

@@ -10,6 +10,8 @@ router.register(r'organizations', views.OrganizationViewSet, basename='organizat
 router.register(r'tags', views.TagViewSet, basename='tag')
 router.register(r'posts', views.PostViewSet, basename='post')
 router.register(r'schedule-items', views.ScheduleItemViewSet, basename='schedule-item')
+router.register(r'event-maps', views.EventMapViewSet, basename='event-map')
+router.register(r'event-map-locations', views.EventMapLocationViewSet, basename='event-map-location')
 
 # The API URLs are now determined automatically by the router
 urlpatterns = [

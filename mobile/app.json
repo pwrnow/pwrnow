@@ -24,7 +24,9 @@
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": ["pl", "en"],
         "CFBundleDevelopmentRegion": "pl",
-        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń."
+        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń.",
+        "NSLocationWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji, aby pokazać mapy wydarzeń i pomóc w nawigacji do miejsc wydarzeń.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Aplikacja potrzebuje dostępu do lokalizacji, aby pokazać mapy wydarzeń i pomóc w nawigacji do miejsc wydarzeń."
       },
       "icon": {
         "light": "./assets/icon-light.png",
@@ -48,7 +50,9 @@
       "permissions": [
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR",
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ],
       "intentFilters": [
         {
@@ -101,6 +105,13 @@
             "ios": ["en", "pl"],
             "android": ["en", "pl"]
           }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Aplikacja potrzebuje dostępu do lokalizacji, aby pokazać mapy wydarzeń i pomóc w nawigacji do miejsc wydarzeń.",
+          "locationWhenInUsePermission": "Aplikacja potrzebuje dostępu do lokalizacji, aby pokazać mapy wydarzeń i pomóc w nawigacji do miejsc wydarzeń."
         }
       ],
       "expo-secure-store",

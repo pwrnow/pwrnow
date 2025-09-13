@@ -588,3 +588,116 @@ class EventParticipation(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.event.title} ({self.get_participation_type_display()})"
+
+
+class EventMap(models.Model):
+    """Maps associated with events to show multiple locations."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    event = models.OneToOneField(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='event_map',
+        help_text="Event this map belongs to"
+    )
+    title = models.CharField(
+        max_length=200,
+        help_text="Title for the event map (e.g., 'Event Locations', 'Campus Map')"
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional description of the map"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this map is active and should be displayed"
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f"Map for {self.event.title}"
+
+    @property
+    def locations_count(self):
+        """Get the total number of locations on this map."""
+        return self.locations.count()
+
+
+class EventMapLocation(models.Model):
+    """Individual locations on an event map."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    event_map = models.ForeignKey(
+        EventMap,
+        on_delete=models.CASCADE,
+        related_name='locations'
+    )
+    name = models.CharField(
+        max_length=200,
+        help_text="Name of the location (e.g., 'Main Auditorium', 'Building A')"
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional description of this location"
+    )
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        help_text="Latitude coordinate"
+    )
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        help_text="Longitude coordinate"
+    )
+    address = models.CharField(
+        max_length=300,
+        blank=True,
+        null=True,
+        help_text="Human-readable address of this location"
+    )
+    order_index = models.PositiveIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Order for displaying locations"
+    )
+    image = models.ImageField(
+        upload_to='event_map_locations/',
+        blank=True,
+        null=True,
+        help_text="Custom marker image for this location"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this location is active and should be displayed"
+    )
+
+    class Meta:
+        ordering = ['order_index', 'name']
+        indexes = [
+            models.Index(fields=['event_map', 'order_index']),
+            models.Index(fields=['event_map', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.event_map.event.title})"
+
+    def clean(self):
+        """Validate latitude and longitude values."""
+        if self.latitude is not None:
+            if self.latitude < -90 or self.latitude > 90:
+                raise ValidationError("Latitude must be between -90 and 90 degrees.")
+        if self.longitude is not None:
+            if self.longitude < -180 or self.longitude > 180:
+                raise ValidationError("Longitude must be between -180 and 180 degrees.")

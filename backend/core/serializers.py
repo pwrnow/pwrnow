@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation
 from .translation_utils import get_language_from_request, get_translated_field
 
 import logging
@@ -76,13 +76,14 @@ class EventSerializer(serializers.ModelSerializer):
     participation_status = serializers.SerializerMethodField()
     posts = serializers.SerializerMethodField()
     schedule = serializers.SerializerMethodField()
+    event_map = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'aspect_ratio',
-            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule'
+            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map'
         ]
 
     def get_title(self, obj):
@@ -179,6 +180,28 @@ class EventSerializer(serializers.ModelSerializer):
             return None
 
         return ScheduleSerializer(schedule, context={'request': request}).data
+
+    def get_event_map(self, obj):
+        """Get event map for the event."""
+        request = self.context.get('request')
+        # Determine if current org owns the event
+        try:
+            from .authentication import get_current_organization
+            current_org = get_current_organization(request)
+        except Exception:
+            current_org = None
+
+        # Get event map - this will use prefetched data if available, otherwise make a query
+        event_map = getattr(obj, 'event_map', None)
+        if not event_map or not event_map.is_active:
+            return None
+
+        # Public can see event map only if event is verified
+        # For public users, events are already filtered to be verified in the queryset
+        if not (current_org and str(current_org.id) == str(obj.organization_id)) and not obj.verified:
+            return None
+
+        return EventMapSerializer(event_map, context={'request': request}).data
 
 
 class EventCreateSerializer(serializers.ModelSerializer):
@@ -468,3 +491,188 @@ class QRCodeScanSerializer(serializers.Serializer):
             return qr_code
         except QRCode.DoesNotExist:
             raise serializers.ValidationError("Invalid or inactive QR code.")
+
+
+class EventMapLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventMapLocation
+        fields = [
+            'id', 'name', 'description', 'latitude', 'longitude',
+            'address', 'order_index', 'image', 'is_active'
+        ]
+
+
+class EventMapSerializer(serializers.ModelSerializer):
+    locations = EventMapLocationSerializer(many=True, read_only=True)
+    locations_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventMap
+        fields = [
+            'id', 'title', 'description', 'is_active', 'locations', 'locations_count'
+        ]
+
+    def get_locations_count(self, obj):
+        """Get the total number of active locations on this map."""
+        return obj.locations.filter(is_active=True).count()
+
+
+class EventMapCreateSerializer(serializers.Serializer):
+    """Serializer for creating event maps."""
+    event_slug = serializers.SlugField(required=True)
+    title = serializers.CharField(max_length=200, required=True)
+    description = serializers.CharField(max_length=1000, required=False, allow_blank=True, allow_null=True)
+    locations = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        allow_empty=True
+    )
+
+    def validate(self, attrs):
+        """Validate the event map data."""
+        event_slug = attrs.get('event_slug')
+        if event_slug:
+            try:
+                event = Event.objects.get(slug=event_slug)
+            except Event.DoesNotExist:
+                raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+            # Check if event already has a map
+            if hasattr(event, 'event_map'):
+                raise serializers.ValidationError({'event_slug': _('Event already has a map.')})
+
+            # Keep for create() to avoid re-query
+            self._validated_event = event
+
+        # Validate locations if provided
+        locations = attrs.get('locations', [])
+        for i, location in enumerate(locations):
+            if 'name' not in location:
+                raise serializers.ValidationError({f'locations[{i}].name': _('Location name is required.')})
+            if 'latitude' not in location or 'longitude' not in location:
+                raise serializers.ValidationError({f'locations[{i}].coordinates': _('Latitude and longitude are required.')})
+
+            try:
+                lat = float(location['latitude'])
+                lng = float(location['longitude'])
+                if lat < -90 or lat > 90:
+                    raise serializers.ValidationError({f'locations[{i}].latitude': _('Latitude must be between -90 and 90 degrees.')})
+                if lng < -180 or lng > 180:
+                    raise serializers.ValidationError({f'locations[{i}].longitude': _('Longitude must be between -180 and 180 degrees.')})
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({f'locations[{i}].coordinates': _('Invalid latitude or longitude values.')})
+
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError(_('No request context found.'))
+
+        from .authentication import get_current_organization
+        organization = get_current_organization(request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        # Use event from validate(), or fetch if not present (safety)
+        event = getattr(self, '_validated_event', None)
+        if event is None:
+            event_slug = validated_data['event_slug']
+            try:
+                event = Event.objects.get(slug=event_slug)
+            except Event.DoesNotExist:
+                raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+        if str(event.organization_id) != str(organization.id):
+            raise serializers.ValidationError(_('You do not have permission to modify this event.'))
+
+        # Create the event map
+        event_map = EventMap.objects.create(
+            event=event,
+            title=validated_data['title'],
+            description=validated_data.get('description') or None,
+            is_active=True
+        )
+
+        # Create locations if provided
+        locations = validated_data.get('locations', [])
+        for index, location_data in enumerate(locations):
+            EventMapLocation.objects.create(
+                event_map=event_map,
+                name=location_data['name'],
+                description=location_data.get('description') or None,
+                latitude=location_data['latitude'],
+                longitude=location_data['longitude'],
+                address=location_data.get('address') or None,
+                order_index=location_data.get('order_index', index),
+                is_active=True
+            )
+
+        return event_map
+
+
+class EventMapLocationCreateSerializer(serializers.Serializer):
+    """Serializer for adding locations to existing event maps."""
+    event_slug = serializers.SlugField(required=True)
+    name = serializers.CharField(max_length=200, required=True)
+    description = serializers.CharField(max_length=1000, required=False, allow_blank=True, allow_null=True)
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=True)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=True)
+    address = serializers.CharField(max_length=300, required=False, allow_blank=True, allow_null=True)
+    order_index = serializers.IntegerField(required=False, default=0)
+
+    def validate(self, attrs):
+        """Validate the location data."""
+        event_slug = attrs.get('event_slug')
+        if event_slug:
+            try:
+                event = Event.objects.get(slug=event_slug)
+            except Event.DoesNotExist:
+                raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+            if not hasattr(event, 'event_map'):
+                raise serializers.ValidationError({'event_slug': _('Event does not have a map.')})
+
+            if not event.event_map.is_active:
+                raise serializers.ValidationError({'event_slug': _('Event map is not active.')})
+
+            # Keep for create() to avoid re-query
+            self._validated_event = event
+
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError(_('No request context found.'))
+
+        from .authentication import get_current_organization
+        organization = get_current_organization(request)
+        if not organization:
+            raise serializers.ValidationError(_('No authenticated organization found.'))
+
+        # Use event from validate(), or fetch if not present (safety)
+        event = getattr(self, '_validated_event', None)
+        if event is None:
+            event_slug = validated_data['event_slug']
+            try:
+                event = Event.objects.get(slug=event_slug)
+            except Event.DoesNotExist:
+                raise serializers.ValidationError({'event_slug': _('Invalid event slug.')})
+
+        if str(event.organization_id) != str(organization.id):
+            raise serializers.ValidationError(_('You do not have permission to modify this event.'))
+
+        # Create the location
+        location = EventMapLocation.objects.create(
+            event_map=event.event_map,
+            name=validated_data['name'],
+            description=validated_data.get('description') or None,
+            latitude=validated_data['latitude'],
+            longitude=validated_data['longitude'],
+            address=validated_data.get('address') or None,
+            order_index=validated_data.get('order_index', 0),
+            is_active=True
+        )
+
+        return location

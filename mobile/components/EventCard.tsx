@@ -354,16 +354,16 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         </View>
 
         {/* Image */}
-        {event.image_url ? (
-          <View>
-            <Pressable onPress={handleImagePress}>
-              <View
-                style={{
-                  backgroundColor: colors.muted,
-                  aspectRatio: imageAspectRatio,
-                }}
-                className='w-full overflow-hidden'
-              >
+        <View>
+          <Pressable onPress={handleImagePress}>
+            <View
+              style={{
+                backgroundColor: colors.muted,
+                aspectRatio: imageAspectRatio,
+              }}
+              className='w-full overflow-hidden'
+            >
+              {event.image_url ? (
                 <CachedImage
                   source={{ uri: event.image_url }}
                   style={{ width: '100%', height: '100%' }}
@@ -371,10 +371,22 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                   onLoad={() => setIsImageLoading(false)}
                   onError={() => setIsImageLoading(false)}
                 />
-              </View>
-            </Pressable>
-          </View>
-        ) : null}
+              ) : (
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#EAEAEA',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Feather name='image' size={48} color='#C9C9C9' />
+                </View>
+              )}
+            </View>
+          </Pressable>
+        </View>
 
         {/* Content */}
         <Pressable onPress={handleEventLinkPress} className='px-3 pt-4 pb-5'>
