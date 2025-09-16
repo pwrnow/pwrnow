@@ -4,7 +4,9 @@
     "target": {
       "namespace": "android_app",
       "package_name": "pl.pwrnow.app",
-      "sha256_cert_fingerprints": ["YOUR_RELEASE_KEY_SHA256_FINGERPRINT"]
+      "sha256_cert_fingerprints": [
+        "1B:4C:9D:1A:A3:78:A3:26:55:4F:1E:8C:DF:F3:C7:87:08:D1:9F:8E"
+      ]
     }
   }
 ]
