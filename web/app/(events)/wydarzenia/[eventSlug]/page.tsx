@@ -15,8 +15,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import { formatLocalizedDate } from '@/lib/utils';
 import { isUpcoming } from '@/lib/organization-utils';
 
-// Enable ISR with 60 second revalidation for SEO and performance
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 // Cache fetch requests for better performance
 // export const fetchCache = 'default-cache';

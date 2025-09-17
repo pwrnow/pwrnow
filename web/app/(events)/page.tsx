@@ -11,11 +11,7 @@ import {
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-// Enable Full Route Cache by setting revalidation
-export const revalidate = 60; // Revalidate every 1 minute
-
-// Cache fetch requests for better performance
-// export const fetchCache = 'default-cache';
+export const dynamic = 'force-dynamic';
 
 // Generate metadata for better SEO
 export async function generateMetadata(): Promise<Metadata> {
