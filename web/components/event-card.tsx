@@ -82,6 +82,14 @@ export default function EventCard({ event }: EventCardProps) {
 
   return (
     <div className='mb-8 border-0 sm:border sm:rounded-lg sm:shadow-sm hover:sm:shadow-md transition-all duration-300 overflow-hidden group'>
+      {/* Hidden SEO-friendly link to event detail page */}
+      <Link
+        href={`/wydarzenia/${event.slug}`}
+        className='sr-only'
+        aria-label={`View details for ${event.title}`}
+      >
+        {event.title} - {event.organization.name} - {dateString}
+      </Link>
       <div className='flex flex-col'>
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
           <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
