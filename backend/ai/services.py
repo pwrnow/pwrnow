@@ -5,6 +5,11 @@ from typing import Dict, Any, List
 from django.conf import settings
 from .models import AIProcessingLog
 
+from utils.posthog_ai import posthog
+from posthog.ai.langchain import CallbackHandler
+
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +29,7 @@ class ScheduleParsingService:
             'max_tokens': 4000,
         }
     }
-    
+
     # Default provider
     DEFAULT_PROVIDER = 'openai'
 
@@ -70,15 +75,24 @@ Please extract all schedule items and return them as a JSON array following the 
     def __init__(self):
         """Initialize the service with LangChain using the configured provider."""
         self.provider = getattr(settings, 'AI_PROVIDER', self.DEFAULT_PROVIDER)
-        
+
         if self.provider not in self.PROVIDER_CONFIGS:
             raise ValueError(f"Unsupported provider: {self.provider}. Supported providers: {list(self.PROVIDER_CONFIGS.keys())}")
-        
+
         config = self.PROVIDER_CONFIGS[self.provider]
-        
+
+        self.callback_handler = CallbackHandler(
+            client=posthog, # This is an optional parameter. If it is not provided, a default client will be used.
+            # distinct_id="user_123", # optional
+            # trace_id="trace_456", # optional
+            # properties={"conversation_id": "abc123"} # optional
+            # groups={"company": "company_id_in_your_db"} # optional
+            privacy_mode=False # optional
+        )
+
         try:
             from langchain.schema import SystemMessage, HumanMessage
-            
+
             if self.provider == 'openai':
                 from langchain_openai import ChatOpenAI
                 self.llm = ChatOpenAI(
@@ -135,7 +149,7 @@ Please extract all schedule items and return them as a JSON array following the 
                 self.HumanMessage(content=prompt)
             ]
 
-            response = self.llm.invoke(messages)
+            response = self.llm.invoke(messages, callbacks=[self.callback_handler])
             content = response.content
 
             # Parse the response

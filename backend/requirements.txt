@@ -28,3 +28,4 @@ dj-rest-auth
 django-allauth[socialaccount]
 djangorestframework-simplejwt
 cryptography
+posthog

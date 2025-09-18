@@ -554,3 +554,6 @@ SIMPLE_JWT = {
 OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
 AI_PROVIDER = env("AI_PROVIDER", default="openai")  # "openai" or "gemini"
+
+POSTHOG_API_KEY = env("POSTHOG_API_KEY", default="")
+POSTHOG_HOST = env("POSTHOG_HOST", default="https://eu.i.posthog.com")
