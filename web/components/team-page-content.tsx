@@ -1,10 +1,35 @@
 'use client';
 
-import { Github, Linkedin, Mail, Globe } from 'lucide-react';
+import {
+  Github,
+  Linkedin,
+  Mail,
+  Globe,
+  Instagram,
+  Facebook,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+// Types
+type SocialLinks = {
+  github?: string;
+  linkedin?: string;
+  website?: string;
+  email?: string;
+  instagram?: string;
+  facebook?: string;
+};
+
+type TeamMember = {
+  id: number;
+  name: string;
+  description: string;
+  image: string | null;
+  social: SocialLinks;
+};
+
 // Team member data - showcasing professional expertise and individual achievements
-const teamMembers = [
+const teamMembers: TeamMember[] = [
   {
     id: 1,
     name: 'Michał Mendzelewski',
@@ -113,7 +138,7 @@ function TeamMemberCard({
   member,
   index,
 }: {
-  member: (typeof teamMembers)[0];
+  member: TeamMember;
   index: number;
 }) {
   const isEven = index % 2 === 0;
@@ -169,6 +194,32 @@ function TeamMemberCard({
 
           {/* Social Links */}
           <div className='flex gap-4'>
+            {member.social.instagram && (
+              <a
+                href={member.social.instagram}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
+              >
+                <Instagram
+                  size={20}
+                  className='text-muted-foreground hover:text-foreground transition-colors'
+                />
+              </a>
+            )}
+            {member.social.facebook && (
+              <a
+                href={member.social.facebook}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
+              >
+                <Facebook
+                  size={20}
+                  className='text-muted-foreground hover:text-foreground transition-colors'
+                />
+              </a>
+            )}
             {member.social.website && (
               <a
                 href={member.social.website}
