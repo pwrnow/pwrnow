@@ -2,13 +2,6 @@ import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 import { Space_Grotesk, Righteous } from 'next/font/google';
 import './globals.css';
-
-import PlausibleProvider from 'next-plausible';
-import {
-  shouldEnableAnalytics,
-  getAnalyticsDomain,
-  analyticsConfig,
-} from '@/lib/analytics';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
 
@@ -76,8 +69,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const enableAnalytics = shouldEnableAnalytics();
-  const analyticsDomain = getAnalyticsDomain();
   const locale = await getLocale();
 
   return (
@@ -93,18 +84,7 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {enableAnalytics ? (
-              <PlausibleProvider
-                domain={analyticsDomain}
-                customDomain={analyticsConfig.apiHost}
-                trackLocalhost={analyticsConfig.trackLocalhost}
-                enabled={enableAnalytics}
-              >
-                {children}
-              </PlausibleProvider>
-            ) : (
-              children
-            )}
+            {children}
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

@@ -1,4 +1,3 @@
-import { usePlausible } from 'next-plausible';
 import posthog from 'posthog-js';
 import { useCallback } from 'react';
 import { shouldEnableAnalytics } from './analytics';
@@ -8,28 +7,22 @@ export interface EventProps {
 }
 
 /**
- * Custom hook for tracking events with Plausible
+ * Custom hook for tracking events (PostHog-backed)
  */
 export const useAnalytics = () => {
-  const plausible = usePlausible();
   const isEnabled = shouldEnableAnalytics();
 
   const trackEvent = useCallback(
     (eventName: string, props?: EventProps) => {
-      // Plausible (controlled by isEnabled)
+      // If disabled, log in dev and skip
       if (!isEnabled) {
         if (process.env.NODE_ENV === 'development') {
           console.log(
-            `[Analytics] Event would be tracked (Plausible disabled): ${eventName}`,
+            `[Analytics] Event would be tracked: ${eventName}`,
             props
           );
         }
-      } else {
-        if (props) {
-          plausible(eventName, { props });
-        } else {
-          plausible(eventName);
-        }
+        return;
       }
 
       // PostHog (independent toggle; only on client when initialized)
@@ -45,7 +38,7 @@ export const useAnalytics = () => {
         }
       }
     },
-    [plausible, isEnabled]
+    [isEnabled]
   );
 
   const trackPageView = useCallback(
@@ -57,9 +50,16 @@ export const useAnalytics = () => {
         return;
       }
 
-      plausible('pageview', { u: url, props });
+      // Pageview via PostHog as a standard capture
+      if (typeof window !== 'undefined') {
+        try {
+          posthog.capture('pageview', { u: url, ...(props || {}) });
+        } catch (error) {
+          console.error('Error tracking pageview with PostHog:', error);
+        }
+      }
     },
-    [plausible, isEnabled]
+    [isEnabled]
   );
 
   // Predefined event tracking functions

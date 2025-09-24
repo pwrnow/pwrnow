@@ -97,6 +97,13 @@ export default function AddEventForm({
         if (parsedData.endsAt) {
           parsedData.endsAt = new Date(parsedData.endsAt);
         }
+        // Ensure publicationDate is a Date and has a sensible default
+        if (parsedData.publicationDate) {
+          parsedData.publicationDate = new Date(parsedData.publicationDate);
+          parsedData.publicationDate.setHours(0, 0, 0, 0);
+        } else {
+          parsedData.publicationDate = getTomorrowDate();
+        }
 
         // Set the form values
         form.reset(parsedData);
