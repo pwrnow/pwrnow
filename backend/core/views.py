@@ -251,10 +251,10 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         # Simpler ordering - avoid complex CASE statements
         return queryset.extra(
             select={
-                'is_today': "DATE(starts_at) = %s",
+                'is_today': "DATE(starts_at) <= %s AND DATE(ends_at) >= %s",
                 'is_new': "publication_date = %s"
             },
-            select_params=[today, today],
+            select_params=[today, today, today],
             order_by=['-is_today', '-is_new', 'starts_at']
         )
 
