@@ -72,7 +72,6 @@ class EventSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     is_new = serializers.SerializerMethodField()
-    is_today = serializers.SerializerMethodField()
     liked = serializers.SerializerMethodField()
     participation_status = serializers.SerializerMethodField()
     posts = serializers.SerializerMethodField()
@@ -115,12 +114,6 @@ class EventSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'is_new'):
             return obj.is_new
         return obj.check_is_new()
-
-    def get_is_today(self, obj):
-        """Check if the event is today."""
-        if hasattr(obj, 'is_today'):
-            return obj.is_today
-        return obj.check_is_today()
 
     def get_liked(self, obj):
         request = self.context.get('request')

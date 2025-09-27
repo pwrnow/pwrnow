@@ -280,12 +280,6 @@ class Event(models.Model):
         today = timezone.now().date()
         return (today - self.publication_date).days < 1
 
-    def check_is_today(self):
-        """Check if the event is today. current date is between start and end date.
-        """
-        today = timezone.now().date()
-        return self.starts_at.date() <= today <= self.ends_at.date()
-
     @property
     def duration(self):
         """Get event duration as timedelta."""
