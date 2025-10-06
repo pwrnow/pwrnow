@@ -57,13 +57,9 @@ const teamMembers: TeamMember[] = [
     id: 3,
     name: 'Kuba Królak',
     description:
-      "Digital Marketing Strategist & Community Growth Specialist. Built PWr Now's user acquisition strategy and community engagement programs. Experienced in data-driven marketing, social media strategy, and product growth. Successfully scaled user base through innovative marketing campaigns and partnerships.",
+      'Taking care of marketing, communication and all the behind-the-scenes stuff',
     image: 'team_pics/krolak.jpg',
-    social: {
-      github: 'https://github.com/jakub',
-      linkedin: 'https://linkedin.com/in/jakub',
-      email: 'jakub@pwrnow.pl',
-    },
+    social: {},
   },
 ];
 
