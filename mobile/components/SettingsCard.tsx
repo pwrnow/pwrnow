@@ -11,6 +11,7 @@ interface SettingsCardProps {
   onPress?: () => void;
   rightElement?: React.ReactNode;
   showChevron?: boolean;
+  disabled?: boolean;
 }
 
 export default function SettingsCard({
@@ -20,6 +21,7 @@ export default function SettingsCard({
   onPress,
   rightElement,
   showChevron = true,
+  disabled = false,
 }: SettingsCardProps) {
   const { colors } = useTheme();
 
@@ -31,7 +33,7 @@ export default function SettingsCard({
   };
 
   const cardContent = (
-    <View className='flex-row items-center'>
+    <View className='flex-row items-center' style={{ opacity: disabled ? 0.5 : 1 }}>
       {/* Icon */}
       <View
         style={{ backgroundColor: colors.muted }}
@@ -66,7 +68,7 @@ export default function SettingsCard({
     </View>
   );
 
-  if (onPress) {
+  if (onPress && !disabled) {
     return (
       <TouchableOpacity
         onPress={handlePress}

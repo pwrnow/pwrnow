@@ -234,8 +234,8 @@ export default function ProfileScreen() {
             {t('settings')}
           </Text>
 
-          {/* Username Setting - only show if username hasn't been set by user yet */}
-          {isAuthenticated && user && !user.username_set_by_user && (
+          {/* Username Setting - always visible but only clickable if not set by user */}
+          {isAuthenticated && user && (
             <SettingsCard
               title='Username'
               description={
@@ -244,15 +244,18 @@ export default function ProfileScreen() {
                   : 'Set your unique username'
               }
               icon='at-sign'
-              onPress={handleUsernamePress}
+              onPress={user.username_set_by_user ? undefined : handleUsernamePress}
               rightElement={
-                <Feather
-                  name='chevron-right'
-                  size={20}
-                  color={colors.foreground}
-                />
+                !user.username_set_by_user && (
+                  <Feather
+                    name='chevron-right'
+                    size={20}
+                    color={colors.foreground}
+                  />
+                )
               }
               showChevron={false}
+              disabled={user.username_set_by_user}
             />
           )}
 
