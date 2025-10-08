@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation
+from django.db import models
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .translation_utils import get_language_from_request, get_translated_field
 
 import logging
@@ -676,3 +677,112 @@ class EventMapLocationCreateSerializer(serializers.Serializer):
         )
 
         return location
+
+
+class UserSearchSerializer(serializers.Serializer):
+    """Serializer for searching users by username."""
+    id = serializers.UUIDField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    is_friend = serializers.BooleanField(read_only=True)
+    has_pending_request = serializers.BooleanField(read_only=True)
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    """Serializer for friend requests."""
+    from_user = serializers.SerializerMethodField()
+    to_user = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FriendRequest
+        fields = ['id', 'from_user', 'to_user', 'status', 'created_at']
+        read_only_fields = ['id', 'status', 'created_at']
+    
+    def get_from_user(self, obj):
+        return {
+            'id': str(obj.from_user.id),
+            'username': obj.from_user.username,
+        }
+    
+    def get_to_user(self, obj):
+        return {
+            'id': str(obj.to_user.id),
+            'username': obj.to_user.username,
+        }
+
+
+class FriendRequestCreateSerializer(serializers.Serializer):
+    """Serializer for creating friend requests."""
+    to_user_id = serializers.UUIDField(required=True)
+    
+    def validate_to_user_id(self, value):
+        """Validate that the target user exists."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            user = User.objects.get(id=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(_("User not found."))
+        
+        # Check if trying to send request to self
+        request = self.context.get('request')
+        if request and request.user.id == value:
+            raise serializers.ValidationError(_("You cannot send a friend request to yourself."))
+        
+        return value
+    
+    def validate(self, attrs):
+        """Additional validation for friend requests."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        request = self.context.get('request')
+        from_user = request.user
+        to_user = User.objects.get(id=attrs['to_user_id'])
+        
+        # Check if users are already friends
+        friendship_exists = Friendship.objects.filter(
+            models.Q(user1=from_user, user2=to_user) |
+            models.Q(user1=to_user, user2=from_user)
+        ).exists()
+        
+        if friendship_exists:
+            raise serializers.ValidationError(_("You are already friends with this user."))
+        
+        # Check if there's already a pending request in either direction
+        existing_request = FriendRequest.objects.filter(
+            (models.Q(from_user=from_user, to_user=to_user) |
+             models.Q(from_user=to_user, to_user=from_user)),
+            status=FriendRequest.Status.PENDING
+        ).first()
+        
+        if existing_request:
+            if existing_request.from_user == from_user:
+                raise serializers.ValidationError(_("You have already sent a friend request to this user."))
+            else:
+                raise serializers.ValidationError(_("This user has already sent you a friend request. Please accept it instead."))
+        
+        return attrs
+    
+    def create(self, validated_data):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        request = self.context.get('request')
+        to_user = User.objects.get(id=validated_data['to_user_id'])
+        
+        friend_request = FriendRequest.objects.create(
+            from_user=request.user,
+            to_user=to_user,
+            status=FriendRequest.Status.PENDING
+        )
+        
+        return friend_request
+
+
+class FriendshipSerializer(serializers.Serializer):
+    """Serializer for friendships (showing the friend's data)."""
+    id = serializers.UUIDField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    friendship_id = serializers.UUIDField(read_only=True)
+    friendship_created_at = serializers.DateTimeField(read_only=True)

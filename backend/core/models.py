@@ -701,3 +701,96 @@ class EventMapLocation(models.Model):
         if self.longitude is not None:
             if self.longitude < -180 or self.longitude > 180:
                 raise ValidationError("Longitude must be between -180 and 180 degrees.")
+
+
+class Friendship(models.Model):
+    """Represents an accepted friendship between two users (bidirectional relationship)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    # Both users in the friendship (order doesn't matter)
+    user1 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='friendships_as_user1'
+    )
+    user2 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='friendships_as_user2'
+    )
+
+    class Meta:
+        unique_together = (('user1', 'user2'),)
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user1', 'created_at']),
+            models.Index(fields=['user2', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"Friendship: {self.user1.username} - {self.user2.username}"
+
+    def clean(self):
+        """Ensure users are different and maintain consistent ordering."""
+        if self.user1 == self.user2:
+            raise ValidationError("Users cannot be friends with themselves.")
+        
+        # Ensure user1.id < user2.id for consistent ordering
+        if self.user1.id > self.user2.id:
+            self.user1, self.user2 = self.user2, self.user1
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+
+class FriendRequest(models.Model):
+    """Represents a pending friend request from one user to another."""
+    
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        ACCEPTED = 'accepted', _('Accepted')
+        REJECTED = 'rejected', _('Rejected')
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    
+    # User who sent the request
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sent_friend_requests'
+    )
+    
+    # User who received the request
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='received_friend_requests'
+    )
+    
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True
+    )
+
+    class Meta:
+        unique_together = (('from_user', 'to_user'),)
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['from_user', 'status']),
+            models.Index(fields=['to_user', 'status']),
+            models.Index(fields=['status', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Friend Request: {self.from_user.username} -> {self.to_user.username} ({self.status})"
+
+    def clean(self):
+        """Validate that users are different."""
+        if self.from_user == self.to_user:
+            raise ValidationError("Users cannot send friend requests to themselves.")

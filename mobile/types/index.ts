@@ -89,3 +89,30 @@ export interface Post {
   organization: Organization;
   images: PostImage[];
 }
+
+export interface FriendUser {
+  id: string;
+  username: string;
+}
+
+export interface SearchedUser {
+  id: string;
+  username: string;
+  is_friend: boolean;
+  has_pending_request: boolean;
+}
+
+export interface FriendRequest {
+  id: string;
+  from_user: FriendUser;
+  to_user: FriendUser;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+}
+
+export interface Friend {
+  id: string;
+  username: string;
+  friendship_id: string;
+  friendship_created_at: string;
+}

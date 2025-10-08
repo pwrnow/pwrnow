@@ -18,4 +18,13 @@ urlpatterns = [
     path('', include(router.urls)),
     path('events/<slug:slug>/likes/', views.event_like, name='event-like'),
     path('scan-qr/', views.scan_qr_code, name='scan-qr'),
+    
+    # Friendship endpoints
+    path('users/search/', views.search_users, name='search-users'),
+    path('friends/', views.list_friends, name='list-friends'),
+    path('friends/<uuid:friend_id>/remove/', views.remove_friend, name='remove-friend'),
+    path('friend-requests/', views.list_friend_requests, name='list-friend-requests'),
+    path('friend-requests/send/', views.send_friend_request, name='send-friend-request'),
+    path('friend-requests/<uuid:request_id>/accept/', views.accept_friend_request, name='accept-friend-request'),
+    path('friend-requests/<uuid:request_id>/reject/', views.reject_friend_request, name='reject-friend-request'),
 ]

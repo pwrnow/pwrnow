@@ -27,6 +27,7 @@ import { config } from '../lib/config';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../hooks/useThemeColors';
+import UsernameSelectionModal from '../components/UsernameSelectionModal';
 
 // Required for expo-auth-session on Android
 WebBrowser.maybeCompleteAuthSession();
@@ -45,18 +46,28 @@ const ACCENT_PINK = '#EC2E81';
 
 export default function SignInScreen() {
   const { colors } = useThemeColors();
-  const { setAuthFromBackend, isLoading, isAuthenticated } = useAuth();
+  const { setAuthFromBackend, isLoading, isAuthenticated, needsUsernameSetup, justSignedIn, clearJustSignedInFlag } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Avoid noisy logs in production
-
-  // Navigation after authentication is now handled in _layout.tsx based on needsUsernameSetup
+  // Handle post-authentication - show username modal if needed, otherwise navigate back
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !isAuthenticating) {
-      console.log('User authenticated, navigation will be handled by _layout.tsx');
+    if (!isLoading && isAuthenticated && justSignedIn && !isAuthenticating) {
+      if (needsUsernameSetup) {
+        // Show username modal for first-time users
+        setShowUsernameModal(true);
+      } else {
+        // User already has username, navigate back
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/');
+        }
+        clearJustSignedInFlag();
+      }
     }
-  }, [isLoading, isAuthenticated, isAuthenticating]);
+  }, [isLoading, isAuthenticated, needsUsernameSetup, justSignedIn, isAuthenticating]);
 
   // Keep OAuth configuration internal; do not log IDs/URIs in production
 
@@ -181,6 +192,28 @@ export default function SignInScreen() {
   const handleApplePress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     handleAppleSignIn();
+  };
+
+  const handleUsernameComplete = async () => {
+    // Hide modal and navigate back
+    setShowUsernameModal(false);
+    clearJustSignedInFlag();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  };
+
+  const handleUsernameCancel = () => {
+    // Hide modal and navigate back
+    setShowUsernameModal(false);
+    clearJustSignedInFlag();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
   };
 
   // Simple loading check
@@ -418,6 +451,14 @@ export default function SignInScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Username Selection Modal - shown after first-time social login */}
+      <UsernameSelectionModal
+        visible={showUsernameModal}
+        onComplete={handleUsernameComplete}
+        onCancel={handleUsernameCancel}
+        dismissible={true}
+      />
     </View>
   );
 }

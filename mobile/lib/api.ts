@@ -1,4 +1,4 @@
-import { Event, Category, Organization, Post, User } from '../types';
+import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -450,6 +450,143 @@ export const userApi = {
   },
 };
 
+// Friendship API
+const friendsApi = {
+  // Search users by username
+  searchUsers: async (query: string): Promise<SearchedUser[]> => {
+    const trimmedQuery = query.trim();
+    console.log('[API] Searching users with query:', trimmedQuery);
+    
+    if (trimmedQuery.length < 3) {
+      console.log('[API] Query too short, returning empty array');
+      return [];
+    }
+    
+    const url = `${getApiUrl()}/users/search/?q=${encodeURIComponent(trimmedQuery)}`;
+    console.log('[API] Search URL:', url);
+    
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    
+    console.log('[API] Search response status:', res.status);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('[API] Search error:', res.status, errorText);
+      throw new Error(`Failed to search users: ${res.status} ${errorText}`);
+    }
+    
+    const data = await res.json();
+    console.log('[API] Search results:', data);
+    return data;
+  },
+
+  // Get list of friends
+  getFriends: async (): Promise<Friend[]> => {
+    const url = `${getApiUrl()}/friends/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to get friends');
+    }
+    return res.json();
+  },
+
+  // Remove a friend
+  removeFriend: async (friendId: string): Promise<void> => {
+    const url = `${getApiUrl()}/friends/${friendId}/remove/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to remove friend');
+    }
+  },
+
+  // Get pending friend requests
+  getFriendRequests: async (): Promise<FriendRequest[]> => {
+    const url = `${getApiUrl()}/friend-requests/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to get friend requests');
+    }
+    return res.json();
+  },
+
+  // Send a friend request
+  sendFriendRequest: async (toUserId: string): Promise<FriendRequest> => {
+    const url = `${getApiUrl()}/friend-requests/send/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+      body: JSON.stringify({ to_user_id: toUserId }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.non_field_errors?.[0] || 'Failed to send friend request');
+    }
+    return res.json();
+  },
+
+  // Accept a friend request
+  acceptFriendRequest: async (requestId: string): Promise<void> => {
+    const url = `${getApiUrl()}/friend-requests/${requestId}/accept/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to accept friend request');
+    }
+  },
+
+  // Reject a friend request
+  rejectFriendRequest: async (requestId: string): Promise<void> => {
+    const url = `${getApiUrl()}/friend-requests/${requestId}/reject/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to reject friend request');
+    }
+  },
+};
+
 // Export all APIs
 export const api = {
   events: eventsApi,
@@ -457,5 +594,6 @@ export const api = {
   organizations: organizationsApi,
   notifications: notificationsApi,
   user: userApi,
+  friends: friendsApi,
   baseUrl: getApiUrl(),
 };

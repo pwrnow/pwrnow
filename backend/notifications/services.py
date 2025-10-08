@@ -692,6 +692,176 @@ class ExpoPushNotificationService:
 
             return title, body, subtitle
 
+    def send_friend_request_notification(self, friend_request):
+        """
+        Send notification when a friend request is received.
+        
+        Args:
+            friend_request: FriendRequest instance
+            
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int, 'total': int}
+        """
+        try:
+            # Get devices for the user who received the request
+            devices = Device.objects.filter(
+                user=friend_request.to_user,
+                notifications_enabled=True
+            ).select_related('user')
+            
+            if not devices.exists():
+                logger.info(f"No active devices found for user {friend_request.to_user.id}")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+            
+            all_notifications_data = []
+            notification_records = []
+            
+            for device in devices:
+                try:
+                    lang = getattr(device, 'preferred_language', 'pl') or 'pl'
+                    
+                    with override(lang):
+                        title = _("New friend request")
+                        body = _("{username} sent you a friend request").format(
+                            username=friend_request.from_user.username
+                        )
+                    
+                    notification_data = {
+                        'to': device.expo_push_token,
+                        'title': f"👋 {title}",
+                        'body': body,
+                        'data': {
+                            'type': 'friend_request',
+                            'friend_request_id': str(friend_request.id),
+                            'from_user_id': str(friend_request.from_user.id),
+                            'from_username': friend_request.from_user.username,
+                        },
+                        'priority': 'high',
+                        'channelId': 'friends',
+                        'sound': 'default'
+                    }
+                    
+                    all_notifications_data.append(notification_data)
+                    notification_records.append({
+                        'title': title,
+                        'body': body,
+                        'data': notification_data['data'],
+                        'device': device,
+                    })
+                    
+                except Exception as e:
+                    logger.error(f"Error preparing friend request notification for device {device.id}: {str(e)}")
+                    continue
+            
+            if not all_notifications_data:
+                return {'sent': 0, 'failed': 0, 'total': 0}
+            
+            result = self.send_multiple_notifications(all_notifications_data)
+            
+            if result['sent'] > 0:
+                for record_data in notification_records:
+                    try:
+                        PushNotification.objects.create(
+                            title=record_data['title'],
+                            body=record_data['body'],
+                            data=record_data['data'],
+                            device=record_data['device'],
+                            status='sent'
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating notification record: {str(e)}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error sending friend request notification: {str(e)}")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
+    def send_friend_request_accepted_notification(self, friend_request):
+        """
+        Send notification when a friend request is accepted.
+        
+        Args:
+            friend_request: FriendRequest instance
+            
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int, 'total': int}
+        """
+        try:
+            # Get devices for the user who sent the request (now accepted)
+            devices = Device.objects.filter(
+                user=friend_request.from_user,
+                notifications_enabled=True
+            ).select_related('user')
+            
+            if not devices.exists():
+                logger.info(f"No active devices found for user {friend_request.from_user.id}")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+            
+            all_notifications_data = []
+            notification_records = []
+            
+            for device in devices:
+                try:
+                    lang = getattr(device, 'preferred_language', 'pl') or 'pl'
+                    
+                    with override(lang):
+                        title = _("Friend request accepted")
+                        body = _("{username} accepted your friend request").format(
+                            username=friend_request.to_user.username
+                        )
+                    
+                    notification_data = {
+                        'to': device.expo_push_token,
+                        'title': f"🎉 {title}",
+                        'body': body,
+                        'data': {
+                            'type': 'friend_request_accepted',
+                            'friend_request_id': str(friend_request.id),
+                            'friend_user_id': str(friend_request.to_user.id),
+                            'friend_username': friend_request.to_user.username,
+                        },
+                        'priority': 'high',
+                        'channelId': 'friends',
+                        'sound': 'default'
+                    }
+                    
+                    all_notifications_data.append(notification_data)
+                    notification_records.append({
+                        'title': title,
+                        'body': body,
+                        'data': notification_data['data'],
+                        'device': device,
+                    })
+                    
+                except Exception as e:
+                    logger.error(f"Error preparing friend request accepted notification for device {device.id}: {str(e)}")
+                    continue
+            
+            if not all_notifications_data:
+                return {'sent': 0, 'failed': 0, 'total': 0}
+            
+            result = self.send_multiple_notifications(all_notifications_data)
+            
+            if result['sent'] > 0:
+                for record_data in notification_records:
+                    try:
+                        PushNotification.objects.create(
+                            title=record_data['title'],
+                            body=record_data['body'],
+                            data=record_data['data'],
+                            device=record_data['device'],
+                            status='sent'
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating notification record: {str(e)}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error sending friend request accepted notification: {str(e)}")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
     def check_delivery_receipts(self, ticket_ids: List[str]) -> Dict:
         """Check delivery receipts for sent notifications."""
 

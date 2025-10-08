@@ -7,7 +7,7 @@ from django.utils.text import Truncator
 from django.conf import settings
 from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
-from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation
+from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .forms import OrganizationAdminForm, EventAdminForm
 
 
@@ -941,3 +941,50 @@ class EventMapLocationAdmin(admin.ModelAdmin):
 
 # Add EventMapInline to EventAdmin after it's defined
 EventAdmin.inlines.append(EventMapInline)
+
+
+@admin.register(Friendship)
+class FriendshipAdmin(admin.ModelAdmin):
+    list_display = ['user1', 'user2', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user1__username', 'user1__email', 'user2__username', 'user2__email']
+    autocomplete_fields = ['user1', 'user2']
+    readonly_fields = ['id', 'created_at']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Friendship', {
+            'fields': ('user1', 'user2')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user1', 'user2')
+
+
+@admin.register(FriendRequest)
+class FriendRequestAdmin(admin.ModelAdmin):
+    list_display = ['from_user', 'to_user', 'status', 'created_at', 'updated_at']
+    list_filter = ['status', 'created_at', 'updated_at']
+    search_fields = ['from_user__username', 'from_user__email', 'to_user__username', 'to_user__email']
+    autocomplete_fields = ['from_user', 'to_user']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    list_editable = ['status']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Friend Request', {
+            'fields': ('from_user', 'to_user', 'status')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('from_user', 'to_user')

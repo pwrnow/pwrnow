@@ -14,7 +14,6 @@ import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
 import { OfflineProvider } from '../providers/offline';
 import StartupAnimation from '../components/StartupAnimation';
-import UsernameSelectionModal from '../components/UsernameSelectionModal';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -91,37 +90,6 @@ export default function StackLayout() {
 function ThemedApp() {
   const { isDark, colors } = useTheme();
   const queryClient = useQueryClient();
-  const { needsUsernameSetup, isAuthenticated, isLoading, justSignedIn, clearJustSignedInFlag } = useAuth();
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const segments = useSegments();
-  const hasRedirectedAfterAuth = useRef(false);
-
-  // Handle post-authentication navigation - only after fresh sign-in
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && justSignedIn && !hasRedirectedAfterAuth.current) {
-      const isOnSignInPage = segments[0] === 'signin';
-      
-      if (needsUsernameSetup) {
-        // Show modal for username setup only after fresh sign-in
-        setShowUsernameModal(true);
-        hasRedirectedAfterAuth.current = true;
-      } else if (isOnSignInPage) {
-        // No username setup needed and on signin page, go back to previous screen
-        if (router.canGoBack()) {
-          router.back();
-        } else {
-          // Fallback to home if no history
-          router.replace('/');
-        }
-        hasRedirectedAfterAuth.current = true;
-      }
-    }
-    
-    // Reset the flag when user signs out
-    if (!isAuthenticated) {
-      hasRedirectedAfterAuth.current = false;
-    }
-  }, [needsUsernameSetup, isAuthenticated, isLoading, justSignedIn, segments]);
 
   async function onAppStateChange(status: AppStateStatus) {
     if (Platform.OS !== 'web') {
@@ -134,34 +102,6 @@ function ThemedApp() {
     return () => subscription.remove();
   }, [queryClient]);
 
-  const handleUsernameComplete = async () => {
-    // Hide modal immediately
-    setShowUsernameModal(false);
-    // Clear the just signed in flag so modal doesn't show again
-    clearJustSignedInFlag();
-    // User data already updated locally in modal, just navigate back
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      // Fallback to home if no history
-      router.replace('/');
-    }
-  };
-
-  const handleUsernameCancel = () => {
-    // Hide modal immediately
-    setShowUsernameModal(false);
-    // Clear the just signed in flag so modal doesn't show again
-    clearJustSignedInFlag();
-    // Go back to previous screen
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      // Fallback to home if no history
-      router.replace('/');
-    }
-  };
-
   return (
     <>
       <StatusBar
@@ -171,14 +111,6 @@ function ThemedApp() {
         backgroundColor={colors.background}
       />
       <RootNavigator />
-
-      {/* Username Selection Modal - shown after first-time social login */}
-      <UsernameSelectionModal
-        visible={showUsernameModal}
-        onComplete={handleUsernameComplete}
-        onCancel={handleUsernameCancel}
-        dismissible={true}
-      />
     </>
   );
 }

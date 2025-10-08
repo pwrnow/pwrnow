@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.db import models
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -483,6 +484,239 @@ def scan_qr_code(request):
             'ends_at': qr_code.event.ends_at,
         }
     }, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def search_users(request):
+    """
+    Search for users by username (minimum 3 characters).
+    Returns users with friendship status.
+    """
+    from django.contrib.auth import get_user_model
+    from .models import Friendship, FriendRequest
+    from .serializers import UserSearchSerializer
+    
+    User = get_user_model()
+    query = request.query_params.get('q', '').strip()
+    
+    if len(query) < 3:
+        return Response({
+            'error': _('Search query must be at least 3 characters long.')
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Search for users by username (case-insensitive)
+    users = User.objects.filter(
+        username__icontains=query
+    ).exclude(
+        id=request.user.id
+    ).values('id', 'username')[:20]
+    
+    # Get current user's friendships
+    friendships = Friendship.objects.filter(
+        models.Q(user1=request.user) | models.Q(user2=request.user)
+    ).values_list('user1_id', 'user2_id')
+    
+    friend_ids = set()
+    for user1_id, user2_id in friendships:
+        friend_ids.add(user1_id)
+        friend_ids.add(user2_id)
+    friend_ids.discard(request.user.id)
+    
+    # Get pending friend requests
+    pending_requests = FriendRequest.objects.filter(
+        models.Q(from_user=request.user) | models.Q(to_user=request.user),
+        status=FriendRequest.Status.PENDING
+    ).values_list('from_user_id', 'to_user_id')
+    
+    pending_user_ids = set()
+    for from_id, to_id in pending_requests:
+        pending_user_ids.add(from_id)
+        pending_user_ids.add(to_id)
+    pending_user_ids.discard(request.user.id)
+    
+    # Annotate users with friendship status
+    results = []
+    for user in users:
+        user['is_friend'] = user['id'] in friend_ids
+        user['has_pending_request'] = user['id'] in pending_user_ids
+        results.append(user)
+    
+    serializer = UserSearchSerializer(results, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def send_friend_request(request):
+    """Send a friend request to another user."""
+    from .serializers import FriendRequestCreateSerializer, FriendRequestSerializer
+    from notifications.services import push_service
+    
+    serializer = FriendRequestCreateSerializer(data=request.data, context={'request': request})
+    
+    if serializer.is_valid():
+        friend_request = serializer.save()
+        
+        # Send notification
+        push_service.send_friend_request_notification(friend_request)
+        
+        response_serializer = FriendRequestSerializer(friend_request)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def accept_friend_request(request, request_id):
+    """Accept a friend request."""
+    from .models import Friendship, FriendRequest
+    from .serializers import FriendRequestSerializer
+    from notifications.services import push_service
+    
+    try:
+        friend_request = FriendRequest.objects.get(
+            id=request_id,
+            to_user=request.user,
+            status=FriendRequest.Status.PENDING
+        )
+    except FriendRequest.DoesNotExist:
+        return Response({
+            'error': _('Friend request not found or already processed.')
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Update request status
+    friend_request.status = FriendRequest.Status.ACCEPTED
+    friend_request.save()
+    
+    # Create friendship (ensure consistent ordering)
+    user1, user2 = friend_request.from_user, friend_request.to_user
+    if user1.id > user2.id:
+        user1, user2 = user2, user1
+    
+    Friendship.objects.create(
+        user1=user1,
+        user2=user2
+    )
+    
+    # Send notification
+    push_service.send_friend_request_accepted_notification(friend_request)
+    
+    serializer = FriendRequestSerializer(friend_request)
+    return Response({
+        'message': _('Friend request accepted.'),
+        'friend_request': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reject_friend_request(request, request_id):
+    """Reject a friend request."""
+    from .models import FriendRequest
+    from .serializers import FriendRequestSerializer
+    
+    try:
+        friend_request = FriendRequest.objects.get(
+            id=request_id,
+            to_user=request.user,
+            status=FriendRequest.Status.PENDING
+        )
+    except FriendRequest.DoesNotExist:
+        return Response({
+            'error': _('Friend request not found or already processed.')
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Update request status
+    friend_request.status = FriendRequest.Status.REJECTED
+    friend_request.save()
+    
+    serializer = FriendRequestSerializer(friend_request)
+    return Response({
+        'message': _('Friend request rejected.'),
+        'friend_request': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_friend_requests(request):
+    """List pending friend requests received by the authenticated user."""
+    from .models import FriendRequest
+    from .serializers import FriendRequestSerializer
+    
+    friend_requests = FriendRequest.objects.filter(
+        to_user=request.user,
+        status=FriendRequest.Status.PENDING
+    ).select_related('from_user', 'to_user').order_by('-created_at')
+    
+    serializer = FriendRequestSerializer(friend_requests, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_friends(request):
+    """List all friends of the authenticated user."""
+    from django.contrib.auth import get_user_model
+    from .models import Friendship
+    from .serializers import FriendshipSerializer
+    
+    User = get_user_model()
+    
+    # Get all friendships involving the current user
+    friendships = Friendship.objects.filter(
+        models.Q(user1=request.user) | models.Q(user2=request.user)
+    ).select_related('user1', 'user2').order_by('-created_at')
+    
+    # Extract friend data
+    friends_data = []
+    for friendship in friendships:
+        friend = friendship.user2 if friendship.user1 == request.user else friendship.user1
+        friends_data.append({
+            'id': friend.id,
+            'username': friend.username,
+            'friendship_id': friendship.id,
+            'friendship_created_at': friendship.created_at,
+        })
+    
+    serializer = FriendshipSerializer(friends_data, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def remove_friend(request, friend_id):
+    """Remove a friend (delete the friendship)."""
+    from django.contrib.auth import get_user_model
+    from .models import Friendship
+    
+    User = get_user_model()
+    
+    try:
+        friend = User.objects.get(id=friend_id)
+    except User.DoesNotExist:
+        return Response({
+            'error': _('User not found.')
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Find and delete the friendship
+    friendship = Friendship.objects.filter(
+        models.Q(user1=request.user, user2=friend) |
+        models.Q(user1=friend, user2=request.user)
+    ).first()
+    
+    if not friendship:
+        return Response({
+            'error': _('You are not friends with this user.')
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    friendship.delete()
+    
+    return Response({
+        'message': _('Friend removed successfully.')
+    }, status=status.HTTP_200_OK)
 
 
 class EventMapViewSet(viewsets.ModelViewSet):

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCachedQuery } from './cachedQuery';
 import { api } from './api';
 import { queryKeys } from './queryKeys';
-import type { Event, Category, Post, User } from '../types';
+import type { Event, Category, Post, User, Friend, FriendRequest, SearchedUser } from '../types';
 
 export function useEvents() {
   return useCachedQuery<Event[]>({
@@ -208,4 +208,93 @@ export function usePrefetchEventDetails() {
     prefetchEventDetails,
     prefetchAllEventDetails,
   };
+}
+
+// Friends queries
+export function useFriends(enabled: boolean = true) {
+  return useQuery<Friend[]>({
+    queryKey: queryKeys.friends,
+    queryFn: () => api.friends.getFriends(),
+    staleTime: 30 * 1000, // 30 seconds
+    enabled,
+  });
+}
+
+export function useFriendRequests(enabled: boolean = true) {
+  return useQuery<FriendRequest[]>({
+    queryKey: queryKeys.friendRequests,
+    queryFn: () => api.friends.getFriendRequests(),
+    staleTime: 30 * 1000, // 30 seconds
+    enabled,
+  });
+}
+
+export function useUserSearch(query: string, enabled: boolean = true) {
+  const isEnabled = enabled && query.trim().length >= 3;
+  console.log('[useUserSearch] Query:', query, 'Enabled:', isEnabled, 'Auth:', enabled);
+  
+  return useQuery<SearchedUser[]>({
+    queryKey: queryKeys.userSearch(query),
+    queryFn: async () => {
+      console.log('[useUserSearch] Executing query for:', query);
+      const result = await api.friends.searchUsers(query);
+      console.log('[useUserSearch] Query result:', result);
+      return result;
+    },
+    staleTime: 0, // No caching
+    gcTime: 0, // No garbage collection time
+    enabled: isEnabled,
+    retry: false, // Don't retry on 400 errors
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useSendFriendRequest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => api.friends.sendFriendRequest(userId),
+    onSuccess: () => {
+      // Invalidate search results to update the "pending" status
+      queryClient.invalidateQueries({ queryKey: ['userSearch'] });
+    },
+  });
+}
+
+export function useAcceptFriendRequest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (requestId: string) => api.friends.acceptFriendRequest(requestId),
+    onSuccess: () => {
+      // Invalidate both friend requests and friends list
+      queryClient.invalidateQueries({ queryKey: queryKeys.friendRequests });
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends });
+    },
+  });
+}
+
+export function useRejectFriendRequest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (requestId: string) => api.friends.rejectFriendRequest(requestId),
+    onSuccess: () => {
+      // Invalidate friend requests
+      queryClient.invalidateQueries({ queryKey: queryKeys.friendRequests });
+    },
+  });
+}
+
+export function useRemoveFriend() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (friendId: string) => api.friends.removeFriend(friendId),
+    onSuccess: () => {
+      // Invalidate friends list
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends });
+    },
+  });
 }
