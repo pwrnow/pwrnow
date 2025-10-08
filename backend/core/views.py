@@ -546,6 +546,54 @@ def search_users(request):
     return Response(serializer.data)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def event_friends_attending(request, slug):
+    """
+    Get list of friends who are attending/participated in an event.
+    """
+    from django.contrib.auth import get_user_model
+    from .models import Friendship, EventParticipation
+    
+    User = get_user_model()
+    
+    # Get the event
+    event = get_object_or_404(Event, slug=slug)
+    
+    # Get current user's friendships
+    friendships = Friendship.objects.filter(
+        models.Q(user1=request.user) | models.Q(user2=request.user)
+    ).select_related('user1', 'user2')
+    
+    friend_ids = set()
+    for friendship in friendships:
+        if friendship.user1.id != request.user.id:
+            friend_ids.add(friendship.user1.id)
+        if friendship.user2.id != request.user.id:
+            friend_ids.add(friendship.user2.id)
+    
+    # Get friends who have participated in this event
+    participating_friends = EventParticipation.objects.filter(
+        event=event,
+        user_id__in=friend_ids
+    ).select_related('user').order_by('-created_at')
+    
+    # Serialize the data
+    friends_data = [
+        {
+            'id': str(participation.user.id),
+            'username': participation.user.username,
+            'participated_at': participation.created_at.isoformat(),
+        }
+        for participation in participating_friends
+    ]
+    
+    return Response({
+        'count': len(friends_data),
+        'friends': friends_data
+    })
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def send_friend_request(request):

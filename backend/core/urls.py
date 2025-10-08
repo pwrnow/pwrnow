@@ -17,6 +17,7 @@ router.register(r'event-map-locations', views.EventMapLocationViewSet, basename=
 urlpatterns = [
     path('', include(router.urls)),
     path('events/<slug:slug>/likes/', views.event_like, name='event-like'),
+    path('events/<slug:slug>/friends-attending/', views.event_friends_attending, name='event-friends-attending'),
     path('scan-qr/', views.scan_qr_code, name='scan-qr'),
     
     # Friendship endpoints

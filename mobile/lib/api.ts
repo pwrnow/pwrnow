@@ -1,4 +1,4 @@
-import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend } from '../types';
+import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend, EventFriendsAttending } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -587,6 +587,25 @@ const friendsApi = {
   },
 };
 
+// Event Friends API
+const eventFriendsApi = {
+  // Get friends attending an event
+  getFriendsAttending: async (eventSlug: string): Promise<EventFriendsAttending> => {
+    const url = `${getApiUrl()}/events/${eventSlug}/friends-attending/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to get friends attending');
+    }
+    return res.json();
+  },
+};
+
 // Export all APIs
 export const api = {
   events: eventsApi,
@@ -595,5 +614,6 @@ export const api = {
   notifications: notificationsApi,
   user: userApi,
   friends: friendsApi,
+  eventFriends: eventFriendsApi,
   baseUrl: getApiUrl(),
 };

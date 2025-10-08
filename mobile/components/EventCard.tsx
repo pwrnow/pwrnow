@@ -37,6 +37,10 @@ import FirstLikeModal from './FirstLikeModal';
 import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useEventActions } from '../hooks/useEventActions';
+import FriendsAttendingIndicator from './FriendsAttendingIndicator';
+import FriendsAttendingModal from './FriendsAttendingModal';
+import { api } from '../lib/api';
+import type { FriendAttending } from '../types';
 
 interface EventCardProps {
   event: Event;
@@ -53,10 +57,22 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const { isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { handleAddToCalendar } = useCalendar({ event });
+  const [friendsAttending, setFriendsAttending] = useState<FriendAttending[]>([]);
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
 
   // Use the event actions hook
   const { handleHeartPress, showFirstLikeModal, setShowFirstLikeModal } =
     useEventActions(event, setShowAuthModal);
+
+  // Fetch friends attending when authenticated
+  useEffect(() => {
+    if (isAuthenticated && event.slug) {
+      api.eventFriends
+        .getFriendsAttending(event.slug)
+        .then((data) => setFriendsAttending(data.friends))
+        .catch(() => setFriendsAttending([]));
+    }
+  }, [isAuthenticated, event.slug]);
 
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -411,6 +427,16 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             />
           </View>
 
+          {/* Friends Attending Indicator */}
+          {friendsAttending.length > 0 && (
+            <View className='mb-2'>
+              <FriendsAttendingIndicator
+                friends={friendsAttending}
+                onPress={() => setShowFriendsModal(true)}
+              />
+            </View>
+          )}
+
           {/* Meta chips under title */}
           <View className='gap-2 mb-1.5'>
             <View className='flex-row gap-2'>
@@ -495,6 +521,13 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           <FirstLikeModal
             visible={showFirstLikeModal}
             onClose={() => setShowFirstLikeModal(false)}
+            eventTitle={event.title}
+          />
+
+          <FriendsAttendingModal
+            visible={showFriendsModal}
+            onClose={() => setShowFriendsModal(false)}
+            friends={friendsAttending}
             eventTitle={event.title}
           />
         </Pressable>

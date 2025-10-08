@@ -116,3 +116,14 @@ export interface Friend {
   friendship_id: string;
   friendship_created_at: string;
 }
+
+export interface FriendAttending {
+  id: string;
+  username: string;
+  participated_at: string;
+}
+
+export interface EventFriendsAttending {
+  count: number;
+  friends: FriendAttending[];
+}
