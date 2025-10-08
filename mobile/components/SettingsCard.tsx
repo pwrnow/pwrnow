@@ -33,7 +33,7 @@ export default function SettingsCard({
   };
 
   const cardContent = (
-    <View className='flex-row items-center' style={{ opacity: disabled ? 0.5 : 1 }}>
+    <View className='flex-row items-center'>
       {/* Icon */}
       <View
         style={{ backgroundColor: colors.muted }}
