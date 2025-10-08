@@ -16,6 +16,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../lib/queryKeys';
 
 interface UsernameSelectionModalProps {
   visible: boolean;
@@ -32,6 +34,7 @@ export default function UsernameSelectionModal({
 }: UsernameSelectionModalProps) {
   const { colors } = useThemeColors();
   const { updateUserLocally } = useAuth();
+  const queryClient = useQueryClient();
   const [username, setUsername] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,6 +127,9 @@ export default function UsernameSelectionModal({
       
       // Update user data locally immediately (includes username and username_set_by_user)
       await updateUserLocally(updatedUser);
+      
+      // Invalidate user query to trigger refetch with fresh data
+      await queryClient.invalidateQueries({ queryKey: queryKeys.user });
       
       // Reset form state
       setUsername('');

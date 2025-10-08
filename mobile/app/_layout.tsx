@@ -91,23 +91,28 @@ export default function StackLayout() {
 function ThemedApp() {
   const { isDark, colors } = useTheme();
   const queryClient = useQueryClient();
-  const { needsUsernameSetup, isAuthenticated, isLoading } = useAuth();
+  const { needsUsernameSetup, isAuthenticated, isLoading, justSignedIn, clearJustSignedInFlag } = useAuth();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const segments = useSegments();
   const hasRedirectedAfterAuth = useRef(false);
 
-  // Handle post-authentication navigation
+  // Handle post-authentication navigation - only after fresh sign-in
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !hasRedirectedAfterAuth.current) {
+    if (!isLoading && isAuthenticated && justSignedIn && !hasRedirectedAfterAuth.current) {
       const isOnSignInPage = segments[0] === 'signin';
       
       if (needsUsernameSetup) {
-        // Show modal for username setup
+        // Show modal for username setup only after fresh sign-in
         setShowUsernameModal(true);
         hasRedirectedAfterAuth.current = true;
       } else if (isOnSignInPage) {
-        // No username setup needed and on signin page, redirect to profile immediately
-        router.replace('/profile');
+        // No username setup needed and on signin page, go back to previous screen
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          // Fallback to home if no history
+          router.replace('/');
+        }
         hasRedirectedAfterAuth.current = true;
       }
     }
@@ -116,7 +121,7 @@ function ThemedApp() {
     if (!isAuthenticated) {
       hasRedirectedAfterAuth.current = false;
     }
-  }, [needsUsernameSetup, isAuthenticated, isLoading, segments]);
+  }, [needsUsernameSetup, isAuthenticated, isLoading, justSignedIn, segments]);
 
   async function onAppStateChange(status: AppStateStatus) {
     if (Platform.OS !== 'web') {
@@ -132,23 +137,28 @@ function ThemedApp() {
   const handleUsernameComplete = async () => {
     // Hide modal immediately
     setShowUsernameModal(false);
-    // User data already updated locally in modal, just navigate
-    // Go back instead of creating new screen instance
+    // Clear the just signed in flag so modal doesn't show again
+    clearJustSignedInFlag();
+    // User data already updated locally in modal, just navigate back
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/profile');
+      // Fallback to home if no history
+      router.replace('/');
     }
   };
 
   const handleUsernameCancel = () => {
     // Hide modal immediately
     setShowUsernameModal(false);
-    // Go back instead of creating new screen instance
+    // Clear the just signed in flag so modal doesn't show again
+    clearJustSignedInFlag();
+    // Go back to previous screen
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/profile');
+      // Fallback to home if no history
+      router.replace('/');
     }
   };
 

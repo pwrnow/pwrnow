@@ -1,4 +1,4 @@
-import { Event, Category, Organization, Post } from '../types';
+import { Event, Category, Organization, Post, User } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -63,7 +63,7 @@ export async function authenticate(
 // Validate stored access token with backend
 export async function validateToken(
   accessToken: string
-): Promise<{ user: any }> {
+): Promise<void> {
   const url = `${getApiUrl()}/auth/token/verify/`;
 
   // Create an AbortController for timeout
@@ -90,7 +90,7 @@ export async function validateToken(
       throw new Error(`Token validation failed: ${res.status} ${text}`);
     }
 
-    return res.json();
+    await res.json();
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
@@ -424,7 +424,7 @@ export const notificationsApi = {
 // User API
 export const userApi = {
   // Update username (one-time only)
-  async updateUsername(username: string): Promise<any> {
+  async updateUsername(username: string): Promise<User> {
     const response = await fetchWithCredentials('/user/username/', {
       method: 'PATCH',
       body: JSON.stringify({ username }),
@@ -444,7 +444,7 @@ export const userApi = {
   },
 
   // Get current user details
-  async getCurrentUser(): Promise<any> {
+  async getCurrentUser(): Promise<User> {
     const response = await fetchWithCredentials('/user/');
     return await response.json();
   },

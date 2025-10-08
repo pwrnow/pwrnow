@@ -9,19 +9,22 @@ import {
 } from '../lib/authStorage';
 import { queryClient } from '../providers/query';
 import { queryConfig } from '../lib/queryConfig';
+import type { User } from '../types';
 
 type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
-  user: any | null;
+  user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   needsUsernameSetup: boolean;
+  justSignedIn: boolean; // Flag to track fresh sign-in vs session restore
   setAuthFromBackend: (r: any) => Promise<void>;
   signOut: () => Promise<void>;
   validateStoredCredentials: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  updateUserLocally: (userData: any) => Promise<void>;
+  updateUserLocally: (userData: User) => Promise<void>;
+  clearJustSignedInFlag: () => void;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -34,26 +37,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [needsUsernameSetup, setNeedsUsernameSetup] = useState(false);
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
   // Validate stored credentials on app startup
   async function validateStoredCredentials() {
     try {
       const a = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
       const r = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-      const u = await SecureStore.getItemAsync(USER_KEY);
 
-      if (a && u) {
+      if (a) {
         // We have stored credentials, validate them with backend
         try {
           await validateToken(a);
           setAccessToken(a);
           setRefreshToken(r);
-          setUser(JSON.parse(u));
           setIsAuthenticated(true);
+          
+          // Fetch fresh user details from /user/ endpoint
+          try {
+            const { userApi } = await import('../lib/api');
+            const userDetails = await userApi.getCurrentUser();
+            setUser(userDetails);
+            await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userDetails));
+            setNeedsUsernameSetup(!userDetails?.username_set_by_user);
+          } catch (userError) {
+            console.warn('Failed to fetch user details:', userError);
+            // Token is valid but couldn't fetch user - use cached user if available
+            const u = await SecureStore.getItemAsync(USER_KEY);
+            if (u) {
+              setUser(JSON.parse(u));
+              setNeedsUsernameSetup(!JSON.parse(u)?.username_set_by_user);
+            }
+          }
         } catch (error) {
           // Try refresh once if we have a refresh token
           if (r) {
@@ -63,8 +82,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 await validateToken(newAccess);
                 setAccessToken(newAccess);
                 setRefreshToken(r);
-                setUser(JSON.parse(u!));
                 setIsAuthenticated(true);
+                
+                // Fetch fresh user details from /user/ endpoint
+                try {
+                  const { userApi } = await import('../lib/api');
+                  const userDetails = await userApi.getCurrentUser();
+                  setUser(userDetails);
+                  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userDetails));
+                  setNeedsUsernameSetup(!userDetails?.username_set_by_user);
+                } catch (userError) {
+                  console.warn('Failed to fetch user details after refresh:', userError);
+                  // Token is valid but couldn't fetch user - use cached user if available
+                  const u = await SecureStore.getItemAsync(USER_KEY);
+                  if (u) {
+                    setUser(JSON.parse(u));
+                    setNeedsUsernameSetup(!JSON.parse(u)?.username_set_by_user);
+                  }
+                }
               } catch (_e) {
                 await signOut();
               }
@@ -116,28 +151,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Check if user needs to set username (not set by user yet)
     setNeedsUsernameSetup(!user?.username_set_by_user);
 
+    // Mark as fresh sign-in (not a session restore)
+    setJustSignedIn(true);
+
     setIsLoading(false);
   }
 
   async function refreshUser() {
     // Refresh user data from backend
     try {
-      const { validateToken } = await import('../lib/api');
-      const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-      if (token) {
-        const result = await validateToken(token);
-        if (result.user) {
-          setUser(result.user);
-          await SecureStore.setItemAsync(USER_KEY, JSON.stringify(result.user));
-          setNeedsUsernameSetup(!result.user?.username_set_by_user);
-        }
-      }
+      const { userApi } = await import('../lib/api');
+      const userDetails = await userApi.getCurrentUser();
+      setUser(userDetails);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userDetails));
+      setNeedsUsernameSetup(!userDetails?.username_set_by_user);
     } catch (error) {
       console.error('Error refreshing user:', error);
     }
   }
 
-  async function updateUserLocally(userData: any) {
+  async function updateUserLocally(userData: User) {
     // Update user data locally without API call
     try {
       setUser(userData);
@@ -147,6 +180,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error('Error updating user locally:', error);
     }
+  }
+
+  function clearJustSignedInFlag() {
+    setJustSignedIn(false);
   }
 
   async function signOut() {
@@ -181,6 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setRefreshToken(null);
     setUser(null);
     setIsAuthenticated(false);
+    setJustSignedIn(false);
     setIsLoading(false);
   }
 
@@ -193,11 +231,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoading,
         isAuthenticated,
         needsUsernameSetup,
+        justSignedIn,
         setAuthFromBackend,
         signOut,
         validateStoredCredentials,
         refreshUser,
         updateUserLocally,
+        clearJustSignedInFlag,
       }}
     >
       {children}

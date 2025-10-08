@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCachedQuery } from './cachedQuery';
 import { api } from './api';
 import { queryKeys } from './queryKeys';
-import type { Event, Category, Post } from '../types';
+import type { Event, Category, Post, User } from '../types';
 
 export function useEvents() {
   return useCachedQuery<Event[]>({
@@ -17,6 +17,16 @@ export function useCategories() {
     queryKey: queryKeys.categories,
     queryFn: () => api.categories.getCategories(),
     staleTime: 0, // Always consider stale to allow refetching
+  });
+}
+
+export function useUser(enabled: boolean = true) {
+  return useQuery<User>({
+    queryKey: queryKeys.user,
+    queryFn: () => api.user.getCurrentUser(),
+    staleTime: 5 * 60 * 1000, // 5 minutes - user data doesn't change often
+    retry: 1,
+    enabled, // Only fetch when enabled (authenticated)
   });
 }
 

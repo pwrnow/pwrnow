@@ -4,6 +4,7 @@ export const queryKeys = {
   eventBySlug: (slug: string) => ['event', slug] as const,
   eventPosts: (slug: string) => ['event', slug, 'posts'] as const,
   eventSchedule: (slug: string) => ['event', slug, 'schedule'] as const,
+  user: ['user'] as const,
 };
 
 export type QueryKey =
@@ -11,4 +12,5 @@ export type QueryKey =
   | ReturnType<typeof queryKeys.eventPosts>
   | ReturnType<typeof queryKeys.eventSchedule>
   | typeof queryKeys.events
-  | typeof queryKeys.categories;
+  | typeof queryKeys.categories
+  | typeof queryKeys.user;

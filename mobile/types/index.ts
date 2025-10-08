@@ -1,3 +1,14 @@
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  username_set_by_user: boolean;
+  date_joined: string;
+  last_login: string;
+}
+
 export interface Organization {
   id: string;
   name: string;

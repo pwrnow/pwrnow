@@ -1,13 +1,13 @@
 from django.urls import path, include
 from .views import (
     GoogleLogin, FacebookLogin, AppleLogin,
-    UsernameUpdateView, UsernameCheckView
+    UsernameUpdateView, UsernameCheckView,
 )
-from rest_framework_simplejwt.views import TokenVerifyView
 from dj_rest_auth.jwt_auth import get_refresh_view
 from dj_rest_auth.views import (
     LogoutView, UserDetailsView,
 )
+from rest_framework_simplejwt.views import TokenVerifyView
 from django.urls import re_path
 
 urlpatterns = [
