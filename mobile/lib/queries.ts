@@ -88,6 +88,10 @@ export function useLikeEvent() {
       // Return context for rollback
       return { previousEvents, previousEvent };
     },
+    onSettled: () => {
+      // Refetch queries to ensure the UI is immediately updated
+      queryClient.refetchQueries({ queryKey: queryKeys.events });
+    },
     onError: (err, slug, context) => {
       // Rollback on error
       if (context?.previousEvents) {
@@ -144,6 +148,10 @@ export function useUnlikeEvent() {
 
       // Return context for rollback
       return { previousEvents, previousEvent };
+    },
+    onSettled: () => {
+      // Refetch queries to ensure the UI is immediately updated
+      queryClient.refetchQueries({ queryKey: queryKeys.events });
     },
     onError: (err, slug, context) => {
       // Rollback on error

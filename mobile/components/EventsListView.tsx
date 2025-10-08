@@ -60,9 +60,6 @@ export default function EventsListView({
         style={{
           flex: 1,
           backgroundColor: isDark ? '#000000' : '#FFFFFF',
-          paddingBottom: insets.bottom,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
         }}
       >
         <ScrollView
@@ -84,9 +81,6 @@ export default function EventsListView({
       style={{
         flex: 1,
         backgroundColor: isDark ? '#000000' : '#FFFFFF',
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
       }}
     >
       <ScrollView

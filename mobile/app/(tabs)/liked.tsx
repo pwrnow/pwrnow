@@ -24,6 +24,9 @@ export default function LikedEventsScreen() {
     handleClearCategory,
   } = useEventsFeed({ filterLiked: true });
 
+  // list filtered events whethe liked or not
+  console.log('filteredEvents', filteredEvents.map((event) => event.liked));
+
   // Show message when user is not authenticated
   if (!isAuthenticated) {
     return (

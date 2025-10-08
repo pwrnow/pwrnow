@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import {
@@ -35,12 +35,9 @@ export function useEventsFeed(options: UseEventsFeedOptions = {}) {
   } = useCategories();
 
   // Filter events based on options
-  const baseEvents = useMemo(() => {
-    if (filterLiked) {
-      return events.filter((event) => event.liked === true);
-    }
-    return events;
-  }, [events, filterLiked]);
+  const baseEvents = filterLiked
+    ? events.filter((event) => event.liked === true)
+    : events;
 
   // Prefetch event details when events are loaded (only once)
   useEffect(() => {
@@ -54,20 +51,16 @@ export function useEventsFeed(options: UseEventsFeedOptions = {}) {
   }, [events.length, prefetchAllEventDetails]);
 
   // Compose categories with the localized "All"
-  const categories: Category[] = useMemo(
-    () => [{ name: t('all'), slug: 'wszystkie' }, ...fetchedCategories],
-    [fetchedCategories]
-  );
+  const categories: Category[] = [
+    { name: t('all'), slug: 'wszystkie' },
+    ...fetchedCategories,
+  ];
 
   // Compute filtered events based on selected category
-  const filteredEvents = useMemo(() => {
-    if (selectedCategory === 'wszystkie') {
-      return baseEvents;
-    }
-    return baseEvents.filter(
-      (event) => event.category.slug === selectedCategory
-    );
-  }, [baseEvents, selectedCategory]);
+  const filteredEvents =
+    selectedCategory === 'wszystkie'
+      ? baseEvents
+      : baseEvents.filter((event) => event.category.slug === selectedCategory);
 
   // Handle refresh events
   const handleRefresh = async () => {
