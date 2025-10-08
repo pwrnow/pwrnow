@@ -474,7 +474,7 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
@@ -539,7 +539,9 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'auth_token',
     'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
-    'JWT_AUTH_HTTPONLY': False
+    'JWT_AUTH_HTTPONLY': False,
+    'USER_DETAILS_SERIALIZER': 'users.serializers.UserSerializer',
+    'JWT_TOKEN_CLAIMS_SERIALIZER': 'users.serializers.CustomTokenObtainPairSerializer',
 }
 # Standard simplejwt settings:
 from datetime import timedelta

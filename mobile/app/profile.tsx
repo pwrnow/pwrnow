@@ -23,12 +23,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsCard from '../components/SettingsCard';
 import Avatar from '../components/Avatar';
 import SocialMediaSection from '../components/SocialMediaSection';
+import UsernameSelectionModal from '../components/UsernameSelectionModal';
 
 export default function ProfileScreen() {
   const { user, signOut, isAuthenticated, isLoading } = useAuth();
   const { settings, setNotificationsEnabled } = useSettings();
   const { theme, setTheme, isDark, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   // Theme options for native selection
   const themeOptions = [
@@ -104,6 +106,22 @@ export default function ProfileScreen() {
   const getCurrentThemeLabel = () => {
     const option = themeOptions.find((opt) => opt.value === theme);
     return option?.label || t('system');
+  };
+
+  const handleUsernamePress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Open modal to set username
+    setShowUsernameModal(true);
+  };
+
+  const handleUsernameComplete = async () => {
+    // Close modal immediately (user data already updated locally in modal)
+    setShowUsernameModal(false);
+  };
+
+  const handleUsernameCancel = () => {
+    // Close modal immediately
+    setShowUsernameModal(false);
   };
 
   if (isLoading) {
@@ -216,6 +234,28 @@ export default function ProfileScreen() {
             {t('settings')}
           </Text>
 
+          {/* Username Setting - only show if username hasn't been set by user yet */}
+          {isAuthenticated && user && !user.username_set_by_user && (
+            <SettingsCard
+              title='Username'
+              description={
+                user.username
+                  ? `@${user.username}`
+                  : 'Set your unique username'
+              }
+              icon='at-sign'
+              onPress={handleUsernamePress}
+              rightElement={
+                <Feather
+                  name='chevron-right'
+                  size={20}
+                  color={colors.foreground}
+                />
+              }
+              showChevron={false}
+            />
+          )}
+
           {/* Notifications Setting */}
           <SettingsCard
             title={t('notifications')}
@@ -310,6 +350,16 @@ export default function ProfileScreen() {
         {/* Bottom spacing */}
         <View className='h-8' />
       </ScrollView>
+
+      {/* Username Selection Modal */}
+      {isAuthenticated && (
+        <UsernameSelectionModal
+          visible={showUsernameModal}
+          onComplete={handleUsernameComplete}
+          onCancel={handleUsernameCancel}
+          dismissible={true}
+        />
+      )}
     </View>
   );
 }

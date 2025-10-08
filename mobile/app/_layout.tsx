@@ -1,8 +1,8 @@
 import '../global.css';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, TouchableOpacity, AppState, Platform } from 'react-native';
 import type { AppStateStatus } from 'react-native';
@@ -14,6 +14,7 @@ import { PosthogProvider } from '../providers/posthog';
 import { QueryProvider } from '../providers/query';
 import { OfflineProvider } from '../providers/offline';
 import StartupAnimation from '../components/StartupAnimation';
+import UsernameSelectionModal from '../components/UsernameSelectionModal';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryKeys';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -90,6 +91,32 @@ export default function StackLayout() {
 function ThemedApp() {
   const { isDark, colors } = useTheme();
   const queryClient = useQueryClient();
+  const { needsUsernameSetup, isAuthenticated, isLoading } = useAuth();
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const segments = useSegments();
+  const hasRedirectedAfterAuth = useRef(false);
+
+  // Handle post-authentication navigation
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !hasRedirectedAfterAuth.current) {
+      const isOnSignInPage = segments[0] === 'signin';
+      
+      if (needsUsernameSetup) {
+        // Show modal for username setup
+        setShowUsernameModal(true);
+        hasRedirectedAfterAuth.current = true;
+      } else if (isOnSignInPage) {
+        // No username setup needed and on signin page, redirect to profile immediately
+        router.replace('/profile');
+        hasRedirectedAfterAuth.current = true;
+      }
+    }
+    
+    // Reset the flag when user signs out
+    if (!isAuthenticated) {
+      hasRedirectedAfterAuth.current = false;
+    }
+  }, [needsUsernameSetup, isAuthenticated, isLoading, segments]);
 
   async function onAppStateChange(status: AppStateStatus) {
     if (Platform.OS !== 'web') {
@@ -102,6 +129,29 @@ function ThemedApp() {
     return () => subscription.remove();
   }, [queryClient]);
 
+  const handleUsernameComplete = async () => {
+    // Hide modal immediately
+    setShowUsernameModal(false);
+    // User data already updated locally in modal, just navigate
+    // Go back instead of creating new screen instance
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/profile');
+    }
+  };
+
+  const handleUsernameCancel = () => {
+    // Hide modal immediately
+    setShowUsernameModal(false);
+    // Go back instead of creating new screen instance
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/profile');
+    }
+  };
+
   return (
     <>
       <StatusBar
@@ -111,6 +161,14 @@ function ThemedApp() {
         backgroundColor={colors.background}
       />
       <RootNavigator />
+
+      {/* Username Selection Modal - shown after first-time social login */}
+      <UsernameSelectionModal
+        visible={showUsernameModal}
+        onComplete={handleUsernameComplete}
+        onCancel={handleUsernameCancel}
+        dismissible={true}
+      />
     </>
   );
 }

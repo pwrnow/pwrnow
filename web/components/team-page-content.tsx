@@ -7,6 +7,7 @@ import {
   Globe,
   Instagram,
   Facebook,
+  Video,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -18,6 +19,7 @@ type SocialLinks = {
   email?: string;
   instagram?: string;
   facebook?: string;
+  tiktok?: string;
 };
 
 type TeamMember = {
@@ -58,8 +60,19 @@ const teamMembers: TeamMember[] = [
     name: 'Kuba Królak',
     description:
       'Taking care of marketing, communication and all the behind-the-scenes stuff',
-    image: 'team_pics/krolak.jpg',
+    image: null,
     social: {},
+  },
+  {
+    id: 4,
+    name: 'Adrian Szefer',
+    description:
+      'I make everything connected to the visual side of the project, from stickers to posts on our social media profiles.',
+    image: null,
+    social: {
+      tiktok: 'https://www.tiktok.com/@adrianszeferart?_t=ZN-90My8XKHRbS&_r=1',
+      instagram: 'https://www.instagram.com/adrianszeferart?igsh=MW9vNTdoOWwxeXZzbA%3D%3D&utm_source=qr',
+    },
   },
 ];
 
@@ -198,6 +211,19 @@ function TeamMemberCard({
                 className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
               >
                 <Instagram
+                  size={20}
+                  className='text-muted-foreground hover:text-foreground transition-colors'
+                />
+              </a>
+            )}
+            {member.social.tiktok && (
+              <a
+                href={member.social.tiktok}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
+              >
+                <Video
                   size={20}
                   className='text-muted-foreground hover:text-foreground transition-colors'
                 />

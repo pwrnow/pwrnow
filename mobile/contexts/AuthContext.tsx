@@ -16,9 +16,12 @@ type AuthState = {
   user: any | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  needsUsernameSetup: boolean;
   setAuthFromBackend: (r: any) => Promise<void>;
   signOut: () => Promise<void>;
   validateStoredCredentials: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  updateUserLocally: (userData: any) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -34,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [needsUsernameSetup, setNeedsUsernameSetup] = useState(false);
 
   // Validate stored credentials on app startup
   async function validateStoredCredentials() {
@@ -108,7 +112,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setRefreshToken(refresh ?? null);
     setUser(user ?? null);
     setIsAuthenticated(true);
+
+    // Check if user needs to set username (not set by user yet)
+    setNeedsUsernameSetup(!user?.username_set_by_user);
+
     setIsLoading(false);
+  }
+
+  async function refreshUser() {
+    // Refresh user data from backend
+    try {
+      const { validateToken } = await import('../lib/api');
+      const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+      if (token) {
+        const result = await validateToken(token);
+        if (result.user) {
+          setUser(result.user);
+          await SecureStore.setItemAsync(USER_KEY, JSON.stringify(result.user));
+          setNeedsUsernameSetup(!result.user?.username_set_by_user);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    }
+  }
+
+  async function updateUserLocally(userData: any) {
+    // Update user data locally without API call
+    try {
+      setUser(userData);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userData));
+      setNeedsUsernameSetup(!userData?.username_set_by_user);
+      console.log('User updated locally:', userData);
+    } catch (error) {
+      console.error('Error updating user locally:', error);
+    }
   }
 
   async function signOut() {
@@ -154,9 +192,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         user,
         isLoading,
         isAuthenticated,
+        needsUsernameSetup,
         setAuthFromBackend,
         signOut,
         validateStoredCredentials,
+        refreshUser,
+        updateUserLocally,
       }}
     >
       {children}

@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import MapView, { Marker, Callout, Region } from 'react-native-maps';
 import { Feather } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { EventMap, EventMapLocation } from '../types';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -86,34 +85,12 @@ export default function EventMapTab({
   error,
 }: EventMapTabProps) {
   const { colors } = useThemeColors();
-  const [userLocation, setUserLocation] =
-    useState<Location.LocationObject | null>(null);
   const [selectedLocation, setSelectedLocation] =
     useState<EventMapLocation | null>(null);
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
   const [showListView, setShowListView] = useState(false);
 
-  // Request location permission and get user location
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          console.log('Location permission denied');
-          return;
-        }
-
-        const location = await Location.getCurrentPositionAsync({});
-        setUserLocation(location);
-      } catch (error) {
-        console.error('Error getting location:', error);
-      }
-    };
-
-    requestLocationPermission();
-  }, []);
-
-  // Calculate map region when eventMap or userLocation changes
+  // Calculate map region when eventMap changes
   useEffect(() => {
     if (!eventMap || !eventMap.locations.length) return;
 
@@ -381,7 +358,7 @@ export default function EventMapTab({
             <MapView
               style={{ flex: 1 }}
               region={mapRegion}
-              showsUserLocation={!!userLocation}
+              showsUserLocation={false}
               showsMyLocationButton={false}
               showsCompass={false}
               showsScale={false}

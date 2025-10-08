@@ -45,7 +45,6 @@ export async function authenticate(
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-
     if (!res.ok) {
       const text = await res.text();
       // console.log('Social login failed:', text);
@@ -113,7 +112,7 @@ async function performTokenRefresh(): Promise<string | null> {
 
     // Create an AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for production reliability
 
     try {
       const res = await fetch(url, {
@@ -168,7 +167,6 @@ export async function refreshAccessToken(): Promise<string | null> {
 // Logout from backend
 export async function logout(): Promise<void> {
   const url = `${getApiUrl()}/auth/logout/`;
-  console.log('logout', url);
   try {
     // Read refresh token from secure storage
     const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
@@ -233,7 +231,7 @@ async function fetchWithCredentials(
     }
   } catch {}
 
-  console.log('authHeaders', authHeaders);
+  // Avoid logging auth headers in production
 
   const makeRequest = async (overrideAuth?: string): Promise<Response> => {
     const headers: Record<string, string> = {
@@ -245,10 +243,7 @@ async function fetchWithCredentials(
 
     // Create an AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-
-    console.log('headers', headers);
-    console.log('url', `${getApiUrl()}${url}`);
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for production reliability
     try {
       const response = await fetch(`${getApiUrl()}${url}`, {
         ...options,
@@ -356,7 +351,7 @@ export const eventsApi = {
     const response = await fetchWithCredentials(`/events/${slug}/likes/`, {
       method: 'POST',
     });
-    console.log('response', response);
+    // No console noise in production
     return await response.json();
   },
 
@@ -426,11 +421,41 @@ export const notificationsApi = {
   },
 };
 
+// User API
+export const userApi = {
+  // Update username (one-time only)
+  async updateUsername(username: string): Promise<any> {
+    const response = await fetchWithCredentials('/user/username/', {
+      method: 'PATCH',
+      body: JSON.stringify({ username }),
+    });
+    return await response.json();
+  },
+
+  // Check if username is available
+  async checkUsername(
+    username: string
+  ): Promise<{ available: boolean; errors?: any }> {
+    const response = await fetchWithCredentials('/user/username/check/', {
+      method: 'POST',
+      body: JSON.stringify({ username }),
+    });
+    return await response.json();
+  },
+
+  // Get current user details
+  async getCurrentUser(): Promise<any> {
+    const response = await fetchWithCredentials('/user/');
+    return await response.json();
+  },
+};
+
 // Export all APIs
 export const api = {
   events: eventsApi,
   categories: categoriesApi,
   organizations: organizationsApi,
   notifications: notificationsApi,
+  user: userApi,
   baseUrl: getApiUrl(),
 };

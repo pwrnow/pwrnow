@@ -196,14 +196,28 @@ export default function QRScannerScreen() {
           <Text style={[styles.text, { color: colors.mutedForeground }]}>
             {t('qrScannerAuthMessage')}
           </Text>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/signin')}
-          >
-            <Text style={[styles.buttonText, { color: colors.background }]}>
-              {t('signIn')}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/signin')}
+            >
+              <Text style={[styles.buttonText, { color: colors.background }]}>
+                {t('signIn')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                styles.secondaryButton,
+                { borderColor: colors.border },
+              ]}
+              onPress={() => router.back()}
+            >
+              <Text style={[styles.buttonText, { color: colors.foreground }]}>
+                {t('goBack')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -376,6 +390,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
+  buttonContainer: {
+    flexDirection: 'column',
+    gap: 12,
+    width: '100%',
+    maxWidth: 300,
+  },
   button: {
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -385,6 +405,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonText: {
     fontSize: 16,

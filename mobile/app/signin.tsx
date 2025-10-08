@@ -49,30 +49,16 @@ export default function SignInScreen() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const insets = useSafeAreaInsets();
 
-  console.log(
-    'SignIn Screen - isLoading:',
-    isLoading,
-    'isAuthenticated:',
-    isAuthenticated
-  );
+  // Avoid noisy logs in production
 
-  // Redirect if already authenticated (but not if we're currently authenticating)
+  // Navigation after authentication is now handled in _layout.tsx based on needsUsernameSetup
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAuthenticating) {
-      // Reset the navigation stack to the home screen
-      router.replace('/');
-      // Reset the entire navigation stack to prevent back navigation
-      try {
-        router.dismissAll();
-      } catch (err: any) {
-        console.error('Error dismissing all navigation stacks', err);
-      }
+      console.log('User authenticated, navigation will be handled by _layout.tsx');
     }
   }, [isLoading, isAuthenticated, isAuthenticating]);
 
-  console.log('REDIRECT_URI', REDIRECT_URI);
-  console.log('ANDROID_CLIENT_ID', ANDROID_CLIENT_ID);
-  console.log('IOS_CLIENT_ID', IOS_CLIENT_ID);
+  // Keep OAuth configuration internal; do not log IDs/URIs in production
 
   const [googleRequest, googleResponse, promptGoogleAsync] =
     Google.useAuthRequest({
@@ -89,7 +75,7 @@ export default function SignInScreen() {
     if (googleResponse?.type === 'success') {
       const { access_token } = googleResponse.params;
       if (!access_token) {
-        Alert.alert('No access token received from Google');
+        Alert.alert(t('error'), t('googleNoAccessToken'));
         return;
       }
       (async () => {
@@ -97,23 +83,24 @@ export default function SignInScreen() {
           setIsAuthenticating(true);
           const backendResult = await authenticate('google', access_token);
           await setAuthFromBackend(backendResult);
-          // Reset navigation stack to home screen after successful login
-          router.replace('/');
-          // Reset the entire navigation stack to prevent back navigation
-          try {
-            router.dismissAll();
-          } catch (err: any) {
-            console.error('Error dismissing all navigation stacks', err);
-          }
+          // Don't navigate here - let the username modal appear if needed
+          // Navigation will happen when modal closes or completes
         } catch (err: any) {
           console.error('Social login error', err);
-          Alert.alert('Login failed', err.message || 'Unknown error');
+          Alert.alert(t('error'), err.message || t('unknownError'));
         } finally {
           setIsAuthenticating(false);
         }
       })();
     } else if (googleResponse?.type === 'error') {
-      Alert.alert('Google sign-in error', JSON.stringify(googleResponse));
+      // Do not expose raw error objects to users
+      Alert.alert(t('error'), t('googleSignInFailedTryAgain'));
+    } else if (
+      googleResponse?.type === 'dismiss' ||
+      // Some SDK versions may return 'cancel' on user dismissal
+      (googleResponse as any)?.type === 'cancel'
+    ) {
+      // User cancelled/dismissed the Google sign-in flow; no alert needed
     }
   }, [googleResponse]);
 
@@ -165,8 +152,8 @@ export default function SignInScreen() {
       });
       await setAuthFromBackend(backendResult);
 
-      // Reset navigation stack to home screen after successful login
-      router.replace('/');
+      // Don't navigate here - let the username modal appear if needed
+      // Navigation will happen when modal closes or completes
     } catch (error: any) {
       console.error('Apple sign-in error:', error);
 
@@ -335,6 +322,8 @@ export default function SignInScreen() {
             <TouchableOpacity
               onPress={handleGooglePress}
               disabled={!googleRequest || isAuthenticating}
+              accessibilityRole='button'
+              accessibilityLabel={t('continueWithGoogle')}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',

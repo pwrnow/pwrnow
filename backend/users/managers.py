@@ -18,6 +18,9 @@ class UserManager(DjangoUserManager["User"]):
             msg = "The given email must be set"
             raise ValueError(msg)
         email = self.normalize_email(email)
+
+        # Don't pass username to model if not explicitly provided
+        # The model's save() method will auto-generate it
         user = self.model(email=email, **extra_fields)
         user.password = make_password(password)
         user.save(using=self._db)

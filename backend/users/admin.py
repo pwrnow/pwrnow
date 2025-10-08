@@ -10,9 +10,10 @@ from .models import User
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """Admin interface for User model."""
-    
+
     list_display = [
         'email',
+        'username',
         'get_full_name',
         'is_staff',
         'is_superuser',
@@ -20,7 +21,7 @@ class UserAdmin(BaseUserAdmin):
         'login_status',
         'date_joined'
     ]
-    
+
     list_filter = [
         'is_staff',
         'is_superuser',
@@ -28,17 +29,17 @@ class UserAdmin(BaseUserAdmin):
         'date_joined',
         'last_login'
     ]
-    
-    search_fields = ['email', 'first_name', 'last_name']
+
+    search_fields = ['email', 'username', 'first_name', 'last_name']
     ordering = ['-date_joined']
     readonly_fields = ['id', 'date_joined', 'last_login', 'login_status']
-    
+
     fieldsets = (
         ('Authentication', {
             'fields': ('email', 'password')
         }),
         ('Personal Information', {
-            'fields': ('first_name', 'last_name')
+            'fields': ('first_name', 'last_name', 'username', 'username_set_by_user')
         }),
         ('Permissions', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
@@ -53,7 +54,7 @@ class UserAdmin(BaseUserAdmin):
             'classes': ('collapse',)
         })
     )
-    
+
     add_fieldsets = (
         ('Create New User', {
             'classes': ('wide',),
@@ -61,14 +62,15 @@ class UserAdmin(BaseUserAdmin):
         }),
         ('Personal Information', {
             'classes': ('wide',),
-            'fields': ('first_name', 'last_name'),
+            'fields': ('first_name', 'last_name', 'username'),
+            'description': 'Username will be auto-generated if not provided'
         }),
         ('Permissions', {
             'classes': ('wide',),
             'fields': ('is_staff', 'is_superuser'),
         }),
     )
-    
+
     @admin.display(description='Full Name', ordering='first_name')
     def get_full_name(self, obj):
         """Display user's full name or fallback to email."""
@@ -76,7 +78,7 @@ class UserAdmin(BaseUserAdmin):
         if full_name:
             return full_name
         return format_html('<em>{}</em>', 'No name provided')
-    
+
     @admin.display(description='Login Status', ordering='last_login')
     def login_status(self, obj):
         """Display user's login status with visual indicators."""
@@ -84,10 +86,10 @@ class UserAdmin(BaseUserAdmin):
             return format_html(
                 '<span style="color: #999; font-style: italic;">Never logged in</span>'
             )
-        
+
         now = timezone.now()
         time_since_login = now - obj.last_login
-        
+
         if time_since_login.days > 30:
             color = '#dc3545'  # red
             status = f'{time_since_login.days} days ago'
@@ -105,45 +107,45 @@ class UserAdmin(BaseUserAdmin):
             else:
                 color = '#28a745'  # green
                 status = 'Recently'
-        
+
         return format_html(
             '<span style="color: {};" title="Last login: {}">{}</span>',
             color,
             obj.last_login.strftime('%Y-%m-%d %H:%M:%S'),
             status
         )
-    
+
     def get_queryset(self, request):
         """Optimize queryset with prefetch_related for groups."""
         return super().get_queryset(request).prefetch_related('groups')
-    
+
     actions = ['activate_users', 'deactivate_users', 'make_staff', 'remove_staff']
-    
+
     def activate_users(self, request, queryset):
         """Activate selected users."""
         updated = queryset.update(is_active=True)
         self.message_user(request, f'{updated} users activated.')
     activate_users.short_description = "Activate selected users"
-    
+
     def deactivate_users(self, request, queryset):
         """Deactivate selected users."""
         updated = queryset.filter(is_superuser=False).update(is_active=False)
         if updated < queryset.count():
             self.message_user(
-                request, 
+                request,
                 f'{updated} users deactivated. Superusers cannot be deactivated.',
                 level='warning'
             )
         else:
             self.message_user(request, f'{updated} users deactivated.')
     deactivate_users.short_description = "Deactivate selected users"
-    
+
     def make_staff(self, request, queryset):
         """Give staff status to selected users."""
         updated = queryset.update(is_staff=True)
         self.message_user(request, f'{updated} users given staff status.')
     make_staff.short_description = "Give staff status to selected users"
-    
+
     def remove_staff(self, request, queryset):
         """Remove staff status from selected users."""
         updated = queryset.filter(is_superuser=False).update(is_staff=False)

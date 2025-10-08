@@ -7,6 +7,12 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client as AllAut
 from allauth.socialaccount.providers.apple.client import AppleOAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
+from rest_framework import status, generics
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import UserSerializer, UsernameUpdateSerializer, UsernameCheckSerializer
 
 
 class OAuth2Error(Exception):
@@ -41,3 +47,40 @@ class FacebookLogin(SocialLoginView):
 class AppleLogin(SocialLoginView):
     adapter_class = AppleOAuth2Adapter
     client_class = AppleOAuth2Client
+
+
+class UsernameUpdateView(APIView):
+    """Update username (one-time only)"""
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = UsernameUpdateSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            user = serializer.update(request.user, serializer.validated_data)
+            user_serializer = UserSerializer(user)
+            return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UsernameCheckView(APIView):
+    """Check if username is available"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = UsernameCheckSerializer(data=request.data)
+
+        if serializer.is_valid():
+            return Response(
+                {'available': True, 'username': serializer.validated_data['username']},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {'available': False, 'errors': serializer.errors},
+            status=status.HTTP_200_OK
+        )
