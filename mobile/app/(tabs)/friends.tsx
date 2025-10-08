@@ -22,7 +22,6 @@ export default function FriendsScreen() {
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('[Friends] Setting debounced query:', searchQuery);
       setDebouncedQuery(searchQuery);
     }, 300);
     return () => clearTimeout(timer);

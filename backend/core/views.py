@@ -548,49 +548,48 @@ def search_users(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def event_friends_attending(request, slug):
+def get_friends_attending_event(request, slug):
     """
-    Get list of friends who are attending/participated in an event.
+    Get list of user's friends who are attending (have liked) a specific event.
     """
     from django.contrib.auth import get_user_model
-    from .models import Friendship, EventParticipation
+    from .models import Friendship, Like, Event
+    from .serializers import UserSearchSerializer
     
     User = get_user_model()
     
     # Get the event
-    event = get_object_or_404(Event, slug=slug)
+    try:
+        event = Event.objects.get(slug=slug)
+    except Event.DoesNotExist:
+        return Response({'error': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
     
     # Get current user's friendships
     friendships = Friendship.objects.filter(
         models.Q(user1=request.user) | models.Q(user2=request.user)
-    ).select_related('user1', 'user2')
+    ).values_list('user1_id', 'user2_id')
     
     friend_ids = set()
-    for friendship in friendships:
-        if friendship.user1.id != request.user.id:
-            friend_ids.add(friendship.user1.id)
-        if friendship.user2.id != request.user.id:
-            friend_ids.add(friendship.user2.id)
+    for user1_id, user2_id in friendships:
+        friend_ids.add(user1_id)
+        friend_ids.add(user2_id)
+    friend_ids.discard(request.user.id)
     
-    # Get friends who have participated in this event
-    participating_friends = EventParticipation.objects.filter(
+    # Get friends who have liked this event
+    attending_friends = Like.objects.filter(
         event=event,
         user_id__in=friend_ids
-    ).select_related('user').order_by('-created_at')
+    ).select_related('user').values('user__id', 'user__username')
     
-    # Serialize the data
-    friends_data = [
-        {
-            'id': str(participation.user.id),
-            'username': participation.user.username,
-            'participated_at': participation.created_at.isoformat(),
-        }
-        for participation in participating_friends
+    # Format the response
+    friends_list = [
+        {'id': str(friend['user__id']), 'username': friend['user__username']}
+        for friend in attending_friends
     ]
     
     return Response({
-        'count': len(friends_data),
-        'friends': friends_data
+        'count': len(friends_list),
+        'friends': friends_list
     })
 
 
@@ -647,9 +646,6 @@ def accept_friend_request(request, request_id):
         user1=user1,
         user2=user2
     )
-    
-    # Send notification
-    push_service.send_friend_request_accepted_notification(friend_request)
     
     serializer = FriendRequestSerializer(friend_request)
     return Response({

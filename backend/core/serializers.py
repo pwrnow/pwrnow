@@ -78,13 +78,14 @@ class EventSerializer(serializers.ModelSerializer):
     posts = serializers.SerializerMethodField()
     schedule = serializers.SerializerMethodField()
     event_map = serializers.SerializerMethodField()
+    friends_interested = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'aspect_ratio',
-            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map'
+            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map', 'friends_interested'
         ]
 
     def get_title(self, obj):
@@ -203,6 +204,50 @@ class EventSerializer(serializers.ModelSerializer):
             return None
 
         return EventMapSerializer(event_map, context={'request': request}).data
+
+    def get_friends_interested(self, obj):
+        """Get friends who are interested in (have liked) this event."""
+        from django.db import models
+        from .models import Friendship, Like
+        
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        
+        # Return empty data if not authenticated
+        if not user or not getattr(user, 'is_authenticated', False):
+            return {'count': 0, 'friends': []}
+        
+        # Get current user's friendships
+        friendships = Friendship.objects.filter(
+            models.Q(user1=user) | models.Q(user2=user)
+        ).values_list('user1_id', 'user2_id')
+        
+        friend_ids = set()
+        for user1_id, user2_id in friendships:
+            friend_ids.add(user1_id)
+            friend_ids.add(user2_id)
+        friend_ids.discard(user.id)
+        
+        # If no friends, return early
+        if not friend_ids:
+            return {'count': 0, 'friends': []}
+        
+        # Get friends who are interested in this event
+        interested_friends = Like.objects.filter(
+            event=obj,
+            user_id__in=friend_ids
+        ).select_related('user').values('user__id', 'user__username')
+        
+        # Format the response
+        friends_list = [
+            {'id': str(friend['user__id']), 'username': friend['user__username']}
+            for friend in interested_friends
+        ]
+        
+        return {
+            'count': len(friends_list),
+            'friends': friends_list
+        }
 
 
 class EventCreateSerializer(serializers.ModelSerializer):

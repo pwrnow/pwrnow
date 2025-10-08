@@ -88,9 +88,11 @@ export function useLikeEvent() {
       // Return context for rollback
       return { previousEvents, previousEvent };
     },
-    onSettled: () => {
+    onSettled: (data, error, slug) => {
       // Refetch queries to ensure the UI is immediately updated
       queryClient.refetchQueries({ queryKey: queryKeys.events });
+      // Invalidate friends attending for this event
+      queryClient.invalidateQueries({ queryKey: ['friendsAttending', slug] });
     },
     onError: (err, slug, context) => {
       // Rollback on error
@@ -149,9 +151,11 @@ export function useUnlikeEvent() {
       // Return context for rollback
       return { previousEvents, previousEvent };
     },
-    onSettled: () => {
+    onSettled: (data, error, slug) => {
       // Refetch queries to ensure the UI is immediately updated
       queryClient.refetchQueries({ queryKey: queryKeys.events });
+      // Invalidate friends attending for this event
+      queryClient.invalidateQueries({ queryKey: ['friendsAttending', slug] });
     },
     onError: (err, slug, context) => {
       // Rollback on error
@@ -231,16 +235,10 @@ export function useFriendRequests(enabled: boolean = true) {
 
 export function useUserSearch(query: string, enabled: boolean = true) {
   const isEnabled = enabled && query.trim().length >= 3;
-  console.log('[useUserSearch] Query:', query, 'Enabled:', isEnabled, 'Auth:', enabled);
   
   return useQuery<SearchedUser[]>({
     queryKey: queryKeys.userSearch(query),
-    queryFn: async () => {
-      console.log('[useUserSearch] Executing query for:', query);
-      const result = await api.friends.searchUsers(query);
-      console.log('[useUserSearch] Query result:', result);
-      return result;
-    },
+    queryFn: () => api.friends.searchUsers(query),
     staleTime: 0, // No caching
     gcTime: 0, // No garbage collection time
     enabled: isEnabled,
@@ -298,3 +296,4 @@ export function useRemoveFriend() {
     },
   });
 }
+

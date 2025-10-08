@@ -31,6 +31,17 @@ export function usePushNotifications(options?: { enabled?: boolean }) {
 
     console.log('[Notifications] Processing notification data:', data);
 
+    // Handle friend request notifications
+    if (data.type === 'friend_request') {
+      console.log('[Notifications] Friend request notification, navigating to friends tab');
+      try {
+        router.push('/(tabs)/friends' as any);
+        return;
+      } catch (err) {
+        console.warn('[Notifications] Friends tab navigation failed:', err);
+      }
+    }
+
     // If URL is provided, navigate to it
     if (data.url) {
       // Strip domain and keep only the path

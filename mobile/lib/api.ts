@@ -1,4 +1,4 @@
-import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend, EventFriendsAttending } from '../types';
+import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -455,16 +455,12 @@ const friendsApi = {
   // Search users by username
   searchUsers: async (query: string): Promise<SearchedUser[]> => {
     const trimmedQuery = query.trim();
-    console.log('[API] Searching users with query:', trimmedQuery);
     
     if (trimmedQuery.length < 3) {
-      console.log('[API] Query too short, returning empty array');
       return [];
     }
     
     const url = `${getApiUrl()}/users/search/?q=${encodeURIComponent(trimmedQuery)}`;
-    console.log('[API] Search URL:', url);
-    
     const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
     const res = await fetch(url, {
       headers: {
@@ -473,17 +469,11 @@ const friendsApi = {
       },
     });
     
-    console.log('[API] Search response status:', res.status);
-    
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error('[API] Search error:', res.status, errorText);
-      throw new Error(`Failed to search users: ${res.status} ${errorText}`);
+      throw new Error('Failed to search users');
     }
     
-    const data = await res.json();
-    console.log('[API] Search results:', data);
-    return data;
+    return res.json();
   },
 
   // Get list of friends
@@ -587,25 +577,6 @@ const friendsApi = {
   },
 };
 
-// Event Friends API
-const eventFriendsApi = {
-  // Get friends attending an event
-  getFriendsAttending: async (eventSlug: string): Promise<EventFriendsAttending> => {
-    const url = `${getApiUrl()}/events/${eventSlug}/friends-attending/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
-    });
-    if (!res.ok) {
-      throw new Error('Failed to get friends attending');
-    }
-    return res.json();
-  },
-};
-
 // Export all APIs
 export const api = {
   events: eventsApi,
@@ -614,6 +585,5 @@ export const api = {
   notifications: notificationsApi,
   user: userApi,
   friends: friendsApi,
-  eventFriends: eventFriendsApi,
   baseUrl: getApiUrl(),
 };

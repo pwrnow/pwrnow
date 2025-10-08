@@ -73,6 +73,10 @@ export interface Event {
     }>;
   } | null;
   event_map?: EventMap | null;
+  friends_interested?: {
+    count: number;
+    friends: { id: string; username: string }[];
+  };
 }
 
 export interface PostImage {
@@ -117,13 +121,7 @@ export interface Friend {
   friendship_created_at: string;
 }
 
-export interface FriendAttending {
-  id: string;
-  username: string;
-  participated_at: string;
-}
-
-export interface EventFriendsAttending {
+export interface FriendsAttendingResponse {
   count: number;
-  friends: FriendAttending[];
+  friends: FriendUser[];
 }
