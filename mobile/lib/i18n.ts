@@ -219,6 +219,14 @@ const translations: Record<string, TranslationMap> = {
     usernamePlaceholder: 'your_username',
     setUsername: 'Set Username',
     usernameNotChangeableWarning: 'You can change your username later in settings',
+    // Tabs translations
+    home: 'Home',
+    liked: 'Liked',
+    // Liked events screen translations
+    signInToSeeLikedEvents: 'Sign in to see liked events',
+    signInToSaveFavoriteEvents: 'Sign in to save your favorite events and see them here',
+    noLikedEvents: 'No liked events yet',
+    likeEventsToSeeThemHere: 'Like events to see them here. Tap the heart icon on any event to add it to your favorites.',
   },
   pl: {
     all: 'Wszystkie',
@@ -443,6 +451,14 @@ const translations: Record<string, TranslationMap> = {
     usernamePlaceholder: 'twoja_nazwa',
     setUsername: 'Ustaw Nazwę',
     usernameNotChangeableWarning: 'Możesz zmienić swoją nazwę użytkownika później w ustawieniach',
+    // Tabs translations
+    home: 'Główna',
+    liked: 'Polubione',
+    // Liked events screen translations
+    signInToSeeLikedEvents: 'Zaloguj się, aby zobaczyć polubione wydarzenia',
+    signInToSaveFavoriteEvents: 'Zaloguj się, aby zapisać ulubione wydarzenia i zobaczyć je tutaj',
+    noLikedEvents: 'Brak polubionych wydarzeń',
+    likeEventsToSeeThemHere: 'Polub wydarzenia, aby zobaczyć je tutaj. Dotknij ikonę serca na dowolnym wydarzeniu, aby dodać je do ulubionych.',
   },
 };
 
