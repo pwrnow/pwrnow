@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Alert } from 'react-native';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Alert, AppState, AppStateStatus } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { t } from '../../lib/i18n';
 import FriendsListView from '../../components/FriendsListView';
@@ -18,6 +18,7 @@ export default function FriendsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const appState = useRef(AppState.currentState);
 
   // Debounce search query
   useEffect(() => {
@@ -31,6 +32,26 @@ export default function FriendsScreen() {
   const { data: friends = [], isLoading: isLoadingFriends, refetch: refetchFriends } = useFriends(isAuthenticated);
   const { data: friendRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useFriendRequests(isAuthenticated);
   const { data: searchResults = [], isLoading: isSearching } = useUserSearch(debouncedQuery, isAuthenticated);
+
+  // Listen for app state changes and refetch data when app becomes active
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active' &&
+        isAuthenticated
+      ) {
+        // App has come to the foreground, refetch friends and requests
+        refetchFriends();
+        refetchRequests();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAuthenticated, refetchFriends, refetchRequests]);
 
   // Mutations
   const acceptRequestMutation = useAcceptFriendRequest();
@@ -110,8 +131,11 @@ export default function FriendsScreen() {
       isLoadingFriends={isLoadingFriends}
       isLoadingRequests={isLoadingRequests}
       acceptRequestPending={acceptRequestMutation.isPending}
+      acceptingRequestId={acceptRequestMutation.variables}
       rejectRequestPending={rejectRequestMutation.isPending}
+      rejectingRequestId={rejectRequestMutation.variables}
       sendRequestPending={sendRequestMutation.isPending}
+      sendingRequestToUserId={sendRequestMutation.variables}
       showEmptyState={!isAuthenticated}
       emptyState={{
         title: t('signInToSeeFriends'),

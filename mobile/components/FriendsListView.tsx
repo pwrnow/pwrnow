@@ -22,8 +22,11 @@ interface FriendsListViewProps {
   isLoadingFriends: boolean;
   isLoadingRequests: boolean;
   acceptRequestPending: boolean;
+  acceptingRequestId?: string;
   rejectRequestPending: boolean;
+  rejectingRequestId?: string;
   sendRequestPending: boolean;
+  sendingRequestToUserId?: string;
   showEmptyState?: boolean;
   emptyState?: {
     title: string;
@@ -47,8 +50,11 @@ export default function FriendsListView({
   isLoadingFriends,
   isLoadingRequests,
   acceptRequestPending,
+  acceptingRequestId,
   rejectRequestPending,
+  rejectingRequestId,
   sendRequestPending,
+  sendingRequestToUserId,
   showEmptyState = false,
   emptyState,
 }: FriendsListViewProps) {
@@ -222,7 +228,7 @@ export default function FriendsListView({
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TouchableOpacity
                     onPress={() => onRejectRequest(request.id)}
-                    disabled={rejectRequestPending}
+                    disabled={rejectRequestPending && rejectingRequestId === request.id}
                     style={{
                       backgroundColor: isDark ? '#374151' : '#E5E7EB',
                       paddingHorizontal: 12,
@@ -241,7 +247,7 @@ export default function FriendsListView({
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => onAcceptRequest(request.id)}
-                    disabled={acceptRequestPending}
+                    disabled={acceptRequestPending && acceptingRequestId === request.id}
                     style={{
                       backgroundColor: isDark ? '#10B981' : '#059669',
                       paddingHorizontal: 12,
@@ -249,7 +255,7 @@ export default function FriendsListView({
                       borderRadius: 8,
                     }}
                   >
-                    {acceptRequestPending ? (
+                    {acceptRequestPending && acceptingRequestId === request.id ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                       <Text style={{ color: '#FFFFFF', fontWeight: '500' }}>
@@ -490,7 +496,7 @@ export default function FriendsListView({
                   ) : (
                     <TouchableOpacity
                       onPress={() => onSendFriendRequest(user.id)}
-                      disabled={sendRequestPending}
+                      disabled={sendRequestPending && sendingRequestToUserId === user.id}
                       style={{
                         backgroundColor: isDark ? '#3B82F6' : '#2563EB',
                         paddingHorizontal: 16,
@@ -498,7 +504,7 @@ export default function FriendsListView({
                         borderRadius: 8,
                       }}
                     >
-                      {sendRequestPending ? (
+                      {sendRequestPending && sendingRequestToUserId === user.id ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
                         <Text style={{ color: '#FFFFFF', fontWeight: '500' }}>
