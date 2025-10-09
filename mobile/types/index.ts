@@ -121,6 +121,13 @@ export interface Friend {
   friendship_created_at: string;
 }
 
+export interface FriendSuggestion {
+  id: string;
+  username: string;
+  mutual_friends_count: number;
+  source_friend: string | null;
+}
+
 export interface FriendsAttendingResponse {
   count: number;
   friends: FriendUser[];

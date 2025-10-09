@@ -729,6 +729,106 @@ def list_friends(request):
     return Response(serializer.data)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def suggest_friends(request):
+    """
+    Suggest friends based on friends of friends.
+    Returns users ordered by number of mutual friends, then by username.
+    """
+    from django.contrib.auth import get_user_model
+    from .models import Friendship, FriendRequest
+    from django.db.models import Count, Q
+    
+    User = get_user_model()
+    
+    # Get current user's friend IDs
+    friendships = Friendship.objects.filter(
+        Q(user1=request.user) | Q(user2=request.user)
+    ).values_list('user1_id', 'user2_id')
+    
+    friend_ids = set()
+    for user1_id, user2_id in friendships:
+        friend_ids.add(user1_id)
+        friend_ids.add(user2_id)
+    friend_ids.discard(request.user.id)
+    
+    if not friend_ids:
+        return Response([])
+    
+    # Get friends of friends (excluding current user and existing friends)
+    friends_of_friends_map = {}  # Maps suggested user ID to list of mutual friend IDs
+    
+    for friend_id in friend_ids:
+        # Get this friend's friends
+        fof_friendships = Friendship.objects.filter(
+            Q(user1_id=friend_id) | Q(user2_id=friend_id)
+        ).values_list('user1_id', 'user2_id')
+        
+        for user1_id, user2_id in fof_friendships:
+            fof_id = user1_id if user1_id != friend_id else user2_id
+            
+            # Skip if it's the current user or already a friend
+            if fof_id == request.user.id or fof_id in friend_ids:
+                continue
+            
+            if fof_id not in friends_of_friends_map:
+                friends_of_friends_map[fof_id] = []
+            friends_of_friends_map[fof_id].append(friend_id)
+    
+    if not friends_of_friends_map:
+        return Response([])
+    
+    # Get pending friend requests to exclude them
+    pending_requests = FriendRequest.objects.filter(
+        Q(from_user=request.user) | Q(to_user=request.user),
+        status=FriendRequest.Status.PENDING
+    ).values_list('from_user_id', 'to_user_id')
+    
+    pending_user_ids = set()
+    for from_id, to_id in pending_requests:
+        pending_user_ids.add(from_id)
+        pending_user_ids.add(to_id)
+    pending_user_ids.discard(request.user.id)
+    
+    # Filter out users with pending requests
+    for user_id in pending_user_ids:
+        friends_of_friends_map.pop(user_id, None)
+    
+    if not friends_of_friends_map:
+        return Response([])
+    
+    # Get user data for suggested friends
+    suggested_user_ids = list(friends_of_friends_map.keys())
+    users = User.objects.filter(id__in=suggested_user_ids).values('id', 'username')
+    
+    # Build suggestions with mutual friend count and source friend
+    suggestions = []
+    for user in users:
+        user_id = user['id']
+        mutual_friends = friends_of_friends_map[user_id]
+        mutual_count = len(mutual_friends)
+        
+        # Get the first mutual friend's username (to show as source)
+        source_friend_id = mutual_friends[0]
+        source_friend = User.objects.filter(id=source_friend_id).values('username').first()
+        
+        suggestions.append({
+            'id': str(user_id),
+            'username': user['username'],
+            'mutual_friends_count': mutual_count,
+            'source_friend': source_friend['username'] if source_friend else None,
+        })
+    
+    # Sort by mutual friends count (descending) then by username (ascending)
+    suggestions.sort(key=lambda x: (-x['mutual_friends_count'], x['username']))
+    
+    # Limit to top 20 suggestions
+    suggestions = suggestions[:20]
+    
+    return Response(suggestions)
+
+
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def remove_friend(request, friend_id):

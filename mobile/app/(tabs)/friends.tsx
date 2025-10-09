@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Alert, AppState, AppStateStatus } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { t } from '../../lib/i18n';
+// Import FriendsListView component with updated props for friend suggestions
 import FriendsListView from '../../components/FriendsListView';
 import {
   useFriends,
@@ -11,6 +12,7 @@ import {
   useRejectFriendRequest,
   useRemoveFriend,
   useSendFriendRequest,
+  useSuggestedFriends,
 } from '../../lib/queries';
 
 export default function FriendsScreen() {
@@ -32,6 +34,7 @@ export default function FriendsScreen() {
   const { data: friends = [], isLoading: isLoadingFriends, refetch: refetchFriends } = useFriends(isAuthenticated);
   const { data: friendRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useFriendRequests(isAuthenticated);
   const { data: searchResults = [], isLoading: isSearching } = useUserSearch(debouncedQuery, isAuthenticated);
+  const { data: suggestedFriends = [], isLoading: isLoadingSuggestions, refetch: refetchSuggestions } = useSuggestedFriends(isAuthenticated);
 
   // Listen for app state changes and refetch data when app becomes active
   useEffect(() => {
@@ -61,9 +64,9 @@ export default function FriendsScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetchFriends(), refetchRequests()]);
+    await Promise.all([refetchFriends(), refetchRequests(), refetchSuggestions()]);
     setRefreshing(false);
-  }, [refetchFriends, refetchRequests]);
+  }, [refetchFriends, refetchRequests, refetchSuggestions]);
 
   const handleAcceptRequest = useCallback(async (requestId: string) => {
     try {
@@ -95,7 +98,6 @@ export default function FriendsScreen() {
           onPress: async () => {
             try {
               await removeFriendMutation.mutateAsync(friendId);
-              Alert.alert(t('success'), t('friendRemoved'));
             } catch (error) {
               Alert.alert(t('error'), t('errorRemovingFriend'));
             }
@@ -118,6 +120,7 @@ export default function FriendsScreen() {
     <FriendsListView
       friends={friends}
       friendRequests={friendRequests}
+      suggestedFriends={suggestedFriends}
       searchResults={searchResults}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}
@@ -130,6 +133,7 @@ export default function FriendsScreen() {
       onSendFriendRequest={handleSendFriendRequest}
       isLoadingFriends={isLoadingFriends}
       isLoadingRequests={isLoadingRequests}
+      isLoadingSuggestions={isLoadingSuggestions}
       acceptRequestPending={acceptRequestMutation.isPending}
       acceptingRequestId={acceptRequestMutation.variables}
       rejectRequestPending={rejectRequestMutation.isPending}

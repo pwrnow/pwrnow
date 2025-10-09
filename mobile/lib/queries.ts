@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCachedQuery } from './cachedQuery';
 import { api } from './api';
 import { queryKeys } from './queryKeys';
-import type { Event, Category, Post, User, Friend, FriendRequest, SearchedUser } from '../types';
+import type { Event, Category, Post, User, Friend, FriendRequest, SearchedUser, FriendSuggestion } from '../types';
 
 export function useEvents() {
   return useCachedQuery<Event[]>({
@@ -220,6 +220,15 @@ export function useFriends(enabled: boolean = true) {
     queryKey: queryKeys.friends,
     queryFn: () => api.friends.getFriends(),
     staleTime: 30 * 1000, // 30 seconds
+    enabled,
+  });
+}
+
+export function useSuggestedFriends(enabled: boolean = true) {
+  return useQuery<FriendSuggestion[]>({
+    queryKey: ['suggestedFriends'],
+    queryFn: () => api.friends.getSuggestedFriends(),
+    staleTime: 60 * 1000, // 60 seconds
     enabled,
   });
 }

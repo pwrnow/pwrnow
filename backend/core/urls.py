@@ -22,6 +22,7 @@ urlpatterns = [
     # Friendship endpoints
     path('users/search/', views.search_users, name='search-users'),
     path('friends/', views.list_friends, name='list-friends'),
+    path('friends/suggestions/', views.suggest_friends, name='suggest-friends'),
     path('friends/<uuid:friend_id>/remove/', views.remove_friend, name='remove-friend'),
     path('friend-requests/', views.list_friend_requests, name='list-friend-requests'),
     path('friend-requests/send/', views.send_friend_request, name='send-friend-request'),

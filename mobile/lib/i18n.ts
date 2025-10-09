@@ -261,6 +261,12 @@ const translations: Record<string, TranslationMap> = {
       and: 'and',
       andOthers: '+ {{count}} more',
     alreadyFriends: 'Already friends',
+    suggestFriends: 'Suggest Friends',
+    friendOf: 'Friend of {{username}}',
+    noSuggestedFriends: 'No friend suggestions',
+    noSuggestedFriendsDescription: 'Add more friends to see suggestions based on mutual connections',
+    mutualFriend: '{{count}} mutual friend',
+    mutualFriends: '{{count}} mutual friends',
   },
   pl: {
     all: 'Wszystkie',
@@ -527,6 +533,12 @@ const translations: Record<string, TranslationMap> = {
       and: 'i',
       andOthers: '+ {{count}} więcej',
     alreadyFriends: 'Już znajomi',
+    suggestFriends: 'Sugeruj Znajomych',
+    friendOf: 'Znajomy {{username}}',
+    noSuggestedFriends: 'Brak sugerowanych znajomych',
+    noSuggestedFriendsDescription: 'Dodaj więcej znajomych, aby zobaczyć sugestie oparte na wzajemnych połączeniach',
+    mutualFriend: '{{count}} wspólny znajomy',
+    mutualFriends: '{{count}} wspólnych znajomych',
   },
 };
 

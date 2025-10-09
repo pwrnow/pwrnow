@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { View, ScrollView, RefreshControl, Platform, Text, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { t } from '../lib/i18n';
 import EmptyState from './EmptyState';
-import { Friend, FriendRequest, SearchedUser } from '../types';
+import { Friend, FriendRequest, SearchedUser, FriendSuggestion } from '../types';
 import Avatar from './Avatar';
 
-interface FriendsListViewProps {
+// Updated interface to include friend suggestions  
+export interface FriendsListViewProps {
   friends: Friend[];
   friendRequests: FriendRequest[];
+  suggestedFriends: FriendSuggestion[];
   searchResults: SearchedUser[];
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
@@ -22,6 +25,7 @@ interface FriendsListViewProps {
   onSendFriendRequest: (userId: string) => void;
   isLoadingFriends: boolean;
   isLoadingRequests: boolean;
+  isLoadingSuggestions: boolean;
   acceptRequestPending: boolean;
   acceptingRequestId?: string;
   rejectRequestPending: boolean;
@@ -38,6 +42,7 @@ interface FriendsListViewProps {
 export default function FriendsListView({
   friends,
   friendRequests,
+  suggestedFriends,
   searchResults,
   searchQuery,
   onSearchQueryChange,
@@ -50,6 +55,7 @@ export default function FriendsListView({
   onSendFriendRequest,
   isLoadingFriends,
   isLoadingRequests,
+  isLoadingSuggestions,
   acceptRequestPending,
   acceptingRequestId,
   rejectRequestPending,
@@ -62,6 +68,7 @@ export default function FriendsListView({
   const { colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const subtleSpinnerColor = isDark ? '#A3A3A3' : '#9CA3AF';
+  const [isSuggestionsExpanded, setIsSuggestionsExpanded] = useState(true);
 
   const refreshControl = (
     <RefreshControl
@@ -258,8 +265,127 @@ export default function FriendsListView({
           </View>
         ) : null}
 
+        {/* Suggested Friends Section */}
+        {!isLoadingSuggestions && suggestedFriends.length > 0 ? (
+          <View style={{ paddingTop: friendRequests.length > 0 ? 16 : 8, paddingBottom: 16 }}>
+            <TouchableOpacity
+              onPress={() => setIsSuggestionsExpanded(!isSuggestionsExpanded)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  color: isDark ? '#FFFFFF' : '#000000',
+                }}
+              >
+                {t('suggestFriends')}
+              </Text>
+              <Ionicons
+                name={isSuggestionsExpanded ? 'chevron-up' : 'chevron-down'}
+                size={24}
+                color={isDark ? '#FFFFFF' : '#000000'}
+              />
+            </TouchableOpacity>
+
+            {isSuggestionsExpanded && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingTop: 12,
+                  gap: 12,
+                }}
+              >
+                {suggestedFriends.map((suggestion) => (
+                  <View
+                    key={suggestion.id}
+                    style={{
+                      width: 160,
+                      backgroundColor: isDark ? '#1F2937' : '#F3F4F6',
+                      borderRadius: 12,
+                      padding: 16,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Avatar
+                      size={64}
+                      username={suggestion.username}
+                      style={{ marginBottom: 12 }}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '600',
+                        color: isDark ? '#FFFFFF' : '#000000',
+                        marginBottom: 4,
+                        textAlign: 'center',
+                      }}
+                      numberOfLines={1}
+                    >
+                      {suggestion.username}
+                    </Text>
+                    {suggestion.source_friend && (
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: isDark ? '#9CA3AF' : '#6B7280',
+                          marginBottom: 4,
+                          textAlign: 'center',
+                        }}
+                        numberOfLines={1}
+                      >
+                        {t('friendOf', { username: suggestion.source_friend })}
+                      </Text>
+                    )}
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: isDark ? '#6B7280' : '#9CA3AF',
+                        marginBottom: 12,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {suggestion.mutual_friends_count === 1
+                        ? t('mutualFriend', { count: suggestion.mutual_friends_count })
+                        : t('mutualFriends', { count: suggestion.mutual_friends_count })}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => onSendFriendRequest(suggestion.id)}
+                      disabled={sendRequestPending && sendingRequestToUserId === suggestion.id}
+                      style={{
+                        backgroundColor: isDark ? '#3B82F6' : '#2563EB',
+                        paddingHorizontal: 20,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                        width: '100%',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {sendRequestPending && sendingRequestToUserId === suggestion.id ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={{ color: '#FFFFFF', fontWeight: '500', fontSize: 14 }}>
+                          {t('invite')}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        ) : null}
+
         {/* Friends List Section */}
-        <View style={{ paddingHorizontal: 16, paddingTop: friendRequests.length > 0 ? 0 : 8 }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: friendRequests.length > 0 || suggestedFriends.length > 0 ? 0 : 8 }}>
           <Text
             style={{
               fontSize: 18,

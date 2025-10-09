@@ -1,4 +1,4 @@
-import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend } from '../types';
+import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend, FriendSuggestion } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -488,6 +488,22 @@ const friendsApi = {
     });
     if (!res.ok) {
       throw new Error('Failed to get friends');
+    }
+    return res.json();
+  },
+
+  // Get friend suggestions
+  getSuggestedFriends: async (): Promise<FriendSuggestion[]> => {
+    const url = `${getApiUrl()}/friends/suggestions/`;
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': i18n.locale,
+      },
+    });
+    if (!res.ok) {
+      throw new Error('Failed to get friend suggestions');
     }
     return res.json();
   },
