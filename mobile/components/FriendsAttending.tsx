@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '../hooks/useThemeColors';
+import Avatar from './Avatar';
 
 interface Friend {
   id: string;
@@ -46,22 +46,16 @@ export default function FriendsAttending({ friends, count }: FriendsAttendingPro
           <View
             key={friend.id}
             style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
-              backgroundColor: isDark ? '#374151' : '#E5E7EB',
-              alignItems: 'center',
-              justifyContent: 'center',
               marginLeft: index === 0 ? 0 : -10,
               borderWidth: 2,
+              borderRadius: 14,
               borderColor: isDark ? '#000000' : '#FFFFFF',
               zIndex: displayedFriends.length - index,
             }}
           >
-            <Ionicons
-              name="person"
-              size={14}
-              color={isDark ? '#9CA3AF' : '#6B7280'}
+            <Avatar
+              size={28}
+              username={friend.username}
             />
           </View>
         ))}

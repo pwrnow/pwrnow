@@ -158,6 +158,7 @@ export default function ProfileScreen() {
           <View className='items-center mb-12 mt-8'>
             <Avatar
               size={100}
+              username={user.username}
               firstName={user.first_name}
               lastName={user.last_name}
               email={user.email}

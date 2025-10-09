@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface AvatarProps {
   size?: number;
+  username?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -14,6 +15,7 @@ interface AvatarProps {
 
 export default function Avatar({
   size = 80,
+  username,
   firstName,
   lastName,
   email,
@@ -22,12 +24,10 @@ export default function Avatar({
 }: AvatarProps) {
   const { colors } = useTheme();
 
-  // Generate initials from first and last name, or from email
+  // Generate initials - prioritize username (first letter only), then firstName, then email
   const getInitials = () => {
-    if (firstName && lastName && firstName.trim() && lastName.trim()) {
-      return `${firstName.charAt(0).toUpperCase()}${lastName
-        .charAt(0)
-        .toUpperCase()}`;
+    if (username && username.trim()) {
+      return username.charAt(0).toUpperCase();
     }
     if (firstName && firstName.trim()) {
       return firstName.charAt(0).toUpperCase();

@@ -5,6 +5,7 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { t } from '../lib/i18n';
 import EmptyState from './EmptyState';
 import { Friend, FriendRequest, SearchedUser } from '../types';
+import Avatar from './Avatar';
 
 interface FriendsListViewProps {
   friends: Friend[];
@@ -199,23 +200,11 @@ export default function FriendsListView({
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 12,
-                    }}
-                  >
-                    <Ionicons
-                      name="person"
-                      size={20}
-                      color={isDark ? '#9CA3AF' : '#6B7280'}
-                    />
-                  </View>
+                  <Avatar
+                    size={40}
+                    username={request.from_user.username}
+                    style={{ marginRight: 12 }}
+                  />
                   <Text
                     style={{
                       fontSize: 16,
@@ -327,23 +316,11 @@ export default function FriendsListView({
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 12,
-                    }}
-                  >
-                    <Ionicons
-                      name="person"
-                      size={20}
-                      color={isDark ? '#9CA3AF' : '#6B7280'}
-                    />
-                  </View>
+                  <Avatar
+                    size={40}
+                    username={friend.username}
+                    style={{ marginRight: 12 }}
+                  />
                   <Text
                     style={{
                       fontSize: 16,
@@ -447,23 +424,11 @@ export default function FriendsListView({
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <View
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: 12,
-                      }}
-                    >
-                      <Ionicons
-                        name="person"
-                        size={20}
-                        color={isDark ? '#9CA3AF' : '#6B7280'}
-                      />
-                    </View>
+                    <Avatar
+                      size={40}
+                      username={user.username}
+                      style={{ marginRight: 12 }}
+                    />
                     <Text
                       style={{
                         fontSize: 16,
