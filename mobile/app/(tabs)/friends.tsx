@@ -36,6 +36,25 @@ export default function FriendsScreen() {
   const { data: searchResults = [], isLoading: isSearching } = useUserSearch(debouncedQuery, isAuthenticated);
   const { data: suggestedFriends = [], isLoading: isLoadingSuggestions, refetch: refetchSuggestions } = useSuggestedFriends(isAuthenticated);
 
+  // Debug logging for friend suggestions
+  useEffect(() => {
+    if (!isLoadingSuggestions && isAuthenticated) {
+      console.log('=== FRIEND SUGGESTIONS ===');
+      console.log(`Loading: ${isLoadingSuggestions}`);
+      console.log(`Total suggestions: ${suggestedFriends.length}`);
+      if (suggestedFriends.length > 0) {
+        suggestedFriends.forEach((suggestion, index) => {
+          console.log(`${index + 1}. ${suggestion.username}`);
+          console.log(`   - Source: ${suggestion.source_friend}`);
+          console.log(`   - Mutual friends: ${suggestion.mutual_friends_count}`);
+        });
+      } else {
+        console.log('No suggestions available');
+      }
+      console.log('==========================');
+    }
+  }, [suggestedFriends, isLoadingSuggestions, isAuthenticated]);
+
   // Listen for app state changes and refetch data when app becomes active
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {

@@ -533,7 +533,7 @@ const translations: Record<string, TranslationMap> = {
       and: 'i',
       andOthers: '+ {{count}} więcej',
     alreadyFriends: 'Już znajomi',
-    suggestFriends: 'Sugeruj Znajomych',
+    suggestFriends: 'Sugerowani znajomi',
     friendOf: 'Znajomy {{username}}',
     noSuggestedFriends: 'Brak sugerowanych znajomych',
     noSuggestedFriendsDescription: 'Dodaj więcej znajomych, aby zobaczyć sugestie oparte na wzajemnych połączeniach',

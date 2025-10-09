@@ -265,10 +265,106 @@ export default function FriendsListView({
           </View>
         ) : null}
 
+        {/* Friends List Section */}
+        <View style={{ paddingHorizontal: 16, paddingTop: friendRequests.length > 0 ? 0 : 8 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: '600',
+              color: isDark ? '#FFFFFF' : '#000000',
+              marginBottom: 12,
+            }}
+          >
+            {t('myFriends')}
+          </Text>
+          {isLoadingFriends ? (
+            <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+              <ActivityIndicator color={isDark ? '#FFFFFF' : '#000000'} />
+            </View>
+          ) : friends.length === 0 ? (
+            <View style={{ paddingVertical: 40 }}>
+              <Ionicons
+                name="people-outline"
+                size={64}
+                color={isDark ? '#374151' : '#E5E7EB'}
+                style={{ alignSelf: 'center', marginBottom: 16 }}
+              />
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: isDark ? '#9CA3AF' : '#6B7280',
+                  textAlign: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                {t('noFriendsYet')}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: isDark ? '#6B7280' : '#9CA3AF',
+                  textAlign: 'center',
+                }}
+              >
+                {t('addFriendsToSeeThemHere')}
+              </Text>
+            </View>
+          ) : (
+            friends.map((friend) => (
+              <View
+                key={friend.id}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: isDark ? '#374151' : '#E5E7EB',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Avatar
+                    size={40}
+                    username={friend.username}
+                    style={{ marginRight: 12 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      color: isDark ? '#FFFFFF' : '#000000',
+                    }}
+                  >
+                    {friend.username}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => onRemoveFriend(friend.id, friend.username)}
+                  style={{
+                    backgroundColor: isDark ? '#374151' : '#E5E7EB',
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isDark ? '#EF4444' : '#DC2626',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {t('remove')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
+
         {/* Suggested Friends Section */}
         {!isLoadingSuggestions && suggestedFriends.length > 0 ? (
-          <View style={{ paddingTop: friendRequests.length > 0 ? 16 : 8, paddingBottom: 16 }}>
+          <View style={{ paddingTop: 16, paddingBottom: 16 }}>
             <TouchableOpacity
+              activeOpacity={1}
               onPress={() => setIsSuggestionsExpanded(!isSuggestionsExpanded)}
               style={{
                 flexDirection: 'row',
@@ -383,101 +479,6 @@ export default function FriendsListView({
             )}
           </View>
         ) : null}
-
-        {/* Friends List Section */}
-        <View style={{ paddingHorizontal: 16, paddingTop: friendRequests.length > 0 || suggestedFriends.length > 0 ? 0 : 8 }}>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: '600',
-              color: isDark ? '#FFFFFF' : '#000000',
-              marginBottom: 12,
-            }}
-          >
-            {t('myFriends')}
-          </Text>
-          {isLoadingFriends ? (
-            <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-              <ActivityIndicator color={isDark ? '#FFFFFF' : '#000000'} />
-            </View>
-          ) : friends.length === 0 ? (
-            <View style={{ paddingVertical: 40 }}>
-              <Ionicons
-                name="people-outline"
-                size={64}
-                color={isDark ? '#374151' : '#E5E7EB'}
-                style={{ alignSelf: 'center', marginBottom: 16 }}
-              />
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: isDark ? '#9CA3AF' : '#6B7280',
-                  textAlign: 'center',
-                  marginBottom: 8,
-                }}
-              >
-                {t('noFriendsYet')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: isDark ? '#6B7280' : '#9CA3AF',
-                  textAlign: 'center',
-                }}
-              >
-                {t('addFriendsToSeeThemHere')}
-              </Text>
-            </View>
-          ) : (
-            friends.map((friend) => (
-              <View
-                key={friend.id}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: 12,
-                  borderBottomWidth: 1,
-                  borderBottomColor: isDark ? '#374151' : '#E5E7EB',
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <Avatar
-                    size={40}
-                    username={friend.username}
-                    style={{ marginRight: 12 }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      color: isDark ? '#FFFFFF' : '#000000',
-                    }}
-                  >
-                    {friend.username}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => onRemoveFriend(friend.id, friend.username)}
-                  style={{
-                    backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: isDark ? '#EF4444' : '#DC2626',
-                      fontWeight: '500',
-                    }}
-                  >
-                    {t('remove')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))
-          )}
-        </View>
       </ScrollView>
 
       {/* Search Results Overlay */}

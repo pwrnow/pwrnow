@@ -496,6 +496,7 @@ const friendsApi = {
   getSuggestedFriends: async (): Promise<FriendSuggestion[]> => {
     const url = `${getApiUrl()}/friends/suggestions/`;
     const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    console.log('[API] Fetching friend suggestions from:', url);
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -503,9 +504,12 @@ const friendsApi = {
       },
     });
     if (!res.ok) {
+      console.error('[API] Failed to get friend suggestions:', res.status, res.statusText);
       throw new Error('Failed to get friend suggestions');
     }
-    return res.json();
+    const data = await res.json();
+    console.log('[API] Friend suggestions response:', data);
+    return data;
   },
 
   // Remove a friend
