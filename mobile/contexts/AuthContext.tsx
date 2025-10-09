@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { validateToken, refreshAccessToken, logout } from '../lib/api';
+import { validateToken, refreshAccessToken, logout, userApi } from '../lib/api';
 import {
   ACCESS_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
@@ -59,7 +59,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           
           // Fetch fresh user details from /user/ endpoint
           try {
-            const { userApi } = await import('../lib/api');
             const userDetails = await userApi.getCurrentUser();
             setUser(userDetails);
             await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userDetails));
@@ -86,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 
                 // Fetch fresh user details from /user/ endpoint
                 try {
-                  const { userApi } = await import('../lib/api');
                   const userDetails = await userApi.getCurrentUser();
                   setUser(userDetails);
                   await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userDetails));
@@ -160,7 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   async function refreshUser() {
     // Refresh user data from backend
     try {
-      const { userApi } = await import('../lib/api');
       const userDetails = await userApi.getCurrentUser();
       setUser(userDetails);
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userDetails));
