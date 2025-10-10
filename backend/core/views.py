@@ -779,7 +779,7 @@ def suggest_friends(request):
     if not friends_of_friends_map:
         return Response([])
     
-    # Get pending friend requests to exclude them
+    # Get pending friend requests to exclude them (both sent and received)
     pending_requests = FriendRequest.objects.filter(
         Q(from_user=request.user) | Q(to_user=request.user),
         status=FriendRequest.Status.PENDING
@@ -787,11 +787,13 @@ def suggest_friends(request):
     
     pending_user_ids = set()
     for from_id, to_id in pending_requests:
+        # Add both users from the request
         pending_user_ids.add(from_id)
         pending_user_ids.add(to_id)
+    # Remove current user from the set
     pending_user_ids.discard(request.user.id)
     
-    # Filter out users with pending requests
+    # Filter out users with pending requests from suggestions
     for user_id in pending_user_ids:
         friends_of_friends_map.pop(user_id, None)
     

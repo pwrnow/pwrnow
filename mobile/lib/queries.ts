@@ -265,6 +265,8 @@ export function useSendFriendRequest() {
     onSuccess: () => {
       // Invalidate search results to update the "pending" status
       queryClient.invalidateQueries({ queryKey: ['userSearch'] });
+      // Note: We don't invalidate suggestedFriends here anymore
+      // The UI handles pending state locally for better UX
     },
   });
 }
@@ -278,6 +280,8 @@ export function useAcceptFriendRequest() {
       // Invalidate both friend requests and friends list
       queryClient.invalidateQueries({ queryKey: queryKeys.friendRequests });
       queryClient.invalidateQueries({ queryKey: queryKeys.friends });
+      // Invalidate suggested friends as new friends-of-friends may appear
+      queryClient.invalidateQueries({ queryKey: ['suggestedFriends'] });
     },
   });
 }
@@ -290,6 +294,8 @@ export function useRejectFriendRequest() {
     onSuccess: () => {
       // Invalidate friend requests
       queryClient.invalidateQueries({ queryKey: queryKeys.friendRequests });
+      // Invalidate suggested friends as the rejected user may appear in suggestions
+      queryClient.invalidateQueries({ queryKey: ['suggestedFriends'] });
     },
   });
 }
@@ -302,6 +308,8 @@ export function useRemoveFriend() {
     onSuccess: () => {
       // Invalidate friends list
       queryClient.invalidateQueries({ queryKey: queryKeys.friends });
+      // Invalidate suggested friends as suggestions will change
+      queryClient.invalidateQueries({ queryKey: ['suggestedFriends'] });
     },
   });
 }

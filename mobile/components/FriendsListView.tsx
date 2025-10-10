@@ -7,6 +7,7 @@ import { t } from '../lib/i18n';
 import EmptyState from './EmptyState';
 import { Friend, FriendRequest, SearchedUser, FriendSuggestion } from '../types';
 import Avatar from './Avatar';
+import InviteButton from './InviteButton';
 
 // Updated interface to include friend suggestions  
 export interface FriendsListViewProps {
@@ -22,7 +23,7 @@ export interface FriendsListViewProps {
   onAcceptRequest: (requestId: string) => void;
   onRejectRequest: (requestId: string) => void;
   onRemoveFriend: (friendId: string, username: string) => void;
-  onSendFriendRequest: (userId: string) => void;
+  onSendFriendRequest: (userId: string, fromSuggestions?: boolean) => void;
   isLoadingFriends: boolean;
   isLoadingRequests: boolean;
   isLoadingSuggestions: boolean;
@@ -32,6 +33,7 @@ export interface FriendsListViewProps {
   rejectingRequestId?: string;
   sendRequestPending: boolean;
   sendingRequestToUserId?: string;
+  pendingSuggestionIds: Set<string>;
   showEmptyState?: boolean;
   emptyState?: {
     title: string;
@@ -62,6 +64,7 @@ export default function FriendsListView({
   rejectingRequestId,
   sendRequestPending,
   sendingRequestToUserId,
+  pendingSuggestionIds,
   showEmptyState = false,
   emptyState,
 }: FriendsListViewProps) {
@@ -453,26 +456,37 @@ export default function FriendsListView({
                         ? t('mutualFriend', { count: suggestion.mutual_friends_count })
                         : t('mutualFriends', { count: suggestion.mutual_friends_count })}
                     </Text>
-                    <TouchableOpacity
-                      onPress={() => onSendFriendRequest(suggestion.id)}
-                      disabled={sendRequestPending && sendingRequestToUserId === suggestion.id}
-                      style={{
-                        backgroundColor: isDark ? '#3B82F6' : '#2563EB',
-                        paddingHorizontal: 20,
-                        paddingVertical: 8,
-                        borderRadius: 8,
-                        width: '100%',
-                        alignItems: 'center',
-                      }}
-                    >
-                      {sendRequestPending && sendingRequestToUserId === suggestion.id ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Text style={{ color: '#FFFFFF', fontWeight: '500', fontSize: 14 }}>
-                          {t('invite')}
+                    {pendingSuggestionIds.has(suggestion.id) ? (
+                      <View
+                        style={{
+                          backgroundColor: isDark ? '#374151' : '#E5E7EB',
+                          paddingHorizontal: 20,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                          width: '100%',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: isDark ? '#F59E0B' : '#D97706',
+                            fontSize: 14,
+                            fontWeight: '500',
+                          }}
+                        >
+                          {t('requestSent')}
                         </Text>
-                      )}
-                    </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <InviteButton
+                        userId={suggestion.id}
+                        onPress={(userId) => onSendFriendRequest(userId, true)}
+                        isPending={sendRequestPending}
+                        pendingUserId={sendingRequestToUserId}
+                        size="small"
+                        fullWidth
+                      />
+                    )}
                   </View>
                 ))}
               </ScrollView>
@@ -586,24 +600,12 @@ export default function FriendsListView({
                       {t('pending')}
                     </Text>
                   ) : (
-                    <TouchableOpacity
-                      onPress={() => onSendFriendRequest(user.id)}
-                      disabled={sendRequestPending && sendingRequestToUserId === user.id}
-                      style={{
-                        backgroundColor: isDark ? '#3B82F6' : '#2563EB',
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 8,
-                      }}
-                    >
-                      {sendRequestPending && sendingRequestToUserId === user.id ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Text style={{ color: '#FFFFFF', fontWeight: '500' }}>
-                          {t('invite')}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
+                    <InviteButton
+                      userId={user.id}
+                      onPress={onSendFriendRequest}
+                      isPending={sendRequestPending}
+                      pendingUserId={sendingRequestToUserId}
+                    />
                   )}
                 </View>
               ))

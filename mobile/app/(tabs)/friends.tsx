@@ -20,6 +20,7 @@ export default function FriendsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [pendingSuggestionIds, setPendingSuggestionIds] = useState<Set<string>>(new Set());
   const appState = useRef(AppState.currentState);
 
   // Debounce search query
@@ -83,6 +84,8 @@ export default function FriendsScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    // Clear pending suggestions when refreshing
+    setPendingSuggestionIds(new Set());
     await Promise.all([refetchFriends(), refetchRequests(), refetchSuggestions()]);
     setRefreshing(false);
   }, [refetchFriends, refetchRequests, refetchSuggestions]);
@@ -126,11 +129,23 @@ export default function FriendsScreen() {
     );
   }, [removeFriendMutation]);
 
-  const handleSendFriendRequest = useCallback(async (userId: string) => {
+  const handleSendFriendRequest = useCallback(async (userId: string, fromSuggestions: boolean = false) => {
     try {
+      // If from suggestions, mark as pending locally
+      if (fromSuggestions) {
+        setPendingSuggestionIds(prev => new Set(prev).add(userId));
+      }
       await sendRequestMutation.mutateAsync(userId);
       // Request sent successfully - no alert needed
     } catch (error: any) {
+      // Remove from pending if failed
+      if (fromSuggestions) {
+        setPendingSuggestionIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
+      }
       Alert.alert(t('error'), error.message || t('errorSendingRequest'));
     }
   }, [sendRequestMutation]);
@@ -159,6 +174,7 @@ export default function FriendsScreen() {
       rejectingRequestId={rejectRequestMutation.variables}
       sendRequestPending={sendRequestMutation.isPending}
       sendingRequestToUserId={sendRequestMutation.variables}
+      pendingSuggestionIds={pendingSuggestionIds}
       showEmptyState={!isAuthenticated}
       emptyState={{
         title: t('signInToSeeFriends'),

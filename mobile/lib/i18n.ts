@@ -267,6 +267,7 @@ const translations: Record<string, TranslationMap> = {
     noSuggestedFriendsDescription: 'Add more friends to see suggestions based on mutual connections',
     mutualFriend: '{{count}} mutual friend',
     mutualFriends: '{{count}} mutual friends',
+    requestSent: 'Request sent',
   },
   pl: {
     all: 'Wszystkie',
@@ -539,6 +540,7 @@ const translations: Record<string, TranslationMap> = {
     noSuggestedFriendsDescription: 'Dodaj więcej znajomych, aby zobaczyć sugestie oparte na wzajemnych połączeniach',
     mutualFriend: '{{count}} wspólny znajomy',
     mutualFriends: '{{count}} wspólnych znajomych',
+    requestSent: 'Zaproszenie wysłane',
   },
 };
 
