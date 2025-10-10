@@ -158,7 +158,7 @@ function RootNavigator() {
         name='(tabs)'
         options={{
           headerShown: true,
-          headerLeft: () => <QRScannerHeaderButton />,
+          // headerLeft: () => <QRScannerHeaderButton />,
           headerRight: () => <ProfileHeaderButton />,
         }}
       />
