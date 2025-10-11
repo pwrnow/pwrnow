@@ -173,7 +173,7 @@ export const generateEventDays = (
     // Multi-day event - include all days from start to end
     const current = new Date(start);
 
-    while (current.getDate() <= end.getDate()) {
+    while (current <= end) {
       const locale = deviceLocaleTag;
       const currentStr = current.toISOString().split('T')[0];
       const currentDate = new Date(current);
