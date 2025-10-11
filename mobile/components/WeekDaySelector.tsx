@@ -143,55 +143,39 @@ export const generateEventDays = (
   startDate: string,
   endDate: string
 ): DayOption[] => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const toLocalStartOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const formatYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const start = toLocalStartOfDay(new Date(startDate));
+  const end = toLocalStartOfDay(new Date(endDate));
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
+
   const days: DayOption[] = [];
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayLocal = toLocalStartOfDay(new Date());
 
-  // Check if it's a single day event by comparing date strings
-  const startDateStr = startDate.split('T')[0];
-  const endDateStr = endDate.split('T')[0];
-
-  if (startDateStr === endDateStr) {
-    // Single day event - only include the start date
-    const currentStr = startDateStr;
-    const currentDate = new Date(start);
-    const isPast = currentDate < new Date(todayStr);
-    const isToday = currentStr === todayStr;
+  const current = new Date(start);
+  while (current <= end) {
+    const id = formatYMD(current);
+    const isToday = current.getTime() === todayLocal.getTime();
+    const isPast = current < todayLocal;
 
     days.push({
-      id: currentStr, // YYYY-MM-DD format
-      date: new Date(start),
-      dayName: start.toLocaleDateString(deviceLocaleTag, { weekday: 'short' }),
-      dayNumber: start.getDate(),
-      monthName: start.toLocaleDateString(deviceLocaleTag, { month: 'short' }),
+      id,
+      date: new Date(current),
+      dayName: current.toLocaleDateString(deviceLocaleTag, { weekday: 'short' }),
+      dayNumber: current.getDate(),
+      monthName: current.toLocaleDateString(deviceLocaleTag, { month: 'short' }),
       isPast,
       isToday,
     });
-  } else {
-    // Multi-day event - include all days from start to end
-    const current = new Date(start);
 
-    while (current <= end) {
-      const locale = deviceLocaleTag;
-      const currentStr = current.toISOString().split('T')[0];
-      const currentDate = new Date(current);
-      const isPast = currentDate < new Date(todayStr);
-      const isToday = currentStr === todayStr;
-
-      days.push({
-        id: currentStr, // YYYY-MM-DD format
-        date: new Date(current),
-        dayName: current.toLocaleDateString(locale, { weekday: 'short' }),
-        dayNumber: current.getDate(),
-        monthName: current.toLocaleDateString(locale, { month: 'short' }),
-        isPast,
-        isToday,
-      });
-
-      current.setDate(current.getDate() + 1);
-    }
+    current.setDate(current.getDate() + 1);
   }
 
   return days;

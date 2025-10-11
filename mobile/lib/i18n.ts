@@ -201,6 +201,7 @@ const translations: Record<string, TranslationMap> = {
       'You have already confirmed participation for this event.',
     invalidQRCodeMessage: 'This QR code is invalid or has expired.',
     errorMessage: 'An error occurred while processing your request.',
+    anErrorOccurred: 'An error occurred',
     // Username selection modal translations
     usernameAtLeast3: 'Username must be at least 3 characters',
     usernameAtMost16: 'Username must be at most 16 characters',
@@ -474,6 +475,7 @@ const translations: Record<string, TranslationMap> = {
     alreadyConfirmedMessage: 'Już potwierdziłeś uczestnictwo w tym wydarzeniu.',
     invalidQRCodeMessage: 'Ten kod QR jest nieprawidłowy lub wygasł.',
     errorMessage: 'Wystąpił błąd podczas przetwarzania Twojego żądania.',
+    anErrorOccurred: 'Wystąpił błąd',
     // Username selection modal translations
     usernameAtLeast3: 'Nazwa użytkownika musi mieć co najmniej 3 znaki',
     usernameAtMost16: 'Nazwa użytkownika może mieć maksymalnie 16 znaków',

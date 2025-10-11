@@ -562,7 +562,7 @@ def get_friends_attending_event(request, slug):
     try:
         event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
-        return Response({'error': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': _('Event not found.')}, status=status.HTTP_404_NOT_FOUND)
     
     # Get current user's friendships
     friendships = Friendship.objects.filter(
@@ -646,6 +646,9 @@ def accept_friend_request(request, request_id):
         user1=user1,
         user2=user2
     )
+    
+    # Send notification to the user who sent the request
+    push_service.send_friend_request_accepted_notification(friend_request)
     
     serializer = FriendRequestSerializer(friend_request)
     return Response({

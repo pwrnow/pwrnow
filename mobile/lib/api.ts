@@ -470,7 +470,7 @@ const friendsApi = {
     });
     
     if (!res.ok) {
-      throw new Error('Failed to search users');
+      throw new Error('An error occurred');
     }
     
     return res.json();
@@ -487,7 +487,7 @@ const friendsApi = {
       },
     });
     if (!res.ok) {
-      throw new Error('Failed to get friends');
+      throw new Error('An error occurred');
     }
     return res.json();
   },
@@ -505,7 +505,7 @@ const friendsApi = {
     });
     if (!res.ok) {
       console.error('[API] Failed to get friend suggestions:', res.status, res.statusText);
-      throw new Error('Failed to get friend suggestions');
+      throw new Error('An error occurred');
     }
     const data = await res.json();
     console.log('[API] Friend suggestions response:', data);
@@ -524,7 +524,7 @@ const friendsApi = {
       },
     });
     if (!res.ok) {
-      throw new Error('Failed to remove friend');
+      throw new Error('An error occurred');
     }
   },
 
@@ -539,7 +539,7 @@ const friendsApi = {
       },
     });
     if (!res.ok) {
-      throw new Error('Failed to get friend requests');
+      throw new Error('An error occurred');
     }
     return res.json();
   },
@@ -558,8 +558,7 @@ const friendsApi = {
       body: JSON.stringify({ to_user_id: toUserId }),
     });
     if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.non_field_errors?.[0] || 'Failed to send friend request');
+      throw new Error('An error occurred');
     }
     return res.json();
   },
@@ -576,7 +575,7 @@ const friendsApi = {
       },
     });
     if (!res.ok) {
-      throw new Error('Failed to accept friend request');
+      throw new Error('An error occurred');
     }
   },
 
@@ -592,7 +591,7 @@ const friendsApi = {
       },
     });
     if (!res.ok) {
-      throw new Error('Failed to reject friend request');
+      throw new Error('An error occurred');
     }
   },
 };

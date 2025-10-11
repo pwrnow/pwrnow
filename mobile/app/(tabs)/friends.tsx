@@ -95,16 +95,16 @@ export default function FriendsScreen() {
       await acceptRequestMutation.mutateAsync(requestId);
       // Request accepted successfully - no alert needed
     } catch (error) {
-      Alert.alert(t('error'), t('errorAcceptingRequest'));
+      Alert.alert(t('error'), t('anErrorOccurred'));
     }
   }, [acceptRequestMutation]);
 
   const handleRejectRequest = useCallback(async (requestId: string) => {
     try {
       await rejectRequestMutation.mutateAsync(requestId);
-      Alert.alert(t('success'), t('friendRequestRejected'));
+      // Request rejected successfully - no alert needed
     } catch (error) {
-      Alert.alert(t('error'), t('errorRejectingRequest'));
+      Alert.alert(t('error'), t('anErrorOccurred'));
     }
   }, [rejectRequestMutation]);
 
@@ -120,8 +120,9 @@ export default function FriendsScreen() {
           onPress: async () => {
             try {
               await removeFriendMutation.mutateAsync(friendId);
+              // Friend removed successfully - no alert needed
             } catch (error) {
-              Alert.alert(t('error'), t('errorRemovingFriend'));
+              Alert.alert(t('error'), t('anErrorOccurred'));
             }
           },
         },
@@ -146,7 +147,7 @@ export default function FriendsScreen() {
           return newSet;
         });
       }
-      Alert.alert(t('error'), error.message || t('errorSendingRequest'));
+      Alert.alert(t('error'), t('anErrorOccurred'));
     }
   }, [sendRequestMutation]);
 
