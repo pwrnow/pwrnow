@@ -210,7 +210,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='Instagram'
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 28, height: 28 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
@@ -225,7 +225,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='TikTok'
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 28, height: 28 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
@@ -240,7 +240,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='Facebook'
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 28, height: 28 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
@@ -281,7 +281,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='LinkedIn'
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 28, height: 28 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
