@@ -47,7 +47,7 @@
     "expo-updates": "~0.28.17",
     "expo-web-browser": "~14.2.0",
     "i18n-js": "^4.5.1",
-    "nativewind": "^4.1.23",
+    "nativewind": "^4.2.1",
     "posthog-react-native": "^4.5.0",
     "react": "19.0.0",
     "react-native": "0.79.5",
