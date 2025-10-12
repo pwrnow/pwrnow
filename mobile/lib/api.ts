@@ -281,7 +281,11 @@ async function fetchWithCredentials(
     const errorMessage =
       (errorData && (errorData.error || errorData.detail)) ||
       'An error occurred';
-    throw new Error(`${response.status}: ${errorMessage}`);
+    
+    // Create error with status property for better error detection
+    const error = new Error(`${response.status}: ${errorMessage}`);
+    (error as any).status = response.status;
+    throw error;
   }
 
   return response;
@@ -460,139 +464,59 @@ const friendsApi = {
       return [];
     }
     
-    const url = `${getApiUrl()}/users/search/?q=${encodeURIComponent(trimmedQuery)}`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
-    });
-    
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
-    
-    return res.json();
+    const response = await fetchWithCredentials(`/users/search/?q=${encodeURIComponent(trimmedQuery)}`);
+    return await response.json();
   },
 
   // Get list of friends
   getFriends: async (): Promise<Friend[]> => {
-    const url = `${getApiUrl()}/friends/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
-    });
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
-    return res.json();
+    const response = await fetchWithCredentials('/friends/');
+    return await response.json();
   },
 
   // Get friend suggestions
   getSuggestedFriends: async (): Promise<FriendSuggestion[]> => {
-    const url = `${getApiUrl()}/friends/suggestions/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    console.log('[API] Fetching friend suggestions from:', url);
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
-    });
-    if (!res.ok) {
-      console.error('[API] Failed to get friend suggestions:', res.status, res.statusText);
-      throw new Error('An error occurred');
-    }
-    const data = await res.json();
+    console.log('[API] Fetching friend suggestions');
+    const response = await fetchWithCredentials('/friends/suggestions/');
+    const data = await response.json();
     console.log('[API] Friend suggestions response:', data);
     return data;
   },
 
   // Remove a friend
   removeFriend: async (friendId: string): Promise<void> => {
-    const url = `${getApiUrl()}/friends/${friendId}/remove/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
+    await fetchWithCredentials(`/friends/${friendId}/remove/`, {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
     });
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
   },
 
   // Get pending friend requests
   getFriendRequests: async (): Promise<FriendRequest[]> => {
-    const url = `${getApiUrl()}/friend-requests/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
-    });
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
-    return res.json();
+    const response = await fetchWithCredentials('/friend-requests/');
+    return await response.json();
   },
 
   // Send a friend request
   sendFriendRequest: async (toUserId: string): Promise<FriendRequest> => {
-    const url = `${getApiUrl()}/friend-requests/send/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
+    const response = await fetchWithCredentials('/friend-requests/send/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
       body: JSON.stringify({ to_user_id: toUserId }),
     });
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
-    return res.json();
+    return await response.json();
   },
 
   // Accept a friend request
   acceptFriendRequest: async (requestId: string): Promise<void> => {
-    const url = `${getApiUrl()}/friend-requests/${requestId}/accept/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
+    await fetchWithCredentials(`/friend-requests/${requestId}/accept/`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
     });
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
   },
 
   // Reject a friend request
   rejectFriendRequest: async (requestId: string): Promise<void> => {
-    const url = `${getApiUrl()}/friend-requests/${requestId}/reject/`;
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    const res = await fetch(url, {
+    await fetchWithCredentials(`/friend-requests/${requestId}/reject/`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': i18n.locale,
-      },
     });
-    if (!res.ok) {
-      throw new Error('An error occurred');
-    }
   },
 };
 

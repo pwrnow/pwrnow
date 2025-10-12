@@ -49,6 +49,8 @@ export function useCachedQuery<TData = unknown, TError = Error>(
       const cachedData = await cacheManager.get<TData>(cacheKey as string[]);
 
       if (cachedData) {
+        // Log that we're using cached data due to network error
+        console.warn(`Using cached data due to network error for query ${JSON.stringify(cacheKey)}:`, error);
         return cachedData;
       }
 

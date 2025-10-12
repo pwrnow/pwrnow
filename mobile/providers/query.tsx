@@ -30,13 +30,31 @@ const queryClient = new QueryClient({
     queries: {
       // Global retry configuration
       retry: (failureCount, error) => {
-        // Don't retry if we're offline (error message indicates no connection)
-        if (
-          error instanceof Error &&
-          error.message.includes('No internet connection')
-        ) {
-          return false;
+        // Don't retry if we're offline or have network issues
+        if (error instanceof Error) {
+          const message = error.message.toLowerCase();
+          if (
+            message.includes('no internet connection') ||
+            message.includes('network request failed') ||
+            message.includes('timeout') ||
+            message.includes('connection') ||
+            message.includes('fetch') ||
+            message.includes('abort') ||
+            message.includes('unreachable') ||
+            message.includes('failed to fetch')
+          ) {
+            return false;
+          }
         }
+        
+        // Don't retry on authentication errors (401/403)
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = (error as any).status;
+          if (status === 401 || status === 403) {
+            return false;
+          }
+        }
+        
         // Retry up to configured max attempts for other errors
         return failureCount < queryConfig.retry.queries.maxAttempts;
       },

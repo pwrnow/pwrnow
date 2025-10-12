@@ -43,6 +43,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [needsUsernameSetup, setNeedsUsernameSetup] = useState(false);
   const [justSignedIn, setJustSignedIn] = useState(false);
 
+  // Helper function to check if an error is authentication-related (401/403)
+  function isAuthError(error: any): boolean {
+    if (!error) return false;
+    
+    // Check if error has a status property (from our API)
+    if (error.status) {
+      return error.status === 401 || error.status === 403;
+    }
+    
+    // Check if error message contains status codes
+    if (typeof error.message === 'string') {
+      return error.message.includes('401:') || error.message.includes('403:');
+    }
+    
+    // Check if it's a response object with status
+    if (error.response && error.response.status) {
+      return error.response.status === 401 || error.response.status === 403;
+    }
+    
+    return false;
+  }
+
+  // Helper function to check if an error is a network-related error
+  function isNetworkError(error: any): boolean {
+    if (!error) return false;
+    
+    // Check for specific error types that indicate network issues
+    if (error.name === 'AbortError' || error.name === 'TypeError') {
+      return true;
+    }
+    
+    // Check for common network error patterns in message
+    if (typeof error.message === 'string') {
+      const message = error.message.toLowerCase();
+      return (
+        message.includes('network') ||
+        message.includes('timeout') ||
+        message.includes('connection') ||
+        message.includes('fetch') ||
+        message.includes('no internet') ||
+        message.includes('abort') ||
+        message.includes('unreachable') ||
+        message.includes('failed to fetch') ||
+        message.includes('network request failed') ||
+        message.includes('request timeout') ||
+        message.includes('connection refused') ||
+        message.includes('connection reset') ||
+        message.includes('connection timed out') ||
+        message.includes('dns') ||
+        message.includes('enotfound') ||
+        message.includes('econnreset') ||
+        message.includes('econnrefused') ||
+        message.includes('etimedout')
+      );
+    }
+    
+    // Check if it's a fetch error (common in React Native)
+    if (error.message && typeof error.message === 'string' && error.message.includes('Network request failed')) {
+      return true;
+    }
+    
+    return false;
+  }
+
   // Validate stored credentials on app startup
   async function validateStoredCredentials() {
     try {
@@ -73,8 +137,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         } catch (error) {
-          // Try refresh once if we have a refresh token
-          if (r) {
+          // Only try refresh if we have a refresh token and the error is auth-related
+          if (r && isAuthError(error)) {
             const newAccess = await refreshAccessToken();
             if (newAccess) {
               try {
@@ -104,8 +168,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             } else {
               await signOut();
             }
-          } else {
+          } else if (isAuthError(error)) {
+            // Only sign out on authentication errors (401/403), not network failures
             await signOut();
+          } else {
+            // For network failures, keep user signed in but use cached data
+            console.warn('Network error during token validation, using cached credentials:', error);
+            const u = await SecureStore.getItemAsync(USER_KEY);
+            if (u) {
+              setUser(JSON.parse(u));
+              setNeedsUsernameSetup(!JSON.parse(u)?.username_set_by_user);
+            }
+            setIsAuthenticated(true);
           }
         }
       } else {
@@ -114,7 +188,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       console.error('Error validating stored credentials:', error);
-      setIsAuthenticated(false);
+      // Only set as not authenticated if it's an auth error, otherwise keep cached state
+      if (isAuthError(error)) {
+        setIsAuthenticated(false);
+      } else {
+        // For network errors, try to use cached credentials
+        console.warn('Network error during credential validation, checking cached data:', error);
+        try {
+          const u = await SecureStore.getItemAsync(USER_KEY);
+          if (u) {
+            setUser(JSON.parse(u));
+            setNeedsUsernameSetup(!JSON.parse(u)?.username_set_by_user);
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+          }
+        } catch {
+          setIsAuthenticated(false);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
