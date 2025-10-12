@@ -5,11 +5,9 @@ import {
   Linkedin,
   Mail,
   Globe,
-  Instagram,
-  Facebook,
-  Video,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { SocialIcon } from 'react-social-icons';
 
 // Types
 type SocialLinks = {
@@ -204,43 +202,49 @@ function TeamMemberCard({
           {/* Social Links */}
           <div className='flex gap-4'>
             {member.social.instagram && (
-              <a
-                href={member.social.instagram}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
-              >
-                <Instagram
-                  size={20}
-                  className='text-muted-foreground hover:text-foreground transition-colors'
+              <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
+                <SocialIcon
+                  network='instagram'
+                  url={member.social.instagram}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:scale-110 transition-transform duration-200'
+                  aria-label='Instagram'
+                  style={{ width: 20, height: 20 }}
+                  fgColor='currentColor'
+                  bgColor='transparent'
                 />
-              </a>
+              </div>
             )}
             {member.social.tiktok && (
-              <a
-                href={member.social.tiktok}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
-              >
-                <Video
-                  size={20}
-                  className='text-muted-foreground hover:text-foreground transition-colors'
+              <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
+                <SocialIcon
+                  network='tiktok'
+                  url={member.social.tiktok}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:scale-110 transition-transform duration-200'
+                  aria-label='TikTok'
+                  style={{ width: 20, height: 20 }}
+                  fgColor='currentColor'
+                  bgColor='transparent'
                 />
-              </a>
+              </div>
             )}
             {member.social.facebook && (
-              <a
-                href={member.social.facebook}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
-              >
-                <Facebook
-                  size={20}
-                  className='text-muted-foreground hover:text-foreground transition-colors'
+              <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
+                <SocialIcon
+                  network='facebook'
+                  url={member.social.facebook}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:scale-110 transition-transform duration-200'
+                  aria-label='Facebook'
+                  style={{ width: 20, height: 20 }}
+                  fgColor='currentColor'
+                  bgColor='transparent'
                 />
-              </a>
+              </div>
             )}
             {member.social.website && (
               <a
@@ -269,17 +273,19 @@ function TeamMemberCard({
               </a>
             )}
             {member.social.linkedin && (
-              <a
-                href={member.social.linkedin}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
-              >
-                <Linkedin
-                  size={20}
-                  className='text-muted-foreground hover:text-foreground transition-colors'
+              <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
+                <SocialIcon
+                  network='linkedin'
+                  url={member.social.linkedin}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:scale-110 transition-transform duration-200'
+                  aria-label='LinkedIn'
+                  style={{ width: 20, height: 20 }}
+                  fgColor='currentColor'
+                  bgColor='transparent'
                 />
-              </a>
+              </div>
             )}
             {member.social.email && (
               <a
