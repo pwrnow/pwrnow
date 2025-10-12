@@ -1,0 +1,122 @@
+version: 2
+updates:
+  # Python dependencies (Django backend)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:10"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "foxjustfox"
+    assignees:
+      - "foxjustfox"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+      - "backend"
+
+  # Web frontend dependencies (Next.js)
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:10"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "foxjustfox"
+    assignees:
+      - "foxjustfox"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "frontend"
+      - "web"
+
+  # Mobile app dependencies (React Native/Expo)
+  - package-ecosystem: "npm"
+    directory: "/mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:10"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "foxjustfox"
+    assignees:
+      - "foxjustfox"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "mobile"
+      - "react-native"
+
+  # Benchmarks dependencies
+  - package-ecosystem: "npm"
+    directory: "/benchmarks"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:10"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "foxjustfox"
+    assignees:
+      - "foxjustfox"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "benchmarks"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:10"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "foxjustfox"
+    assignees:
+      - "foxjustfox"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:10"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "foxjustfox"
+    assignees:
+      - "foxjustfox"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
