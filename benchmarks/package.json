@@ -2,7 +2,7 @@
   "dependencies": {
     "k6": "^0.0.0",
     "lighthouse": "^12.8.0",
-    "chrome-launcher": "^1.2.0"
+    "chrome-launcher": "^1.2.1"
   },
   "scripts": {
     "bench:api:load": "k6 run backend/load_test.js",
