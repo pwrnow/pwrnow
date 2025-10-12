@@ -733,16 +733,42 @@ class Friendship(models.Model):
 
     def clean(self):
         """Ensure users are different and maintain consistent ordering."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.debug(f"FRIENDS_MODEL_FRIENDSHIP_CLEAN: Cleaning friendship between {self.user1.username} and {self.user2.username}")
+        
         if self.user1 == self.user2:
+            logger.error(f"FRIENDS_MODEL_FRIENDSHIP_CLEAN_ERROR: User {self.user1.username} cannot be friends with themselves")
             raise ValidationError("Users cannot be friends with themselves.")
         
         # Ensure user1.id < user2.id for consistent ordering
         if self.user1.id > self.user2.id:
+            logger.debug(f"FRIENDS_MODEL_FRIENDSHIP_CLEAN_REORDER: Reordering users for consistent ordering")
             self.user1, self.user2 = self.user2, self.user1
 
     def save(self, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        is_new = self.pk is None
+        logger.info(f"FRIENDS_MODEL_FRIENDSHIP_SAVE: {'Creating' if is_new else 'Updating'} friendship between {self.user1.username} and {self.user2.username}")
+        
         self.clean()
         super().save(*args, **kwargs)
+        
+        if is_new:
+            logger.info(f"FRIENDS_MODEL_FRIENDSHIP_SAVE_SUCCESS: Friendship {self.id} created between {self.user1.username} and {self.user2.username}")
+        else:
+            logger.info(f"FRIENDS_MODEL_FRIENDSHIP_SAVE_SUCCESS: Friendship {self.id} updated between {self.user1.username} and {self.user2.username}")
+
+    def delete(self, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE: Deleting friendship {self.id} between {self.user1.username} and {self.user2.username}")
+        super().delete(*args, **kwargs)
+        logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_SUCCESS: Friendship {self.id} deleted successfully")
 
 
 class FriendRequest(models.Model):
@@ -792,5 +818,44 @@ class FriendRequest(models.Model):
 
     def clean(self):
         """Validate that users are different."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.debug(f"FRIENDS_MODEL_FRIEND_REQUEST_CLEAN: Cleaning friend request from {self.from_user.username} to {self.to_user.username}")
+        
         if self.from_user == self.to_user:
+            logger.error(f"FRIENDS_MODEL_FRIEND_REQUEST_CLEAN_ERROR: User {self.from_user.username} cannot send friend request to themselves")
             raise ValidationError("Users cannot send friend requests to themselves.")
+
+    def save(self, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            try:
+                old_instance = FriendRequest.objects.get(pk=self.pk)
+                old_status = old_instance.status
+            except FriendRequest.DoesNotExist:
+                pass
+        
+        logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE: {'Creating' if is_new else 'Updating'} friend request from {self.from_user.username} to {self.to_user.username}")
+        if not is_new and old_status != self.status:
+            logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE_STATUS_CHANGE: Status changed from {old_status} to {self.status}")
+        
+        self.clean()
+        super().save(*args, **kwargs)
+        
+        if is_new:
+            logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE_SUCCESS: Friend request {self.id} created from {self.from_user.username} to {self.to_user.username} with status {self.status}")
+        else:
+            logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE_SUCCESS: Friend request {self.id} updated from {self.from_user.username} to {self.to_user.username} with status {self.status}")
+
+    def delete(self, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_DELETE: Deleting friend request {self.id} from {self.from_user.username} to {self.to_user.username}")
+        super().delete(*args, **kwargs)
+        logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_DELETE_SUCCESS: Friend request {self.id} deleted successfully")

@@ -605,30 +605,54 @@ def get_friends_attending_event(request, slug):
 @permission_classes([IsAuthenticated])
 def send_friend_request(request):
     """Send a friend request to another user."""
+    import logging
     from .serializers import FriendRequestCreateSerializer, FriendRequestSerializer
     from notifications.services import push_service
+    
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"FRIENDS_REQUEST_SEND: User {request.user.id} ({request.user.username}) attempting to send friend request")
+    logger.debug(f"FRIENDS_REQUEST_SEND: Request data: {request.data}")
     
     serializer = FriendRequestCreateSerializer(data=request.data, context={'request': request})
     
     if serializer.is_valid():
-        friend_request = serializer.save()
-        
-        # Send notification
-        push_service.send_friend_request_notification(friend_request)
-        
-        response_serializer = FriendRequestSerializer(friend_request)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            friend_request = serializer.save()
+            logger.info(f"FRIENDS_REQUEST_SEND_SUCCESS: Friend request {friend_request.id} created from user {request.user.id} to user {friend_request.to_user.id}")
+            logger.debug(f"FRIENDS_REQUEST_SEND_SUCCESS: Friend request details - from: {friend_request.from_user.username}, to: {friend_request.to_user.username}, status: {friend_request.status}")
+            
+            # Send notification
+            try:
+                notification_result = push_service.send_friend_request_notification(friend_request)
+                logger.info(f"FRIENDS_REQUEST_NOTIFICATION: Notification sent for friend request {friend_request.id}, result: {notification_result}")
+            except Exception as e:
+                logger.error(f"FRIENDS_REQUEST_NOTIFICATION_ERROR: Failed to send notification for friend request {friend_request.id}: {str(e)}")
+            
+            response_serializer = FriendRequestSerializer(friend_request)
+            logger.info(f"FRIENDS_REQUEST_SEND_COMPLETE: Successfully processed friend request {friend_request.id}")
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"FRIENDS_REQUEST_SEND_ERROR: Failed to create friend request from user {request.user.id}: {str(e)}")
+            return Response({'error': 'Failed to create friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        logger.warning(f"FRIENDS_REQUEST_SEND_VALIDATION_ERROR: Validation failed for user {request.user.id}, errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def accept_friend_request(request, request_id):
     """Accept a friend request."""
+    import logging
     from .models import Friendship, FriendRequest
     from .serializers import FriendRequestSerializer
     from notifications.services import push_service
+    
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"FRIENDS_REQUEST_ACCEPT: User {request.user.id} ({request.user.username}) attempting to accept friend request {request_id}")
     
     try:
         friend_request = FriendRequest.objects.get(
@@ -636,41 +660,61 @@ def accept_friend_request(request, request_id):
             to_user=request.user,
             status=FriendRequest.Status.PENDING
         )
+        logger.info(f"FRIENDS_REQUEST_ACCEPT_FOUND: Found friend request {friend_request.id} from {friend_request.from_user.username} to {friend_request.to_user.username}")
     except FriendRequest.DoesNotExist:
+        logger.warning(f"FRIENDS_REQUEST_ACCEPT_NOT_FOUND: Friend request {request_id} not found or already processed for user {request.user.id}")
         return Response({
             'error': _('Friend request not found or already processed.')
         }, status=status.HTTP_404_NOT_FOUND)
     
-    # Update request status
-    friend_request.status = FriendRequest.Status.ACCEPTED
-    friend_request.save()
-    
-    # Create friendship (ensure consistent ordering)
-    user1, user2 = friend_request.from_user, friend_request.to_user
-    if user1.id > user2.id:
-        user1, user2 = user2, user1
-    
-    Friendship.objects.create(
-        user1=user1,
-        user2=user2
-    )
-    
-    # Send notification to the user who sent the request
-    push_service.send_friend_request_accepted_notification(friend_request)
-    
-    serializer = FriendRequestSerializer(friend_request)
-    return Response({
-        'message': _('Friend request accepted.'),
-        'friend_request': serializer.data
-    }, status=status.HTTP_200_OK)
+    try:
+        # Update request status
+        friend_request.status = FriendRequest.Status.ACCEPTED
+        friend_request.save()
+        logger.info(f"FRIENDS_REQUEST_ACCEPT_STATUS_UPDATED: Friend request {friend_request.id} status updated to ACCEPTED")
+        
+        # Create friendship (ensure consistent ordering)
+        user1, user2 = friend_request.from_user, friend_request.to_user
+        if user1.id > user2.id:
+            user1, user2 = user2, user1
+        
+        friendship = Friendship.objects.create(
+            user1=user1,
+            user2=user2
+        )
+        logger.info(f"FRIENDS_REQUEST_ACCEPT_FRIENDSHIP_CREATED: Friendship {friendship.id} created between {user1.username} and {user2.username}")
+        
+        # Send notification to the user who sent the request
+        try:
+            # Note: This method doesn't exist yet, we'll need to implement it
+            notification_result = push_service.send_friend_request_accepted_notification(friend_request)
+            logger.info(f"FRIENDS_REQUEST_ACCEPT_NOTIFICATION: Notification sent for accepted friend request {friend_request.id}, result: {notification_result}")
+        except Exception as e:
+            logger.error(f"FRIENDS_REQUEST_ACCEPT_NOTIFICATION_ERROR: Failed to send notification for accepted friend request {friend_request.id}: {str(e)}")
+        
+        serializer = FriendRequestSerializer(friend_request)
+        logger.info(f"FRIENDS_REQUEST_ACCEPT_COMPLETE: Successfully accepted friend request {friend_request.id}")
+        return Response({
+            'message': _('Friend request accepted.'),
+            'friend_request': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"FRIENDS_REQUEST_ACCEPT_ERROR: Failed to accept friend request {request_id} for user {request.user.id}: {str(e)}")
+        return Response({'error': 'Failed to accept friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def reject_friend_request(request, request_id):
     """Reject a friend request."""
+    import logging
     from .models import FriendRequest
     from .serializers import FriendRequestSerializer
+    
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"FRIENDS_REQUEST_REJECT: User {request.user.id} ({request.user.username}) attempting to reject friend request {request_id}")
     
     try:
         friend_request = FriendRequest.objects.get(
@@ -678,66 +722,106 @@ def reject_friend_request(request, request_id):
             to_user=request.user,
             status=FriendRequest.Status.PENDING
         )
+        logger.info(f"FRIENDS_REQUEST_REJECT_FOUND: Found friend request {friend_request.id} from {friend_request.from_user.username} to {friend_request.to_user.username}")
     except FriendRequest.DoesNotExist:
+        logger.warning(f"FRIENDS_REQUEST_REJECT_NOT_FOUND: Friend request {request_id} not found or already processed for user {request.user.id}")
         return Response({
             'error': _('Friend request not found or already processed.')
         }, status=status.HTTP_404_NOT_FOUND)
     
-    # Update request status
-    friend_request.status = FriendRequest.Status.REJECTED
-    friend_request.save()
-    
-    serializer = FriendRequestSerializer(friend_request)
-    return Response({
-        'message': _('Friend request rejected.'),
-        'friend_request': serializer.data
-    }, status=status.HTTP_200_OK)
+    try:
+        # Update request status
+        friend_request.status = FriendRequest.Status.REJECTED
+        friend_request.save()
+        logger.info(f"FRIENDS_REQUEST_REJECT_STATUS_UPDATED: Friend request {friend_request.id} status updated to REJECTED")
+        
+        serializer = FriendRequestSerializer(friend_request)
+        logger.info(f"FRIENDS_REQUEST_REJECT_COMPLETE: Successfully rejected friend request {friend_request.id}")
+        return Response({
+            'message': _('Friend request rejected.'),
+            'friend_request': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"FRIENDS_REQUEST_REJECT_ERROR: Failed to reject friend request {request_id} for user {request.user.id}: {str(e)}")
+        return Response({'error': 'Failed to reject friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_friend_requests(request):
     """List pending friend requests received by the authenticated user."""
+    import logging
     from .models import FriendRequest
     from .serializers import FriendRequestSerializer
     
-    friend_requests = FriendRequest.objects.filter(
-        to_user=request.user,
-        status=FriendRequest.Status.PENDING
-    ).select_related('from_user', 'to_user').order_by('-created_at')
+    logger = logging.getLogger(__name__)
     
-    serializer = FriendRequestSerializer(friend_requests, many=True)
-    return Response(serializer.data)
+    logger.info(f"FRIENDS_REQUEST_LIST: User {request.user.id} ({request.user.username}) requesting list of friend requests")
+    
+    try:
+        friend_requests = FriendRequest.objects.filter(
+            to_user=request.user,
+            status=FriendRequest.Status.PENDING
+        ).select_related('from_user', 'to_user').order_by('-created_at')
+        
+        request_count = friend_requests.count()
+        logger.info(f"FRIENDS_REQUEST_LIST_FOUND: Found {request_count} pending friend requests for user {request.user.id}")
+        
+        if request_count > 0:
+            logger.debug(f"FRIENDS_REQUEST_LIST_DETAILS: Friend request IDs: {[str(req.id) for req in friend_requests]}")
+        
+        serializer = FriendRequestSerializer(friend_requests, many=True)
+        logger.info(f"FRIENDS_REQUEST_LIST_COMPLETE: Successfully returned {request_count} friend requests for user {request.user.id}")
+        return Response(serializer.data)
+        
+    except Exception as e:
+        logger.error(f"FRIENDS_REQUEST_LIST_ERROR: Failed to list friend requests for user {request.user.id}: {str(e)}")
+        return Response({'error': 'Failed to retrieve friend requests'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_friends(request):
     """List all friends of the authenticated user."""
+    import logging
     from django.contrib.auth import get_user_model
     from .models import Friendship
     from .serializers import FriendshipSerializer
     
+    logger = logging.getLogger(__name__)
     User = get_user_model()
     
-    # Get all friendships involving the current user
-    friendships = Friendship.objects.filter(
-        models.Q(user1=request.user) | models.Q(user2=request.user)
-    ).select_related('user1', 'user2').order_by('-created_at')
+    logger.info(f"FRIENDS_LIST: User {request.user.id} ({request.user.username}) requesting list of friends")
     
-    # Extract friend data
-    friends_data = []
-    for friendship in friendships:
-        friend = friendship.user2 if friendship.user1 == request.user else friendship.user1
-        friends_data.append({
-            'id': friend.id,
-            'username': friend.username,
-            'friendship_id': friendship.id,
-            'friendship_created_at': friendship.created_at,
-        })
-    
-    serializer = FriendshipSerializer(friends_data, many=True)
-    return Response(serializer.data)
+    try:
+        # Get all friendships involving the current user
+        friendships = Friendship.objects.filter(
+            models.Q(user1=request.user) | models.Q(user2=request.user)
+        ).select_related('user1', 'user2').order_by('-created_at')
+        
+        friendship_count = friendships.count()
+        logger.info(f"FRIENDS_LIST_FOUND: Found {friendship_count} friendships for user {request.user.id}")
+        
+        # Extract friend data
+        friends_data = []
+        for friendship in friendships:
+            friend = friendship.user2 if friendship.user1 == request.user else friendship.user1
+            friends_data.append({
+                'id': friend.id,
+                'username': friend.username,
+                'friendship_id': friendship.id,
+                'friendship_created_at': friendship.created_at,
+            })
+            logger.debug(f"FRIENDS_LIST_FRIEND: Added friend {friend.username} (ID: {friend.id}) to list")
+        
+        serializer = FriendshipSerializer(friends_data, many=True)
+        logger.info(f"FRIENDS_LIST_COMPLETE: Successfully returned {friendship_count} friends for user {request.user.id}")
+        return Response(serializer.data)
+        
+    except Exception as e:
+        logger.error(f"FRIENDS_LIST_ERROR: Failed to list friends for user {request.user.id}: {str(e)}")
+        return Response({'error': 'Failed to retrieve friends list'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
@@ -747,133 +831,171 @@ def suggest_friends(request):
     Suggest friends based on friends of friends.
     Returns users ordered by number of mutual friends, then by username.
     """
+    import logging
     from django.contrib.auth import get_user_model
     from .models import Friendship, FriendRequest
     from django.db.models import Count, Q
     
+    logger = logging.getLogger(__name__)
     User = get_user_model()
     
-    # Get current user's friend IDs
-    friendships = Friendship.objects.filter(
-        Q(user1=request.user) | Q(user2=request.user)
-    ).values_list('user1_id', 'user2_id')
+    logger.info(f"FRIENDS_SUGGEST: User {request.user.id} ({request.user.username}) requesting friend suggestions")
     
-    friend_ids = set()
-    for user1_id, user2_id in friendships:
-        friend_ids.add(user1_id)
-        friend_ids.add(user2_id)
-    friend_ids.discard(request.user.id)
-    
-    if not friend_ids:
-        return Response([])
-    
-    # Get friends of friends (excluding current user and existing friends)
-    friends_of_friends_map = {}  # Maps suggested user ID to list of mutual friend IDs
-    
-    for friend_id in friend_ids:
-        # Get this friend's friends
-        fof_friendships = Friendship.objects.filter(
-            Q(user1_id=friend_id) | Q(user2_id=friend_id)
+    try:
+        # Get current user's friend IDs
+        friendships = Friendship.objects.filter(
+            Q(user1=request.user) | Q(user2=request.user)
         ).values_list('user1_id', 'user2_id')
         
-        for user1_id, user2_id in fof_friendships:
-            fof_id = user1_id if user1_id != friend_id else user2_id
-            
-            # Skip if it's the current user or already a friend
-            if fof_id == request.user.id or fof_id in friend_ids:
-                continue
-            
-            if fof_id not in friends_of_friends_map:
-                friends_of_friends_map[fof_id] = []
-            friends_of_friends_map[fof_id].append(friend_id)
-    
-    if not friends_of_friends_map:
-        return Response([])
-    
-    # Get pending friend requests to exclude them (both sent and received)
-    pending_requests = FriendRequest.objects.filter(
-        Q(from_user=request.user) | Q(to_user=request.user),
-        status=FriendRequest.Status.PENDING
-    ).values_list('from_user_id', 'to_user_id')
-    
-    pending_user_ids = set()
-    for from_id, to_id in pending_requests:
-        # Add both users from the request
-        pending_user_ids.add(from_id)
-        pending_user_ids.add(to_id)
-    # Remove current user from the set
-    pending_user_ids.discard(request.user.id)
-    
-    # Filter out users with pending requests from suggestions
-    for user_id in pending_user_ids:
-        friends_of_friends_map.pop(user_id, None)
-    
-    if not friends_of_friends_map:
-        return Response([])
-    
-    # Get user data for suggested friends
-    suggested_user_ids = list(friends_of_friends_map.keys())
-    users = User.objects.filter(id__in=suggested_user_ids).values('id', 'username')
-    
-    # Build suggestions with mutual friend count and source friend
-    suggestions = []
-    for user in users:
-        user_id = user['id']
-        mutual_friends = friends_of_friends_map[user_id]
-        mutual_count = len(mutual_friends)
+        friend_ids = set()
+        for user1_id, user2_id in friendships:
+            friend_ids.add(user1_id)
+            friend_ids.add(user2_id)
+        friend_ids.discard(request.user.id)
         
-        # Get the first mutual friend's username (to show as source)
-        source_friend_id = mutual_friends[0]
-        source_friend = User.objects.filter(id=source_friend_id).values('username').first()
+        logger.info(f"FRIENDS_SUGGEST_FRIENDS: User {request.user.id} has {len(friend_ids)} friends")
         
-        suggestions.append({
-            'id': str(user_id),
-            'username': user['username'],
-            'mutual_friends_count': mutual_count,
-            'source_friend': source_friend['username'] if source_friend else None,
-        })
-    
-    # Sort by mutual friends count (descending) then by username (ascending)
-    suggestions.sort(key=lambda x: (-x['mutual_friends_count'], x['username']))
-    
-    # Limit to top 20 suggestions
-    suggestions = suggestions[:20]
-    
-    return Response(suggestions)
+        if not friend_ids:
+            logger.info(f"FRIENDS_SUGGEST_NO_FRIENDS: User {request.user.id} has no friends, returning empty suggestions")
+            return Response([])
+        
+        # Get friends of friends (excluding current user and existing friends)
+        friends_of_friends_map = {}  # Maps suggested user ID to list of mutual friend IDs
+        
+        for friend_id in friend_ids:
+            # Get this friend's friends
+            fof_friendships = Friendship.objects.filter(
+                Q(user1_id=friend_id) | Q(user2_id=friend_id)
+            ).values_list('user1_id', 'user2_id')
+            
+            for user1_id, user2_id in fof_friendships:
+                fof_id = user1_id if user1_id != friend_id else user2_id
+                
+                # Skip if it's the current user or already a friend
+                if fof_id == request.user.id or fof_id in friend_ids:
+                    continue
+                
+                if fof_id not in friends_of_friends_map:
+                    friends_of_friends_map[fof_id] = []
+                friends_of_friends_map[fof_id].append(friend_id)
+        
+        logger.info(f"FRIENDS_SUGGEST_FOF: Found {len(friends_of_friends_map)} potential friends of friends")
+        
+        if not friends_of_friends_map:
+            logger.info(f"FRIENDS_SUGGEST_NO_FOF: No friends of friends found for user {request.user.id}")
+            return Response([])
+        
+        # Get pending friend requests to exclude them (both sent and received)
+        pending_requests = FriendRequest.objects.filter(
+            Q(from_user=request.user) | Q(to_user=request.user),
+            status=FriendRequest.Status.PENDING
+        ).values_list('from_user_id', 'to_user_id')
+        
+        pending_user_ids = set()
+        for from_id, to_id in pending_requests:
+            # Add both users from the request
+            pending_user_ids.add(from_id)
+            pending_user_ids.add(to_id)
+        # Remove current user from the set
+        pending_user_ids.discard(request.user.id)
+        
+        logger.info(f"FRIENDS_SUGGEST_PENDING: Found {len(pending_user_ids)} users with pending requests")
+        
+        # Filter out users with pending requests from suggestions
+        for user_id in pending_user_ids:
+            friends_of_friends_map.pop(user_id, None)
+        
+        logger.info(f"FRIENDS_SUGGEST_FILTERED: {len(friends_of_friends_map)} suggestions after filtering pending requests")
+        
+        if not friends_of_friends_map:
+            logger.info(f"FRIENDS_SUGGEST_NO_AFTER_FILTER: No suggestions after filtering for user {request.user.id}")
+            return Response([])
+        
+        # Get user data for suggested friends
+        suggested_user_ids = list(friends_of_friends_map.keys())
+        users = User.objects.filter(id__in=suggested_user_ids).values('id', 'username')
+        
+        # Build suggestions with mutual friend count and source friend
+        suggestions = []
+        for user in users:
+            user_id = user['id']
+            mutual_friends = friends_of_friends_map[user_id]
+            mutual_count = len(mutual_friends)
+            
+            # Get the first mutual friend's username (to show as source)
+            source_friend_id = mutual_friends[0]
+            source_friend = User.objects.filter(id=source_friend_id).values('username').first()
+            
+            suggestions.append({
+                'id': str(user_id),
+                'username': user['username'],
+                'mutual_friends_count': mutual_count,
+                'source_friend': source_friend['username'] if source_friend else None,
+            })
+            
+            logger.debug(f"FRIENDS_SUGGEST_USER: Added suggestion {user['username']} with {mutual_count} mutual friends")
+        
+        # Sort by mutual friends count (descending) then by username (ascending)
+        suggestions.sort(key=lambda x: (-x['mutual_friends_count'], x['username']))
+        
+        # Limit to top 20 suggestions
+        suggestions = suggestions[:20]
+        
+        logger.info(f"FRIENDS_SUGGEST_COMPLETE: Returning {len(suggestions)} friend suggestions for user {request.user.id}")
+        return Response(suggestions)
+        
+    except Exception as e:
+        logger.error(f"FRIENDS_SUGGEST_ERROR: Failed to generate friend suggestions for user {request.user.id}: {str(e)}")
+        return Response({'error': 'Failed to generate friend suggestions'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def remove_friend(request, friend_id):
     """Remove a friend (delete the friendship)."""
+    import logging
     from django.contrib.auth import get_user_model
     from .models import Friendship
     
+    logger = logging.getLogger(__name__)
     User = get_user_model()
+    
+    logger.info(f"FRIENDS_REMOVE: User {request.user.id} ({request.user.username}) attempting to remove friend {friend_id}")
     
     try:
         friend = User.objects.get(id=friend_id)
+        logger.info(f"FRIENDS_REMOVE_FRIEND_FOUND: Found friend {friend.username} (ID: {friend.id})")
     except User.DoesNotExist:
+        logger.warning(f"FRIENDS_REMOVE_FRIEND_NOT_FOUND: Friend with ID {friend_id} not found")
         return Response({
             'error': _('User not found.')
         }, status=status.HTTP_404_NOT_FOUND)
     
-    # Find and delete the friendship
-    friendship = Friendship.objects.filter(
-        models.Q(user1=request.user, user2=friend) |
-        models.Q(user1=friend, user2=request.user)
-    ).first()
-    
-    if not friendship:
+    try:
+        # Find and delete the friendship
+        friendship = Friendship.objects.filter(
+            models.Q(user1=request.user, user2=friend) |
+            models.Q(user1=friend, user2=request.user)
+        ).first()
+        
+        if not friendship:
+            logger.warning(f"FRIENDS_REMOVE_NOT_FRIENDS: User {request.user.id} is not friends with user {friend.id}")
+            return Response({
+                'error': _('You are not friends with this user.')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        logger.info(f"FRIENDS_REMOVE_FRIENDSHIP_FOUND: Found friendship {friendship.id} between {request.user.username} and {friend.username}")
+        
+        friendship.delete()
+        logger.info(f"FRIENDS_REMOVE_SUCCESS: Successfully removed friendship {friendship.id} between {request.user.username} and {friend.username}")
+        
         return Response({
-            'error': _('You are not friends with this user.')
-        }, status=status.HTTP_404_NOT_FOUND)
-    
-    friendship.delete()
-    
-    return Response({
-        'message': _('Friend removed successfully.')
-    }, status=status.HTTP_200_OK)
+            'message': _('Friend removed successfully.')
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"FRIENDS_REMOVE_ERROR: Failed to remove friend {friend_id} for user {request.user.id}: {str(e)}")
+        return Response({'error': 'Failed to remove friend'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class EventMapViewSet(viewsets.ModelViewSet):

@@ -762,29 +762,40 @@ class FriendRequestCreateSerializer(serializers.Serializer):
     
     def validate_to_user_id(self, value):
         """Validate that the target user exists."""
+        import logging
         from django.contrib.auth import get_user_model
         User = get_user_model()
         
+        logger = logging.getLogger(__name__)
+        logger.debug(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID: Validating user ID {value}")
+        
         try:
             user = User.objects.get(id=value)
+            logger.debug(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID_SUCCESS: User {user.username} found for ID {value}")
         except User.DoesNotExist:
+            logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID_NOT_FOUND: User with ID {value} not found")
             raise serializers.ValidationError(_("User not found."))
         
         # Check if trying to send request to self
         request = self.context.get('request')
         if request and request.user.id == value:
+            logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID_SELF: User {request.user.id} attempted to send friend request to themselves")
             raise serializers.ValidationError(_("You cannot send a friend request to yourself."))
         
         return value
     
     def validate(self, attrs):
         """Additional validation for friend requests."""
+        import logging
         from django.contrib.auth import get_user_model
         User = get_user_model()
         
+        logger = logging.getLogger(__name__)
         request = self.context.get('request')
         from_user = request.user
         to_user = User.objects.get(id=attrs['to_user_id'])
+        
+        logger.info(f"FRIENDS_SERIALIZER_VALIDATE: Validating friend request from {from_user.username} to {to_user.username}")
         
         # Check if users are already friends
         friendship_exists = Friendship.objects.filter(
@@ -793,6 +804,7 @@ class FriendRequestCreateSerializer(serializers.Serializer):
         ).exists()
         
         if friendship_exists:
+            logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_ALREADY_FRIENDS: Users {from_user.username} and {to_user.username} are already friends")
             raise serializers.ValidationError(_("You are already friends with this user."))
         
         # Check if there's already a pending request in either direction
@@ -804,26 +816,37 @@ class FriendRequestCreateSerializer(serializers.Serializer):
         
         if existing_request:
             if existing_request.from_user == from_user:
+                logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_DUPLICATE_SENT: User {from_user.username} already sent a friend request to {to_user.username}")
                 raise serializers.ValidationError(_("You have already sent a friend request to this user."))
             else:
+                logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_DUPLICATE_RECEIVED: User {to_user.username} already sent a friend request to {from_user.username}")
                 raise serializers.ValidationError(_("This user has already sent you a friend request. Please accept it instead."))
         
+        logger.info(f"FRIENDS_SERIALIZER_VALIDATE_SUCCESS: Validation passed for friend request from {from_user.username} to {to_user.username}")
         return attrs
     
     def create(self, validated_data):
+        import logging
         from django.contrib.auth import get_user_model
         User = get_user_model()
         
+        logger = logging.getLogger(__name__)
         request = self.context.get('request')
         to_user = User.objects.get(id=validated_data['to_user_id'])
         
-        friend_request = FriendRequest.objects.create(
-            from_user=request.user,
-            to_user=to_user,
-            status=FriendRequest.Status.PENDING
-        )
+        logger.info(f"FRIENDS_SERIALIZER_CREATE: Creating friend request from {request.user.username} to {to_user.username}")
         
-        return friend_request
+        try:
+            friend_request = FriendRequest.objects.create(
+                from_user=request.user,
+                to_user=to_user,
+                status=FriendRequest.Status.PENDING
+            )
+            logger.info(f"FRIENDS_SERIALIZER_CREATE_SUCCESS: Friend request {friend_request.id} created successfully")
+            return friend_request
+        except Exception as e:
+            logger.error(f"FRIENDS_SERIALIZER_CREATE_ERROR: Failed to create friend request: {str(e)}")
+            raise
 
 
 class FriendshipSerializer(serializers.Serializer):
