@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  Github,
-  Linkedin,
-  Mail,
-  Globe,
-} from 'lucide-react';
+import { Globe, Mail } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { SocialIcon } from 'react-social-icons';
 
@@ -210,7 +205,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='Instagram'
-                  style={{ width: 28, height: 28 }}
+                  style={{ width: 40, height: 40 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
@@ -225,7 +220,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='TikTok'
-                  style={{ width: 28, height: 28 }}
+                  style={{ width: 40, height: 40 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
@@ -240,7 +235,7 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='Facebook'
-                  style={{ width: 28, height: 28 }}
+                  style={{ width: 40, height: 40 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
@@ -254,23 +249,25 @@ function TeamMemberCard({
                 className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
               >
                 <Globe
-                  size={20}
+                  size={28}
                   className='text-muted-foreground hover:text-foreground transition-colors'
                 />
               </a>
             )}
             {member.social.github && (
-              <a
-                href={member.social.github}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
-              >
-                <Github
-                  size={20}
-                  className='text-muted-foreground hover:text-foreground transition-colors'
+              <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
+                <SocialIcon
+                  network='github'
+                  url={member.social.github}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:scale-110 transition-transform duration-200'
+                  aria-label='GitHub'
+                  style={{ width: 40, height: 40 }}
+                  fgColor='currentColor'
+                  bgColor='transparent'
                 />
-              </a>
+              </div>
             )}
             {member.social.linkedin && (
               <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
@@ -281,22 +278,24 @@ function TeamMemberCard({
                   rel='noopener noreferrer'
                   className='hover:scale-110 transition-transform duration-200'
                   aria-label='LinkedIn'
-                  style={{ width: 28, height: 28 }}
+                  style={{ width: 40, height: 40 }}
                   fgColor='currentColor'
                   bgColor='transparent'
                 />
               </div>
             )}
             {member.social.email && (
-              <a
-                href={`mailto:${member.social.email}`}
-                className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'
-              >
-                <Mail
-                  size={20}
-                  className='text-muted-foreground hover:text-foreground transition-colors'
+              <div className='w-14 h-14 rounded-2xl bg-muted/30 hover:bg-muted flex items-center justify-center border border-border/50 transition-colors duration-200'>
+                <SocialIcon
+                  network='email'
+                  url={`mailto:${member.social.email}`}
+                  className='hover:scale-110 transition-transform duration-200'
+                  aria-label='Email'
+                  style={{ width: 40, height: 40 }}
+                  fgColor='currentColor'
+                  bgColor='transparent'
                 />
-              </a>
+              </div>
             )}
           </div>
         </div>
