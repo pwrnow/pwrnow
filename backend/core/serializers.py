@@ -730,6 +730,7 @@ class UserSearchSerializer(serializers.Serializer):
     username = serializers.CharField(read_only=True)
     is_friend = serializers.BooleanField(read_only=True)
     has_pending_request = serializers.BooleanField(read_only=True)
+    friendship_status = serializers.CharField(read_only=True)
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):

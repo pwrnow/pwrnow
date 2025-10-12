@@ -104,6 +104,7 @@ export interface SearchedUser {
   username: string;
   is_friend: boolean;
   has_pending_request: boolean;
+  friendship_status: 'friend' | 'request_sent' | 'request_received' | 'none';
 }
 
 export interface FriendRequest {

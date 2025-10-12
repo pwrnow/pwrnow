@@ -269,6 +269,11 @@ const translations: Record<string, TranslationMap> = {
     mutualFriend: '{{count}} mutual friend',
     mutualFriends: '{{count}} mutual friends',
     requestSent: 'Request sent',
+    requestReceived: 'Request received',
+    notFriends: 'Not friends',
+    respond: 'Respond',
+    friends: 'Friends',
+    pending: 'Pending',
   },
   pl: {
     all: 'Wszystkie',
@@ -543,6 +548,11 @@ const translations: Record<string, TranslationMap> = {
     mutualFriend: '{{count}} wspólny znajomy',
     mutualFriends: '{{count}} wspólnych znajomych',
     requestSent: 'Zaproszenie wysłane',
+    requestReceived: 'Otrzymano zaproszenie',
+    notFriends: 'Nie znajomi',
+    respond: 'Odpowiedz',
+    friends: 'Znajomi',
+    pending: 'Oczekujące',
   },
 };
 

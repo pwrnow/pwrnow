@@ -523,23 +523,31 @@ def search_users(request):
         friend_ids.add(user2_id)
     friend_ids.discard(request.user.id)
     
-    # Get pending friend requests
-    pending_requests = FriendRequest.objects.filter(
-        models.Q(from_user=request.user) | models.Q(to_user=request.user),
+    # Get pending friend requests (both sent and received)
+    sent_requests = FriendRequest.objects.filter(
+        from_user=request.user,
         status=FriendRequest.Status.PENDING
-    ).values_list('from_user_id', 'to_user_id')
+    ).values_list('to_user_id', flat=True)
     
-    pending_user_ids = set()
-    for from_id, to_id in pending_requests:
-        pending_user_ids.add(from_id)
-        pending_user_ids.add(to_id)
-    pending_user_ids.discard(request.user.id)
+    received_requests = FriendRequest.objects.filter(
+        to_user=request.user,
+        status=FriendRequest.Status.PENDING
+    ).values_list('from_user_id', flat=True)
     
-    # Annotate users with friendship status
+    sent_request_ids = set(sent_requests)
+    received_request_ids = set(received_requests)
+    
+    # Annotate users with detailed friendship status
     results = []
     for user in users:
-        user['is_friend'] = user['id'] in friend_ids
-        user['has_pending_request'] = user['id'] in pending_user_ids
+        user_id = user['id']
+        user['is_friend'] = user_id in friend_ids
+        user['has_pending_request'] = user_id in sent_request_ids or user_id in received_request_ids
+        user['friendship_status'] = 'friend' if user_id in friend_ids else (
+            'request_sent' if user_id in sent_request_ids else (
+                'request_received' if user_id in received_request_ids else 'none'
+            )
+        )
         results.append(user)
     
     serializer = UserSearchSerializer(results, many=True)

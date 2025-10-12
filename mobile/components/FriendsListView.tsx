@@ -579,26 +579,63 @@ export default function FriendsListView({
                       {user.username}
                     </Text>
                   </View>
-                  {user.is_friend ? (
-                    <Text
+                  {user.friendship_status === 'friend' ? (
+                    <View
                       style={{
-                        color: isDark ? '#10B981' : '#059669',
-                        fontSize: 14,
-                        fontWeight: '500',
+                        backgroundColor: isDark ? '#10B981' : '#D1FAE5',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 16,
                       }}
                     >
-                      {t('alreadyFriends')}
-                    </Text>
-                  ) : user.has_pending_request ? (
-                    <Text
+                      <Text
+                        style={{
+                          color: isDark ? '#FFFFFF' : '#065F46',
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {t('friends')}
+                      </Text>
+                    </View>
+                  ) : user.friendship_status === 'request_sent' ? (
+                    <View
                       style={{
-                        color: isDark ? '#F59E0B' : '#D97706',
-                        fontSize: 14,
-                        fontWeight: '500',
+                        backgroundColor: isDark ? '#F59E0B' : '#FEF3C7',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 16,
                       }}
                     >
-                      {t('pending')}
-                    </Text>
+                      <Text
+                        style={{
+                          color: isDark ? '#FFFFFF' : '#92400E',
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {t('pending')}
+                      </Text>
+                    </View>
+                  ) : user.friendship_status === 'request_received' ? (
+                    <View
+                      style={{
+                        backgroundColor: isDark ? '#3B82F6' : '#DBEAFE',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 16,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: isDark ? '#FFFFFF' : '#1E40AF',
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {t('respond')}
+                      </Text>
+                    </View>
                   ) : (
                     <InviteButton
                       userId={user.id}
