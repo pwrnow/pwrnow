@@ -993,6 +993,18 @@ def remove_friend(request, friend_id):
         
         logger.info(f"FRIENDS_REMOVE_FRIENDSHIP_FOUND: Found friendship {friendship.id} between {request.user.username} and {friend.username}")
         
+        # Delete any existing friend requests between these users (in both directions)
+        from .models import FriendRequest
+        friend_requests = FriendRequest.objects.filter(
+            models.Q(from_user=request.user, to_user=friend) |
+            models.Q(from_user=friend, to_user=request.user)
+        )
+        
+        if friend_requests.exists():
+            logger.info(f"FRIENDS_REMOVE_CLEANUP_REQUESTS: Found {friend_requests.count()} friend request(s) to clean up between {request.user.username} and {friend.username}")
+            friend_requests.delete()
+            logger.info(f"FRIENDS_REMOVE_CLEANUP_REQUESTS_SUCCESS: Successfully deleted friend requests between {request.user.username} and {friend.username}")
+        
         friendship.delete()
         logger.info(f"FRIENDS_REMOVE_SUCCESS: Successfully removed friendship {friendship.id} between {request.user.username} and {friend.username}")
         

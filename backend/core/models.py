@@ -767,6 +767,18 @@ class Friendship(models.Model):
         logger = logging.getLogger(__name__)
         
         logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE: Deleting friendship {self.id} between {self.user1.username} and {self.user2.username}")
+        
+        # Clean up any friend requests between these users before deleting the friendship
+        friend_requests = FriendRequest.objects.filter(
+            models.Q(from_user=self.user1, to_user=self.user2) |
+            models.Q(from_user=self.user2, to_user=self.user1)
+        )
+        
+        if friend_requests.exists():
+            logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_CLEANUP: Found {friend_requests.count()} friend request(s) to clean up between {self.user1.username} and {self.user2.username}")
+            friend_requests.delete()
+            logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_CLEANUP_SUCCESS: Successfully deleted friend requests between {self.user1.username} and {self.user2.username}")
+        
         super().delete(*args, **kwargs)
         logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_SUCCESS: Friendship {self.id} deleted successfully")
 
