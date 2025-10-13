@@ -1,5 +1,5 @@
 from django.utils import timezone
-from django.db import models
+from django.db import models, IntegrityError
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -633,6 +633,13 @@ def send_friend_request(request):
             logger.info(f"FRIENDS_REQUEST_SEND_COMPLETE: Successfully processed friend request {friend_request.id}")
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
+        except IntegrityError as e:
+            if 'duplicate key value violates unique constraint' in str(e):
+                logger.warning(f"FRIENDS_REQUEST_SEND_DUPLICATE: Duplicate friend request from user {request.user.id}: {str(e)}")
+                return Response({'error': 'You have already sent a friend request to this user.'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                logger.error(f"FRIENDS_REQUEST_SEND_INTEGRITY_ERROR: Integrity error for user {request.user.id}: {str(e)}")
+                return Response({'error': 'Failed to create friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             logger.error(f"FRIENDS_REQUEST_SEND_ERROR: Failed to create friend request from user {request.user.id}: {str(e)}")
             return Response({'error': 'Failed to create friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

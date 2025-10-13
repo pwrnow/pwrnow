@@ -828,6 +828,7 @@ class FriendRequestCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         import logging
         from django.contrib.auth import get_user_model
+        from django.db import IntegrityError
         User = get_user_model()
         
         logger = logging.getLogger(__name__)
@@ -844,6 +845,13 @@ class FriendRequestCreateSerializer(serializers.Serializer):
             )
             logger.info(f"FRIENDS_SERIALIZER_CREATE_SUCCESS: Friend request {friend_request.id} created successfully")
             return friend_request
+        except IntegrityError as e:
+            if 'duplicate key value violates unique constraint' in str(e):
+                logger.warning(f"FRIENDS_SERIALIZER_CREATE_DUPLICATE: Duplicate friend request from {request.user.username} to {to_user.username}")
+                raise serializers.ValidationError(_("You have already sent a friend request to this user."))
+            else:
+                logger.error(f"FRIENDS_SERIALIZER_CREATE_INTEGRITY_ERROR: Integrity error creating friend request: {str(e)}")
+                raise
         except Exception as e:
             logger.error(f"FRIENDS_SERIALIZER_CREATE_ERROR: Failed to create friend request: {str(e)}")
             raise
