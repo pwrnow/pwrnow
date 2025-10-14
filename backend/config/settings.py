@@ -268,20 +268,23 @@ REST_FRAMEWORK = {
     'DEFAULT_VERSION': 'v1',
     'ALLOWED_VERSIONS': ['v1'],
     'VERSION_PARAM': 'version',
-    # Throttling configuration
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.AnonRateThrottle',
-    #     'rest_framework.throttling.UserRateThrottle',
-    # ],
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'anon': '100/hour',  # Anonymous users: 100 requests per hour
-    #     'user': '1000/hour',  # Authenticated users: 1000 requests per hour
-    #     'burst': '60/minute',  # Burst rate: 60 requests per minute
-    #     'sustained': '1000/hour',  # Sustained rate: 1000 requests per hour
-    # },
-
+    # Throttling configuration (code-configured)
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
     'DEFAULT_THROTTLE_RATES': {
+        # Global throttles
+        'anon': '100/minute' if DEBUG else '60/minute',
+        'user': '600/minute' if DEBUG else '120/minute',
+        # Scoped throttles (used by specific endpoints)
         'ai_parse': '10000/hour' if DEBUG else '5/hour',
+        'qr_scan': '30/minute' if DEBUG else '6/minute',
+        'event_like': '120/minute' if DEBUG else '30/minute',
+        'user_search': '60/minute' if DEBUG else '20/minute',
+        'friend_action': '30/minute' if DEBUG else '10/minute',
+        'friend_read': '120/minute' if DEBUG else '60/minute',
     }
 }
 

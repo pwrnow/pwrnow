@@ -50,6 +50,8 @@ def parse_schedule(request):
             status=status.HTTP_403_FORBIDDEN,
         )
 
+    # Ensure scope aligns with settings.DEFAULT_THROTTLE_RATES['ai_parse']
+    parse_schedule.throttle_scope = 'ai_parse'
     serializer = ScheduleParseRequestSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

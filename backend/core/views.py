@@ -35,7 +35,8 @@ from .authentication import (
 from .tasks import send_discord_notification
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import IsAuthenticated
 from django.utils.translation import gettext as _
 
@@ -411,8 +412,11 @@ class ScheduleItemViewSet(OrganizationAuthenticationMixin, viewsets.GenericViewS
 
 @api_view(["POST", "DELETE"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def event_like(request, slug):
     """Create or delete a like for the authenticated user on an event by slug."""
+    # Scoped throttle name for this endpoint
+    event_like.throttle_scope = 'event_like'
     event = get_object_or_404(Event, slug=slug)
 
     if request.method == "POST":
@@ -428,11 +432,14 @@ def event_like(request, slug):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def scan_qr_code(request):
     """
     Scan a QR code and confirm participation in an event.
     This endpoint is used by the mobile app QR scanner.
     """
+    scan_qr_code.throttle_scope = 'qr_scan'
+
     serializer = QRCodeScanSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -488,8 +495,10 @@ def scan_qr_code(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def search_users(request):
     """
+    search_users.throttle_scope = 'user_search'
     Search for users by username (minimum 3 characters).
     Returns users with friendship status.
     """
@@ -603,8 +612,10 @@ def get_friends_attending_event(request, slug):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def send_friend_request(request):
     """Send a friend request to another user."""
+    send_friend_request.throttle_scope = 'friend_action'
     import logging
     from .serializers import FriendRequestCreateSerializer, FriendRequestSerializer
     from notifications.services import push_service
@@ -650,8 +661,10 @@ def send_friend_request(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def accept_friend_request(request, request_id):
     """Accept a friend request."""
+    accept_friend_request.throttle_scope = 'friend_action'
     import logging
     from .models import Friendship, FriendRequest
     from .serializers import FriendRequestSerializer
@@ -713,8 +726,10 @@ def accept_friend_request(request, request_id):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def reject_friend_request(request, request_id):
     """Reject a friend request."""
+    reject_friend_request.throttle_scope = 'friend_action'
     import logging
     from .models import FriendRequest
     from .serializers import FriendRequestSerializer
@@ -756,8 +771,10 @@ def reject_friend_request(request, request_id):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def list_friend_requests(request):
     """List pending friend requests received by the authenticated user."""
+    list_friend_requests.throttle_scope = 'friend_read'
     import logging
     from .models import FriendRequest
     from .serializers import FriendRequestSerializer
@@ -789,8 +806,10 @@ def list_friend_requests(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def list_friends(request):
     """List all friends of the authenticated user."""
+    list_friends.throttle_scope = 'friend_read'
     import logging
     from django.contrib.auth import get_user_model
     from .models import Friendship
@@ -833,8 +852,10 @@ def list_friends(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def suggest_friends(request):
     """
+    suggest_friends.throttle_scope = 'friend_read'
     Suggest friends based on friends of friends.
     Returns users ordered by number of mutual friends, then by username.
     """
@@ -958,8 +979,10 @@ def suggest_friends(request):
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([ScopedRateThrottle])
 def remove_friend(request, friend_id):
     """Remove a friend (delete the friendship)."""
+    remove_friend.throttle_scope = 'friend_action'
     import logging
     from django.contrib.auth import get_user_model
     from .models import Friendship
