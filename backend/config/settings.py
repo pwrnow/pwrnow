@@ -82,6 +82,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'utils.logging.RequestIdMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
 
@@ -383,42 +384,59 @@ if not DEBUG:
 ADMIN_URL = env("DJANGO_ADMIN_URL", default="admin/")
 
 
-# LOGGING
+"""Logging configuration"""
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
+    "filters": {
+        "context_filter": {
+            "()": "utils.logging.ContextFilter",
+        },
+    },
     "formatters": {
+        "concise": {
+            "format": "%(levelname)s %(asctime)s %(name)s %(request_id)s user=%(user_id)s org=%(organization_id)s %(endpoint)s - %(message)s",
+        },
         "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",
+            "format": "%(levelname)s %(asctime)s %(name)s pid=%(process)d tid=%(thread)d req=%(request_id)s user=%(user_id)s org=%(organization_id)s %(endpoint)s - %(message)s",
         },
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "filters": ["context_filter"],
+            "formatter": "concise" if DEBUG else "verbose",
         },
     },
-    "root": {"level": "DEBUG", "handlers": ["console"]},
+    "root": {"level": "INFO" if not DEBUG else "DEBUG", "handlers": ["console"]},
     "loggers": {
         "django.db.backends": {
             "level": "ERROR",
             "handlers": ["console"],
             "propagate": False,
         },
-        # Errors logged by the SDK itself
         "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {
             "level": "ERROR",
             "handlers": ["console"],
             "propagate": False,
         },
-        # Notifications module logging
         "notifications": {
             "level": "INFO",
             "handlers": ["console"],
             "propagate": False,
+        },
+        "ai": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "core": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": True,
         },
     },
 }

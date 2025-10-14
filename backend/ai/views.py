@@ -10,6 +10,7 @@ from .services import ScheduleParsingService
 from .throttles import OrganizationRateThrottle
 from feature_access.utils import has_feature_access
 import logging
+from utils.logging import bind_context
 import time
 from django.core.cache import cache
 
@@ -26,9 +27,18 @@ def parse_schedule(request):
     This endpoint accepts raw schedule text (from Excel, text documents, etc.)
     and uses AI to extract and format it into structured schedule items.
     """
+    ctx = bind_context(
+        user_id=getattr(getattr(request, "user", None), "id", None),
+        organization_id=getattr(get_current_organization(request), "id", None),
+        endpoint="ai.parse_schedule",
+    )
+
+    logger.info("AI_PARSE_SCHEDULE_REQUEST_RECEIVED", **ctx)
+
     # Get event slug from request data
     event_slug = request.data.get("event_slug")
     if not event_slug:
+        logger.warning("AI_PARSE_SCHEDULE_VALIDATION_ERROR missing event_slug", **ctx)
         return Response(
             {"error": _("Event slug is required.")}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -39,12 +49,14 @@ def parse_schedule(request):
 
         event = Event.objects.get(slug=event_slug)
     except Event.DoesNotExist:
+        logger.warning("AI_PARSE_SCHEDULE_EVENT_NOT_FOUND", **ctx)
         return Response(
             {"error": _("Event not found.")}, status=status.HTTP_404_NOT_FOUND
         )
 
     # Check if event has access to magic parsing feature
     if not has_feature_access(event, "magic_parsing"):
+        logger.info("AI_PARSE_SCHEDULE_FEATURE_DENIED", **ctx)
         return Response(
             {"error": _("Magic parsing feature is not available for this event.")},
             status=status.HTTP_403_FORBIDDEN,
@@ -54,6 +66,7 @@ def parse_schedule(request):
     parse_schedule.throttle_scope = 'ai_parse'
     serializer = ScheduleParseRequestSerializer(data=request.data)
     if not serializer.is_valid():
+        logger.warning(f"AI_PARSE_SCHEDULE_SCHEMA_ERRORS {serializer.errors}", **ctx)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -69,6 +82,7 @@ def parse_schedule(request):
         )
 
         if not result["success"]:
+            logger.error(f"AI_PARSE_SCHEDULE_FAILED error={result.get('error')}", **ctx)
             return Response(
                 {"error": result.get("error", "Failed to parse schedule")},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -113,10 +127,14 @@ def parse_schedule(request):
 
         # Return in the expected format
         response_data = {"id": "temp-schedule-id", "items": formatted_items}
+        logger.info(
+            f"AI_PARSE_SCHEDULE_SUCCESS items={len(formatted_items)} tokens={result.get('tokens_used', 0)}",
+            **ctx,
+        )
         return Response(response_data, status=status.HTTP_200_OK)
 
     except Exception as e:
-        logger.error(f"Schedule parsing error: {str(e)}")
+        logger.error(f"AI_PARSE_SCHEDULE_EXCEPTION {str(e)}", **ctx)
         return Response(
             {
                 "error": _(
