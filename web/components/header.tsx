@@ -25,7 +25,7 @@ export default function Header({ currentLocale }: HeaderProps) {
     <header className='sticky top-0 z-20 w-full bg-background/95 backdrop-blur-md border-b border-muted/50'>
       <div className='relative flex items-center justify-center p-3 sm:p-4'>
         {/* Left side - Mobile menu button or Desktop navigation */}
-        <div className='absolute left-0 flex items-center'>
+        <div className='absolute left-3 sm:left-4 flex items-center'>
           {/* Mobile menu button */}
           <button
             onClick={toggleMobileMenu}
@@ -56,7 +56,7 @@ export default function Header({ currentLocale }: HeaderProps) {
         <Logo />
 
         {/* Right side - Controls */}
-        <div className='absolute right-0 flex items-center gap-2'>
+        <div className='absolute right-3 sm:right-4 flex items-center gap-2'>
           <LocaleSelector currentLocale={currentLocale} />
           <ThemeToggle />
         </div>
