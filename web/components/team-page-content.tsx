@@ -3,6 +3,7 @@
 import { Globe, Mail } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { SocialIcon } from 'react-social-icons';
+import Image from 'next/image';
 
 // Types
 type SocialLinks = {
@@ -154,6 +155,7 @@ function TeamMemberCard({
   index: number;
 }) {
   const isEven = index % 2 === 0;
+  const imageSrc = member.image && (member.image.startsWith('/') ? member.image : `/${member.image}`);
 
   return (
     <div className='group relative'>
@@ -163,7 +165,7 @@ function TeamMemberCard({
         } gap-12 lg:gap-20 items-center`}
       >
         {/* Image Section - only show if image exists */}
-        {member.image && (
+        {imageSrc && (
           <div
             className='relative flex-shrink-0 animate-float-gentle'
             style={{ animationDelay: `${index * 0.5}s` }}
@@ -174,10 +176,12 @@ function TeamMemberCard({
 
               {/* Image container */}
               <div className='absolute inset-2 bg-background rounded-3xl overflow-hidden shadow-lg'>
-                <img
-                  src={member.image}
+                <Image
+                  src={imageSrc}
                   alt={member.name}
-                  className='w-full h-full object-cover'
+                  fill
+                  className='object-cover'
+                  sizes='(max-width: 1024px) 20rem, 20rem'
                 />
               </div>
             </div>
