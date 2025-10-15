@@ -52,7 +52,7 @@ const teamMembers: TeamMember[] = [
   {
     id: 3,
     name: 'Daria Jurewicz',
-    description: 'just having fun and doing socials in my free time',
+    description: 'just having fun a w wolnym czasie robię sociale',
     image: 'team/daria.jpeg',
     social: {
       instagram: 'https://www.instagram.com/daria_jurewicz_/',
