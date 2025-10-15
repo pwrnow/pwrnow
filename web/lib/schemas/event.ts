@@ -31,7 +31,7 @@ export const eventFormSchema = z
       .optional(),
     url: z
       .url()
-      .max(500, 'URL nie może być dłuższy niż 500 znaków')
+      .max(1000, 'URL nie może być dłuższy niż 1000 znaków')
       .optional()
       .or(z.literal('')),
     description: z

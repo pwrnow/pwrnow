@@ -762,7 +762,7 @@ export default function AddEventForm({
               <div className='flex justify-between'>
                 <FormMessage />
                 <p className='text-xs text-muted-foreground'>
-                  {(field.value && field.value.length) || 0}/500
+                  {(field.value && field.value.length) || 0}/1000
                 </p>
               </div>
             </FormItem>

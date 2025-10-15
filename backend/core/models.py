@@ -164,6 +164,7 @@ class Event(models.Model):
         help_text="Detected aspect ratio of the event image (e.g., '16:9', '1:1')"
     )
     url = models.URLField(
+        max_length=1000,
         blank=True,
         null=True,
         validators=[URLValidator()],

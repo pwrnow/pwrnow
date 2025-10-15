@@ -252,7 +252,7 @@ class EventSerializer(serializers.ModelSerializer):
 
 class EventCreateSerializer(serializers.ModelSerializer):
     category_slug = serializers.SlugField(write_only=True, required=False, allow_null=True, allow_blank=True)
-    image = serializers.ImageField(write_only=True, required=True)
+    image = serializers.ImageField(write_only=True, required=False)
     publication_date = serializers.DateField(required=True)
 
     class Meta:
@@ -269,7 +269,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        """Validate that end time is after start time and publication date is in future"""
+        """Validate that end time is after start time and publication date is in future. Also require image except for 'rekrutacja' category."""
         if data.get('starts_at') and data.get('ends_at'):
             if data['ends_at'] <= data['starts_at']:
                 raise serializers.ValidationError({
@@ -293,6 +293,18 @@ class EventCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'publication_date': _('Publication date cannot be later than the event start date.')
                 })
+
+        # Enforce image requirement except for 'rekrutacja' category
+        category_slug = data.get('category_slug') or None
+        # If instance doesn't carry slug, we rely on provided slug
+        requires_image = True
+        if category_slug:
+            if str(category_slug).lower() == 'rekrutacja':
+                requires_image = False
+        # When creating, image may be provided in files under 'image' and is passed via validated_data as 'image'
+        image = data.get('image')
+        if requires_image and not image:
+            raise serializers.ValidationError({'image': _('Image is required for this category.')})
 
         return data
 
