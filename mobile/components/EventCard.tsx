@@ -119,6 +119,17 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   // Calendar functionality moved to useCalendar hook
 
+  // Badge logic
+  const now = new Date();
+  const startsAt = new Date(event.starts_at);
+  const endsAt = new Date(event.ends_at);
+  const isNow = now >= startsAt && now <= endsAt;
+  const isSameDay =
+    startsAt.getFullYear() === now.getFullYear() &&
+    startsAt.getMonth() === now.getMonth() &&
+    startsAt.getDate() === now.getDate();
+  const isTodayOnly = !isNow && isSameDay;
+
   const handleEventLinkPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to local event detail page instead of external URL
@@ -325,18 +336,38 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               </Text>
             </View>
             <View className='flex-row gap-2'>
-              {event.participation_status ? (
+              {/* NOW/TODAY/NEW badges (priority: NOW > TODAY > NEW) */}
+              {isNow ? (
                 <View
                   style={{
-                    backgroundColor: '#10B981' + '15',
-                    borderColor: '#10B981' + '30',
+                    backgroundColor: colors.accent + '15',
+                    borderColor: colors.accent + '30',
                   }}
-                  className='w-8 h-8 rounded-full border items-center justify-center'
+                  className='px-2.5 py-1.5 rounded-xl border'
                 >
-                  <Feather name='check-circle' size={16} color='#10B981' />
+                  <Text
+                    style={{ color: colors.accent }}
+                    className='text-xs font-semibold tracking-[0.5px]'
+                  >
+                    {t('nowTag')}
+                  </Text>
                 </View>
-              ) : null}
-              {event.is_new ? (
+              ) : isTodayOnly ? (
+                <View
+                  style={{
+                    backgroundColor: colors.accent + '15',
+                    borderColor: colors.accent + '30',
+                  }}
+                  className='px-2.5 py-1.5 rounded-xl border'
+                >
+                  <Text
+                    style={{ color: colors.accent }}
+                    className='text-xs font-semibold tracking-[0.5px]'
+                  >
+                    {t('todayTag')}
+                  </Text>
+                </View>
+              ) : event.is_new ? (
                 <View
                   style={{
                     backgroundColor: colors.accent + '15',
@@ -350,6 +381,18 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                   >
                     {t('newTag')}
                   </Text>
+                </View>
+              ) : null}
+
+              {event.participation_status ? (
+                <View
+                  style={{
+                    backgroundColor: '#10B981' + '15',
+                    borderColor: '#10B981' + '30',
+                  }}
+                  className='w-8 h-8 rounded-full border items-center justify-center'
+                >
+                  <Feather name='check-circle' size={16} color='#10B981' />
                 </View>
               ) : null}
             </View>

@@ -117,7 +117,12 @@ export default function EventCard({ event }: EventCardProps) {
                 {event.category && (
                   <Badge
                     variant='outline'
-                    className='bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 text-xs sm:text-sm'
+                    className={cn(
+                      'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm',
+                      event.category.slug === CATEGORY_SLUGS.REKRUTACJA
+                        ? 'border-amber-500'
+                        : 'border-primary/50'
+                    )}
                   >
                     {categoryName}
                   </Badge>
@@ -227,7 +232,9 @@ export default function EventCard({ event }: EventCardProps) {
                   className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer'
                 >
                   <ExternalLink className='h-4 w-4' />
-                  {t('visitEventPage')}
+                  {event.category?.slug === CATEGORY_SLUGS.REKRUTACJA
+                    ? t('openRecruitmentForm')
+                    : t('visitEventPage')}
                 </Button>
               </Link>
             </div>

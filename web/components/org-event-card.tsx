@@ -34,6 +34,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Event } from '@/lib/types';
+import { CATEGORY_SLUGS } from '@/lib/constants';
 import { EventBadge } from '@/components/event-badge';
 import { useTranslations } from 'next-intl';
 import { deleteEvent } from '@/lib/api';
@@ -47,6 +48,7 @@ interface OrgEventCardProps {
   truncateDescription: (text: string, maxLength: number) => string;
   isUpcoming: (dateString: string) => boolean;
   onEventDeleted?: (eventSlug: string) => void;
+  hideImage?: boolean;
 }
 
 export default function OrgEventCard({
@@ -57,6 +59,7 @@ export default function OrgEventCard({
   truncateDescription,
   isUpcoming,
   onEventDeleted,
+  hideImage,
 }: OrgEventCardProps) {
   const router = useRouter();
   const t = useTranslations('OrganizationPage');
@@ -156,14 +159,16 @@ export default function OrgEventCard({
         </div>
 
         {/* Event Image */}
-        <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9]'>
-          <Image
-            src={event.image_url || '/placeholder.svg'}
-            alt={event.title}
-            fill
-            className='object-cover transition-transform duration-500 z-10'
-          />
-        </div>
+        {!hideImage && (
+          <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9]'>
+            <Image
+              src={event.image_url || '/placeholder.svg'}
+              alt={event.title}
+              fill
+              className='object-cover transition-transform duration-500 z-10'
+            />
+          </div>
+        )}
 
         {/* Event Content */}
         <div className='px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6 flex flex-col flex-1'>
@@ -273,7 +278,9 @@ export default function OrgEventCard({
                   className='w-full flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/90'
                 >
                   <ExternalLink className='h-4 w-4' />
-                  {t('visitEventPage')}
+                  {event.category?.slug === CATEGORY_SLUGS.REKRUTACJA
+                    ? t('openRecruitmentForm')
+                    : t('visitEventPage')}
                 </Button>
               </a>
             )}

@@ -30,7 +30,8 @@
     "openInMaps": "Open in maps app",
     "showLess": "Show less",
     "showMore": "Show more",
-    "visitEventPage": "Visit event page"
+    "visitEventPage": "Visit event page",
+    "openRecruitmentForm": "Open recruitment form"
   },
   "EventFeed": {
     "noEventsAvailable": "Currently no events available."
@@ -107,6 +108,7 @@
     "openInMaps": "Open in maps app",
     "showMore": "Show more",
     "visitEventPage": "Visit event page",
+    "openRecruitmentForm": "Open recruitment form",
     "manageEvent": "Manage Event",
     "deleteEvent": "Delete Event",
     "deleteEventConfirmation": "Are you sure you want to delete the event \"{title}\"? This action cannot be undone.",
@@ -333,7 +335,7 @@
     "schedule": "Schedule",
     "eventDescription": "Event Description",
     "noDescription": "No description provided for this event.",
-    "posts": "Posts",
+    "postsTab": "Posts",
     "createPost": "Create Post",
     "noPosts": "No posts yet",
     "noPostsDescription": "Be the first to create a post for this event.",

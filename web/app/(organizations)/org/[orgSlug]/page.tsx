@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl';
 import OrganizationHeader from '@/components/organization-header';
 import OrganizationStats from '@/components/organization-stats';
 import OrgEventCard from '@/components/org-event-card';
+import { CATEGORY_SLUGS } from '@/lib/constants';
 import EventsEmptyState from '@/components/events-empty-state';
 import OrganizationPageSkeleton from '@/components/organization-page-skeleton';
 import ErrorState from '@/components/error-state';
@@ -87,8 +88,19 @@ export default function OrganizationPage() {
     }
   }, [orgSlug, router, t]);
 
-  const upcomingEvents = events.filter((event) => isUpcoming(event.starts_at));
-  const pastEvents = events.filter((event) => !isUpcoming(event.starts_at));
+  const rekrutacjaEvents = events.filter(
+    (e) => e.category?.slug === CATEGORY_SLUGS.REKRUTACJA
+  );
+  const nonRekrutacjaEvents = events.filter(
+    (e) => e.category?.slug !== CATEGORY_SLUGS.REKRUTACJA
+  );
+
+  const upcomingEvents = nonRekrutacjaEvents.filter((event) =>
+    isUpcoming(event.starts_at)
+  );
+  const pastEvents = nonRekrutacjaEvents.filter(
+    (event) => !isUpcoming(event.starts_at)
+  );
   const sortedEvents = [...upcomingEvents.reverse(), ...pastEvents.reverse()];
 
   const handleEventDeleted = (eventSlug: string) => {
@@ -173,6 +185,43 @@ export default function OrganizationPage() {
               />
             ))}
           </div>
+
+          {rekrutacjaEvents.length > 0 && (
+            <div className='mt-10'>
+              <h3 className='text-xl font-semibold mb-4'>Rekrutacje</h3>
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                {rekrutacjaEvents.map((event) => (
+                  <OrgEventCard
+                    key={event.id}
+                    event={event}
+                    orgSlug={orgSlug}
+                    onEventDeleted={handleEventDeleted}
+                    getInitials={(name: string) =>
+                      name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    }
+                    handleMapLinkClick={(location: string) => {
+                      const encodedLocation = encodeURIComponent(location);
+                      window.open(
+                        `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+                        '_blank'
+                      );
+                    }}
+                    truncateDescription={(text: string, maxLength: number) =>
+                      text.length > maxLength
+                        ? text.substring(0, maxLength) + '...'
+                        : text
+                    }
+                    isUpcoming={isUpcoming}
+                    hideImage
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

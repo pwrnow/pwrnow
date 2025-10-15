@@ -27,6 +27,8 @@ const translations: Record<string, TranslationMap> = {
     expand: 'Expand',
     visitPage: 'Visit page',
     newTag: 'NEW',
+    nowTag: 'NOW',
+    todayTag: 'TODAY',
     confirmedParticipation: 'CONFIRMED',
     // Event detail page translations
     eventDescription: 'Event description',
@@ -298,6 +300,8 @@ const translations: Record<string, TranslationMap> = {
     expand: 'Rozwiń',
     visitPage: 'Odwiedź stronę',
     newTag: 'NOWE',
+    nowTag: 'TERAZ',
+    todayTag: 'DZIŚ',
     confirmedParticipation: 'POTWIERDZONE',
     // Event detail page translations
     eventDescription: 'Opis wydarzenia',

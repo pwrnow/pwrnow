@@ -59,7 +59,7 @@ export function useEventsFeed(options: UseEventsFeedOptions = {}) {
   // Compute filtered events based on selected category
   const filteredEvents =
     selectedCategory === 'wszystkie'
-      ? baseEvents
+      ? baseEvents.filter((event) => event.category.slug !== 'rekrutacja')
       : baseEvents.filter((event) => event.category.slug === selectedCategory);
 
   // Handle refresh events

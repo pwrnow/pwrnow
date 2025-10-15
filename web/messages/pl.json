@@ -30,7 +30,8 @@
     "openInMaps": "Otwórz w aplikacji map",
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej",
-    "visitEventPage": "Odwiedź stronę wydarzenia"
+    "visitEventPage": "Odwiedź stronę wydarzenia",
+    "openRecruitmentForm": "Otwórz formularz rekrutacyjny"
   },
   "EventFeed": {
     "noEventsAvailable": "Aktualnie brak dostępnych wydarzeń."
@@ -107,6 +108,7 @@
     "openInMaps": "Otwórz w aplikacji map",
     "showMore": "Pokaż więcej",
     "visitEventPage": "Odwiedź stronę wydarzenia",
+    "openRecruitmentForm": "Otwórz formularz rekrutacyjny",
     "manageEvent": "Zarządzaj Wydarzeniem",
     "deleteEvent": "Usuń Wydarzenie",
     "deleteEventConfirmation": "Czy na pewno chcesz usunąć wydarzenie \"{title}\"? Ta operacja jest nieodwracalna.",

@@ -27,7 +27,7 @@ export default function EventFeed({ allEvents }: { allEvents: Event[] }) {
   // Filter events based on category client-side
   const filteredEvents =
     categorySlug === 'wszystkie'
-      ? allEvents
+      ? allEvents.filter((event) => event.category.slug !== 'rekrutacja')
       : allEvents.filter((event) => event.category.slug === categorySlug);
 
   // Only show "No events" message if we have an active category filter that's not "wszystkie"

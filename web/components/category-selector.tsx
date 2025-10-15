@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import type { Category } from '@/lib/types';
 import { useAnalytics } from '@/lib/useAnalytics';
 import { useTranslations } from 'next-intl';
+import { CATEGORY_SLUGS } from '@/lib/constants';
 
 export default function CategorySelector({
   categories = [],
@@ -94,7 +95,7 @@ export default function CategorySelector({
       <ScrollArea className='w-full h-full'>
         <div
           ref={containerRef}
-          className='flex items-center justify-center h-full gap-3 px-4 py-2 relative'
+          className='flex items-center justify-start h-full gap-3 px-4 py-2 relative max-w-full overflow-x-auto'
         >
           {allCategories.map((category) => (
             <button
@@ -111,8 +112,11 @@ export default function CategorySelector({
                     : 'text-muted-foreground hover:text-foreground'
                 }
               `}
+              style={{ maxWidth: '180px' }}
             >
-              {category.name}
+              <span className={category.slug === CATEGORY_SLUGS.REKRUTACJA ? 'border border-amber-500 px-3 py-0.5 rounded-full' : ''}>
+                {category.name}
+              </span>
               {currentCategory === category.slug && (
                 <motion.span
                   layoutId='activeCategory'
