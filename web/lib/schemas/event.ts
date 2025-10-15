@@ -83,7 +83,7 @@ export interface EventFormData extends EventFormValues {
 
 export function formToApiData(
   formData: EventFormValues,
-  imageFile: File
+  imageFile?: File | null
 ): {
   title: string;
   description?: string;
@@ -93,7 +93,7 @@ export function formToApiData(
   location?: string;
   url?: string;
   category_slug?: string;
-  image: File;
+  image?: File;
 } {
   return {
     title: formData.title,
@@ -109,6 +109,6 @@ export function formToApiData(
     location: formData.location || undefined,
     url: formData.url || undefined,
     category_slug: formData.categorySlug,
-    image: imageFile,
+    image: imageFile || undefined,
   };
 }

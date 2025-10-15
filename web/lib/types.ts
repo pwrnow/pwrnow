@@ -66,7 +66,7 @@ export interface CreateEventData {
   location?: string;
   url?: string;
   category_slug?: string;
-  image: File;
+  image?: File;
 }
 
 export interface PostImage {

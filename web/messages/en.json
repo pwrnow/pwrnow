@@ -72,6 +72,7 @@
     "selectDateAndTime": "Select date and time",
     "selectTime": "Select time",
     "image": "Image",
+    "rekrutacjaImageInfo": "For now we don't accept images for recruitment events.",
     "location": "Location",
     "locationPlaceholder": "Where will the event take place?",
     "eventLink": "Event link",

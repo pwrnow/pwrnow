@@ -13,6 +13,7 @@ import {
 } from '@/lib/schemas/event';
 import { createEvent } from '@/lib/api';
 import { Category } from '@/lib/types';
+import { CATEGORY_SLUGS } from '@/lib/constants';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -205,8 +206,10 @@ export default function AddEventForm({
 
   async function onSubmit(data: EventFormValues) {
     try {
-      // Validate that image is required
-      if (!imageFile) {
+      // For most categories, image is required. For rekrutacja, it's not allowed for now
+      const selectedCategory = data.categorySlug;
+      const isRekrutacja = selectedCategory === CATEGORY_SLUGS.REKRUTACJA;
+      if (!isRekrutacja && !imageFile) {
         setImageError('Zdjęcie jest wymagane');
         return;
       }
@@ -222,7 +225,7 @@ export default function AddEventForm({
       setFormError(null);
 
       // Transform form data to API format
-      const apiData = formToApiData(data, imageFile);
+      const apiData = formToApiData(data, imageFile ?? undefined);
 
       // Call API
       const result = await createEvent(apiData);
@@ -662,6 +665,11 @@ export default function AddEventForm({
           }}
         />
 
+        {form.watch('categorySlug') === CATEGORY_SLUGS.REKRUTACJA ? (
+          <div className='p-3 border rounded-md bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300'>
+            {t('rekrutacjaImageInfo')}
+          </div>
+        ) : (
         <FormItem>
           <FormLabel>
             {t('image')} <span className='text-red-500'>*</span>
@@ -721,6 +729,7 @@ export default function AddEventForm({
             <p className='text-sm mt-2 text-destructive'>{imageError}</p>
           )}
         </FormItem>
+        )}
 
         <FormField
           control={form.control}

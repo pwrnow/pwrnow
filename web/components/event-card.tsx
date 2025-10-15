@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { cn, formatEventDateRange, formatEventTimeRange } from '@/lib/utils';
 import type { Event } from '@/lib/types';
+import { CATEGORY_SLUGS } from '@/lib/constants';
 import { useAnalytics } from '@/lib/useAnalytics';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -125,6 +126,7 @@ export default function EventCard({ event }: EventCardProps) {
             </div>
           </div>
         </div>
+        {event.category?.slug === CATEGORY_SLUGS.REKRUTACJA ? null : (
         <div
           className={cn(
             'relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900',
@@ -147,6 +149,7 @@ export default function EventCard({ event }: EventCardProps) {
             }}
           />
         </div>
+        )}
         <div className='px-3 pt-3 sm:px-4 sm:pt-4 pb-4 sm:pb-6'>
           <h2 className='text-lg sm:text-xl md:text-2xl font-bold display-font mb-2 sm:mb-3'>
             {event.title}

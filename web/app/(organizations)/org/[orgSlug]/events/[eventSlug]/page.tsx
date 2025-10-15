@@ -17,6 +17,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
+import { CATEGORY_SLUGS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
@@ -604,14 +605,16 @@ export default function OrgEventDetailsPage() {
             </div>
 
             {/* Event Image */}
-            <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] mb-3 rounded-lg'>
-              <Image
-                src={event.image_url || '/placeholder.svg'}
-                alt={event.title}
-                fill
-                className='object-cover'
-              />
-            </div>
+            {event.category?.slug === CATEGORY_SLUGS.REKRUTACJA ? null : (
+              <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] mb-3 rounded-lg'>
+                <Image
+                  src={event.image_url || '/placeholder.svg'}
+                  alt={event.title}
+                  fill
+                  className='object-cover'
+                />
+              </div>
+            )}
 
             {/* Event Details */}
             <div className='space-y-2 mb-3'>
