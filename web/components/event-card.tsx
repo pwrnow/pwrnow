@@ -114,14 +114,11 @@ export default function EventCard({ event }: EventCardProps) {
                 {organizationName}
               </span>
               <div className='flex items-center gap-2'>
-                {event.category && (
+                {event.category && event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
                   <Badge
                     variant='outline'
                     className={cn(
-                      'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm',
-                      event.category.slug === CATEGORY_SLUGS.REKRUTACJA
-                        ? 'border-amber-500'
-                        : 'border-primary/50'
+                      'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm border-primary/50'
                     )}
                   >
                     {categoryName}
