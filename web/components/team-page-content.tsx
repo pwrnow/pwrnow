@@ -50,6 +50,15 @@ const teamMembers: TeamMember[] = [
   },
   {
     id: 3,
+    name: 'Daria Jurewicz',
+    description: 'just having fun and doing socials in my free time',
+    image: 'team/daria.jpeg',
+    social: {
+      instagram: 'https://www.instagram.com/daria_jurewicz_/',
+    }
+  },
+  {
+    id: 4,
     name: 'Kuba Królak',
     description:
       'Taking care of marketing, communication and all the behind-the-scenes stuff',
@@ -57,7 +66,7 @@ const teamMembers: TeamMember[] = [
     social: {},
   },
   {
-    id: 4,
+    id: 5,
     name: 'Adrian Szefer',
     description:
       'I make everything connected to the visual side of the project, from stickers to posts on our social media profiles.',
@@ -67,15 +76,7 @@ const teamMembers: TeamMember[] = [
       instagram: 'https://www.instagram.com/adrianszeferart?igsh=MW9vNTdoOWwxeXZzbA%3D%3D&utm_source=qr',
     },
   },
-  {
-    id: 5,
-    name: 'Daria Jurewicz',
-    description: 'just having fun and doing socials in my free time',
-    image: null,
-    social: {
-      instagram: 'https://www.instagram.com/daria_jurewicz_/',
-    }
-  }
+  
 ];
 
 export default function TeamPageContent() {
