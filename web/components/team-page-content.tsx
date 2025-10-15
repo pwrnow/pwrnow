@@ -67,6 +67,15 @@ const teamMembers: TeamMember[] = [
       instagram: 'https://www.instagram.com/adrianszeferart?igsh=MW9vNTdoOWwxeXZzbA%3D%3D&utm_source=qr',
     },
   },
+  {
+    id: 5,
+    name: 'Daria Jurewicz',
+    description: 'just having fun and doing socials in my free time',
+    image: null,
+    social: {
+      instagram: 'https://www.instagram.com/daria_jurewicz_/',
+    }
+  }
 ];
 
 export default function TeamPageContent() {
