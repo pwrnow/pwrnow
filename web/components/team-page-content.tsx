@@ -29,7 +29,7 @@ const teamMembers: TeamMember[] = [
     id: 1,
     name: 'Michał Mendzelewski',
     description: 'working on the idea and handling the tech side :)',
-    image: null,
+    image: 'team/michal.png',
     social: {
       github: 'https://github.com/michallm',
       linkedin: 'https://www.linkedin.com/in/michalmendzelewskim/',
