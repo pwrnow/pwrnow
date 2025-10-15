@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import type { Category } from '@/lib/types';
 import { useAnalytics } from '@/lib/useAnalytics';
 import { useTranslations } from 'next-intl';
-import { CATEGORY_SLUGS } from '@/lib/constants';
 
 export default function CategorySelector({
   categories = [],
@@ -93,11 +92,10 @@ export default function CategorySelector({
   return (
     <div className='sticky top-0 z-10 w-full h-14 bg-background/80 backdrop-blur-xl'>
       <ScrollArea className='w-full h-full'>
-        <div className='w-full h-full'>
-          <div
-            ref={containerRef}
-            className='flex items-center justify-center h-full gap-3 px-4 py-2 relative max-w-4xl mx-auto overflow-x-auto'
-          >
+        <div
+          ref={containerRef}
+          className='flex items-center justify-center h-full gap-3 px-4 py-2 relative'
+        >
           {allCategories.map((category) => (
             <button
               key={category.slug}
@@ -113,16 +111,8 @@ export default function CategorySelector({
                     : 'text-muted-foreground hover:text-foreground'
                 }
               `}
-              style={{ maxWidth: '180px' }}
             >
-              {category.slug === CATEGORY_SLUGS.REKRUTACJA ? (
-                <span className='relative px-3 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300 border border-amber-400 shadow-[0_0_0_1px_rgba(245,158,11,0.3)] ring-1 ring-amber-300/50 dark:ring-amber-500/30'>
-                  <span className='absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-400 shadow animate-pulse' />
-                  {category.name}
-                </span>
-              ) : (
-                <span>{category.name}</span>
-              )}
+              {category.name}
               {currentCategory === category.slug && (
                 <motion.span
                   layoutId='activeCategory'
@@ -139,7 +129,6 @@ export default function CategorySelector({
               )}
             </button>
           ))}
-          </div>
         </div>
         <ScrollBar
           orientation='horizontal'
