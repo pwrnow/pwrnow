@@ -1,13 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   Pressable,
-  Modal,
   Linking,
-  Image,
-  Alert,
 } from 'react-native';
 import CachedImage from './CachedImage';
 import { useRouter } from 'expo-router';
@@ -63,9 +59,7 @@ export default function EventCard({ event, index = 0, hideImage, disableNavigati
   const { handleHeartPress, showFirstLikeModal, setShowFirstLikeModal } =
     useEventActions(event, setShowAuthModal);
 
-  const lastTapRef = useRef<number>(0);
-  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const DOUBLE_TAP_DELAY_MS = 280;
+  
 
   // CTA button animations
   const ctaScale = useSharedValue(1);
@@ -142,27 +136,7 @@ export default function EventCard({ event, index = 0, hideImage, disableNavigati
     analytics.trackEventImageClicked(event as any);
   };
 
-  // Handle double-tap on image only; single tap navigates
-  const handleImagePress = () => {
-    if (disableNavigation) {
-      return; // no-op when navigation disabled
-    }
-    const now = Date.now();
-    if (now - (lastTapRef.current || 0) < DOUBLE_TAP_DELAY_MS) {
-      if (tapTimeoutRef.current) {
-        clearTimeout(tapTimeoutRef.current);
-        tapTimeoutRef.current = null;
-      }
-      lastTapRef.current = 0;
-      handleHeartPress();
-      return;
-    }
-    lastTapRef.current = now;
-    tapTimeoutRef.current = setTimeout(() => {
-      handleEventLinkPress();
-      tapTimeoutRef.current = null;
-    }, DOUBLE_TAP_DELAY_MS);
-  };
+  
 
   const handleCtaPressIn = async () => {
     ctaScale.value = withSpring(0.96, { damping: 14, stiffness: 300 });
@@ -410,37 +384,35 @@ export default function EventCard({ event, index = 0, hideImage, disableNavigati
         {/* Image (configurable via prop) */}
         {!hideImage ? (
           <View>
-            <Pressable onPress={handleImagePress}>
-              <View
-                style={{
-                  backgroundColor: colors.muted,
-                  aspectRatio: imageAspectRatio,
-                }}
-                className='w-full overflow-hidden'
-              >
-                {event.image_url ? (
-                  <CachedImage
-                    source={{ uri: event.image_url }}
-                    style={{ width: '100%', height: '100%' }}
-                    contentFit='cover'
-                    onLoad={() => setIsImageLoading(false)}
-                    onError={() => setIsImageLoading(false)}
-                  />
-                ) : (
-                  <View
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      backgroundColor: '#EAEAEA',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Feather name='image' size={48} color='#C9C9C9' />
-                  </View>
-                )}
-              </View>
-            </Pressable>
+            <View
+              style={{
+                backgroundColor: colors.muted,
+                aspectRatio: imageAspectRatio,
+              }}
+              className='w-full overflow-hidden'
+            >
+              {event.image_url ? (
+                <CachedImage
+                  source={{ uri: event.image_url }}
+                  style={{ width: '100%', height: '100%' }}
+                  contentFit='cover'
+                  onLoad={() => setIsImageLoading(false)}
+                  onError={() => setIsImageLoading(false)}
+                />
+              ) : (
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#EAEAEA',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Feather name='image' size={48} color='#C9C9C9' />
+                </View>
+              )}
+            </View>
           </View>
         ) : null}
 
