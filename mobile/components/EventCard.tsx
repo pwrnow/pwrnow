@@ -39,10 +39,9 @@ interface EventCardProps {
   event: Event;
   index?: number;
   hideImage?: boolean;
-  disableNavigation?: boolean;
 }
 
-export default function EventCard({ event, index = 0, hideImage, disableNavigation }: EventCardProps) {
+export default function EventCard({ event, index = 0, hideImage }: EventCardProps) {
   const { colors } = useThemeColors();
   const iconPrimary = colors.foreground;
   const [isDescriptionExpanded] = useState(false);
@@ -127,9 +126,6 @@ export default function EventCard({ event, index = 0, hideImage, disableNavigati
   const isTodayOnly = !isNow && isSameDay;
 
   const handleEventLinkPress = async () => {
-    if (disableNavigation) {
-      return; // navigation disabled via props
-    }
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to local event detail page instead of external URL
     router.push(`/wydarzenia/${event.slug}` as any);
@@ -417,7 +413,7 @@ export default function EventCard({ event, index = 0, hideImage, disableNavigati
         ) : null}
 
         {/* Content (configurable navigation) */}
-        <Pressable onPress={handleEventLinkPress} disabled={disableNavigation} className='px-3 pt-4 pb-5'>
+        <Pressable onPress={handleEventLinkPress} className='px-3 pt-4 pb-5'>
           {/* Title and Share */}
           <View className='flex-row items-start'>
             <View className='flex-1 mr-3'>

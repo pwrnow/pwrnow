@@ -9,11 +9,13 @@ import { useThemeColors } from '../hooks/useThemeColors';
 interface Props {
   onPress: () => void;
   animatedStyle?: any;
+  labelKey?: string; // i18n key to override default label
 }
 
 export const VisitPageButton: React.FC<Props> = ({
   onPress,
   animatedStyle,
+  labelKey,
 }) => {
   const { colors } = useThemeColors();
   const iconPrimary = colors.foreground;
@@ -45,7 +47,7 @@ export const VisitPageButton: React.FC<Props> = ({
                   style={{ color: colors.foreground }}
                   className='font-semibold text-base tracking-[0.5px]'
                 >
-                  {t('visitPage')}
+                  {t((labelKey as any) || 'visitPage')}
                 </Text>
               </View>
             </View>

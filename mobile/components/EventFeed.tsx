@@ -66,13 +66,11 @@ export default function EventFeed({
 
   const renderEventCard = ({ item, index }: { item: Event; index: number }) => {
     const hideImage = selectedCategory === CATEGORY_SLUGS.REKRUTACJA;
-    const disableNavigation = selectedCategory === CATEGORY_SLUGS.REKRUTACJA;
     return (
       <EventCard
         event={item}
         index={index}
         hideImage={hideImage}
-        disableNavigation={disableNavigation}
       />
     );
   };
