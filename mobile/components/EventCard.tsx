@@ -42,9 +42,11 @@ import FriendsAttending from './FriendsAttending';
 interface EventCardProps {
   event: Event;
   index?: number;
+  hideImage?: boolean;
+  disableNavigation?: boolean;
 }
 
-export default function EventCard({ event, index = 0 }: EventCardProps) {
+export default function EventCard({ event, index = 0, hideImage, disableNavigation }: EventCardProps) {
   const { colors } = useThemeColors();
   const iconPrimary = colors.foreground;
   const [isDescriptionExpanded] = useState(false);
@@ -131,6 +133,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const isTodayOnly = !isNow && isSameDay;
 
   const handleEventLinkPress = async () => {
+    if (disableNavigation) {
+      return; // navigation disabled via props
+    }
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to local event detail page instead of external URL
     router.push(`/wydarzenia/${event.slug}` as any);
@@ -139,6 +144,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
   // Handle double-tap on image only; single tap navigates
   const handleImagePress = () => {
+    if (disableNavigation) {
+      return; // no-op when navigation disabled
+    }
     const now = Date.now();
     if (now - (lastTapRef.current || 0) < DOUBLE_TAP_DELAY_MS) {
       if (tapTimeoutRef.current) {
@@ -399,43 +407,45 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
           </View>
         </View>
 
-        {/* Image */}
-        <View>
-          <Pressable onPress={handleImagePress}>
-            <View
-              style={{
-                backgroundColor: colors.muted,
-                aspectRatio: imageAspectRatio,
-              }}
-              className='w-full overflow-hidden'
-            >
-              {event.image_url ? (
-                <CachedImage
-                  source={{ uri: event.image_url }}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit='cover'
-                  onLoad={() => setIsImageLoading(false)}
-                  onError={() => setIsImageLoading(false)}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: '#EAEAEA',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Feather name='image' size={48} color='#C9C9C9' />
-                </View>
-              )}
-            </View>
-          </Pressable>
-        </View>
+        {/* Image (configurable via prop) */}
+        {!hideImage ? (
+          <View>
+            <Pressable onPress={handleImagePress}>
+              <View
+                style={{
+                  backgroundColor: colors.muted,
+                  aspectRatio: imageAspectRatio,
+                }}
+                className='w-full overflow-hidden'
+              >
+                {event.image_url ? (
+                  <CachedImage
+                    source={{ uri: event.image_url }}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit='cover'
+                    onLoad={() => setIsImageLoading(false)}
+                    onError={() => setIsImageLoading(false)}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      backgroundColor: '#EAEAEA',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Feather name='image' size={48} color='#C9C9C9' />
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          </View>
+        ) : null}
 
-        {/* Content */}
-        <Pressable onPress={handleEventLinkPress} className='px-3 pt-4 pb-5'>
+        {/* Content (configurable navigation) */}
+        <Pressable onPress={handleEventLinkPress} disabled={disableNavigation} className='px-3 pt-4 pb-5'>
           {/* Title and Share */}
           <View className='flex-row items-start'>
             <View className='flex-1 mr-3'>

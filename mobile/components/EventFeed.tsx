@@ -12,6 +12,7 @@ import EventCard from './EventCard';
 import { t } from '../lib/i18n';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useImagePreloading } from '../hooks/useImagePreloading';
+import { CATEGORY_SLUGS } from '../lib/constants';
 
 interface EventFeedProps {
   events: Event[];
@@ -34,10 +35,10 @@ export default function EventFeed({
 
   // Preload images when events change
   useEffect(() => {
-    if (events.length > 0) {
+    if (events.length > 0 && selectedCategory !== CATEGORY_SLUGS.REKRUTACJA) {
       preloadEventImages(events);
     }
-  }, [events, preloadEventImages]);
+  }, [events, preloadEventImages, selectedCategory]);
 
   const renderEmptyComponent = () => (
     <View className='p-6 items-center'>
@@ -63,9 +64,18 @@ export default function EventFeed({
     </View>
   );
 
-  const renderEventCard = ({ item, index }: { item: Event; index: number }) => (
-    <EventCard event={item} index={index} />
-  );
+  const renderEventCard = ({ item, index }: { item: Event; index: number }) => {
+    const hideImage = selectedCategory === CATEGORY_SLUGS.REKRUTACJA;
+    const disableNavigation = selectedCategory === CATEGORY_SLUGS.REKRUTACJA;
+    return (
+      <EventCard
+        event={item}
+        index={index}
+        hideImage={hideImage}
+        disableNavigation={disableNavigation}
+      />
+    );
+  };
 
   return (
     <FlatList
