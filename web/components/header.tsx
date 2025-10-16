@@ -44,6 +44,12 @@ export default function Header({ currentLocale }: HeaderProps) {
               {t('team')}
             </Link>
             <Link
+              href='/dla-organizacji'
+              className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
+            >
+              {t('forOrganizations')}
+            </Link>
+            <Link
               href='/kontakt'
               className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
             >
@@ -72,6 +78,13 @@ export default function Header({ currentLocale }: HeaderProps) {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('team')}
+            </Link>
+            <Link
+              href='/dla-organizacji'
+              className='px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors'
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {t('forOrganizations')}
             </Link>
             <Link
               href='/kontakt'

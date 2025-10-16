@@ -187,6 +187,7 @@
     "training": "Szkolenie",
     "jobFair": "Targi pracy"
   },
+  
   "ThemeToggle": {
     "toggleTheme": "Przełącz motyw",
     "light": "Jasny",
@@ -221,6 +222,53 @@
     "benefitEasyTitle": "Łatwo i szybko",
     "benefitEasyDesc": "Publikacja jest prosta, a wsparcie zawsze dostępne.",
     "ctaButton": "Aplikuj do PWr Now!"
+    ,
+    "Sections": {
+      "Hero": {
+        "titlePart1": "Twoje wydarzenia",
+        "titleEmphasis": "zasługują na uwagę",
+        "description": "PWr Now to innowacyjna platforma, która łączy studentów Politechniki Wrocławskiej z wydarzeniami organizowanymi przez koła naukowe, samorządy i organizacje studenckie.",
+        "joinButton": "Dołącz do nas",
+        "joinButtonHover": "Napisz do nas ✉️",
+        "moreButton": "Dowiedz się więcej"
+      },
+      "HowItWorks": {
+        "title": "Jak to działa?",
+        "steps": {
+          "1": {
+            "title": "Skontaktuj się z nami",
+            "description": "Napisz do nas wiadomość na adres <Link>email</Link>. Opowiedz nam o swojej organizacji i działalności na uczelni, a my odpowiemy na wszystkie pytania."
+          },
+          "2": {
+            "title": "Otrzymaj unikalny link",
+            "description": "Po weryfikacji, wyślemy Ci specjalny link umożliwiający zarządzanie wydarzeniami Twojej organizacji na platformie PWr Now."
+          },
+          "3": {
+            "title": "Dodawaj wydarzenia",
+            "description": "Twórz atrakcyjne wydarzenia z opisami, zdjęciami i wszystkimi potrzebnymi informacjami. Nasz intuicyjny interfejs ułatwi Ci to zadanie."
+          },
+          "4": {
+            "title": "Docieraj do studentów",
+            "description": "Twoje wydarzenia staną się widoczne dla społeczności akademickiej Politechniki Wrocławskiej, co przełoży się na większą frekwencję i rozpoznawalność."
+          }
+        }
+      },
+      "Faq": {
+        "title": "Najczęściej zadawane pytania",
+        "questions": {
+          "1": { "q": "Kto może dodawać wydarzenia na platformę?", "a": "Aktualnie przyjmujemy organizacje studenckie, koła naukowe, samorządy wydziałowe oraz inne grupy związane z Politechniką Wrocławską. Jeśli reprezentujesz taką organizację, skontaktuj się z nami!" },
+          "2": { "q": "Czy korzystanie z platformy jest płatne?", "a": "Nie, korzystanie z PWr Now jest całkowicie bezpłatne zarówno dla organizacji, jak i dla studentów." },
+          "3": { "q": "Jak szybko moje wydarzenie pojawi się na platformie?", "a": "Staramy się, aby Twoje wydarzenia pojawiały się na platformie jak najszybciej po ich dodaniu." },
+          "4": { "q": "Czy wydarzenia podlegają weryfikacji?", "a": "Tak, wydarzenia przechodzą weryfikację przed pojawieniem się na platformie, aby zapewnić odpowiedni standard i jakość treści dla naszych użytkowników." },
+          "5": { "q": "Czy mogę edytować lub usunąć opublikowane wydarzenie?", "a": "Tak, w dowolnym momencie możesz edytować szczegóły wydarzenia lub usunąć je z platformy za pomocą panelu organizacji." },
+          "6": { "q": "Jakie informacje mogę zamieścić o wydarzeniu?", "a": "Możesz dodać tytuł, opis, datę i godzinę, miejsce, kategorię wydarzenia, zdjęcie, link do rejestracji oraz inne istotne informacje." }
+        }
+      },
+      "Contact": {
+        "title": "Gotowi na współpracę?",
+        "subtitle": "Jeśli chcesz, by wydarzenia Twojej organizacji dotarły do większej liczby studentów, napisz do nas już teraz!"
+      }
+    }
   },
   "PrivacyPolicy": {
     "title": "Polityka Prywatności | PWr Now",

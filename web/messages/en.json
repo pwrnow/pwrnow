@@ -187,6 +187,7 @@
     "training": "Training",
     "jobFair": "Job Fair"
   },
+  
   "ThemeToggle": {
     "toggleTheme": "Toggle theme",
     "light": "Light",
@@ -221,6 +222,53 @@
     "benefitEasyTitle": "Easy & Fast",
     "benefitEasyDesc": "Posting is simple and support is always available.",
     "ctaButton": "Apply to join PWr Now!"
+    ,
+    "Sections": {
+      "Hero": {
+        "titlePart1": "Your events",
+        "titleEmphasis": "deserve attention",
+        "description": "PWr Now is an innovative platform that connects students of Wrocław University of Technology with events organized by student clubs, councils, and organizations.",
+        "joinButton": "Join us",
+        "joinButtonHover": "Write to us ✉️",
+        "moreButton": "Learn more"
+      },
+      "HowItWorks": {
+        "title": "How does it work?",
+        "steps": {
+          "1": {
+            "title": "Contact us",
+            "description": "Write us an email at <Link>email</Link>. Tell us about your organization and activities at the university, and we'll answer all your questions."
+          },
+          "2": {
+            "title": "Receive a unique link",
+            "description": "After verification, we'll send you a special link that allows your organization to manage events on the PWr Now platform."
+          },
+          "3": {
+            "title": "Add events",
+            "description": "Create attractive events with descriptions, images and all the necessary information. Our intuitive interface will make it easy."
+          },
+          "4": {
+            "title": "Reach students",
+            "description": "Your events will become visible to the academic community of Wrocław University of Technology, increasing attendance and recognition."
+          }
+        }
+      },
+      "Faq": {
+        "title": "Frequently Asked Questions",
+        "questions": {
+          "1": { "q": "Who can add events to the platform?", "a": "We currently accept student organizations, scientific clubs, faculty councils and other groups related to Wrocław University of Technology. If you represent such an organization, contact us!" },
+          "2": { "q": "Is using the platform paid?", "a": "No, using PWr Now is completely free for both organizations and students." },
+          "3": { "q": "How quickly will my event appear on the platform?", "a": "We strive to ensure that your events appear on the platform as soon as possible after they are added." },
+          "4": { "q": "Are events verified?", "a": "Yes, events are verified before appearing on the platform to ensure the appropriate standard and quality of content for our users." },
+          "5": { "q": "Can I edit or delete a published event?", "a": "Yes, you can edit event details or delete them from the platform at any time using the organization panel." },
+          "6": { "q": "What information can I include about an event?", "a": "You can add a title, description, date and time, location, event category, image, registration link, and other relevant information." }
+        }
+      },
+      "Contact": {
+        "title": "Ready to collaborate?",
+        "subtitle": "If you want your organization's events to reach more students, write to us now!"
+      }
+    }
   },
   "PrivacyPolicy": {
     "title": "Privacy Policy | PWr Now",
