@@ -10,6 +10,7 @@ from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, T
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .forms import OrganizationAdminForm, EventAdminForm
 from import_export.admin import ImportExportModelAdmin
+from import_export import resources
 
 
 @admin.register(Category)
