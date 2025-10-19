@@ -128,7 +128,7 @@ export default function EventCard({ event }: EventCardProps) {
             </div>
           </div>
         </div>
-        {event.category?.slug === CATEGORY_SLUGS.REKRUTACJA ? null : (
+        {event.image_url && (
         <div
           className={cn(
             'relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900',
@@ -137,7 +137,7 @@ export default function EventCard({ event }: EventCardProps) {
           )}
         >
           <Image
-            src={event.image_url || '/placeholder.svg'}
+            src={event.image_url}
             alt={event.title}
             fill
             className={cn(

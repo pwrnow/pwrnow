@@ -159,10 +159,10 @@ export default function OrgEventCard({
         </div>
 
         {/* Event Image */}
-        {!hideImage && (
+        {!hideImage && event.image_url && (
           <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9]'>
             <Image
-              src={event.image_url || '/placeholder.svg'}
+              src={event.image_url}
               alt={event.title}
               fill
               className='object-cover transition-transform duration-500 z-10'

@@ -605,10 +605,10 @@ export default function OrgEventDetailsPage() {
             </div>
 
             {/* Event Image */}
-            {event.category?.slug === CATEGORY_SLUGS.REKRUTACJA ? null : (
+            {event.image_url && (
               <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] mb-3 rounded-lg'>
                 <Image
-                  src={event.image_url || '/placeholder.svg'}
+                  src={event.image_url}
                   alt={event.title}
                   fill
                   className='object-cover'
