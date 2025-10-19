@@ -206,7 +206,7 @@ export default function AddEventForm({
 
   async function onSubmit(data: EventFormValues) {
     try {
-      // For most categories, image is required. For rekrutacja, it's not allowed for now
+      // For most categories, image is required. For rekrutacja, it's optional
       const selectedCategory = data.categorySlug;
       const isRekrutacja = selectedCategory === CATEGORY_SLUGS.REKRUTACJA;
       if (!isRekrutacja && !imageFile) {
@@ -665,15 +665,15 @@ export default function AddEventForm({
           }}
         />
 
-        {form.watch('categorySlug') === CATEGORY_SLUGS.REKRUTACJA ? (
-          <div className='p-3 border rounded-md bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300'>
-            {t('rekrutacjaImageInfo')}
-          </div>
-        ) : (
         <FormItem>
           <FormLabel>
-            {t('image')} <span className='text-red-500'>*</span>
+            {t('image')} {form.watch('categorySlug') === CATEGORY_SLUGS.REKRUTACJA ? '' : <span className='text-red-500'>*</span>}
           </FormLabel>
+          {form.watch('categorySlug') === CATEGORY_SLUGS.REKRUTACJA && (
+            <p className='text-sm text-muted-foreground mb-2'>
+              {t('rekrutacjaImageInfo')}
+            </p>
+          )}
           <Dropzone
             className='mt-2'
             onDrop={async (acceptedFiles) => {
@@ -729,7 +729,6 @@ export default function AddEventForm({
             <p className='text-sm mt-2 text-destructive'>{imageError}</p>
           )}
         </FormItem>
-        )}
 
         <FormField
           control={form.control}
