@@ -29,3 +29,4 @@ django-allauth[socialaccount]
 djangorestframework-simplejwt
 cryptography
 posthog
+django-import-export[all]

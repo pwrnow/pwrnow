@@ -9,6 +9,7 @@ from django.utils import timezone
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .forms import OrganizationAdminForm, EventAdminForm
+from import_export.admin import ImportExportModelAdmin
 
 
 @admin.register(Category)
@@ -54,8 +55,25 @@ class OrganizationCodeInline(admin.TabularInline):
     fields = ['code', 'created_at', 'last_used_at']
 
 
+class OrganizationCodeResource(resources.ModelResource):
+    organization_name = fields.Field(attribute='organization__name', column_name='Organization Name')
+    url = fields.Field(column_name='URL')
+    
+    class Meta:
+        model = OrganizationCode
+        fields = ['organization', 'organization_name', 'code', 'url', 'created_at', 'last_used_at']
+    
+    def dehydrate_url(self, obj):
+        if settings.DEBUG:
+            base_url = "http://localhost:3000"
+        else:
+            base_url = "https://pwrnow.pl"
+        
+        return f"{base_url}/auth/{obj.code}"
+
+
 @admin.register(OrganizationCode)
-class OrganizationCodeAdmin(admin.ModelAdmin):
+class OrganizationCodeAdmin(ImportExportModelAdmin):
     list_display = ['organization', 'code_preview', 'created_at', 'last_used_display']
     list_filter = ['created_at', 'last_used_at']
     search_fields = ['organization__name', 'code']
@@ -79,6 +97,8 @@ class OrganizationCodeAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         })
     )
+
+    resource_class = OrganizationCodeResource
 
     @admin.display(description='Code')
     def code_preview(self, obj):
