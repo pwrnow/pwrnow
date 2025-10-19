@@ -11,6 +11,7 @@ from .models import Event, Category, Organization, Tag, OrganizationCode, Like, 
 from .forms import OrganizationAdminForm, EventAdminForm
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources
+from import_export import fields
 
 
 @admin.register(Category)
