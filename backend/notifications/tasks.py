@@ -232,3 +232,29 @@ def send_post_verification_notifications(post_id):
     except Exception as e:
         logger.error(f"Error sending post verification notifications for post {post_id}: {str(e)}")
         return {'sent': 0, 'failed': 0, 'total': 0}
+
+
+@shared_task
+def send_new_event_notifications_to_staff(event_id: str):
+    """
+    Send push notifications about a newly created event to all staff users' devices.
+
+    Args:
+        event_id: UUID of the newly created event
+
+    Returns:
+        Dict with counts: {'sent': int, 'failed': int, 'total': int}
+    """
+    try:
+        event = Event.objects.select_related('organization', 'category').get(id=event_id)
+        result = push_service.send_new_event_to_staff(event)
+        logger.info(
+            f"New event staff notifications for event {event_id}: {result['sent']} sent, {result['failed']} failed out of {result['total']} total"
+        )
+        return result
+    except Event.DoesNotExist:
+        logger.error(f"Event {event_id} not found for staff notification task")
+        return {'sent': 0, 'failed': 0, 'total': 0}
+    except Exception as e:
+        logger.error(f"Error sending new event notifications to staff for event {event_id}: {str(e)}")
+        return {'sent': 0, 'failed': 0, 'total': 0}

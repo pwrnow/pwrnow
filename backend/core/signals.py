@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Event, PostImage, Post, Organization, OrganizationCode
 from .tasks import translate_event_content, detect_event_image_aspect_ratio, detect_post_image_aspect_ratio
+from notifications.tasks import send_new_event_notifications_to_staff
 
 
 @receiver(post_save, sender=Event)
@@ -30,6 +31,11 @@ def event_post_save_handler(sender, instance, created, **kwargs):
     if created:
         # Start translation task immediately in background
         translate_event_content.delay(str(instance.id))
+        # Notify staff devices about new event
+        try:
+            send_new_event_notifications_to_staff.delay(str(instance.id))
+        except Exception as e:
+            print(f"⚠️ Failed to enqueue staff new event notifications for {instance.id}: {e}")
 
     # Trigger aspect ratio detection if event has an image and aspect_ratio is not set
     if instance.image and not instance.aspect_ratio:

@@ -556,6 +556,91 @@ class ExpoPushNotificationService:
             logger.error(f"Error sending post verification notifications: {str(e)}")
             return {'sent': 0, 'failed': 0, 'total': 0}
 
+    def send_new_event_to_staff(self, event: Event):
+        """
+        Send a notification about a newly created event to all staff users' devices.
+
+        Args:
+            event: Event instance that was just created
+
+        Returns:
+            Dict with counts: {'sent': int, 'failed': int, 'total': int}
+        """
+        try:
+            # Get devices for staff users only
+            devices = Device.objects.filter(
+                notifications_enabled=True,
+                user__isnull=False,
+                user__is_staff=True,
+            ).select_related('user')
+
+            if not devices.exists():
+                logger.info("No staff devices found for new event notification")
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            notifications_data = []
+            records = []
+
+            for device in devices:
+                try:
+                    lang = getattr(device, 'preferred_language', 'pl') or 'pl'
+                    title, body, subtitle = self._build_notification_content(event, lang)
+
+                    payload = {
+                        'to': device.expo_push_token,
+                        'title': title,
+                        'body': body,
+                        'data': {
+                            'type': 'new_event_staff',
+                            'event_id': str(event.id),
+                            'event_slug': event.slug,
+                            'organization_slug': event.organization.slug if event.organization else None,
+                            'category_slug': event.category.slug if event.category else None,
+                            'url': event.public_url,
+                        },
+                        'priority': 'high',
+                        'channelId': 'events',
+                        'sound': 'default',
+                    }
+
+                    if subtitle and device.platform == 'ios':
+                        payload['subtitle'] = subtitle
+
+                    notifications_data.append(payload)
+                    records.append({
+                        'title': title,
+                        'body': body,
+                        'data': payload['data'],
+                        'device': device,
+                    })
+                except Exception as e:
+                    logger.error(f"Error preparing staff notification for device {device.id}: {str(e)}")
+                    continue
+
+            if not notifications_data:
+                return {'sent': 0, 'failed': 0, 'total': 0}
+
+            result = self.send_multiple_notifications(notifications_data)
+
+            if result['sent'] > 0:
+                for rec in records:
+                    try:
+                        PushNotification.objects.create(
+                            title=rec['title'],
+                            body=rec['body'],
+                            data=rec['data'],
+                            device=rec['device'],
+                            status='sent',
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating staff notification record: {str(e)}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error sending new event notifications to staff: {str(e)}")
+            return {'sent': 0, 'failed': 0, 'total': 0}
+
     # --- Helpers ---------------------------------------------------------
 
     def _truncate(self, text: Optional[str], max_length: int) -> str:

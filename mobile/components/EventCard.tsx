@@ -516,6 +516,13 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
             />
           )}
 
+          {/* Staff likes count */}
+          {isStaff && event.likes_count !== null && event.likes_count !== undefined && (
+            <View className='mb-2'>
+              <StaffBadge count={event.likes_count} />
+            </View>
+          )}
+
           <SignInRequiredModal
             visible={showAuthModal}
             onClose={() => setShowAuthModal(false)}
@@ -531,19 +538,6 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
             eventTitle={event.title}
           />
         </Pressable>
-
-        {/* Footer: staff-only extra info */}
-        {isStaff && event.likes_count !== null && event.likes_count !== undefined ? (
-          <View className='px-3 pb-4'>
-            <View
-              style={{ backgroundColor: colors.border }}
-              className='h-px w-full mb-3'
-            />
-            <View className='flex-row items-center justify-end'>
-              <StaffBadge count={event.likes_count} />
-            </View>
-          </View>
-        ) : null}
       </Pressable>
     </Animated.View>
   );
