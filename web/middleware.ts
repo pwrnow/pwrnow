@@ -7,12 +7,20 @@ import { trackServerEvent } from './lib/posthog-server';
 export function middleware(request: NextRequest) {
   // Handle /wlepa redirect
   if (request.nextUrl.pathname === '/wlepa') {
+    console.log('🔗 User accessed /wlepa path');
+    
     // Generate a unique identifier for the user (using IP + User-Agent hash for anonymity)
     const userAgent = request.headers.get('user-agent') || 'unknown';
     const forwardedFor = request.headers.get('x-forwarded-for') ||
                         request.headers.get('x-real-ip') ||
                         'unknown';
     const distinctId = `anonymous-${Buffer.from(forwardedFor + userAgent).toString('base64').slice(0, 16)}`;
+
+    console.log('📊 Tracking wlepa_scanned event for user:', distinctId, {
+      ip: forwardedFor,
+      userAgent: userAgent.substring(0, 50) + '...', // Truncate for readability
+      timestamp: new Date().toISOString()
+    });
 
     // Track the click event
     trackServerEvent(distinctId, 'wlepa_scanned', {
@@ -23,6 +31,8 @@ export function middleware(request: NextRequest) {
       redirect_target: '/', // Will be updated when you change the redirect target
     });
 
+    console.log('↩️ Redirecting user from /wlepa to home page');
+    
     // Redirect to home page (change this URL when you want to redirect to app store)
     const redirectUrl = new URL('/', request.url);
     return NextResponse.redirect(redirectUrl);
