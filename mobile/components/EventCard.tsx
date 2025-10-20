@@ -30,7 +30,7 @@ import { t, deviceLocaleTag } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import SignInRequiredModal from './SignInRequiredModal';
 import FirstLikeModal from './FirstLikeModal';
-import { useLikeEvent, useUnlikeEvent, useVerifyEvent } from '../lib/queries';
+import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useEventActions } from '../hooks/useEventActions';
 import FriendsAttending from './FriendsAttending';
@@ -52,7 +52,6 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
   const { isAuthenticated, isStaff } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { handleAddToCalendar } = useCalendar({ event });
-  const verifyEventMutation = useVerifyEvent();
 
   // Friends interested data is now included in the event object
 
@@ -166,18 +165,6 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
   const handleTimePillPress = async () => {
     await handleAddToCalendar();
     analytics.trackEventPillClicked(event as any, 'time');
-  };
-
-  const handleVerifyEvent = async () => {
-    try {
-      await verifyEventMutation.mutateAsync(event.slug);
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Show success message (you may want to use a toast library)
-      alert('Event verified successfully!');
-    } catch (error) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      alert('Failed to verify event');
-    }
   };
 
   const getInitials = (name: string) => {
@@ -533,22 +520,6 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
           {isStaff && event.likes_count !== null && event.likes_count !== undefined && (
             <View className='mb-2'>
               <StaffBadge count={event.likes_count} />
-            </View>
-          )}
-
-          {/* Staff verify button */}
-          {isStaff && !event.verified && (
-            <View className='mb-2'>
-              <Pressable 
-                onPress={handleVerifyEvent}
-                disabled={verifyEventMutation.isPending}
-                style={{ backgroundColor: colors.accent }}
-                className='px-4 py-2 rounded-lg'
-              >
-                <Text style={{ color: '#fff' }} className='font-semibold text-center'>
-                  {verifyEventMutation.isPending ? 'Verifying...' : 'Verify Event'}
-                </Text>
-              </Pressable>
             </View>
           )}
 

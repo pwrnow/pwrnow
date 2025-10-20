@@ -12,18 +12,6 @@ export function useEvents() {
   });
 }
 
-export function useVerifyEvent() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (slug: string) => api.events.verifyEvent(slug),
-    onSuccess: () => {
-      // Invalidate events list to refetch
-      queryClient.invalidateQueries({ queryKey: queryKeys.events });
-    },
-  });
-}
-
 export function useCategories() {
   return useCachedQuery<Category[]>({
     queryKey: queryKeys.categories,
