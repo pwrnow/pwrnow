@@ -39,6 +39,7 @@ interface Props {
   onExternalLink?: () => void;
   onImagePress: (images: string[], initialIndex: number) => void;
   ctaAnimatedStyle?: any;
+  isStaff?: boolean;
 }
 
 // routes are built dynamically in the component based on data
@@ -49,8 +50,9 @@ const DetailsScene: React.FC<{
   onMapPress?: () => void;
   onExternalLink?: () => void;
   ctaAnimatedStyle?: any;
+  isStaff?: boolean;
 }> = React.memo(
-  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle }) => {
+  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle, isStaff }) => {
     const { colors } = useThemeColors();
     const { data: event, isLoading, error } = useEventBySlug(eventSlug);
 
@@ -108,6 +110,8 @@ const DetailsScene: React.FC<{
             location={event.location}
             onMapPress={onMapPress}
             event={event}
+            isStaff={isStaff}
+            likesCount={event.likes_count}
           />
 
           {/* Event Description */}
@@ -237,6 +241,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     onExternalLink,
     onImagePress,
     ctaAnimatedStyle,
+    isStaff,
   }) => {
     const layout = useWindowDimensions();
     const { colors } = useThemeColors();
@@ -295,6 +300,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
               onMapPress={onMapPress}
               onExternalLink={onExternalLink}
               ctaAnimatedStyle={ctaAnimatedStyle}
+              isStaff={isStaff}
             />
           );
         case 'posts':

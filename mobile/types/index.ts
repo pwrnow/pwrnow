@@ -5,6 +5,7 @@ export interface User {
   first_name: string;
   last_name: string;
   username_set_by_user: boolean;
+  is_staff: boolean;
   date_joined: string;
   last_login: string;
 }
@@ -57,6 +58,7 @@ export interface Event {
   aspect_ratio?: string | null;
   liked?: boolean;
   participation_status?: boolean;
+  likes_count?: number | null;
   organization: Organization;
   category: Category;
   posts?: Post[];

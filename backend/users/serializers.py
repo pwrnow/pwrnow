@@ -16,10 +16,11 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'username_set_by_user',
+            'is_staff',
             'date_joined',
             'last_login'
         ]
-        read_only_fields = ['id', 'email', 'date_joined', 'last_login', 'username_set_by_user']
+        read_only_fields = ['id', 'email', 'date_joined', 'last_login', 'username_set_by_user', 'is_staff']
 
 
 class UsernameUpdateSerializer(serializers.Serializer):

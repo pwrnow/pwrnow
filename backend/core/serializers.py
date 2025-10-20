@@ -79,13 +79,14 @@ class EventSerializer(serializers.ModelSerializer):
     schedule = serializers.SerializerMethodField()
     event_map = serializers.SerializerMethodField()
     friends_interested = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'aspect_ratio',
-            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map', 'friends_interested'
+            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map', 'friends_interested', 'likes_count'
         ]
 
     def get_title(self, obj):
@@ -248,6 +249,17 @@ class EventSerializer(serializers.ModelSerializer):
             'count': len(friends_list),
             'friends': friends_list
         }
+
+    def get_likes_count(self, obj):
+        """Get the total number of likes for this event (staff only)."""
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        
+        # Only return likes count for staff users
+        if not user or not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_staff', False):
+            return None
+            
+        return obj.likes_count
 
 
 class EventCreateSerializer(serializers.ModelSerializer):

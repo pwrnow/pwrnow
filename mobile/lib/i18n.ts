@@ -136,7 +136,6 @@ const translations: Record<string, TranslationMap> = {
     loadingMap: 'Loading map...',
     failedToLoadMap: 'Failed to load map',
     noMapAvailable: 'No map available for this event',
-    location: 'Location',
     locations: 'Locations',
     cannotOpenMaps: 'Cannot open maps app',
     map: 'Map',
@@ -275,8 +274,7 @@ const translations: Record<string, TranslationMap> = {
     requestReceived: 'Request received',
     notFriends: 'Not friends',
     respond: 'Respond',
-    friends: 'Friends',
-    pending: 'Pending',
+    likesCount: '{{count}} likes',
   },
   pl: {
     all: 'Wszystkie',
@@ -417,7 +415,6 @@ const translations: Record<string, TranslationMap> = {
     loadingMap: 'Ładowanie mapy...',
     failedToLoadMap: 'Nie udało się załadować mapy',
     noMapAvailable: 'Brak mapy dla tego wydarzenia',
-    location: 'Lokalizacja',
     locations: 'Lokalizacje',
     cannotOpenMaps: 'Nie można otworzyć aplikacji map',
     map: 'Mapa',
@@ -557,8 +554,7 @@ const translations: Record<string, TranslationMap> = {
     requestReceived: 'Otrzymano zaproszenie',
     notFriends: 'Nie znajomi',
     respond: 'Odpowiedz',
-    friends: 'Znajomi',
-    pending: 'Oczekujące',
+    likesCount: '{{count}} polubień',
   },
 };
 

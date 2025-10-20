@@ -19,6 +19,7 @@ type AuthState = {
   isAuthenticated: boolean;
   needsUsernameSetup: boolean;
   justSignedIn: boolean; // Flag to track fresh sign-in vs session restore
+  isStaff: boolean; // Computed property for staff status
   setAuthFromBackend: (r: any) => Promise<void>;
   signOut: () => Promise<void>;
   validateStoredCredentials: () => Promise<void>;
@@ -311,6 +312,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(false);
   }
 
+  // Computed property for staff status
+  const isStaff = user?.is_staff ?? false;
+
   return (
     <AuthContext.Provider
       value={{
@@ -321,6 +325,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isAuthenticated,
         needsUsernameSetup,
         justSignedIn,
+        isStaff,
         setAuthFromBackend,
         signOut,
         validateStoredCredentials,

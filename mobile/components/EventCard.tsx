@@ -34,6 +34,7 @@ import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useEventActions } from '../hooks/useEventActions';
 import FriendsAttending from './FriendsAttending';
+import StaffBadge from './StaffBadge';
 
 interface EventCardProps {
   event: Event;
@@ -48,7 +49,7 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
   const [isImageLoading, setIsImageLoading] = useState(true);
   const analytics = useAnalytics();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isStaff } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { handleAddToCalendar } = useCalendar({ event });
 
@@ -314,6 +315,10 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
               </Text>
             </View>
             <View className='flex-row gap-2'>
+              {/* Staff likes count badge */}
+              {isStaff && event.likes_count !== null && event.likes_count !== undefined && (
+                <StaffBadge count={event.likes_count} />
+              )}
               {/* NOW/TODAY/NEW badges (priority: NOW > TODAY > NEW) */}
               {isNow ? (
                 <View

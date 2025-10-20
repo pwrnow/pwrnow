@@ -35,7 +35,7 @@ export default function EventDetailScreen() {
   const { eventSlug, postId } = useLocalSearchParams();
   const router = useRouter();
   const analytics = useAnalytics();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isStaff } = useAuth();
   const insets = useSafeAreaInsets();
 
   // State hooks
@@ -291,6 +291,8 @@ export default function EventDetailScreen() {
                 location={event.location}
                 onMapPress={handleMapPress}
                 event={event}
+                isStaff={isStaff}
+                likesCount={event.likes_count}
               />
               <EventDescription description={event.description} />
               
@@ -312,6 +314,7 @@ export default function EventDetailScreen() {
             onExternalLink={handleExternalLinkWithAnimation}
             onImagePress={handleImagePress}
             ctaAnimatedStyle={ctaAnimatedStyle}
+            isStaff={isStaff}
           />
         </Animated.View>
       )}
