@@ -315,10 +315,6 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
               </Text>
             </View>
             <View className='flex-row gap-2'>
-              {/* Staff likes count badge */}
-              {isStaff && event.likes_count !== null && event.likes_count !== undefined && (
-                <StaffBadge count={event.likes_count} />
-              )}
               {/* NOW/TODAY/NEW badges (priority: NOW > TODAY > NEW) */}
               {isNow ? (
                 <View
@@ -535,6 +531,19 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
             eventTitle={event.title}
           />
         </Pressable>
+
+        {/* Footer: staff-only extra info */}
+        {isStaff && event.likes_count !== null && event.likes_count !== undefined ? (
+          <View className='px-3 pb-4'>
+            <View
+              style={{ backgroundColor: colors.border }}
+              className='h-px w-full mb-3'
+            />
+            <View className='flex-row items-center justify-end'>
+              <StaffBadge count={event.likes_count} />
+            </View>
+          </View>
+        ) : null}
       </Pressable>
     </Animated.View>
   );
