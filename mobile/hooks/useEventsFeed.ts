@@ -57,10 +57,16 @@ export function useEventsFeed(options: UseEventsFeedOptions = {}) {
   ];
 
   // Compute filtered events based on selected category
-  const filteredEvents =
+  const filteredEvents = (
     selectedCategory === 'wszystkie'
       ? baseEvents.filter((event) => event.category.slug !== 'rekrutacja')
-      : baseEvents.filter((event) => event.category.slug === selectedCategory);
+      : baseEvents.filter((event) => event.category.slug === selectedCategory)
+  ).sort((a, b) => {
+    // For staff: unverified events first
+    if (a.verified === false && b.verified !== false) return -1;
+    if (a.verified !== false && b.verified === false) return 1;
+    return 0; // Keep original order for same verification status
+  });
 
   // Handle refresh events
   const handleRefresh = async () => {

@@ -37,8 +37,15 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.utils.translation import gettext as _
+
+
+class IsStaff(BasePermission):
+    """Permission class that allows only staff users."""
+    
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.is_staff
 
 
 class CategoryViewSet(viewsets.GenericViewSet):
@@ -231,11 +238,18 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             # Apply filters first, then annotations
             # Only show events that are published today or in the past
             today = timezone.now().date()
-            queryset = queryset.filter(
-                verified=True,
-                ends_at__gte=now,
-                publication_date__lte=today
-            )
+            
+            # Check if user is staff - staff users see all events
+            if request and hasattr(request, 'user') and request.user.is_authenticated and request.user.is_staff:
+                # Staff users see all events, only filter by end date
+                queryset = queryset.filter(ends_at__gte=now)
+            else:
+                # Regular logic for non-staff
+                queryset = queryset.filter(
+                    verified=True,
+                    ends_at__gte=now,
+                    publication_date__lte=today
+                )
 
         # Add participation status annotation for authenticated users
         request = self.request
@@ -340,6 +354,17 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             return Response(None, status=status.HTTP_200_OK)
 
         serializer = ScheduleSerializer(schedule, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsStaff])
+    def verify(self, request, slug=None):
+        """Verify an event (staff only)."""
+        event = self.get_object()
+        event.verified = True
+        event.verified_at = timezone.now()
+        event.save(update_fields=['verified', 'verified_at'])
+        
+        serializer = EventSerializer(event, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
