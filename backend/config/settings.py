@@ -288,6 +288,8 @@ REST_FRAMEWORK = {
         'user_search': '60/minute' if DEBUG else '20/minute',
         'friend_action': '30/minute' if DEBUG else '10/minute',
         'friend_read': '120/minute' if DEBUG else '60/minute',
+        # dj_rest_auth throttling
+        'dj_rest_auth': '1000/hour' if DEBUG else '100/hour',
     }
 }
 
