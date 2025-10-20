@@ -168,6 +168,17 @@ export const useAnalytics = () => {
     [trackEvent]
   );
 
+  const trackOrgAuth = useCallback(
+    (organizationCode: string, success: boolean) => {
+      trackEvent('org_auth', {
+        'Organization Code': organizationCode.substring(0, 10),
+        'Success': success,
+        'Timestamp': new Date().toISOString(),
+      });
+    },
+    [trackEvent]
+  );
+
   return {
     trackEvent,
     trackPageView,
@@ -179,6 +190,7 @@ export const useAnalytics = () => {
     trackOrganizationEventsView,
     trackEventInteraction,
     trackCategoryInteraction,
+    trackOrgAuth,
     isEnabled,
   };
 };

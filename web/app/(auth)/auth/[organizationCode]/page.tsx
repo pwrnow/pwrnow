@@ -8,12 +8,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { authenticateOrganization } from '@/lib/api';
 import { ApiError } from '@/lib/types';
 import { useTranslations } from 'next-intl';
+import { useAnalytics } from '@/lib/useAnalytics';
 
 export default function OrganizationCodePage() {
   const params = useParams();
   const router = useRouter();
   const organizationCode = params.organizationCode as string;
   const t = useTranslations('AuthPage');
+  const { trackOrgAuth } = useAnalytics();
 
   const [loading, setLoading] = useState(true);
 
@@ -29,11 +31,18 @@ export default function OrganizationCodePage() {
         const currentOrg = authResponse.organization;
         console.log('Successfully authenticated organization:', currentOrg);
 
+        // Track successful authentication
+        trackOrgAuth(organizationCode, true);
+
         // Redirect to org slug URL after successful authentication
         console.log('Redirecting to org slug:', currentOrg.slug);
         router.replace(`/org/${currentOrg.slug}`);
       } catch (authError) {
         console.error('Authentication failed:', authError);
+        
+        // Track failed authentication
+        trackOrgAuth(organizationCode, false);
+        
         // Redirect to main page on authentication failure
         router.replace('/');
       } finally {
