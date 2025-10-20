@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import Event, PostImage, Post
+from .models import Event, PostImage, Post, Organization, OrganizationCode
 from .tasks import translate_event_content, detect_event_image_aspect_ratio, detect_post_image_aspect_ratio
 
 
@@ -35,6 +35,21 @@ def event_post_save_handler(sender, instance, created, **kwargs):
     if instance.image and not instance.aspect_ratio:
         # Start aspect ratio detection task immediately in background
         detect_event_image_aspect_ratio.delay(str(instance.id))
+
+
+@receiver(post_save, sender=Organization)
+def organization_post_save_create_code(sender, instance, created, **kwargs):
+    """
+    Ensure a newly created organization automatically receives an auth code.
+
+    This is idempotent on create: if somehow an organization already has codes,
+    we do nothing. On true creation, we create exactly one code.
+    """
+    if not created:
+        return
+
+    if not instance.auth_codes.exists():
+        OrganizationCode.objects.create(organization=instance)
 
 
 @receiver(post_save, sender=PostImage)
