@@ -124,14 +124,14 @@ const DetailsScene: React.FC<{
             <View className='mx-4 mb-4'>
               <TouchableOpacity
                 onPress={onVerify}
-                style={{ backgroundColor: colors.primary }}
+                style={{ backgroundColor: '#10B981' }}
                 className='py-3 px-4 rounded-xl items-center'
                 activeOpacity={0.85}
               >
                 <View className='flex-row items-center'>
-                  <Feather name='shield' size={18} color={colors.primaryForeground} />
+                  <Feather name='shield' size={18} color='white' />
                   <Text
-                    style={{ color: colors.primaryForeground }}
+                    style={{ color: 'white' }}
                     className='font-semibold ml-2'
                   >
                     {t('verifyEvent')}

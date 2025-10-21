@@ -50,7 +50,7 @@ export default function VerifyEventModal({
               style={{ backgroundColor: colors.accent + '15' }}
               className='w-12 h-12 rounded-full items-center justify-center mb-2'
             >
-              <Feather name='shield-check' size={22} color={colors.accent} />
+              <Feather name='shield' size={22} color={colors.accent} />
             </View>
             <Text
               style={{ color: colors.foreground }}
@@ -87,12 +87,12 @@ export default function VerifyEventModal({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleVerify}
-              style={{ backgroundColor: colors.primary }}
+              style={{ backgroundColor: '#10B981' }}
               className='flex-1 py-3 rounded-xl items-center'
               activeOpacity={0.85}
             >
               <Text
-                style={{ color: colors.primaryForeground }}
+                style={{ color: 'white' }}
                 className='font-semibold'
               >
                 {t('verify')}

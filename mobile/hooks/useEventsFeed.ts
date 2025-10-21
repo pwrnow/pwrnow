@@ -57,10 +57,22 @@ export function useEventsFeed(options: UseEventsFeedOptions = {}) {
   ];
 
   // Compute filtered events based on selected category
-  const filteredEvents =
+  const categoryFilteredEvents =
     selectedCategory === 'wszystkie'
       ? baseEvents.filter((event) => event.category.slug !== 'rekrutacja')
       : baseEvents.filter((event) => event.category.slug === selectedCategory);
+
+  // Sort events to show unverified events at the top
+  const filteredEvents = categoryFilteredEvents.sort((a, b) => {
+    // If both events have the same verification status, maintain original order
+    if (a.verified === b.verified) return 0;
+    
+    // Unverified events (verified === false) should come first
+    if (a.verified === false && b.verified !== false) return -1;
+    if (a.verified !== false && b.verified === false) return 1;
+    
+    return 0;
+  });
 
   // Handle refresh events
   const handleRefresh = async () => {
