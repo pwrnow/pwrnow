@@ -14,12 +14,27 @@ from pathlib import Path
 import environ
 import ssl
 import os
+import warnings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 # backend/
 APPS_DIR = BASE_DIR
 env = environ.Env()
+
+# Suppress specific warnings from dj_rest_auth about deprecated allauth settings
+warnings.filterwarnings(
+    "ignore",
+    message="app_settings.USERNAME_REQUIRED is deprecated, use: app_settings.SIGNUP_FIELDS\\['username'\\]\\['required'\\]",
+    category=UserWarning,
+    module="dj_rest_auth.registration.serializers"
+)
+warnings.filterwarnings(
+    "ignore", 
+    message="app_settings.EMAIL_REQUIRED is deprecated, use: app_settings.SIGNUP_FIELDS\\['email'\\]\\['required'\\]",
+    category=UserWarning,
+    module="dj_rest_auth.registration.serializers"
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
