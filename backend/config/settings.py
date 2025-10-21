@@ -15,7 +15,7 @@ import environ
 import ssl
 import os
 import warnings
-
+import logging
 import sentry_sdk
 
 from sentry_sdk.integrations.celery import CeleryIntegration
