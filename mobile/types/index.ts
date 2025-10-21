@@ -59,6 +59,7 @@ export interface Event {
   liked?: boolean;
   participation_status?: boolean;
   likes_count?: number | null;
+  is_published?: boolean;
   organization: Organization;
   category: Category;
   posts?: Post[];

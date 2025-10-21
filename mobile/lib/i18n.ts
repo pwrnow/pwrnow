@@ -277,6 +277,7 @@ const translations: Record<string, TranslationMap> = {
     likesCount: '{{count}} likes',
     // Event verification translations
     unverifiedTag: 'Unverified',
+    unpublishedTag: 'Unpublished',
     verifyEvent: 'Verify Event',
     verifyEventConfirmTitle: 'Verify this event?',
     verifyEventConfirmMessage: 'This will mark the event as verified and make it visible to all users.',
@@ -569,6 +570,7 @@ const translations: Record<string, TranslationMap> = {
     verifyEventConfirmMessage: 'To oznaczy wydarzenie jako zweryfikowane i uczyni je widocznym dla wszystkich użytkowników.',
     verify: 'Zweryfikuj',
     eventVerified: 'Wydarzenie zweryfikowane pomyślnie',
+    unpublishedTag: 'Nieopublikowane',
   },
 };
 

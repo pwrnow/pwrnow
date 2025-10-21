@@ -300,6 +300,14 @@ class Event(models.Model):
         return "Not verified"
 
     @property
+    def is_published(self):
+        """Check if the event is published (publication date has passed)."""
+        if not self.publication_date:
+            return False
+        today = timezone.now().date()
+        return self.publication_date <= today
+
+    @property
     def likes_count(self):
         """Get the total number of likes for this event."""
         return self.likes.count()

@@ -391,6 +391,24 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
                   </Text>
                 </View>
               )}
+
+              {/* Verified but unpublished badge for staff users */}
+              {isStaff && event.verified === true && event.is_published === false && (
+                <View
+                  style={{
+                    backgroundColor: '#8B5CF6' + '15',
+                    borderColor: '#8B5CF6' + '30',
+                  }}
+                  className='px-2.5 py-1.5 rounded-xl border'
+                >
+                  <Text
+                    style={{ color: '#8B5CF6' }}
+                    className='text-xs font-semibold tracking-[0.5px]'
+                  >
+                    {t('unpublishedTag')}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

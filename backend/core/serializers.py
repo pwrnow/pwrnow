@@ -80,13 +80,14 @@ class EventSerializer(serializers.ModelSerializer):
     event_map = serializers.SerializerMethodField()
     friends_interested = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    is_published = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
             'location', 'image_url', 'url', 'verified', 'verified_by', 'aspect_ratio',
-            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map', 'friends_interested', 'likes_count'
+            'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map', 'friends_interested', 'likes_count', 'is_published'
         ]
 
     def get_title(self, obj):
@@ -260,6 +261,17 @@ class EventSerializer(serializers.ModelSerializer):
             return None
             
         return obj.likes_count
+
+    def get_is_published(self, obj):
+        """Get publication status for this event (staff only)."""
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        
+        # Only return publication status for staff users
+        if not user or not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_staff', False):
+            return None
+            
+        return obj.is_published
 
 
 class EventCreateSerializer(serializers.ModelSerializer):
