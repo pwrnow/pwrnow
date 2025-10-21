@@ -38,10 +38,9 @@ import FriendsAttending from './FriendsAttending';
 interface EventCardProps {
   event: Event;
   index?: number;
-  hideImage?: boolean;
 }
 
-export default function EventCard({ event, index = 0, hideImage }: EventCardProps) {
+export default function EventCard({ event, index = 0 }: EventCardProps) {
   const { colors } = useThemeColors();
   const iconPrimary = colors.foreground;
   const [isDescriptionExpanded] = useState(false);
@@ -413,40 +412,38 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
           </View>
         </View>
 
-        {/* Image (configurable via prop) */}
-        {!hideImage ? (
-          <View>
-            <View
-              style={{
-                backgroundColor: colors.muted,
-                aspectRatio: imageAspectRatio,
-              }}
-              className='w-full overflow-hidden'
-            >
-              {event.image_url ? (
-                <CachedImage
-                  source={{ uri: event.image_url }}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit='cover'
-                  onLoad={() => setIsImageLoading(false)}
-                  onError={() => setIsImageLoading(false)}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: '#EAEAEA',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Feather name='image' size={48} color='#C9C9C9' />
-                </View>
-              )}
-            </View>
+        {/* Image */}
+        <View>
+          <View
+            style={{
+              backgroundColor: colors.muted,
+              aspectRatio: imageAspectRatio,
+            }}
+            className='w-full overflow-hidden'
+          >
+            {event.image_url ? (
+              <CachedImage
+                source={{ uri: event.image_url }}
+                style={{ width: '100%', height: '100%' }}
+                contentFit='cover'
+                onLoad={() => setIsImageLoading(false)}
+                onError={() => setIsImageLoading(false)}
+              />
+            ) : (
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#EAEAEA',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Feather name='image' size={48} color='#C9C9C9' />
+              </View>
+            )}
           </View>
-        ) : null}
+        </View>
 
         {/* Content (configurable navigation) */}
         <Pressable onPress={handleEventLinkPress} className='px-3 pt-4 pb-5'>

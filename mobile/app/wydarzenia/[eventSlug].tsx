@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { generateEventDays } from '../../components/WeekDaySelector';
-import { View, Alert, Platform, ToastAndroid, ScrollView } from 'react-native';
+import { View, Alert, Platform, ToastAndroid } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
@@ -10,16 +10,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { EventHeader } from '../../components/EventHeader';
 import { SimpleEventTabs } from '../../components/SimpleEventTabs';
-import VisitPageButton from '../../components/VisitPageButton';
 import { LoadingState } from '../../components/LoadingState';
 import { ErrorState } from '../../components/ErrorState';
 import SignInRequiredModal from '../../components/SignInRequiredModal';
 import FirstLikeModal from '../../components/FirstLikeModal';
 import ImageView from 'react-native-image-viewing';
-import EventHeroImage from '../../components/EventHeroImage';
-import OrganizationHeader from '../../components/OrganizationHeader';
-import EventMetaCard from '../../components/EventMetaCard';
-import EventDescription from '../../components/EventDescription';
 import { useAnalytics } from '../../lib/analytics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventBySlug } from '../../lib/queries';
@@ -274,6 +269,7 @@ export default function EventDetailScreen() {
         onClose={() => setShowVerifyModal(false)}
         onVerify={handleVerifyEvent}
         eventTitle={event.title}
+        publicationDate={event.publication_date}
       />
 
       <ImageView
@@ -292,56 +288,25 @@ export default function EventDetailScreen() {
         iconPrimary={iconPrimary}
       />
 
-      {/* Recruitment details-only view (no tabs) */}
-      {isRecruitmentCategory ? (
-        <Animated.View entering={FadeInDown.duration(400).delay(200)} className='flex-1'>
-          <ScrollView showsVerticalScrollIndicator={false} className='flex-1' contentContainerStyle={{ paddingBottom: 24 }}>
-            <View className='space-y-4'>
-            {event.url ? (
-                <VisitPageButton
-                  onPress={handleExternalLinkWithAnimation}
-                  animatedStyle={ctaAnimatedStyle}
-                  labelKey={'applyNow'}
-                />
-              ) : null}
-              <OrganizationHeader
-                organization={event.organization}
-                categoryName={event.category?.name || 'Uncategorized'}
-              />
-              <EventMetaCard
-                startsAt={event.starts_at}
-                endsAt={event.ends_at}
-                location={event.location}
-                onMapPress={handleMapPress}
-                event={event}
-                isStaff={isStaff}
-                likesCount={event.likes_count}
-              />
-              <EventDescription description={event.description} />
-              
-            </View>
-          </ScrollView>
-        </Animated.View>
-      ) : (
-        <Animated.View
-          entering={FadeInDown.duration(400).delay(200)}
-          className='flex-1'
-        >
-          <SimpleEventTabs
-            eventSlug={eventSlug as string}
-            posts={posts}
-            eventDays={eventDays}
-            itemsByDay={scheduleByDay}
-            hasSchedule={hasSchedule || false}
-            onMapPress={handleMapPress}
-            onExternalLink={handleExternalLinkWithAnimation}
-            onImagePress={handleImagePress}
-            ctaAnimatedStyle={ctaAnimatedStyle}
-            isStaff={isStaff}
-            onVerify={() => setShowVerifyModal(true)}
-          />
-        </Animated.View>
-      )}
+      <Animated.View
+        entering={FadeInDown.duration(400).delay(200)}
+        className='flex-1'
+      >
+        <SimpleEventTabs
+          eventSlug={eventSlug as string}
+          posts={posts}
+          eventDays={eventDays}
+          itemsByDay={scheduleByDay}
+          hasSchedule={hasSchedule || false}
+          onMapPress={handleMapPress}
+          onExternalLink={handleExternalLinkWithAnimation}
+          onImagePress={handleImagePress}
+          ctaAnimatedStyle={ctaAnimatedStyle}
+          isStaff={isStaff}
+          onVerify={() => setShowVerifyModal(true)}
+          isRecruitmentCategory={isRecruitmentCategory}
+        />
+      </Animated.View>
     </View>
   );
 }

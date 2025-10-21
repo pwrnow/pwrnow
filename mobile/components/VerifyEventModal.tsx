@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { t } from '../lib/i18n';
@@ -11,6 +12,7 @@ interface VerifyEventModalProps {
   onClose: () => void;
   onVerify: () => void;
   eventTitle: string;
+  publicationDate?: string;
 }
 
 export default function VerifyEventModal({
@@ -18,8 +20,40 @@ export default function VerifyEventModal({
   onClose,
   onVerify,
   eventTitle,
+  publicationDate,
 }: VerifyEventModalProps) {
   const { colors } = useThemeColors();
+
+  const formatPublicationDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Check if publication date is tomorrow
+    if (date.toDateString() === tomorrow.toDateString()) {
+      return t('verifyEventConfirmMessageTomorrow', { time: date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      }) });
+    }
+    
+    // Otherwise show the full date
+    return t('verifyEventConfirmMessageDate', { 
+      date: date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      time: date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    });
+  };
 
   const handleVerify = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -62,7 +96,7 @@ export default function VerifyEventModal({
               style={{ color: colors.mutedForeground }}
               className='mt-1 text-center text-sm'
             >
-              {t('verifyEventConfirmMessage')}
+              {publicationDate ? formatPublicationDate(publicationDate) : t('verifyEventConfirmMessage')}
             </Text>
             <Text
               style={{ color: colors.foreground }}
@@ -87,16 +121,34 @@ export default function VerifyEventModal({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleVerify}
-              style={{ backgroundColor: '#10B981' }}
-              className='flex-1 py-3 rounded-xl items-center'
-              activeOpacity={0.85}
+              className='flex-1'
+              activeOpacity={0.8}
             >
-              <Text
-                style={{ color: 'white' }}
-                className='font-semibold'
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 14, padding: 1 }}
               >
-                {t('verify')}
-              </Text>
+                <View
+                  style={{
+                    backgroundColor: '#10B981',
+                    shadowColor: '#10B981',
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                  }}
+                  className='rounded-[13px] py-2.5 px-4 items-center justify-center'
+                >
+                  <Text
+                    style={{ color: 'white' }}
+                    className='font-semibold text-base tracking-[0.5px]'
+                  >
+                    {t('verify')}
+                  </Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </Animated.View>

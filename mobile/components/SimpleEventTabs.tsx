@@ -4,6 +4,7 @@ import { TabView, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { t } from '../lib/i18n';
 import { useEventBySlug } from '../lib/queries';
 import { formatPostTime, getInitials } from '../lib/format';
@@ -41,6 +42,7 @@ interface Props {
   ctaAnimatedStyle?: any;
   isStaff?: boolean;
   onVerify?: () => void;
+  isRecruitmentCategory?: boolean;
 }
 
 // routes are built dynamically in the component based on data
@@ -53,8 +55,9 @@ const DetailsScene: React.FC<{
   ctaAnimatedStyle?: any;
   isStaff?: boolean;
   onVerify?: () => void;
+  isRecruitmentCategory?: boolean;
 }> = React.memo(
-  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle, isStaff, onVerify }) => {
+  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle, isStaff, onVerify, isRecruitmentCategory }) => {
     const { colors } = useThemeColors();
     const { data: event, isLoading, error } = useEventBySlug(eventSlug);
 
@@ -122,21 +125,35 @@ const DetailsScene: React.FC<{
           {/* Verify Button for Staff Users */}
           {isStaff && event.verified === false && onVerify && (
             <View className='mx-4 mb-4'>
-              <TouchableOpacity
-                onPress={onVerify}
-                style={{ backgroundColor: '#10B981' }}
-                className='py-3 px-4 rounded-xl items-center'
-                activeOpacity={0.85}
-              >
-                <View className='flex-row items-center'>
-                  <Feather name='shield' size={18} color='white' />
-                  <Text
-                    style={{ color: 'white' }}
-                    className='font-semibold ml-2'
+              <TouchableOpacity onPress={onVerify} activeOpacity={0.8}>
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ borderRadius: 14, padding: 1 }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: '#10B981',
+                      shadowColor: '#10B981',
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      shadowOffset: { width: 0, height: 4 },
+                      elevation: 4,
+                    }}
+                    className='rounded-[13px] py-2.5 px-4 items-center justify-center'
                   >
-                    {t('verifyEvent')}
-                  </Text>
-                </View>
+                    <View className='flex-row items-center gap-2.5'>
+                      <Feather name='shield' size={18} color='white' />
+                      <Text
+                        style={{ color: 'white' }}
+                        className='font-semibold text-base tracking-[0.5px]'
+                      >
+                        {t('verifyEvent')}
+                      </Text>
+                    </View>
+                  </View>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           )}
@@ -146,6 +163,7 @@ const DetailsScene: React.FC<{
             <VisitPageButton
               onPress={onExternalLink}
               animatedStyle={ctaAnimatedStyle}
+              labelKey={isRecruitmentCategory ? 'applyNow' : 'visitPage'}
             />
           )}
         </View>
@@ -267,6 +285,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     ctaAnimatedStyle,
     isStaff,
     onVerify,
+    isRecruitmentCategory,
   }) => {
     const layout = useWindowDimensions();
     const { colors } = useThemeColors();
@@ -279,22 +298,27 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
       event.event_map.is_active &&
       event.event_map.locations?.some((loc) => loc.is_active);
 
-    // Always show schedule tab for events - even if no schedule items exist
-    // This allows users to see event days and potentially add schedule items
-    const routes: Route[] = [
-      { key: 'details', title: t('details'), icon: 'info' },
-      { key: 'posts', title: t('posts'), icon: 'message-circle' },
-      ...(hasSchedule
-        ? ([
-            { key: 'schedule', title: t('schedule'), icon: 'calendar' },
-          ] as Route[])
-        : ([] as Route[])),
-      ...(hasMap
-        ? ([{ key: 'map', title: t('map'), icon: 'map-pin' }] as Route[])
-        : ([] as Route[])),
-    ];
+    // For recruitment events, only show details tab
+    // For other events, show all tabs
+    const routes: Route[] = isRecruitmentCategory 
+      ? [{ key: 'details', title: t('details'), icon: 'info' }]
+      : [
+          { key: 'details', title: t('details'), icon: 'info' },
+          { key: 'posts', title: t('posts'), icon: 'message-circle' },
+          ...(hasSchedule
+            ? ([
+                { key: 'schedule', title: t('schedule'), icon: 'calendar' },
+              ] as Route[])
+            : ([] as Route[])),
+          ...(hasMap
+            ? ([{ key: 'map', title: t('map'), icon: 'map-pin' }] as Route[])
+            : ([] as Route[])),
+        ];
 
     const [index, setIndex] = useState(() => {
+      // For recruitment events, always show details (index 0)
+      if (isRecruitmentCategory) return 0;
+      
       // Initialize based on URL tab parameter and availability
       if (tab === 'posts') return 1;
       if (tab === 'schedule' && hasSchedule)
@@ -306,6 +330,12 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
 
     // Sync index with URL tab parameter changes
     useEffect(() => {
+      // For recruitment events, always stay on details tab
+      if (isRecruitmentCategory) {
+        setIndex(0);
+        return;
+      }
+      
       if (tab === 'posts') setIndex(1);
       else if (tab === 'schedule' && hasSchedule)
         setIndex(routes.findIndex((r) => r.key === 'schedule'));
@@ -313,7 +343,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
         setIndex(routes.findIndex((r) => r.key === 'map'));
       else setIndex(0);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tab, hasSchedule, hasMap]);
+    }, [tab, hasSchedule, hasMap, isRecruitmentCategory]);
 
     // Create scene map
     const renderScene = ({ route }: any) => {
@@ -327,6 +357,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
               ctaAnimatedStyle={ctaAnimatedStyle}
               isStaff={isStaff}
               onVerify={onVerify}
+              isRecruitmentCategory={isRecruitmentCategory}
             />
           );
         case 'posts':
@@ -350,33 +381,39 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
       }
     };
 
-    // Tab Bar Component
-    const renderTabBar = (props: any) => (
-      <TabBar
-        {...props}
-        indicatorStyle={{
-          backgroundColor: colors.primary,
-          height: 2,
-        }}
-        style={{
-          backgroundColor: colors.background,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-          elevation: 0,
-          shadowOpacity: 0,
-        }}
-        tabStyle={{
-          flex: 1,
-          paddingVertical: 16,
-        }}
-        pressColor={colors.primary + '20'}
-        activeColor={colors.foreground}
-        inactiveColor={colors.mutedForeground}
-        onTabPress={() => {
-          Haptics.selectionAsync();
-        }}
-      />
-    );
+    // Tab Bar Component - hide for recruitment events
+    const renderTabBar = (props: any) => {
+      if (isRecruitmentCategory) {
+        return null;
+      }
+      
+      return (
+        <TabBar
+          {...props}
+          indicatorStyle={{
+            backgroundColor: colors.primary,
+            height: 2,
+          }}
+          style={{
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            elevation: 0,
+            shadowOpacity: 0,
+          }}
+          tabStyle={{
+            flex: 1,
+            paddingVertical: 16,
+          }}
+          pressColor={colors.primary + '20'}
+          activeColor={colors.foreground}
+          inactiveColor={colors.mutedForeground}
+          onTabPress={() => {
+            Haptics.selectionAsync();
+          }}
+        />
+      );
+    };
 
     return (
       <View className='flex-1'>
