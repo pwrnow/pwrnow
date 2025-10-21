@@ -68,6 +68,9 @@ export default function OrgEventDetailsPage() {
   const [parseAvailable, setParseAvailable] = useState<boolean | null>(null);
   const [parseUnavailableMessage, setParseUnavailableMessage] = useState<string>('');
   const [hasMagicParsingAccess, setHasMagicParsingAccess] = useState<boolean>(false);
+  
+  // Feature flag to disable schedule tab for organization editing
+  const isScheduleTabEnabled = false;
 
   useEffect(() => {
     async function loadData() {
@@ -577,12 +580,18 @@ export default function OrgEventDetailsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-        <TabsList className={`grid w-full ${event.category.slug === CATEGORY_SLUGS.REKRUTACJA ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <TabsList className={`grid w-full ${
+          event.category.slug === CATEGORY_SLUGS.REKRUTACJA 
+            ? (isScheduleTabEnabled ? 'grid-cols-2' : 'grid-cols-1')
+            : (isScheduleTabEnabled ? 'grid-cols-3' : 'grid-cols-2')
+        }`}>
           <TabsTrigger value='details'>{t('details')}</TabsTrigger>
           {event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
             <TabsTrigger value='posts'>{t('posts')}</TabsTrigger>
           )}
-          <TabsTrigger value='schedule'>{t('schedule')}</TabsTrigger>
+          {isScheduleTabEnabled && (
+            <TabsTrigger value='schedule'>{t('schedule')}</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value='details' className='mt-6'>
@@ -714,74 +723,80 @@ export default function OrgEventDetailsPage() {
           </TabsContent>
         )}
 
-        <TabsContent value='schedule' className='mt-6'>
-          <div className='space-y-4 max-w-2xl mx-auto'>
-            <EventScheduleDaySelector
-              days={dayOptions}
-              selectedDay={selectedDay}
-              onSelect={setSelectedDay}
-            />
-
-            {currentItems.length > 0 ? (
-              <EventScheduleList
-                items={currentItems}
-                canDelete={canManage}
-                onDelete={handleDeleteScheduleItem}
+        {/* Schedule tab - disabled for now */}
+        {isScheduleTabEnabled && (
+          <TabsContent value='schedule' className='mt-6'>
+            <div className='space-y-4 max-w-2xl mx-auto'>
+              <EventScheduleDaySelector
+                days={dayOptions}
+                selectedDay={selectedDay}
+                onSelect={setSelectedDay}
               />
-            ) : (
-              <Card className='p-12 text-center text-muted-foreground'>
-                {t('scheduleEmpty')}
-              </Card>
-            )}
 
-            {canManage && selectedDay && (
-              <div className='flex justify-center gap-3 pt-2'>
-                {hasMagicParsingAccess && (
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant='outline'
-                        onClick={() => {
-                          if (parseAvailable === false || !hasMagicParsingAccess) return;
-                          setIsMagicImportModalOpen(true);
-                        }}
-                        aria-disabled={parseAvailable === false || !hasMagicParsingAccess}
-                        className={`cursor-pointer ${(parseAvailable === false || !hasMagicParsingAccess) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <Wand2 className='h-4 w-4 mr-2' />
-                          Magic Import
-                        </Button>
-                      </TooltipTrigger>
-                      {(parseAvailable === false || !hasMagicParsingAccess) && (
-                        <TooltipContent>
-                          {parseUnavailableMessage}
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <Button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className='cursor-pointer'
-                >
-                  <Plus className='h-4 w-4 mr-2' />
-                  {t('addScheduleItem')}
-                </Button>
-              </div>
-            )}
-          </div>
-        </TabsContent>
+              {currentItems.length > 0 ? (
+                <EventScheduleList
+                  items={currentItems}
+                  canDelete={canManage}
+                  onDelete={handleDeleteScheduleItem}
+                />
+              ) : (
+                <Card className='p-12 text-center text-muted-foreground'>
+                  {t('scheduleEmpty')}
+                </Card>
+              )}
+
+              {canManage && selectedDay && (
+                <div className='flex justify-center gap-3 pt-2'>
+                  {hasMagicParsingAccess && (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant='outline'
+                          onClick={() => {
+                            if (parseAvailable === false || !hasMagicParsingAccess) return;
+                            setIsMagicImportModalOpen(true);
+                          }}
+                          aria-disabled={parseAvailable === false || !hasMagicParsingAccess}
+                          className={`cursor-pointer ${(parseAvailable === false || !hasMagicParsingAccess) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <Wand2 className='h-4 w-4 mr-2' />
+                            Magic Import
+                          </Button>
+                        </TooltipTrigger>
+                        {(parseAvailable === false || !hasMagicParsingAccess) && (
+                          <TooltipContent>
+                            {parseUnavailableMessage}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  <Button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className='cursor-pointer'
+                  >
+                    <Plus className='h-4 w-4 mr-2' />
+                    {t('addScheduleItem')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
-      <EventScheduleAddModal
-        open={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
-        eventSlug={event.slug}
-        selectedDate={selectedDay}
-        initialStartTime={initialStartTime}
-        onCreate={handleCreateScheduleItem}
-      />
+      {/* Schedule modals - disabled for now */}
+      {isScheduleTabEnabled && (
+        <EventScheduleAddModal
+          open={isAddModalOpen}
+          onOpenChange={setIsAddModalOpen}
+          eventSlug={event.slug}
+          selectedDate={selectedDay}
+          initialStartTime={initialStartTime}
+          onCreate={handleCreateScheduleItem}
+        />
+      )}
 
       <CreatePostModal
         isOpen={isCreatePostModalOpen}
@@ -790,15 +805,18 @@ export default function OrgEventDetailsPage() {
         eventSlug={event.slug}
       />
 
-      <MagicImportModal
-        open={isMagicImportModalOpen}
-        onOpenChange={setIsMagicImportModalOpen}
-        eventSlug={event.slug}
-        eventTitle={event.title}
-        eventStartDate={event.starts_at}
-        eventEndDate={event.ends_at}
-        onScheduleParsed={handleScheduleParsed}
-      />
+      {/* Magic Import modal - disabled for now */}
+      {isScheduleTabEnabled && (
+        <MagicImportModal
+          open={isMagicImportModalOpen}
+          onOpenChange={setIsMagicImportModalOpen}
+          eventSlug={event.slug}
+          eventTitle={event.title}
+          eventStartDate={event.starts_at}
+          eventEndDate={event.ends_at}
+          onScheduleParsed={handleScheduleParsed}
+        />
+      )}
     </div>
   );
 }
