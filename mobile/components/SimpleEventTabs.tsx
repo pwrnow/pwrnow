@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, useWindowDimensions, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView } from 'react-native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -40,6 +40,7 @@ interface Props {
   onImagePress: (images: string[], initialIndex: number) => void;
   ctaAnimatedStyle?: any;
   isStaff?: boolean;
+  onVerify?: () => void;
 }
 
 // routes are built dynamically in the component based on data
@@ -51,8 +52,9 @@ const DetailsScene: React.FC<{
   onExternalLink?: () => void;
   ctaAnimatedStyle?: any;
   isStaff?: boolean;
+  onVerify?: () => void;
 }> = React.memo(
-  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle, isStaff }) => {
+  ({ eventSlug, onMapPress, onExternalLink, ctaAnimatedStyle, isStaff, onVerify }) => {
     const { colors } = useThemeColors();
     const { data: event, isLoading, error } = useEventBySlug(eventSlug);
 
@@ -116,6 +118,28 @@ const DetailsScene: React.FC<{
 
           {/* Event Description */}
           <EventDescription description={event.description} />
+
+          {/* Verify Button for Staff Users */}
+          {isStaff && event.verified === false && onVerify && (
+            <View className='mx-4 mb-4'>
+              <TouchableOpacity
+                onPress={onVerify}
+                style={{ backgroundColor: colors.primary }}
+                className='py-3 px-4 rounded-xl items-center'
+                activeOpacity={0.85}
+              >
+                <View className='flex-row items-center'>
+                  <Feather name='shield' size={18} color={colors.primaryForeground} />
+                  <Text
+                    style={{ color: colors.primaryForeground }}
+                    className='font-semibold ml-2'
+                  >
+                    {t('verifyEvent')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Visit Page Button */}
           {event.url && onExternalLink && (
@@ -242,6 +266,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
     onImagePress,
     ctaAnimatedStyle,
     isStaff,
+    onVerify,
   }) => {
     const layout = useWindowDimensions();
     const { colors } = useThemeColors();
@@ -301,6 +326,7 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
               onExternalLink={onExternalLink}
               ctaAnimatedStyle={ctaAnimatedStyle}
               isStaff={isStaff}
+              onVerify={onVerify}
             />
           );
         case 'posts':

@@ -314,3 +314,21 @@ export function useRemoveFriend() {
   });
 }
 
+export function useVerifyEvent() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (slug: string) => api.events.verifyEvent(slug),
+    onSuccess: (updatedEvent) => {
+      // Invalidate events list to refresh
+      queryClient.invalidateQueries({ queryKey: queryKeys.events });
+      
+      // Update the specific event in cache
+      queryClient.setQueryData(
+        queryKeys.eventBySlug(updatedEvent.slug),
+        updatedEvent
+      );
+    },
+  });
+}
+

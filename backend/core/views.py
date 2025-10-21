@@ -4,7 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem, EventParticipation, EventMap, EventMapLocation
 from .serializers import (
@@ -32,6 +32,7 @@ from .authentication import (
     clear_organization_session,
     OrganizationAuthenticationMixin
 )
+from .permissions import IsStaff
 from .tasks import send_discord_notification
 from django.conf import settings
 from django.shortcuts import get_object_or_404
@@ -228,14 +229,20 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         if current_org:
             queryset = queryset.filter(organization__id=current_org.id)
         else:
-            # Apply filters first, then annotations
-            # Only show events that are published today or in the past
-            today = timezone.now().date()
-            queryset = queryset.filter(
-                verified=True,
-                ends_at__gte=now,
-                publication_date__lte=today
-            )
+            # Check if user is staff using the permission class logic
+            is_staff_user = self._is_staff_user()
+            
+            # Staff users see all events (verified and unverified)
+            # Regular users only see verified events
+            if not is_staff_user:
+                queryset = queryset.filter(
+                    verified=True,
+                    ends_at__gte=now,
+                    publication_date__lte=today
+                )
+            else:
+                # Staff users see all events, but still filter by end date
+                queryset = queryset.filter(ends_at__gte=now)
 
         # Add participation status annotation for authenticated users
         request = self.request
@@ -259,6 +266,14 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             select_params=[today, today],
             order_by=['-is_today', '-is_new', 'starts_at']
         )
+
+    def _is_staff_user(self):
+        """
+        Helper method to check if the current user is staff.
+        Uses the same logic as the IsStaff permission class.
+        """
+        permission = IsStaff()
+        return permission.has_permission(self.request, self)
 
     def list(self, request, *args, **kwargs):
         """List events with filtering support."""
@@ -340,6 +355,29 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
             return Response(None, status=status.HTTP_200_OK)
 
         serializer = ScheduleSerializer(schedule, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='verify', permission_classes=[IsStaff])
+    def verify_event(self, request, slug=None):
+        """
+        Verify an event (staff only).
+        POST /events/{slug}/verify/
+        """
+        event = self.get_object()
+        
+        if event.verified:
+            return Response(
+                {'detail': _('Event is already verified.')}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        event.verified = True
+        event.verified_at = timezone.now()
+        event.verified_by = request.user
+        event.save()
+        
+        # Return updated event data
+        serializer = self.get_serializer(event)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

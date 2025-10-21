@@ -374,6 +374,24 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
                   <Feather name='check-circle' size={16} color='#10B981' />
                 </View>
               ) : null}
+
+              {/* Unverified badge for staff users */}
+              {isStaff && event.verified === false && (
+                <View
+                  style={{
+                    backgroundColor: '#F59E0B' + '15',
+                    borderColor: '#F59E0B' + '30',
+                  }}
+                  className='px-2.5 py-1.5 rounded-xl border'
+                >
+                  <Text
+                    style={{ color: '#F59E0B' }}
+                    className='text-xs font-semibold tracking-[0.5px]'
+                  >
+                    {t('unverifiedTag')}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

@@ -24,10 +24,12 @@ import { useAnalytics } from '../../lib/analytics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventBySlug } from '../../lib/queries';
 import { useEventActions } from '../../hooks/useEventActions';
+import { useVerifyEvent } from '../../lib/queries';
 import { t } from '../../lib/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { CATEGORY_SLUGS } from '../../lib/constants';
+import VerifyEventModal from '../../components/VerifyEventModal';
 
 export default function EventDetailScreen() {
   const { colors } = useThemeColors();
@@ -40,6 +42,7 @@ export default function EventDetailScreen() {
 
   // State hooks
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<{ uri: string }[]>(
     []
@@ -123,6 +126,19 @@ export default function EventDetailScreen() {
     showFirstLikeModal,
     setShowFirstLikeModal,
   } = useEventActions(event, setShowAuthModal);
+
+  // Verify event mutation
+  const verifyEventMutation = useVerifyEvent();
+
+  const handleVerifyEvent = async () => {
+    if (!event) return;
+    try {
+      await verifyEventMutation.mutateAsync(event.slug);
+      // Success feedback could be added here
+    } catch (error) {
+      console.error('Failed to verify event:', error);
+    }
+  };
 
   // CTA animated style
   const ctaAnimatedStyle = useAnimatedStyle(() => ({
@@ -253,6 +269,13 @@ export default function EventDetailScreen() {
         eventTitle={event.title}
       />
 
+      <VerifyEventModal
+        visible={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        onVerify={handleVerifyEvent}
+        eventTitle={event.title}
+      />
+
       <ImageView
         images={imageViewerImages}
         imageIndex={imageViewerInitialIndex}
@@ -315,6 +338,7 @@ export default function EventDetailScreen() {
             onImagePress={handleImagePress}
             ctaAnimatedStyle={ctaAnimatedStyle}
             isStaff={isStaff}
+            onVerify={() => setShowVerifyModal(true)}
           />
         </Animated.View>
       )}

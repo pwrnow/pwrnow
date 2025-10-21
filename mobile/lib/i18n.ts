@@ -275,6 +275,13 @@ const translations: Record<string, TranslationMap> = {
     notFriends: 'Not friends',
     respond: 'Respond',
     likesCount: '{{count}} likes',
+    // Event verification translations
+    unverifiedTag: 'Unverified',
+    verifyEvent: 'Verify Event',
+    verifyEventConfirmTitle: 'Verify this event?',
+    verifyEventConfirmMessage: 'This will mark the event as verified and make it visible to all users.',
+    verify: 'Verify',
+    eventVerified: 'Event verified successfully',
   },
   pl: {
     all: 'Wszystkie',
@@ -555,6 +562,13 @@ const translations: Record<string, TranslationMap> = {
     notFriends: 'Nie znajomi',
     respond: 'Odpowiedz',
     likesCount: '{{count}} polubień',
+    // Event verification translations
+    unverifiedTag: 'Niezweryfikowane',
+    verifyEvent: 'Zweryfikuj wydarzenie',
+    verifyEventConfirmTitle: 'Zweryfikować to wydarzenie?',
+    verifyEventConfirmMessage: 'To oznaczy wydarzenie jako zweryfikowane i uczyni je widocznym dla wszystkich użytkowników.',
+    verify: 'Zweryfikuj',
+    eventVerified: 'Wydarzenie zweryfikowane pomyślnie',
   },
 };
 

@@ -85,7 +85,7 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             'id', 'slug', 'title', 'description', 'starts_at', 'ends_at',
-            'location', 'image_url', 'url', 'verified', 'aspect_ratio',
+            'location', 'image_url', 'url', 'verified', 'verified_by', 'aspect_ratio',
             'organization', 'category', 'is_new', 'liked', 'participation_status', 'posts', 'schedule', 'event_map', 'friends_interested', 'likes_count'
         ]
 

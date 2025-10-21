@@ -201,11 +201,13 @@ class EventAdmin(TranslationAdmin):
         'category',
         'organization',
         'verified',
+        'verified_by_display',
         'status_display',
         'likes_count_display'
     ]
     list_filter = [
         'verified',
+        'verified_by',
         'category',
         'organization',
         'starts_at',
@@ -217,7 +219,7 @@ class EventAdmin(TranslationAdmin):
     list_editable = ['verified']
     date_hierarchy = 'starts_at'
     ordering = ['-created_at']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'likes_count_display']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'verified_by', 'likes_count_display']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
 
@@ -238,7 +240,7 @@ class EventAdmin(TranslationAdmin):
             'fields': ('organization', 'tags')
         }),
         ('Status', {
-            'fields': ('verified', 'verified_at')
+            'fields': ('verified', 'verified_at', 'verified_by')
         }),
         ('Metadata', {
             'fields': ('id', 'created_at', 'updated_at'),
@@ -305,11 +307,21 @@ class EventAdmin(TranslationAdmin):
         return format_html('<span style="color: #10b981;">❤️ {}</span>', count)
     likes_count_display.short_description = 'Likes'
 
+    @admin.display(description='Verified By')
+    def verified_by_display(self, obj):
+        if obj.verified_by:
+            return format_html(
+                '<span style="color: #10B981;">{}</span>',
+                obj.get_verified_by_display()
+            )
+        return format_html('<span style="color: #EF4444;">Not verified</span>')
+    verified_by_display.short_description = 'Verified By'
+
     # Removed schedule_manage_link from Event admin per request
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
-            'category', 'organization'
+            'category', 'organization', 'verified_by'
         ).prefetch_related('tags')
 
     actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h']

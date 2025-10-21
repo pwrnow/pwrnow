@@ -198,6 +198,13 @@ class Event(models.Model):
         null=True, blank=True, db_index=True,
         help_text="Timestamp of when the event was verified"
     )
+    verified_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True, db_index=True,
+        related_name='verified_events',
+        help_text="User who verified this event"
+    )
 
     class Meta:
         ordering = ['starts_at']
@@ -285,6 +292,12 @@ class Event(models.Model):
     def duration(self):
         """Get event duration as timedelta."""
         return self.ends_at - self.starts_at
+
+    def get_verified_by_display(self):
+        """Get a display-friendly string for who verified this event."""
+        if self.verified_by:
+            return f"{self.verified_by.get_full_name()} ({self.verified_by.username})"
+        return "Not verified"
 
     @property
     def likes_count(self):

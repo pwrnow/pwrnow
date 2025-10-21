@@ -377,6 +377,14 @@ export const eventsApi = {
     });
     return await response.json();
   },
+
+  // Verify an event (staff only)
+  async verifyEvent(slug: string): Promise<Event> {
+    const response = await fetchWithCredentials(`/events/${slug}/verify/`, {
+      method: 'POST',
+    });
+    return await response.json();
+  },
 };
 
 // Categories API
