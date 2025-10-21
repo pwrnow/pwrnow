@@ -216,7 +216,7 @@ class EventAdmin(TranslationAdmin):
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['verified']
     date_hierarchy = 'starts_at'
-    ordering = ['starts_at']
+    ordering = ['-created_at']
     readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'likes_count_display']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
