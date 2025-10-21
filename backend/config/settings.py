@@ -629,4 +629,8 @@ if not DEBUG:
         integrations=integrations,
         environment=env("SENTRY_ENVIRONMENT", default="production"),
         traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0),
+        send_default_pii=True,
+        enable_logs=True,
+        profile_session_sample_rate=1.0,
+        profile_lifecycle="trace",
     )
