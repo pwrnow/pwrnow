@@ -407,7 +407,6 @@ ADMIN_URL = env("DJANGO_ADMIN_URL", default="admin/")
 
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
     "filters": {
         "context_filter": {
             "()": "utils.logging.ContextFilter",
