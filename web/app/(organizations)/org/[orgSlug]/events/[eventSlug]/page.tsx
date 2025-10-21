@@ -577,9 +577,11 @@ export default function OrgEventDetailsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-        <TabsList className='grid w-full grid-cols-3'>
+        <TabsList className={`grid w-full ${event.category.slug === CATEGORY_SLUGS.REKRUTACJA ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <TabsTrigger value='details'>{t('details')}</TabsTrigger>
-          <TabsTrigger value='posts'>{t('posts')}</TabsTrigger>
+          {event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
+            <TabsTrigger value='posts'>{t('posts')}</TabsTrigger>
+          )}
           <TabsTrigger value='schedule'>{t('schedule')}</TabsTrigger>
         </TabsList>
 
@@ -681,34 +683,37 @@ export default function OrgEventDetailsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value='posts' className='mt-6'>
-          <div className='mb-4'>
-            <CreatePostComposer
-              onPostCreated={handlePostCreated}
-              eventSlug={event.slug}
-            />
-          </div>
+        {event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
+          <TabsContent value='posts' className='mt-6'>
+            <div className='mb-4'>
+              <CreatePostComposer
+                onPostCreated={handlePostCreated}
+                eventSlug={event.slug}
+              />
+            </div>
 
-          {event?.posts && event.posts.length > 0 ? (
-            <PostsList
-              posts={event.posts}
-              onPostDeleted={handlePostDeleted}
-              organizationId={organization.id}
-            />
-          ) : (
-            <Card className='p-12 text-center'>
-              <div className='max-w-md mx-auto'>
-                <div className='w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6'>
-                  <Plus className='w-10 h-10 text-muted-foreground' />
+            {event?.posts && event.posts.length > 0 ? (
+              <PostsList
+                posts={event.posts}
+                onPostDeleted={handlePostDeleted}
+                organizationId={organization.id}
+              />
+            ) : (
+              <Card className='p-12 text-center'>
+                <div className='max-w-md mx-auto'>
+                  <div className='w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6'>
+                    <Plus className='w-10 h-10 text-muted-foreground' />
+                  </div>
+                  <h3 className='text-xl font-semibold mb-3'>{t('noPosts')}</h3>
+                  <p className='text-muted-foreground mb-6'>
+                    {t('noPostsDescription')}
+                  </p>
                 </div>
-                <h3 className='text-xl font-semibold mb-3'>{t('noPosts')}</h3>
-                <p className='text-muted-foreground mb-6'>
-                  {t('noPostsDescription')}
-                </p>
-              </div>
-            </Card>
-          )}
-        </TabsContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
+        )}
 
         <TabsContent value='schedule' className='mt-6'>
           <div className='space-y-4 max-w-2xl mx-auto'>

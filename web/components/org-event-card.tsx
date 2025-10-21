@@ -247,23 +247,25 @@ export default function OrgEventCard({
           {/* Action Buttons - Pushed to bottom */}
           <div className='mt-auto pt-4 space-y-2'>
             <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() =>
-                  router.push(`/org/${orgSlug}/events/${event.slug}`)
-                }
-                className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
-              >
-                <Settings className='h-4 w-4' />
-                {t('manageEvent')}
-              </Button>
+              {event.verified && (
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    router.push(`/org/${orgSlug}/events/${event.slug}`)
+                  }
+                  className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
+                >
+                  <Settings className='h-4 w-4' />
+                  {t('manageEvent')}
+                </Button>
+              )}
 
               <Button
                 variant='outline'
                 size='sm'
                 onClick={handleDeleteClick}
-                className='text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30'
+                className={`${event.verified ? 'flex-1' : 'w-full'} text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30`}
                 title={t('deleteEvent')}
               >
                 <Trash2 className='h-4 w-4' />
