@@ -713,7 +713,6 @@ export default function OrgEventDetailsPage() {
             )}
           </TabsContent>
         )}
-        )}
 
         <TabsContent value='schedule' className='mt-6'>
           <div className='space-y-4 max-w-2xl mx-auto'>
