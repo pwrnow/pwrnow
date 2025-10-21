@@ -34,7 +34,6 @@ import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useEventActions } from '../hooks/useEventActions';
 import FriendsAttending from './FriendsAttending';
-import StaffBadge from './StaffBadge';
 
 interface EventCardProps {
   event: Event;
@@ -534,12 +533,6 @@ export default function EventCard({ event, index = 0, hideImage }: EventCardProp
             />
           )}
 
-          {/* Staff likes count */}
-          {isStaff && event.likes_count !== null && event.likes_count !== undefined && (
-            <View className='mb-2'>
-              <StaffBadge count={event.likes_count} />
-            </View>
-          )}
 
           <SignInRequiredModal
             visible={showAuthModal}
