@@ -127,6 +127,27 @@ export default function CategorySelector({
                   }}
                 />
               )}
+              {category.slug === 'rekrutacja' && (
+                <motion.div
+                  className='absolute inset-0 rounded-full'
+                  style={{
+                    background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+                    backgroundSize: '400% 400%',
+                    padding: '2px',
+                    zIndex: -1,
+                  }}
+                  animate={{
+                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                >
+                  <div className='w-full h-full rounded-full bg-background' />
+                </motion.div>
+              )}
             </button>
           ))}
         </div>
