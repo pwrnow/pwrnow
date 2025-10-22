@@ -9,10 +9,12 @@ from django.core.management.base import BaseCommand, CommandParser
 from django.utils.dateparse import parse_datetime
 from django.conf import settings  # noqa: F401  - may be useful if defaults are restored later
 
-from core.models import Category, Event, Organization
+from core.models import Category, Event, Organization, Tag
+from django.utils.dateparse import parse_date
+from users.models import User
 
 
-DEFAULT_TIMEOUT_SECONDS = 30
+DEFAULT_TIMEOUT_SECONDS = 60
 
 
 @dataclass
@@ -45,6 +47,10 @@ class RemoteEvent:
     category_slug: Optional[str]
     organization_slug: Optional[str]
     image_url: Optional[str]
+    publication_date: Optional[str] = None
+    verified_at: Optional[str] = None
+    verified_by_username: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 class Command(BaseCommand):
@@ -164,6 +170,8 @@ class Command(BaseCommand):
             slug = item.get("slug")
             org = item.get("organization") or {}
             cat = item.get("category") or {}
+            verified_by = item.get("verified_by")
+            tags = item.get("tags") or []
             common = {
                 "starts_at": item.get("starts_at"),
                 "ends_at": item.get("ends_at"),
@@ -174,6 +182,10 @@ class Command(BaseCommand):
                 "image_url": item.get("image_url"),
                 "organization_slug": org.get("slug"),
                 "category_slug": cat.get("slug"),
+                "publication_date": item.get("publication_date"),
+                "verified_at": item.get("verified_at"),
+                "verified_by_username": verified_by if isinstance(verified_by, str) else (verified_by.get("username") if isinstance(verified_by, dict) else None),
+                "tags": [tag.get("slug") for tag in tags if tag.get("slug")],
             }
             return slug, common
 
@@ -292,6 +304,44 @@ class Command(BaseCommand):
                 )
                 continue
 
+            # Parse publication_date
+            publication_date = None
+            if revent.publication_date:
+                publication_date = parse_date(revent.publication_date)
+                if not publication_date:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Event {slug}: invalid publication_date format '{revent.publication_date}', using starts_at date"
+                        )
+                    )
+                    publication_date = starts_at.date()
+            else:
+                # Default to starts_at date if no publication_date provided
+                publication_date = starts_at.date()
+                if not dry_run:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Event {slug}: no publication_date provided, using starts_at date"
+                        )
+                    )
+
+            # Parse verified_at
+            verified_at = None
+            if revent.verified_at:
+                verified_at = parse_datetime(revent.verified_at)
+
+            # Get verified_by user
+            verified_by = None
+            if revent.verified_by_username:
+                try:
+                    verified_by = User.objects.get(username=revent.verified_by_username)
+                except User.DoesNotExist:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Event {slug}: verified_by user '{revent.verified_by_username}' not found"
+                        )
+                    )
+
             # Update existing or create new with all required fields set in one go
             obj = Event.objects.filter(slug=slug).first()
             if obj is None:
@@ -302,6 +352,9 @@ class Command(BaseCommand):
                     starts_at=starts_at,
                     ends_at=ends_at,
                     verified=revent.verified,
+                    publication_date=publication_date,
+                    verified_at=verified_at,
+                    verified_by=verified_by,
                 )
                 was_created = True
             else:
@@ -311,6 +364,9 @@ class Command(BaseCommand):
                 obj.starts_at = starts_at
                 obj.ends_at = ends_at
                 obj.verified = revent.verified
+                obj.publication_date = publication_date
+                obj.verified_at = verified_at
+                obj.verified_by = verified_by
 
             # Assign translations and optional fields
             if revent.title_pl is not None:
@@ -336,6 +392,25 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.WARNING(f"Event {slug}: failed to download image: {e}"))
 
             obj.save()
+
+            # Handle tags
+            if revent.tags:
+                tag_objects = []
+                for tag_slug in revent.tags:
+                    try:
+                        tag_obj = Tag.objects.get(slug=tag_slug)
+                        tag_objects.append(tag_obj)
+                    except Tag.DoesNotExist:
+                        self.stdout.write(
+                            self.style.WARNING(f"Event {slug}: tag '{tag_slug}' not found, skipping")
+                        )
+                if tag_objects:
+                    obj.tags.set(tag_objects)
+                    if not dry_run:
+                        self.stdout.write(
+                            f"Event {slug}: assigned {len(tag_objects)} tags"
+                        )
+
             created += int(was_created)
             updated += int(not was_created)
 

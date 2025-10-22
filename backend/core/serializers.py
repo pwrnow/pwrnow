@@ -156,10 +156,14 @@ class EventSerializer(serializers.ModelSerializer):
         except Exception:
             current_org = None
 
-        # Get posts - this will use prefetched data if available, otherwise make a query
-        queryset = obj.posts.all().select_related('organization').prefetch_related('images').order_by('-created_at')
+        # Get posts - use prefetched data from queryset to avoid additional queries
+        # Don't add select_related/prefetch_related here as it's already done in the viewset
+        queryset = obj.posts.all()
         if not (current_org and str(current_org.id) == str(obj.organization_id)):
             queryset = queryset.filter(verified=True)
+        
+        # Order by created_at (this works on prefetched querysets)
+        queryset = queryset.order_by('-created_at')
 
         return PostSerializer(queryset, many=True, context={'request': request}).data
 
@@ -173,9 +177,11 @@ class EventSerializer(serializers.ModelSerializer):
         except Exception:
             current_org = None
 
-        # Get schedule - this will use prefetched data if available, otherwise make a query
-        schedule = getattr(obj, 'schedule', None)
-        if not schedule:
+        # Get schedule - use prefetched data from queryset to avoid additional queries
+        # Using getattr to access related object that may be prefetched
+        try:
+            schedule = obj.schedule
+        except Schedule.DoesNotExist:
             return None
 
         # Public can see schedule only if event is verified
@@ -195,9 +201,13 @@ class EventSerializer(serializers.ModelSerializer):
         except Exception:
             current_org = None
 
-        # Get event map - this will use prefetched data if available, otherwise make a query
-        event_map = getattr(obj, 'event_map', None)
-        if not event_map or not event_map.is_active:
+        # Get event map - use prefetched data from queryset to avoid additional queries
+        # Using try/except to access related object that may be prefetched
+        try:
+            event_map = obj.event_map
+            if not event_map.is_active:
+                return None
+        except EventMap.DoesNotExist:
             return None
 
         # Public can see event map only if event is verified
@@ -209,8 +219,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     def get_friends_interested(self, obj):
         """Get friends who are interested in (have liked) this event."""
-        from django.db import models
-        from .models import Friendship, Like
+        from .models import Like
         
         request = self.context.get('request')
         user = getattr(request, 'user', None)
@@ -219,16 +228,23 @@ class EventSerializer(serializers.ModelSerializer):
         if not user or not getattr(user, 'is_authenticated', False):
             return {'count': 0, 'friends': []}
         
-        # Get current user's friendships
-        friendships = Friendship.objects.filter(
-            models.Q(user1=user) | models.Q(user2=user)
-        ).values_list('user1_id', 'user2_id')
+        # Use cached friend_ids from context if available (optimized for list views)
+        friend_ids = self.context.get('friend_ids')
         
-        friend_ids = set()
-        for user1_id, user2_id in friendships:
-            friend_ids.add(user1_id)
-            friend_ids.add(user2_id)
-        friend_ids.discard(user.id)
+        # If friend_ids not in context, fetch them (fallback for detail views)
+        if friend_ids is None:
+            from django.db import models
+            from .models import Friendship
+            
+            friendships = Friendship.objects.filter(
+                models.Q(user1=user) | models.Q(user2=user)
+            ).values_list('user1_id', 'user2_id')
+            
+            friend_ids = set()
+            for user1_id, user2_id in friendships:
+                friend_ids.add(user1_id)
+                friend_ids.add(user2_id)
+            friend_ids.discard(user.id)
         
         # If no friends, return early
         if not friend_ids:

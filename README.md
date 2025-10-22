@@ -102,6 +102,54 @@ docker-compose exec backend python manage.py <command>
   docker-compose exec backend python manage.py createsuperuser
   ```
 
+### Data Import Command
+
+The project includes a management command to import events, categories, and organizations from the remote API:
+
+```bash
+docker-compose exec backend python manage.py import_data
+```
+
+#### Command Options
+
+- `--api-url` – Base API URL (default: `https://api.pwrnow.pl/`)
+- `--api-version` – API version (default: `v1`)
+- `--only` – Import only specific resources: `categories`, `organizations`, `events`
+- `--dry-run` – Show what would be imported without making changes
+- `--force-images` – Re-download images even if they already exist
+- `--limit` – Limit number of events to import (useful for testing)
+- `--allow-notifications` – Allow notifications during import (default: suppressed)
+
+#### Examples
+
+```bash
+# Import all data
+docker-compose exec backend python manage.py import_data
+
+# Test import (dry run) with only 5 events
+docker-compose exec backend python manage.py import_data --dry-run --limit 5
+
+# Import only events
+docker-compose exec backend python manage.py import_data --only events
+
+# Import with custom API URL
+docker-compose exec backend python manage.py import_data --api-url https://staging-api.pwrnow.pl/
+
+# Force re-download of all images
+docker-compose exec backend python manage.py import_data --force-images
+```
+
+#### What Gets Imported
+
+- **Categories** – Event categories with translations (PL/EN)
+- **Organizations** – Organizations with logos and metadata
+- **Events** – Complete event data including:
+  - Basic info (title, description, dates, location)
+  - Images and aspect ratios
+  - Publication dates and verification status
+  - Tags and relationships
+  - Translations (PL/EN)
+
 ---
 
 ### Translations (Django i18n)
