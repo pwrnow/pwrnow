@@ -2,12 +2,11 @@ from django.urls import path, include
 from .views import (
     GoogleLogin, FacebookLogin, AppleLogin,
     UsernameUpdateView, UsernameCheckView,
+    CustomTokenVerifyView, CustomTokenRefreshView,
 )
-from dj_rest_auth.jwt_auth import get_refresh_view
 from dj_rest_auth.views import (
     LogoutView, UserDetailsView,
 )
-from rest_framework_simplejwt.views import TokenVerifyView
 from django.urls import re_path
 
 urlpatterns = [
@@ -22,6 +21,6 @@ urlpatterns = [
     path('user/username/check/', UsernameCheckView.as_view(), name='username_check'),
 
     re_path(r'auth/logout/?$', LogoutView.as_view(), name='rest_logout'),
-    re_path(r'auth/token/verify/?$', TokenVerifyView.as_view(), name='token_verify'),
-    re_path(r'auth/token/refresh/?$', get_refresh_view().as_view(), name='token_refresh'),
+    re_path(r'auth/token/verify/?$', CustomTokenVerifyView.as_view(), name='token_verify'),
+    re_path(r'auth/token/refresh/?$', CustomTokenRefreshView.as_view(), name='token_refresh'),
 ]

@@ -1,4 +1,5 @@
 # accounts/views.py
+import logging
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
 # Apple often uses a special client, but the adapter can handle it in many setups
@@ -12,7 +13,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenVerifyView, TokenRefreshView
+from rest_framework_simplejwt.tokens import AccessToken
+from django.utils import timezone
+from django.contrib.auth import get_user_model
 from .serializers import UserSerializer, UsernameUpdateSerializer, UsernameCheckSerializer
+
+User = get_user_model()
 
 
 class OAuth2Error(Exception):
@@ -84,3 +91,49 @@ class UsernameCheckView(APIView):
             {'available': False, 'errors': serializer.errors},
             status=status.HTTP_200_OK
         )
+
+
+class CustomTokenVerifyView(TokenVerifyView):
+    """
+    Custom token verification view that updates user's last_login timestamp
+    when token is successfully verified.
+    """
+    
+    def post(self, request, *args, **kwargs):
+        # Call the parent method to verify the token
+        response = super().post(request, *args, **kwargs)
+        
+        # If token verification was successful (200 status), update last_login
+        if response.status_code == 200 and request.user.is_authenticated:
+            try:
+                request.user.last_login = timezone.now()
+                request.user.save(update_fields=['last_login'])
+            except Exception as e:
+                # Log the error but don't fail the token verification
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to update last_login during token verification: {e}")
+        
+        return response
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Custom token refresh view that updates user's last_login timestamp
+    when token is successfully refreshed.
+    """
+    
+    def post(self, request, *args, **kwargs):
+        # Call the parent method to refresh the token
+        response = super().post(request, *args, **kwargs)
+        
+        # If token refresh was successful (200 status), update last_login
+        if response.status_code == 200 and request.user.is_authenticated:
+            try:
+                request.user.last_login = timezone.now()
+                request.user.save(update_fields=['last_login'])
+            except Exception as e:
+                # Log the error but don't fail the token refresh
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to update last_login during token refresh: {e}")
+        
+        return response
