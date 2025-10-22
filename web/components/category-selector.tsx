@@ -131,18 +131,18 @@ export default function CategorySelector({
                 <motion.div
                   className='absolute inset-0 rounded-full'
                   style={{
-                    background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+                    background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6, #8b5cf6, #ec4899)',
                     backgroundSize: '400% 400%',
                     padding: '2px',
                     zIndex: -1,
                   }}
                   animate={{
-                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                    backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
                   }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: 'linear',
+                    ease: 'easeInOut',
                   }}
                 >
                   <div className='w-full h-full rounded-full bg-background' />
