@@ -549,13 +549,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             />
           )}
 
-          {/* Staff likes count */}
-          {isStaff && event.likes_count !== null && event.likes_count !== undefined && (
-            <View className='mb-2'>
-              <StaffBadge count={event.likes_count} />
-            </View>
-          )}
-
           <SignInRequiredModal
             visible={showAuthModal}
             onClose={() => setShowAuthModal(false)}
