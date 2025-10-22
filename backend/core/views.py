@@ -252,18 +252,27 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
                 # Staff users see all events, but still filter by end date
                 queryset = queryset.filter(ends_at__gte=now)
 
-        # Add participation status annotation for authenticated users
+        # Add useful annotations for authenticated users (participation and liked)
         request = self.request
         if request and hasattr(request, 'user') and request.user.is_authenticated:
-            from django.db.models import Exists, OuterRef
+            from django.db.models import Exists, OuterRef, Count
             queryset = queryset.annotate(
                 user_participation_exists=Exists(
                     EventParticipation.objects.filter(
                         user=request.user,
                         event=OuterRef('pk')
                     )
+                ),
+                user_liked_exists=Exists(
+                    Like.objects.filter(
+                        user=request.user,
+                        event=OuterRef('pk')
+                    )
                 )
             )
+            # Only staff users need likes count; annotate when staff to avoid unnecessary work
+            if getattr(request.user, 'is_staff', False):
+                queryset = queryset.annotate(likes_total=Count('likes'))
 
         # Simpler ordering - avoid complex CASE statements
         return queryset.extra(
@@ -286,33 +295,51 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """List events with filtering support."""
         queryset = self.filter_queryset(self.get_queryset())
-        
-        # Optimize friendship queries for authenticated users
-        # Fetch all friendships once and pass them through context
+
+        # Optimize friendship queries for authenticated users by batching once
         friend_ids = None
         if request and hasattr(request, 'user') and request.user.is_authenticated:
             friendships = Friendship.objects.filter(
                 models.Q(user1=request.user) | models.Q(user2=request.user)
             ).values_list('user1_id', 'user2_id')
-            
+
             friend_ids = set()
             for user1_id, user2_id in friendships:
                 friend_ids.add(user1_id)
                 friend_ids.add(user2_id)
             friend_ids.discard(request.user.id)
-        
+
+        # Paginate first to avoid computing mappings for the entire dataset
         page = self.paginate_queryset(queryset)
+        events = page if page is not None else list(queryset)
+
+        friends_interested_map = {}
+        if friend_ids:
+            event_ids = [e.id for e in events]
+            if event_ids:
+                interested_rows = Like.objects.filter(
+                    event_id__in=event_ids,
+                    user_id__in=friend_ids
+                ).select_related('user').values('event_id', 'user__id', 'user__username')
+
+                for row in interested_rows:
+                    ev_id = row['event_id']
+                    friends_interested_map.setdefault(ev_id, []).append({
+                        'id': str(row['user__id']),
+                        'username': row['user__username'],
+                    })
+
+        context = {
+            'request': request,
+            'friend_ids': friend_ids,
+            'friends_interested_map': friends_interested_map,
+        }
+
         if page is not None:
-            serializer = self.get_serializer(page, many=True, context={
-                'request': request,
-                'friend_ids': friend_ids
-            })
+            serializer = self.get_serializer(page, many=True, context=context)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True, context={
-            'request': request,
-            'friend_ids': friend_ids
-        })
+        serializer = self.get_serializer(events, many=True, context=context)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):

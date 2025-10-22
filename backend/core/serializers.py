@@ -124,9 +124,11 @@ class EventSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         if not user or not getattr(user, 'is_authenticated', False):
             return False
-
+        # Use annotation if present to avoid per-object query
+        if hasattr(obj, 'user_liked_exists'):
+            return bool(getattr(obj, 'user_liked_exists'))
+        # Fallback (detail views or legacy paths)
         logger.info(f"Checking if user {user.id} liked event {obj.id}")
-        # Efficient existence check
         return Like.objects.filter(user_id=user.id, event_id=obj.id).exists()
 
     def get_participation_status(self, obj):
@@ -156,16 +158,22 @@ class EventSerializer(serializers.ModelSerializer):
         except Exception:
             current_org = None
 
-        # Get posts - use prefetched data from queryset to avoid additional queries
-        # Don't add select_related/prefetch_related here as it's already done in the viewset
-        queryset = obj.posts.all()
-        if not (current_org and str(current_org.id) == str(obj.organization_id)):
-            queryset = queryset.filter(verified=True)
-        
-        # Order by created_at (this works on prefetched querysets)
-        queryset = queryset.order_by('-created_at')
+        # Use prefetched posts when available to avoid N+1 queries; filter in Python if needed
+        prefetched = getattr(obj, '_prefetched_objects_cache', {}).get('posts')
+        if prefetched is not None:
+            posts = prefetched
+        else:
+            posts = list(obj.posts.all())
 
-        return PostSerializer(queryset, many=True, context={'request': request}).data
+        # Restrict to verified for public (non-owner) in memory to keep prefetch benefits
+        is_owner = current_org and str(current_org.id) == str(obj.organization_id)
+        if not is_owner:
+            posts = [p for p in posts if getattr(p, 'verified', False)]
+
+        # Order in memory by created_at desc
+        posts = sorted(posts, key=lambda p: p.created_at, reverse=True)
+
+        return PostSerializer(posts, many=True, context={'request': request}).data
 
     def get_schedule(self, obj):
         """Get schedule for the event."""
@@ -228,6 +236,15 @@ class EventSerializer(serializers.ModelSerializer):
         if not user or not getattr(user, 'is_authenticated', False):
             return {'count': 0, 'friends': []}
         
+        # Use batched results from view when available
+        friends_map = self.context.get('friends_interested_map') or {}
+        precomputed = friends_map.get(getattr(obj, 'id'))
+        if precomputed is not None:
+            return {
+                'count': len(precomputed),
+                'friends': precomputed,
+            }
+
         # Use cached friend_ids from context if available (optimized for list views)
         friend_ids = self.context.get('friend_ids')
         
@@ -275,8 +292,10 @@ class EventSerializer(serializers.ModelSerializer):
         # Only return likes count for staff users
         if not user or not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_staff', False):
             return None
-            
-        return obj.likes_count
+        # Prefer annotation when available to avoid N+1
+        if hasattr(obj, 'likes_total'):
+            return int(getattr(obj, 'likes_total') or 0)
+        return obj.likes.count()
 
     def get_is_published(self, obj):
         """Get publication status for this event (staff only)."""
