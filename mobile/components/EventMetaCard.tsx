@@ -112,6 +112,25 @@ export const EventMetaCard: React.FC<Props> = ({
             </TouchableOpacity>
           ) : null}
 
+          {/* Staff likes count row */}
+          {isStaff && likesCount !== null && likesCount !== undefined && (
+            <View className='flex-row items-center'>
+              <View
+                style={{ backgroundColor: colors.muted }}
+                className='w-8 h-8 rounded-full items-center justify-center mr-3'
+              >
+                <Feather name='heart' size={14} color={colors.mutedForeground} />
+              </View>
+              <View className='flex-1'>
+                <Text
+                  style={{ color: colors.foreground }}
+                  className='font-groteskSemibold text-base'
+                >
+                  {t('likesCount', { count: likesCount })}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </View>

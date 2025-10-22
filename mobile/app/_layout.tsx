@@ -22,28 +22,13 @@ import { SettingsProvider } from '../contexts/SettingsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { focusManager, useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react-native';
-
-Sentry.init({
-  dsn: 'https://9a6655b71fc7046ef22a2c6ebff8cedd@o4510227015729152.ingest.de.sentry.io/4510227092340816',
-
-  // Disable sending PII data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-  sendDefaultPii: false,
-
-  // Enable Logs
-  enableLogs: true,
-
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
-});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
 
 let hasShownStartupOnce = false;
 
-export default Sentry.wrap(function StackLayout() {
+export default function StackLayout() {
   const [showStartup, setShowStartup] = useState(() => !hasShownStartupOnce);
   const [loaded, error] = useFonts({
     'Righteous-Regular': require('../assets/fonts/Righteous-Regular.ttf'),
@@ -99,7 +84,7 @@ export default Sentry.wrap(function StackLayout() {
       </AuthProvider>
     </SafeAreaProvider>
   );
-});
+}
 
 // Component that handles theming based on settings
 function ThemedApp() {
