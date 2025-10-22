@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem, EventParticipation, EventMap, EventMapLocation
+from .models import Event, Category, Organization, Tag, Like, Post, ScheduleItem, EventParticipation, EventMap, EventMapLocation, Friendship
 from .serializers import (
     EventSerializer,
     EventDetailSerializer,
@@ -224,6 +224,14 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
                 'posts__images',
                 'schedule__items'
             )
+        # For list action, prefetch posts, schedule, and event_map to avoid N+1 queries
+        elif self.action == 'list':
+            queryset = queryset.select_related('schedule', 'event_map').prefetch_related(
+                'posts__organization',
+                'posts__images',
+                'schedule__items',
+                'event_map__locations'
+            )
 
         current_org = self.get_current_organization()
         if current_org:
@@ -277,7 +285,35 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """List events with filtering support."""
-        return super().list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Optimize friendship queries for authenticated users
+        # Fetch all friendships once and pass them through context
+        friend_ids = None
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            friendships = Friendship.objects.filter(
+                models.Q(user1=request.user) | models.Q(user2=request.user)
+            ).values_list('user1_id', 'user2_id')
+            
+            friend_ids = set()
+            for user1_id, user2_id in friendships:
+                friend_ids.add(user1_id)
+                friend_ids.add(user2_id)
+            friend_ids.discard(request.user.id)
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context={
+                'request': request,
+                'friend_ids': friend_ids
+            })
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True, context={
+            'request': request,
+            'friend_ids': friend_ids
+        })
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         """
