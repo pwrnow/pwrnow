@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "724662438875",
+    "project_id": "pwrnow-958a5",
+    "storage_bucket": "pwrnow-958a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:724662438875:android:de179404ab58056d8035fe",
+        "android_client_info": {
+          "package_name": "pl.pwrnow.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDy8RxCUCUjyEQJF5DEzL_Ky7Qk4R2mavo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
