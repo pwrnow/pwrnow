@@ -187,7 +187,7 @@
     "training": "Szkolenie",
     "jobFair": "Targi pracy"
   },
-  
+
   "ThemeToggle": {
     "toggleTheme": "Przełącz motyw",
     "light": "Jasny",
@@ -467,5 +467,23 @@
     "parseFailedTryAgain": "Nie udało się przetworzyć harmonogramu. Spróbuj ponownie.",
     "importSuccess": "Harmonogram został pomyślnie zaimportowany!",
     "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później."
+  },
+  "AppPage": {
+    "title": "PWr Now - Aplikacja na iOS Już Dostępna! | Pobierz z App Store",
+    "description": "Aplikacja mobilna PWr Now jest już dostępna na iOS! Odkrywaj wydarzenia na Politechnice Wrocławskiej z telefonu. Pobierz teraz z App Store. Wersja Android wkrótce!",
+    "headline": "PWr Now na iOS!",
+    "subheadline": "Bądź na bieżąco z wydarzeniami kampusu, gdziekolwiek jesteś.",
+    "downloadOnAppStore": "Pobierz z App Store",
+    "comingSoon": "Wkrótce",
+    "androidComingSoon": "Wersja na Androida wkrótce",
+    "appScreenshot": "Zrzut ekranu aplikacji mobilnej PWr Now",
+    "keywords": {
+      "mobileApp": "aplikacja mobilna PWr Now",
+      "iosApp": "PWr Now iOS",
+      "appStore": "PWr Now App Store",
+      "pwrApp": "aplikacja Politechnika Wrocławska",
+      "studentApp": "aplikacja wydarzenia studenckie",
+      "eventsApp": "aplikacja wydarzenia uczelnia"
+    }
   }
 }

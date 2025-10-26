@@ -9,6 +9,12 @@ export const CONTACT_CONFIG = {
   EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'support@pwrnow.pl',
 };
 
+// App Store Configuration
+export const APP_CONFIG = {
+  APP_STORE_ID: '6751172859',
+  IOS_APP_URL: 'https://apps.apple.com/app/id6751172859',
+};
+
 // Social Media Links
 export const SOCIAL_LINKS = {
   FACEBOOK: 'https://www.facebook.com/pwrnow',

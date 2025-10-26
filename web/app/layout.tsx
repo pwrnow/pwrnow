@@ -4,6 +4,7 @@ import { Space_Grotesk, Righteous } from 'next/font/google';
 import './globals.css';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { APP_CONFIG } from '@/lib/config';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -61,6 +62,9 @@ export async function generateMetadata(): Promise<Metadata> {
       description: t('ogDescription'),
     },
     category: 'education',
+    other: {
+      'apple-itunes-app': `app-id=${APP_CONFIG.APP_STORE_ID}`,
+    },
   };
 }
 
