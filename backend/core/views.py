@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import models, IntegrityError
+from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -41,6 +42,9 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import IsAuthenticated
 from django.utils.translation import gettext as _
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CategoryViewSet(viewsets.GenericViewSet):
     """
@@ -239,7 +243,7 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         else:
             # Check if user is staff using the permission class logic
             is_staff_user = self._is_staff_user()
-            
+
             # Staff users see all events (verified and unverified)
             # Regular users only see verified events
             if not is_staff_user:
@@ -427,18 +431,18 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         POST /events/{slug}/verify/
         """
         event = self.get_object()
-        
+
         if event.verified:
             return Response(
-                {'detail': _('Event is already verified.')}, 
+                {'detail': _('Event is already verified.')},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         event.verified = True
         event.verified_at = timezone.now()
         event.verified_by = request.user
         event.save()
-        
+
         # Return updated event data
         serializer = self.get_serializer(event)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -606,47 +610,47 @@ def search_users(request):
     from django.contrib.auth import get_user_model
     from .models import Friendship, FriendRequest
     from .serializers import UserSearchSerializer
-    
+
     User = get_user_model()
     query = request.query_params.get('q', '').strip()
-    
+
     if len(query) < 3:
         return Response({
             'error': _('Search query must be at least 3 characters long.')
         }, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # Search for users by username (case-insensitive)
     users = User.objects.filter(
         username__icontains=query
     ).exclude(
         id=request.user.id
     ).values('id', 'username')[:20]
-    
+
     # Get current user's friendships
     friendships = Friendship.objects.filter(
         models.Q(user1=request.user) | models.Q(user2=request.user)
     ).values_list('user1_id', 'user2_id')
-    
+
     friend_ids = set()
     for user1_id, user2_id in friendships:
         friend_ids.add(user1_id)
         friend_ids.add(user2_id)
     friend_ids.discard(request.user.id)
-    
+
     # Get pending friend requests (both sent and received)
     sent_requests = FriendRequest.objects.filter(
         from_user=request.user,
         status=FriendRequest.Status.PENDING
     ).values_list('to_user_id', flat=True)
-    
+
     received_requests = FriendRequest.objects.filter(
         to_user=request.user,
         status=FriendRequest.Status.PENDING
     ).values_list('from_user_id', flat=True)
-    
+
     sent_request_ids = set(sent_requests)
     received_request_ids = set(received_requests)
-    
+
     # Annotate users with detailed friendship status
     results = []
     for user in users:
@@ -659,7 +663,7 @@ def search_users(request):
             )
         )
         results.append(user)
-    
+
     serializer = UserSearchSerializer(results, many=True)
     return Response(serializer.data)
 
@@ -673,38 +677,38 @@ def get_friends_attending_event(request, slug):
     from django.contrib.auth import get_user_model
     from .models import Friendship, Like, Event
     from .serializers import UserSearchSerializer
-    
+
     User = get_user_model()
-    
+
     # Get the event
     try:
         event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         return Response({'error': _('Event not found.')}, status=status.HTTP_404_NOT_FOUND)
-    
+
     # Get current user's friendships
     friendships = Friendship.objects.filter(
         models.Q(user1=request.user) | models.Q(user2=request.user)
     ).values_list('user1_id', 'user2_id')
-    
+
     friend_ids = set()
     for user1_id, user2_id in friendships:
         friend_ids.add(user1_id)
         friend_ids.add(user2_id)
     friend_ids.discard(request.user.id)
-    
+
     # Get friends who have liked this event
     attending_friends = Like.objects.filter(
         event=event,
         user_id__in=friend_ids
     ).select_related('user').values('user__id', 'user__username')
-    
+
     # Format the response
     friends_list = [
         {'id': str(friend['user__id']), 'username': friend['user__username']}
         for friend in attending_friends
     ]
-    
+
     return Response({
         'count': len(friends_list),
         'friends': friends_list
@@ -720,31 +724,31 @@ def send_friend_request(request):
     import logging
     from .serializers import FriendRequestCreateSerializer, FriendRequestSerializer
     from notifications.services import push_service
-    
+
     logger = logging.getLogger(__name__)
-    
+
     logger.info(f"FRIENDS_REQUEST_SEND: User {request.user.id} ({request.user.username}) attempting to send friend request")
     logger.debug(f"FRIENDS_REQUEST_SEND: Request data: {request.data}")
-    
+
     serializer = FriendRequestCreateSerializer(data=request.data, context={'request': request})
-    
+
     if serializer.is_valid():
         try:
             friend_request = serializer.save()
             logger.info(f"FRIENDS_REQUEST_SEND_SUCCESS: Friend request {friend_request.id} created from user {request.user.id} to user {friend_request.to_user.id}")
             logger.debug(f"FRIENDS_REQUEST_SEND_SUCCESS: Friend request details - from: {friend_request.from_user.username}, to: {friend_request.to_user.username}, status: {friend_request.status}")
-            
+
             # Send notification
             try:
                 notification_result = push_service.send_friend_request_notification(friend_request)
                 logger.info(f"FRIENDS_REQUEST_NOTIFICATION: Notification sent for friend request {friend_request.id}, result: {notification_result}")
             except Exception as e:
                 logger.error(f"FRIENDS_REQUEST_NOTIFICATION_ERROR: Failed to send notification for friend request {friend_request.id}: {str(e)}")
-            
+
             response_serializer = FriendRequestSerializer(friend_request)
             logger.info(f"FRIENDS_REQUEST_SEND_COMPLETE: Successfully processed friend request {friend_request.id}")
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-            
+
         except IntegrityError as e:
             if 'duplicate key value violates unique constraint' in str(e):
                 logger.warning(f"FRIENDS_REQUEST_SEND_DUPLICATE: Duplicate friend request from user {request.user.id}: {str(e)}")
@@ -770,11 +774,11 @@ def accept_friend_request(request, request_id):
     from .models import Friendship, FriendRequest
     from .serializers import FriendRequestSerializer
     from notifications.services import push_service
-    
+
     logger = logging.getLogger(__name__)
-    
+
     logger.info(f"FRIENDS_REQUEST_ACCEPT: User {request.user.id} ({request.user.username}) attempting to accept friend request {request_id}")
-    
+
     try:
         friend_request = FriendRequest.objects.get(
             id=request_id,
@@ -787,24 +791,24 @@ def accept_friend_request(request, request_id):
         return Response({
             'error': _('Friend request not found or already processed.')
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
     try:
         # Update request status
         friend_request.status = FriendRequest.Status.ACCEPTED
         friend_request.save()
         logger.info(f"FRIENDS_REQUEST_ACCEPT_STATUS_UPDATED: Friend request {friend_request.id} status updated to ACCEPTED")
-        
+
         # Create friendship (ensure consistent ordering)
         user1, user2 = friend_request.from_user, friend_request.to_user
         if user1.id > user2.id:
             user1, user2 = user2, user1
-        
+
         friendship = Friendship.objects.create(
             user1=user1,
             user2=user2
         )
         logger.info(f"FRIENDS_REQUEST_ACCEPT_FRIENDSHIP_CREATED: Friendship {friendship.id} created between {user1.username} and {user2.username}")
-        
+
         # Send notification to the user who sent the request
         try:
             # Note: This method doesn't exist yet, we'll need to implement it
@@ -812,14 +816,14 @@ def accept_friend_request(request, request_id):
             logger.info(f"FRIENDS_REQUEST_ACCEPT_NOTIFICATION: Notification sent for accepted friend request {friend_request.id}, result: {notification_result}")
         except Exception as e:
             logger.error(f"FRIENDS_REQUEST_ACCEPT_NOTIFICATION_ERROR: Failed to send notification for accepted friend request {friend_request.id}: {str(e)}")
-        
+
         serializer = FriendRequestSerializer(friend_request)
         logger.info(f"FRIENDS_REQUEST_ACCEPT_COMPLETE: Successfully accepted friend request {friend_request.id}")
         return Response({
             'message': _('Friend request accepted.'),
             'friend_request': serializer.data
         }, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
         logger.error(f"FRIENDS_REQUEST_ACCEPT_ERROR: Failed to accept friend request {request_id} for user {request.user.id}: {str(e)}")
         return Response({'error': 'Failed to accept friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -834,11 +838,11 @@ def reject_friend_request(request, request_id):
     import logging
     from .models import FriendRequest
     from .serializers import FriendRequestSerializer
-    
+
     logger = logging.getLogger(__name__)
-    
+
     logger.info(f"FRIENDS_REQUEST_REJECT: User {request.user.id} ({request.user.username}) attempting to reject friend request {request_id}")
-    
+
     try:
         friend_request = FriendRequest.objects.get(
             id=request_id,
@@ -851,20 +855,20 @@ def reject_friend_request(request, request_id):
         return Response({
             'error': _('Friend request not found or already processed.')
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
     try:
         # Update request status
         friend_request.status = FriendRequest.Status.REJECTED
         friend_request.save()
         logger.info(f"FRIENDS_REQUEST_REJECT_STATUS_UPDATED: Friend request {friend_request.id} status updated to REJECTED")
-        
+
         serializer = FriendRequestSerializer(friend_request)
         logger.info(f"FRIENDS_REQUEST_REJECT_COMPLETE: Successfully rejected friend request {friend_request.id}")
         return Response({
             'message': _('Friend request rejected.'),
             'friend_request': serializer.data
         }, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
         logger.error(f"FRIENDS_REQUEST_REJECT_ERROR: Failed to reject friend request {request_id} for user {request.user.id}: {str(e)}")
         return Response({'error': 'Failed to reject friend request'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -879,27 +883,27 @@ def list_friend_requests(request):
     import logging
     from .models import FriendRequest
     from .serializers import FriendRequestSerializer
-    
+
     logger = logging.getLogger(__name__)
-    
+
     logger.info(f"FRIENDS_REQUEST_LIST: User {request.user.id} ({request.user.username}) requesting list of friend requests")
-    
+
     try:
         friend_requests = FriendRequest.objects.filter(
             to_user=request.user,
             status=FriendRequest.Status.PENDING
         ).select_related('from_user', 'to_user').order_by('-created_at')
-        
+
         request_count = friend_requests.count()
         logger.info(f"FRIENDS_REQUEST_LIST_FOUND: Found {request_count} pending friend requests for user {request.user.id}")
-        
+
         if request_count > 0:
             logger.debug(f"FRIENDS_REQUEST_LIST_DETAILS: Friend request IDs: {[str(req.id) for req in friend_requests]}")
-        
+
         serializer = FriendRequestSerializer(friend_requests, many=True)
         logger.info(f"FRIENDS_REQUEST_LIST_COMPLETE: Successfully returned {request_count} friend requests for user {request.user.id}")
         return Response(serializer.data)
-        
+
     except Exception as e:
         logger.error(f"FRIENDS_REQUEST_LIST_ERROR: Failed to list friend requests for user {request.user.id}: {str(e)}")
         return Response({'error': 'Failed to retrieve friend requests'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -915,21 +919,21 @@ def list_friends(request):
     from django.contrib.auth import get_user_model
     from .models import Friendship
     from .serializers import FriendshipSerializer
-    
+
     logger = logging.getLogger(__name__)
     User = get_user_model()
-    
+
     logger.info(f"FRIENDS_LIST: User {request.user.id} ({request.user.username}) requesting list of friends")
-    
+
     try:
         # Get all friendships involving the current user
         friendships = Friendship.objects.filter(
             models.Q(user1=request.user) | models.Q(user2=request.user)
         ).select_related('user1', 'user2').order_by('-created_at')
-        
+
         friendship_count = friendships.count()
         logger.info(f"FRIENDS_LIST_FOUND: Found {friendship_count} friendships for user {request.user.id}")
-        
+
         # Extract friend data
         friends_data = []
         for friendship in friendships:
@@ -941,11 +945,11 @@ def list_friends(request):
                 'friendship_created_at': friendship.created_at,
             })
             logger.debug(f"FRIENDS_LIST_FRIEND: Added friend {friend.username} (ID: {friend.id}) to list")
-        
+
         serializer = FriendshipSerializer(friends_data, many=True)
         logger.info(f"FRIENDS_LIST_COMPLETE: Successfully returned {friendship_count} friends for user {request.user.id}")
         return Response(serializer.data)
-        
+
     except Exception as e:
         logger.error(f"FRIENDS_LIST_ERROR: Failed to list friends for user {request.user.id}: {str(e)}")
         return Response({'error': 'Failed to retrieve friends list'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -964,62 +968,62 @@ def suggest_friends(request):
     from django.contrib.auth import get_user_model
     from .models import Friendship, FriendRequest
     from django.db.models import Count, Q
-    
+
     logger = logging.getLogger(__name__)
     User = get_user_model()
-    
+
     logger.info(f"FRIENDS_SUGGEST: User {request.user.id} ({request.user.username}) requesting friend suggestions")
-    
+
     try:
         # Get current user's friend IDs
         friendships = Friendship.objects.filter(
             Q(user1=request.user) | Q(user2=request.user)
         ).values_list('user1_id', 'user2_id')
-        
+
         friend_ids = set()
         for user1_id, user2_id in friendships:
             friend_ids.add(user1_id)
             friend_ids.add(user2_id)
         friend_ids.discard(request.user.id)
-        
+
         logger.info(f"FRIENDS_SUGGEST_FRIENDS: User {request.user.id} has {len(friend_ids)} friends")
-        
+
         if not friend_ids:
             logger.info(f"FRIENDS_SUGGEST_NO_FRIENDS: User {request.user.id} has no friends, returning empty suggestions")
             return Response([])
-        
+
         # Get friends of friends (excluding current user and existing friends)
         friends_of_friends_map = {}  # Maps suggested user ID to list of mutual friend IDs
-        
+
         for friend_id in friend_ids:
             # Get this friend's friends
             fof_friendships = Friendship.objects.filter(
                 Q(user1_id=friend_id) | Q(user2_id=friend_id)
             ).values_list('user1_id', 'user2_id')
-            
+
             for user1_id, user2_id in fof_friendships:
                 fof_id = user1_id if user1_id != friend_id else user2_id
-                
+
                 # Skip if it's the current user or already a friend
                 if fof_id == request.user.id or fof_id in friend_ids:
                     continue
-                
+
                 if fof_id not in friends_of_friends_map:
                     friends_of_friends_map[fof_id] = []
                 friends_of_friends_map[fof_id].append(friend_id)
-        
+
         logger.info(f"FRIENDS_SUGGEST_FOF: Found {len(friends_of_friends_map)} potential friends of friends")
-        
+
         if not friends_of_friends_map:
             logger.info(f"FRIENDS_SUGGEST_NO_FOF: No friends of friends found for user {request.user.id}")
             return Response([])
-        
+
         # Get pending friend requests to exclude them (both sent and received)
         pending_requests = FriendRequest.objects.filter(
             Q(from_user=request.user) | Q(to_user=request.user),
             status=FriendRequest.Status.PENDING
         ).values_list('from_user_id', 'to_user_id')
-        
+
         pending_user_ids = set()
         for from_id, to_id in pending_requests:
             # Add both users from the request
@@ -1027,52 +1031,52 @@ def suggest_friends(request):
             pending_user_ids.add(to_id)
         # Remove current user from the set
         pending_user_ids.discard(request.user.id)
-        
+
         logger.info(f"FRIENDS_SUGGEST_PENDING: Found {len(pending_user_ids)} users with pending requests")
-        
+
         # Filter out users with pending requests from suggestions
         for user_id in pending_user_ids:
             friends_of_friends_map.pop(user_id, None)
-        
+
         logger.info(f"FRIENDS_SUGGEST_FILTERED: {len(friends_of_friends_map)} suggestions after filtering pending requests")
-        
+
         if not friends_of_friends_map:
             logger.info(f"FRIENDS_SUGGEST_NO_AFTER_FILTER: No suggestions after filtering for user {request.user.id}")
             return Response([])
-        
+
         # Get user data for suggested friends
         suggested_user_ids = list(friends_of_friends_map.keys())
         users = User.objects.filter(id__in=suggested_user_ids).values('id', 'username')
-        
+
         # Build suggestions with mutual friend count and source friend
         suggestions = []
         for user in users:
             user_id = user['id']
             mutual_friends = friends_of_friends_map[user_id]
             mutual_count = len(mutual_friends)
-            
+
             # Get the first mutual friend's username (to show as source)
             source_friend_id = mutual_friends[0]
             source_friend = User.objects.filter(id=source_friend_id).values('username').first()
-            
+
             suggestions.append({
                 'id': str(user_id),
                 'username': user['username'],
                 'mutual_friends_count': mutual_count,
                 'source_friend': source_friend['username'] if source_friend else None,
             })
-            
+
             logger.debug(f"FRIENDS_SUGGEST_USER: Added suggestion {user['username']} with {mutual_count} mutual friends")
-        
+
         # Sort by mutual friends count (descending) then by username (ascending)
         suggestions.sort(key=lambda x: (-x['mutual_friends_count'], x['username']))
-        
+
         # Limit to top 20 suggestions
         suggestions = suggestions[:20]
-        
+
         logger.info(f"FRIENDS_SUGGEST_COMPLETE: Returning {len(suggestions)} friend suggestions for user {request.user.id}")
         return Response(suggestions)
-        
+
     except Exception as e:
         logger.error(f"FRIENDS_SUGGEST_ERROR: Failed to generate friend suggestions for user {request.user.id}: {str(e)}")
         return Response({'error': 'Failed to generate friend suggestions'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1087,12 +1091,12 @@ def remove_friend(request, friend_id):
     import logging
     from django.contrib.auth import get_user_model
     from .models import Friendship
-    
+
     logger = logging.getLogger(__name__)
     User = get_user_model()
-    
+
     logger.info(f"FRIENDS_REMOVE: User {request.user.id} ({request.user.username}) attempting to remove friend {friend_id}")
-    
+
     try:
         friend = User.objects.get(id=friend_id)
         logger.info(f"FRIENDS_REMOVE_FRIEND_FOUND: Found friend {friend.username} (ID: {friend.id})")
@@ -1101,41 +1105,41 @@ def remove_friend(request, friend_id):
         return Response({
             'error': _('User not found.')
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
     try:
         # Find and delete the friendship
         friendship = Friendship.objects.filter(
             models.Q(user1=request.user, user2=friend) |
             models.Q(user1=friend, user2=request.user)
         ).first()
-        
+
         if not friendship:
             logger.warning(f"FRIENDS_REMOVE_NOT_FRIENDS: User {request.user.id} is not friends with user {friend.id}")
             return Response({
                 'error': _('You are not friends with this user.')
             }, status=status.HTTP_404_NOT_FOUND)
-        
+
         logger.info(f"FRIENDS_REMOVE_FRIENDSHIP_FOUND: Found friendship {friendship.id} between {request.user.username} and {friend.username}")
-        
+
         # Delete any existing friend requests between these users (in both directions)
         from .models import FriendRequest
         friend_requests = FriendRequest.objects.filter(
             models.Q(from_user=request.user, to_user=friend) |
             models.Q(from_user=friend, to_user=request.user)
         )
-        
+
         if friend_requests.exists():
             logger.info(f"FRIENDS_REMOVE_CLEANUP_REQUESTS: Found {friend_requests.count()} friend request(s) to clean up between {request.user.username} and {friend.username}")
             friend_requests.delete()
             logger.info(f"FRIENDS_REMOVE_CLEANUP_REQUESTS_SUCCESS: Successfully deleted friend requests between {request.user.username} and {friend.username}")
-        
+
         friendship.delete()
         logger.info(f"FRIENDS_REMOVE_SUCCESS: Successfully removed friendship {friendship.id} between {request.user.username} and {friend.username}")
-        
+
         return Response({
             'message': _('Friend removed successfully.')
         }, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
         logger.error(f"FRIENDS_REMOVE_ERROR: Failed to remove friend {friend_id} for user {request.user.id}: {str(e)}")
         return Response({'error': 'Failed to remove friend'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1311,3 +1315,13 @@ class EventMapLocationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(_('You do not have permission to delete this event map location.'))
 
         instance.delete()
+
+
+def health_check(request):
+    """
+    Health check endpoint that returns 200 if everything is OK.
+    """
+    logger.debug('Health check endpoint called')
+    return JsonResponse({
+        'status': 'ok'
+    }, status=200)
