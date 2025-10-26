@@ -187,7 +187,7 @@
     "training": "Training",
     "jobFair": "Job Fair"
   },
-  
+
   "ThemeToggle": {
     "toggleTheme": "Toggle theme",
     "light": "Light",
@@ -479,5 +479,23 @@
     "parseFailedTryAgain": "Failed to parse schedule. Please try again.",
     "importSuccess": "Schedule imported successfully!",
     "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later."
+  },
+  "AppPage": {
+    "title": "PWr Now - iOS App Available Now! | Download on App Store",
+    "description": "The PWr Now mobile app is now available on iOS! Discover events at Wrocław University of Technology from your phone. Download now from the App Store. Android version coming soon!",
+    "headline": "PWr Now on iOS!",
+    "subheadline": "Stay connected with campus events wherever you are.",
+    "downloadOnAppStore": "Download on the App Store",
+    "comingSoon": "Coming Soon",
+    "androidComingSoon": "Android version coming soon",
+    "appScreenshot": "PWr Now mobile app screenshot",
+    "keywords": {
+      "mobileApp": "PWr Now mobile app",
+      "iosApp": "PWr Now iOS",
+      "appStore": "PWr Now App Store",
+      "pwrApp": "Wrocław University of Technology app",
+      "studentApp": "student events app",
+      "eventsApp": "university events app"
+    }
   }
 }
