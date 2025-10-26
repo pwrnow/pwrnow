@@ -51,6 +51,17 @@ const teamMembers: TeamMember[] = [
   },
   {
     id: 3,
+    name: 'Adrian Szefer',
+    description:
+      'I make everything connected to the visual side of the project, from stickers to posts on our social media profiles.',
+    image: 'team/adrian.JPG',
+    social: {
+      tiktok: 'https://www.tiktok.com/@adrianszeferart?_t=ZN-90My8XKHRbS&_r=1',
+      instagram: 'https://www.instagram.com/adrianszeferart?igsh=MW9vNTdoOWwxeXZzbA%3D%3D&utm_source=qr',
+    },
+  },
+  {
+    id: 4,
     name: 'Daria Jurewicz',
     description: 'just having fun a w wolnym czasie robię sociale',
     image: 'team/daria.jpeg',
@@ -59,25 +70,13 @@ const teamMembers: TeamMember[] = [
     }
   },
   {
-    id: 4,
+    id: 5,
     name: 'Kuba Królak',
     description:
       'Taking care of marketing, communication and all the behind-the-scenes stuff',
     image: null,
     social: {},
   },
-  {
-    id: 5,
-    name: 'Adrian Szefer',
-    description:
-      'I make everything connected to the visual side of the project, from stickers to posts on our social media profiles.',
-    image: null,
-    social: {
-      tiktok: 'https://www.tiktok.com/@adrianszeferart?_t=ZN-90My8XKHRbS&_r=1',
-      instagram: 'https://www.instagram.com/adrianszeferart?igsh=MW9vNTdoOWwxeXZzbA%3D%3D&utm_source=qr',
-    },
-  },
-  
 ];
 
 export default function TeamPageContent() {
