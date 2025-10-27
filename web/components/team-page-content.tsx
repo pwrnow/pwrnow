@@ -17,7 +17,7 @@ type SocialLinks = {
 };
 
 type TeamMember = {
-  id: number;
+  id: string;
   name: string;
   description: string;
   image: string | null;
@@ -27,7 +27,7 @@ type TeamMember = {
 // Team member data - showcasing professional expertise and individual achievements
 const teamMembers: TeamMember[] = [
   {
-    id: 1,
+    id: 'michal-mendzelewski',
     name: 'Michał Mendzelewski',
     description: 'working on the idea and handling the tech side :)',
     image: 'team/michal.png',
@@ -38,7 +38,7 @@ const teamMembers: TeamMember[] = [
     },
   },
   {
-    id: 2,
+    id: 'igor-lis',
     name: 'Igor Lis',
     description:
       "Full-Stack Developer & Co-Founder with expertise in modern web technologies and mobile development. Built PWr Now's core platform using React, Next.js, and React Native. Passionate about creating seamless user experiences across web and mobile platforms. Experienced in full-stack development, API design, and scalable architecture solutions.",
@@ -50,7 +50,7 @@ const teamMembers: TeamMember[] = [
     },
   },
   {
-    id: 3,
+    id: 'adrian-szefer',
     name: 'Adrian Szefer',
     description:
       'I make everything connected to the visual side of the project, from stickers to posts on our social media profiles.',
@@ -61,7 +61,7 @@ const teamMembers: TeamMember[] = [
     },
   },
   {
-    id: 4,
+    id: 'daria-jurewicz',
     name: 'Daria Jurewicz',
     description: 'just having fun a w wolnym czasie robię sociale',
     image: 'team/daria.jpeg',
@@ -70,14 +70,14 @@ const teamMembers: TeamMember[] = [
     }
   },
   {
-    id: 5,
+    id: 'zosia-kukula',
     name: 'Zosia Kukuła',
     description: 'An optimist who loves trying new things, turning inspiration from people and nature into posts',
     image: 'team/zosia.JPG',
     social: {},
   },
   {
-    id: 6,
+    id: 'kuba-krolak',
     name: 'Kuba Królak',
     description:
       'Taking care of marketing, communication and all the behind-the-scenes stuff',
@@ -164,7 +164,7 @@ function TeamMemberCard({
   const imageSrc = member.image && (member.image.startsWith('/') ? member.image : `/${member.image}`);
 
   return (
-    <div className='group relative'>
+    <div className='group relative' id={member.id}>
       <div
         className={`relative flex flex-col ${
           !isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'
