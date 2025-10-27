@@ -71,6 +71,13 @@ const teamMembers: TeamMember[] = [
   },
   {
     id: 5,
+    name: 'Zosia Kukuła',
+    description: 'An optimist who loves trying new things, turning inspiration from people and nature into posts',
+    image: 'team/zosia.JPG',
+    social: {},
+  },
+  {
+    id: 6,
     name: 'Kuba Królak',
     description:
       'Taking care of marketing, communication and all the behind-the-scenes stuff',
