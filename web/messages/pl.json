@@ -347,8 +347,17 @@
     }
   },
   "TeamPage": {
-    "title": "Poznaj Nasz Zespół | PWr Now",
-    "description": "Poznaj profesjonalistów stojących za PWr Now - doświadczonych deweloperów, designerów i marketerów budujących przyszłość doświadczenia studenckiego.",
+    "title": "Poznaj Zespół PWr Now - Studenci Budujący Twoją Aplikację!",
+    "description": "Poznaj ludzi tworzących PWr Now! Kodzimy, projektujemy, robimy socialki i generalnie dobrze się bawimy, poprawiając życie na uczelni dla wszystkich. Chcesz do nas dołączyć? Będziemy zadowoleni! 😎",
+    "keywords": {
+      "team": "zespół PWr Now",
+      "developers": "deweloperzy PWr Now",
+      "designers": "designerzy Wrocław",
+      "marketing": "zespół marketingowy studenci",
+      "studentApp": "deweloperzy aplikacji studenckich",
+      "pwrStudents": "studenci Politechniki Wrocławskiej",
+      "joinTeam": "dołącz do zespołu PWr Now"
+    },
     "hero": {
       "title": "Poznaj Nasz Zespół"
     },

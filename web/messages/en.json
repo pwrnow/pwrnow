@@ -357,8 +357,17 @@
     }
   },
   "TeamPage": {
-    "title": "Meet Our Team | PWr Now",
-    "description": "Meet the professionals behind PWr Now - experienced developers, designers, and marketers building the future of student experience.",
+    "title": "Meet the PWr Now Team - The Students Building Your Campus App!",
+    "description": "Meet the people building PWr Now! We code stuff, design things, post fun stuff, and basically just having a great time making campus life better for everyone. Want to join us? We'd love to have you! 😎",
+    "keywords": {
+      "team": "PWr Now team",
+      "developers": "developers PWr Now",
+      "designers": "designers Wrocław",
+      "marketing": "student marketing team",
+      "studentApp": "student app developers",
+      "pwrStudents": "Wrocław University students",
+      "joinTeam": "join PWr Now team"
+    },
     "hero": {
       "title": "Meet Our Team"
     },

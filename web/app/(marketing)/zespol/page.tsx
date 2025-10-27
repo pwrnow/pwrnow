@@ -13,6 +13,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    keywords: [
+      t('keywords.team'),
+      t('keywords.developers'),
+      t('keywords.designers'),
+      t('keywords.marketing'),
+      t('keywords.studentApp'),
+      t('keywords.pwrStudents'),
+      t('keywords.joinTeam'),
+    ],
     alternates: {
       canonical: url,
     },
