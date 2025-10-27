@@ -167,6 +167,13 @@ body {
   .display-font {
     font-family: var(--font-righteous), cursive;
   }
+
+  /* Fix text selection on buttons with light text */
+  button:not([class*="ghost"]):not([class*="outline"]):not([class*="link"])::selection,
+  button:not([class*="ghost"]):not([class*="outline"]):not([class*="link"])::-moz-selection {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+  }
 }
 
 .gradient-text {
