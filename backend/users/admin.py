@@ -12,8 +12,8 @@ class UserAdmin(BaseUserAdmin):
     """Admin interface for User model."""
 
     list_display = [
-        'email',
         'username',
+        'email',
         'get_full_name',
         'is_staff',
         'is_superuser',
@@ -30,7 +30,7 @@ class UserAdmin(BaseUserAdmin):
         'last_login'
     ]
 
-    search_fields = ['email', 'username', 'first_name', 'last_name']
+    search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering = ['-date_joined']
     readonly_fields = ['id', 'date_joined', 'last_login', 'login_status']
 
