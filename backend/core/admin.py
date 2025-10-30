@@ -6,6 +6,9 @@ from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.contrib.admin import SimpleListFilter
+from django.db import models
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .forms import OrganizationAdminForm, EventAdminForm
@@ -14,15 +17,72 @@ from import_export import resources
 from import_export import fields
 
 
+# Custom filters
+class HasImageFilter(SimpleListFilter):
+    title = _('has image')
+    parameter_name = 'has_image'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', _('Yes')),
+            ('no', _('No')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.exclude(image__isnull=True).exclude(image='')
+        elif self.value() == 'no':
+            return queryset.filter(models.Q(image__isnull=True) | models.Q(image=''))
+
+
+class EventStatusFilter(SimpleListFilter):
+    title = _('status')
+    parameter_name = 'event_status'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('past', _('Past')),
+            ('ongoing', _('Ongoing')),
+            ('upcoming', _('Upcoming')),
+        )
+
+    def queryset(self, request, queryset):
+        now = timezone.now()
+        if self.value() == 'past':
+            return queryset.filter(ends_at__lt=now)
+        elif self.value() == 'ongoing':
+            return queryset.filter(starts_at__lte=now, ends_at__gte=now)
+        elif self.value() == 'upcoming':
+            return queryset.filter(starts_at__gt=now)
+
+
+class HasAspectRatioFilter(SimpleListFilter):
+    title = _('aspect ratio')
+    parameter_name = 'has_aspect_ratio'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', _('Yes')),
+            ('no', _('No')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.exclude(aspect_ratio__isnull=True).exclude(aspect_ratio='')
+        elif self.value() == 'no':
+            return queryset.filter(models.Q(aspect_ratio__isnull=True) | models.Q(aspect_ratio=''))
+
+
 @admin.register(Category)
 class CategoryAdmin(TranslationAdmin):
-    list_display = ['name', 'slug', 'order_index', 'event_count', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['name', 'slug', 'order_index', 'event_count', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at']
     search_fields = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     list_editable = ['order_index']
     ordering = ['order_index', 'name']
     readonly_fields = ['id', 'created_at', 'updated_at']
+    date_hierarchy = 'created_at'
 
     # Translation-specific configurations - let TranslationAdmin handle fieldsets automatically
     # This will create tabs/sections for Polish and English translations
@@ -37,12 +97,13 @@ class CategoryAdmin(TranslationAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'event_count', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['name', 'slug', 'event_count', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at']
     search_fields = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     ordering = ['name']
     readonly_fields = ['id', 'created_at', 'updated_at']
+    date_hierarchy = 'created_at'
 
     @admin.display(description='Events')
     def event_count(self, obj):
@@ -76,12 +137,17 @@ class OrganizationCodeResource(resources.ModelResource):
 
 @admin.register(OrganizationCode)
 class OrganizationCodeAdmin(ImportExportModelAdmin):
-    list_display = ['organization', 'code_preview', 'created_at', 'last_used_display']
-    list_filter = ['created_at', 'last_used_at']
+    list_display = ['organization', 'code_preview', 'created_at', 'last_used_display', 'is_used']
+    list_filter = ['created_at', 'last_used_at', 'organization']
     search_fields = ['organization__name', 'code']
     autocomplete_fields = ['organization']
     readonly_fields = ['id','created_at', 'updated_at', 'last_used_at']
     ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Used', boolean=True)
+    def is_used(self, obj):
+        return obj.last_used_at is not None
 
     fieldsets = (
         ('Organization', {
@@ -151,13 +217,18 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
     form = OrganizationAdminForm
-    list_display = ['name', 'slug', 'image_preview', 'auth_codes_count', 'event_count', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['name', 'slug', 'image_preview', 'auth_codes_count', 'event_count', 'has_image', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at', HasImageFilter]
     search_fields = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     ordering = ['name']
     readonly_fields = ['id', 'created_at', 'updated_at']
     inlines = [OrganizationCodeInline]
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Has Image', boolean=True)
+    def has_image(self, obj):
+        return bool(obj.image)
 
     fieldsets = (
         ('Basic Information', {
@@ -203,25 +274,40 @@ class EventAdmin(TranslationAdmin):
         'verified',
         'verified_by_display',
         'status_display',
-        'likes_count_display'
+        'likes_count_display',
+        'has_image',
+        'has_url'
     ]
     list_filter = [
+        EventStatusFilter,
         'verified',
         'verified_by',
         'category',
         'organization',
+        HasImageFilter,
+        HasAspectRatioFilter,
         'starts_at',
+        'ends_at',
         'created_at',
-        'publication_date'
+        'publication_date',
+        'verified_at'
     ]
     search_fields = ['title', 'description', 'location', 'slug']
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['verified']
     date_hierarchy = 'starts_at'
     ordering = ['-created_at']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'verified_by', 'likes_count_display']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'verified_by', 'likes_count_display', 'has_image', 'has_url']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
+
+    @admin.display(description='Has Image', boolean=True)
+    def has_image(self, obj):
+        return bool(obj.image)
+
+    @admin.display(description='Has URL', boolean=True)
+    def has_url(self, obj):
+        return bool(obj.url)
 
     # Translation-specific configurations
     group_fieldsets = True
@@ -444,10 +530,23 @@ admin.site.index_title = "Welcome to PWr Now Administration"
 
 @admin.register(Like)
 class LikeAdmin(admin.ModelAdmin):
-    list_display = ['user', 'event', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['user__username', 'user__email', 'event__title']
+    list_display = ['user', 'event', 'event_category', 'event_organization', 'created_at']
+    list_filter = ['created_at', 'event__category', 'event__organization']
+    search_fields = ['user__username', 'user__email', 'event__title', 'event__slug']
     autocomplete_fields = ['user', 'event']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+
+    @admin.display(description='Category', ordering='event__category__name')
+    def event_category(self, obj):
+        return obj.event.category.name if obj.event.category else '-'
+
+    @admin.display(description='Organization', ordering='event__organization__name')
+    def event_organization(self, obj):
+        return obj.event.organization.name if obj.event.organization else '-'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'event', 'event__category', 'event__organization')
 
 
 class PostImageInline(admin.TabularInline):
@@ -465,13 +564,22 @@ class PostImageInline(admin.TabularInline):
 
 @admin.register(PostImage)
 class PostImageAdmin(admin.ModelAdmin):
-    list_display = ['post', 'image_preview', 'aspect_ratio_display', 'order_index', 'created_at']
-    list_filter = ['created_at', 'post__event', 'post__organization']
-    search_fields = ['post__event__title', 'post__organization__name']
+    list_display = ['post', 'image_preview', 'aspect_ratio_display', 'order_index', 'event_name', 'organization_name', 'created_at']
+    list_filter = ['created_at', 'aspect_ratio', 'post__event', 'post__organization', HasAspectRatioFilter]
+    search_fields = ['post__event__title', 'post__organization__name', 'post__text']
     readonly_fields = ['id', 'created_at', 'image_preview', 'aspect_ratio_display']
     list_editable = ['order_index']
     autocomplete_fields = ['post']
     ordering = ['post', 'order_index']
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Event', ordering='post__event__title')
+    def event_name(self, obj):
+        return obj.post.event.title if obj.post.event else '-'
+
+    @admin.display(description='Organization', ordering='post__organization__name')
+    def organization_name(self, obj):
+        return obj.post.organization.name if obj.post.organization else '-'
 
     fieldsets = (
         ('Post Information', {
@@ -543,13 +651,15 @@ class PostImageAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['event', 'organization', 'text_preview', 'images_count', 'verified', 'created_at']
-    list_filter = ['verified', 'event', 'organization', 'created_at']
-    search_fields = ['event__title', 'organization__name', 'text']
+    list_display = ['event', 'organization', 'text_preview', 'images_count', 'verified', 'verified_at', 'created_at', 'updated_at']
+    list_filter = ['verified', 'event', 'organization', 'created_at', 'updated_at', 'verified_at']
+    search_fields = ['event__title', 'event__slug', 'organization__name', 'text']
     readonly_fields = ['id', 'created_at', 'updated_at', 'verified_at']
     list_editable = ['verified']
     inlines = [PostImageInline]
     autocomplete_fields = ['event', 'organization']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
 
     fieldsets = (
         ('Content', {
@@ -647,11 +757,24 @@ class ScheduleItemInline(admin.TabularInline):
 
 @admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ['event', 'items_count', 'days_count', 'updated_at']
+    list_display = ['event', 'items_count', 'days_count', 'event_category', 'event_organization', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at', 'event__category', 'event__organization']
     search_fields = ['event__title', 'event__slug']
     autocomplete_fields = ['event']
     readonly_fields = ['id', 'created_at', 'updated_at']
     inlines = [ScheduleItemInline]
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Category', ordering='event__category__name')
+    def event_category(self, obj):
+        return obj.event.category.name if obj.event.category else '-'
+
+    @admin.display(description='Organization', ordering='event__organization__name')
+    def event_organization(self, obj):
+        return obj.event.organization.name if obj.event.organization else '-'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('event', 'event__category', 'event__organization')
 
     @admin.display(description='Items')
     def items_count(self, obj):
@@ -665,11 +788,15 @@ class ScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(ScheduleItem)
 class ScheduleItemAdmin(admin.ModelAdmin):
-    list_display = ['title', 'event_display', 'date', 'start_time', 'end_time']
-    list_filter = ['date']
-    search_fields = ['title', 'description', 'schedule__event__title']
+    list_display = ['title', 'event_display', 'date', 'start_time', 'end_time', 'schedule']
+    list_filter = ['date', 'schedule__event', 'schedule__event__category', 'schedule__event__organization']
+    search_fields = ['title', 'description', 'schedule__event__title', 'schedule__event__slug']
     autocomplete_fields = ['schedule']
     ordering = ['date', 'start_time']
+    date_hierarchy = 'date'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('schedule', 'schedule__event', 'schedule__event__category', 'schedule__event__organization')
 
     @admin.display(description='Event', ordering='schedule__event__title')
     def event_display(self, obj):
@@ -685,13 +812,21 @@ class QRCodeInline(admin.TabularInline):
 
 @admin.register(QRCode)
 class QRCodeAdmin(admin.ModelAdmin):
-    list_display = ['event', 'name', 'code', 'is_active', 'usage_count', 'last_used_display', 'qr_code_preview']
-    list_filter = ['is_active', 'event', 'created_at', 'last_used_at']
-    search_fields = ['event__title', 'name', 'code']
+    list_display = ['event', 'name', 'code', 'is_active', 'usage_count', 'has_been_used', 'last_used_display', 'created_at', 'qr_code_preview']
+    list_filter = ['is_active', 'event', 'event__category', 'event__organization', 'created_at', 'last_used_at']
+    search_fields = ['event__title', 'event__slug', 'name', 'code']
     autocomplete_fields = ['event']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'usage_count', 'last_used_at', 'qr_code_preview']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'usage_count', 'last_used_at', 'qr_code_preview', 'has_been_used']
     list_editable = ['is_active']
     ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Used', boolean=True)
+    def has_been_used(self, obj):
+        return obj.last_used_at is not None
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('event', 'event__category', 'event__organization')
 
     fieldsets = (
         ('Basic Information', {
@@ -836,12 +971,30 @@ class QRCodeAdmin(admin.ModelAdmin):
 
 @admin.register(EventParticipation)
 class EventParticipationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'event', 'participation_type', 'qr_code', 'confirmed_at']
-    list_filter = ['participation_type', 'confirmed_at', 'event', 'qr_code']
-    search_fields = ['user__username', 'user__email', 'event__title', 'qr_code__name', 'notes']
+    list_display = ['user', 'event', 'event_category', 'event_organization', 'participation_type', 'qr_code', 'is_confirmed', 'confirmed_at', 'created_at']
+    list_filter = ['participation_type', 'confirmed_at', 'created_at', 'event', 'event__category', 'event__organization', 'qr_code']
+    search_fields = ['user__username', 'user__email', 'event__title', 'event__slug', 'qr_code__name', 'notes']
     autocomplete_fields = ['user', 'event', 'qr_code']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'confirmed_at']
-    ordering = ['-confirmed_at']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'confirmed_at', 'is_confirmed']
+    ordering = ['-confirmed_at', '-created_at']
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Confirmed', boolean=True)
+    def is_confirmed(self, obj):
+        return obj.confirmed_at is not None
+
+    @admin.display(description='Category', ordering='event__category__name')
+    def event_category(self, obj):
+        return obj.event.category.name if obj.event.category else '-'
+
+    @admin.display(description='Organization', ordering='event__organization__name')
+    def event_organization(self, obj):
+        return obj.event.organization.name if obj.event.organization else '-'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'user', 'event', 'event__category', 'event__organization', 'qr_code'
+        )
 
     fieldsets = (
         ('Participation Details', {
@@ -855,11 +1008,6 @@ class EventParticipationAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         })
     )
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            'user', 'event', 'qr_code'
-        )
 
 
 # Add inlines to EventAdmin after they're defined
@@ -882,14 +1030,26 @@ class EventMapLocationInline(admin.TabularInline):
 
 @admin.register(EventMap)
 class EventMapAdmin(admin.ModelAdmin):
-    list_display = ['event', 'title', 'locations_count', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['event__title', 'title', 'description']
+    list_display = ['event', 'title', 'locations_count', 'is_active', 'event_category', 'event_organization', 'created_at', 'updated_at']
+    list_filter = ['is_active', 'created_at', 'updated_at', 'event__category', 'event__organization']
+    search_fields = ['event__title', 'event__slug', 'title', 'description']
     autocomplete_fields = ['event']
     readonly_fields = ['id', 'created_at', 'updated_at', 'locations_count']
     list_editable = ['is_active']
     inlines = [EventMapLocationInline]
     ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Category', ordering='event__category__name')
+    def event_category(self, obj):
+        return obj.event.category.name if obj.event.category else '-'
+
+    @admin.display(description='Organization', ordering='event__organization__name')
+    def event_organization(self, obj):
+        return obj.event.organization.name if obj.event.organization else '-'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('event', 'event__category', 'event__organization')
 
     fieldsets = (
         ('Basic Information', {
@@ -913,13 +1073,25 @@ class EventMapAdmin(admin.ModelAdmin):
 
 @admin.register(EventMapLocation)
 class EventMapLocationAdmin(admin.ModelAdmin):
-    list_display = ['name', 'event_map', 'address', 'coordinates', 'image_preview', 'order_index', 'is_active', 'created_at']
-    list_filter = ['is_active', 'event_map__event', 'created_at']
-    search_fields = ['name', 'description', 'address', 'event_map__event__title']
+    list_display = ['name', 'event_map', 'event_name', 'address', 'coordinates', 'image_preview', 'order_index', 'is_active', 'has_image', 'created_at']
+    list_filter = ['is_active', 'event_map__event', 'event_map__event__category', 'event_map__event__organization', 'created_at', HasImageFilter]
+    search_fields = ['name', 'description', 'address', 'event_map__event__title', 'event_map__event__slug']
     autocomplete_fields = ['event_map']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'coordinates', 'image_preview']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'coordinates', 'image_preview', 'has_image']
     list_editable = ['order_index', 'is_active']
     ordering = ['event_map', 'order_index']
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Event', ordering='event_map__event__title')
+    def event_name(self, obj):
+        return obj.event_map.event.title if obj.event_map.event else '-'
+
+    @admin.display(description='Has Image', boolean=True)
+    def has_image(self, obj):
+        return bool(obj.image)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('event_map', 'event_map__event', 'event_map__event__category', 'event_map__event__organization')
 
     fieldsets = (
         ('Location Information', {
@@ -955,11 +1127,6 @@ class EventMapLocationAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="40" height="40" style="object-fit: cover; border-radius: 4px;" />', obj.image.url)
         return format_html('<span style="color: #999;">No image</span>')
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            'event_map__event'
-        )
-
     actions = ['activate_locations', 'deactivate_locations']
 
     def activate_locations(self, request, queryset):
@@ -981,10 +1148,11 @@ EventAdmin.inlines.append(EventMapInline)
 class FriendshipAdmin(admin.ModelAdmin):
     list_display = ['user1', 'user2', 'created_at']
     list_filter = ['created_at']
-    search_fields = ['user1__username', 'user2__username', 'user1__email', 'user2__email']
+    search_fields = ['user1__username', 'user1__email', 'user2__username', 'user2__email']
     autocomplete_fields = ['user1', 'user2']
     readonly_fields = ['id', 'created_at']
     ordering = ['-created_at']
+    date_hierarchy = 'created_at'
 
     fieldsets = (
         ('Friendship', {
@@ -1004,11 +1172,12 @@ class FriendshipAdmin(admin.ModelAdmin):
 class FriendRequestAdmin(admin.ModelAdmin):
     list_display = ['from_user', 'to_user', 'status', 'created_at', 'updated_at']
     list_filter = ['status', 'created_at', 'updated_at']
-    search_fields = ['from_user__username', 'to_user__username', 'from_user__email', 'to_user__email']
+    search_fields = ['from_user__username', 'from_user__email', 'to_user__username', 'to_user__email']
     autocomplete_fields = ['from_user', 'to_user']
     readonly_fields = ['id', 'created_at', 'updated_at']
     list_editable = ['status']
     ordering = ['-created_at']
+    date_hierarchy = 'created_at'
 
     fieldsets = (
         ('Friend Request', {

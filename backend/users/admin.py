@@ -18,21 +18,26 @@ class UserAdmin(BaseUserAdmin):
         'is_staff',
         'is_superuser',
         'is_active',
+        'username_set_by_user',
         'login_status',
-        'date_joined'
+        'date_joined',
+        'last_login'
     ]
 
     list_filter = [
         'is_staff',
         'is_superuser',
         'is_active',
+        'username_set_by_user',
         'date_joined',
-        'last_login'
+        'last_login',
+        'groups'
     ]
 
     search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering = ['-date_joined']
     readonly_fields = ['id', 'date_joined', 'last_login', 'login_status']
+    date_hierarchy = 'date_joined'
 
     fieldsets = (
         ('Authentication', {

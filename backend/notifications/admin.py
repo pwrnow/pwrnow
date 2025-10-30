@@ -49,6 +49,7 @@ class DeviceAdmin(admin.ModelAdmin):
         "preferred_language",
         "notifications_enabled",
         "is_active_display",
+        "app_version",
         "created_at",
         "last_active_at",
     ]
@@ -74,6 +75,8 @@ class DeviceAdmin(admin.ModelAdmin):
         "updated_at",
         "last_active_at",
     ]
+    date_hierarchy = 'created_at'
+    ordering = ['-last_active_at', '-created_at']
 
     fieldsets = (
         (
@@ -423,6 +426,7 @@ class DeviceAdmin(admin.ModelAdmin):
 class PushNotificationAdmin(admin.ModelAdmin):
     list_display = [
         "title",
+        "body_preview",
         "device_display",
         "status",
         "created_at",
@@ -433,12 +437,15 @@ class PushNotificationAdmin(admin.ModelAdmin):
         "status",
         "created_at",
         "sent_at",
+        "delivered_at",
         "device__platform",
     ]
     search_fields = [
         "title",
         "body",
         "device__device_name",
+        "device__user__username",
+        "device__user__email",
     ]
     readonly_fields = [
         "id",
@@ -448,6 +455,15 @@ class PushNotificationAdmin(admin.ModelAdmin):
         "delivered_at",
         "expo_ticket_id",
     ]
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+
+    @admin.display(description='Body')
+    def body_preview(self, obj):
+        if obj.body:
+            from django.utils.text import Truncator
+            return Truncator(obj.body).chars(50)
+        return "-"
 
     fieldsets = (
         (

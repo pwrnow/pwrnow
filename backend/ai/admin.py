@@ -5,10 +5,12 @@ from .models import AIProcessingLog
 
 @admin.register(AIProcessingLog)
 class AIProcessingLogAdmin(admin.ModelAdmin):
-    list_display = ['id', 'get_provider_display', 'status', 'organization', 'user', 'tokens_used', 'processing_time_ms', 'created_at']
-    list_filter = ['status', 'provider_name', 'organization', 'created_at']
-    search_fields = ['id', 'provider_name', 'error_message', 'organization__name', 'user__username', 'user__email']
+    list_display = ['id', 'get_provider_display', 'status', 'organization', 'user', 'tokens_used', 'processing_time_ms', 'created_at', 'updated_at']
+    list_filter = ['status', 'provider_name', 'organization', 'created_at', 'updated_at']
+    search_fields = ['id', 'provider_name', 'error_message', 'organization__name', 'user__username', 'user__email', 'input_text', 'output_text']
     readonly_fields = ['id', 'created_at', 'updated_at']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
 
     def get_provider_display(self, obj):
         """Display the human-readable provider name."""
