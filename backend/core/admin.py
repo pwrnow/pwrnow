@@ -217,14 +217,18 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
     form = OrganizationAdminForm
-    list_display = ['name', 'slug', 'image_preview', 'auth_codes_count', 'event_count', 'has_image', 'created_at', 'updated_at']
+    list_display = ['name', 'image_preview', 'last_active', 'auth_link', 'auth_codes_count', 'event_count', 'has_image']
     list_filter = ['created_at', 'updated_at', HasImageFilter]
     search_fields = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     ordering = ['name']
     readonly_fields = ['id', 'created_at', 'updated_at']
     inlines = [OrganizationCodeInline]
-    date_hierarchy = 'created_at'
+    date_hierarchy = None
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related('auth_codes')
 
     @admin.display(description='Has Image', boolean=True)
     def has_image(self, obj):
@@ -247,6 +251,59 @@ class OrganizationAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="30" height="30" style="object-fit: cover;" />', obj.image.url)
         return "No image"
 
+    @admin.display(description='Last Active', ordering='auth_codes__last_used_at')
+    def last_active(self, obj):
+        """Show the most recent last_used_at from any organization code."""
+        # Get the most recent last_used_at from all auth codes
+        # Use prefetched data to avoid N+1 queries
+        auth_codes_with_date = [code for code in obj.auth_codes.all() if code.last_used_at]
+        if auth_codes_with_date:
+            last_used = max(auth_codes_with_date, key=lambda x: x.last_used_at)
+            if last_used.last_used_at:
+                now = timezone.now()
+                time_diff = now - last_used.last_used_at
+
+                if time_diff.days > 0:
+                    return format_html(
+                        '<span title="{}">{} days ago</span>',
+                        last_used.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        time_diff.days
+                    )
+                elif time_diff.seconds > 3600:
+                    hours = time_diff.seconds // 3600
+                    return format_html(
+                        '<span title="{}">{} hours ago</span>',
+                        last_used.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        hours
+                    )
+                elif time_diff.seconds > 60:
+                    minutes = time_diff.seconds // 60
+                    return format_html(
+                        '<span title="{}">{} minutes ago</span>',
+                        last_used.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        minutes
+                    )
+                else:
+                    return format_html(
+                        '<span title="{}">Just now</span>',
+                        last_used.last_used_at.strftime('%Y-%m-%d %H:%M:%S')
+                    )
+        return format_html('<span style="color: #999;">Never</span>')
+
+    @admin.display(description='Auth Link')
+    def auth_link(self, obj):
+        """Display a button to navigate to any auth code URL for this organization."""
+        # Get any auth code for this organization
+        auth_code = obj.auth_codes.first()
+        if auth_code:
+            base_url = "http://localhost:3000" if settings.DEBUG else "https://pwrnow.pl"
+            url = f"{base_url}/auth/{auth_code.code}"
+            return format_html(
+                '<a href="{}" target="_blank" style="background-color: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px; display: inline-block;">🔗 Open Auth</a>',
+                url
+            )
+        return format_html('<span style="color: #999;">No code</span>')
+
     @admin.display(description='Auth Codes')
     def auth_codes_count(self, obj):
         count = obj.auth_codes.count()
@@ -264,39 +321,25 @@ class OrganizationAdmin(admin.ModelAdmin):
 class EventAdmin(TranslationAdmin):
     form = EventAdminForm
     list_display = [
-        'truncated_title',
         'image_preview',
-        'starts_at',
-        'ends_at',
-        'publication_date',
-        'category',
-        'organization',
+        'compact_title',
+        'compact_dates',
+        'compact_status',
         'verified',
-        'verified_by_display',
-        'status_display',
         'likes_count_display',
-        'has_image',
-        'has_url'
     ]
     list_filter = [
-        EventStatusFilter,
         'verified',
-        'verified_by',
+        EventStatusFilter,
         'category',
         'organization',
         HasImageFilter,
-        HasAspectRatioFilter,
-        'starts_at',
-        'ends_at',
-        'created_at',
-        'publication_date',
-        'verified_at'
     ]
     search_fields = ['title_pl', 'title_en', 'description_pl', 'description_en', 'location', 'slug']
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['verified']
-    date_hierarchy = 'starts_at'
-    ordering = ['-created_at']
+    date_hierarchy = None  # Removed date hierarchy for more compact view
+    ordering = ['verified', '-created_at']  # Non-verified first
     readonly_fields = ['id', 'created_at', 'updated_at', 'duration_display', 'verified_at', 'verified_by', 'likes_count_display', 'has_image', 'has_url']
     autocomplete_fields = ['category', 'organization']
     filter_horizontal = ['tags']
@@ -335,14 +378,56 @@ class EventAdmin(TranslationAdmin):
     )
 
     @admin.display(description='Title')
-    def truncated_title(self, obj):
-        return Truncator(obj.title).chars(50)
+    def compact_title(self, obj):
+        title = Truncator(obj.title).chars(60)
+        verified_badge = ''
+        if not obj.verified:
+            verified_badge = format_html(
+                '<span style="background-color: #EF4444; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-right: 4px;">UNVERIFIED</span>'
+            )
+        return format_html('{} {}', verified_badge, title)
+    compact_title.admin_order_field = 'title'
 
     @admin.display(description='Image')
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="40" height="40" style="object-fit: cover;" />', obj.image.url)
-        return "No image"
+            return format_html('<img src="{}" width="80" height="80" style="object-fit: cover; border-radius: 4px;" />', obj.image.url)
+        return format_html('<span style="color: #999; font-size: 11px;">No image</span>')
+
+    @admin.display(description='Dates')
+    def compact_dates(self, obj):
+        """Compact date display showing start date and status."""
+        if obj.starts_at:
+            date_str = obj.starts_at.strftime('%Y-%m-%d %H:%M')
+        else:
+            date_str = "No date"
+
+        status_color = '#dc3545' if obj.is_past else '#28a745' if obj.is_ongoing else '#007bff'
+        status_text = 'Past' if obj.is_past else 'Ongoing' if obj.is_ongoing else 'Upcoming'
+        status_badge = format_html(
+            '<span style="background-color: {}; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-left: 4px;">{}</span>',
+            status_color, status_text
+        )
+        return format_html('{} {}', date_str, status_badge)
+    compact_dates.admin_order_field = 'starts_at'
+
+    @admin.display(description='Status')
+    def compact_status(self, obj):
+        """Compact status display with verification and other info."""
+        verified_icon = '✓' if obj.verified else '✗'
+        verified_color = '#10B981' if obj.verified else '#EF4444'
+        verified_text = format_html(
+            '<span style="color: {}; font-weight: bold; margin-right: 8px;">{}</span>',
+            verified_color, verified_icon
+        )
+
+        org = obj.organization.name if obj.organization else '-'
+        cat = obj.category.name if obj.category else '-'
+        info = format_html(
+            '<span style="font-size: 11px; color: #666;">{} / {}</span>',
+            cat, org
+        )
+        return format_html('{} {}', verified_text, info)
 
     @admin.display(description='Aspect Ratio')
     def aspect_ratio_display(self, obj):
