@@ -292,7 +292,7 @@ class EventAdmin(TranslationAdmin):
         'publication_date',
         'verified_at'
     ]
-    search_fields = ['title', 'description', 'location', 'slug']
+    search_fields = ['title_pl', 'title_en', 'description_pl', 'description_en', 'location', 'slug']
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ['verified']
     date_hierarchy = 'starts_at'
