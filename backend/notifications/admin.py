@@ -60,8 +60,8 @@ class DeviceAdmin(admin.ModelAdmin):
         "last_active_at",
     ]
     search_fields = [
-        "user__email",
         "user__username",
+        "user__email",
         "device_name",
         "expo_push_token",
         "app_version",

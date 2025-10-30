@@ -52,6 +52,7 @@ class EventFeatureAccessAdmin(admin.ModelAdmin):
         "event__organization__name",
         "feature__name",
         "feature__display_name",
+        "enabled_by__username",
         "enabled_by__email",
     ]
     list_editable = ["is_enabled"]

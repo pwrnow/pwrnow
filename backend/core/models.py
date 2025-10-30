@@ -609,7 +609,7 @@ class EventParticipation(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.email} - {self.event.title} ({self.get_participation_type_display()})"
+        return f"{self.user.username} - {self.event.title} ({self.get_participation_type_display()})"
 
 
 class EventMap(models.Model):
@@ -729,7 +729,7 @@ class Friendship(models.Model):
     """Represents an accepted friendship between two users (bidirectional relationship)."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    
+
     # Both users in the friendship (order doesn't matter)
     user1 = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -757,13 +757,13 @@ class Friendship(models.Model):
         """Ensure users are different and maintain consistent ordering."""
         import logging
         logger = logging.getLogger(__name__)
-        
+
         logger.debug(f"FRIENDS_MODEL_FRIENDSHIP_CLEAN: Cleaning friendship between {self.user1.username} and {self.user2.username}")
-        
+
         if self.user1 == self.user2:
             logger.error(f"FRIENDS_MODEL_FRIENDSHIP_CLEAN_ERROR: User {self.user1.username} cannot be friends with themselves")
             raise ValidationError("Users cannot be friends with themselves.")
-        
+
         # Ensure user1.id < user2.id for consistent ordering
         if self.user1.id > self.user2.id:
             logger.debug(f"FRIENDS_MODEL_FRIENDSHIP_CLEAN_REORDER: Reordering users for consistent ordering")
@@ -772,13 +772,13 @@ class Friendship(models.Model):
     def save(self, *args, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
-        
+
         is_new = self.pk is None
         logger.info(f"FRIENDS_MODEL_FRIENDSHIP_SAVE: {'Creating' if is_new else 'Updating'} friendship between {self.user1.username} and {self.user2.username}")
-        
+
         self.clean()
         super().save(*args, **kwargs)
-        
+
         if is_new:
             logger.info(f"FRIENDS_MODEL_FRIENDSHIP_SAVE_SUCCESS: Friendship {self.id} created between {self.user1.username} and {self.user2.username}")
         else:
@@ -787,50 +787,50 @@ class Friendship(models.Model):
     def delete(self, *args, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
-        
+
         logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE: Deleting friendship {self.id} between {self.user1.username} and {self.user2.username}")
-        
+
         # Clean up any friend requests between these users before deleting the friendship
         friend_requests = FriendRequest.objects.filter(
             models.Q(from_user=self.user1, to_user=self.user2) |
             models.Q(from_user=self.user2, to_user=self.user1)
         )
-        
+
         if friend_requests.exists():
             logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_CLEANUP: Found {friend_requests.count()} friend request(s) to clean up between {self.user1.username} and {self.user2.username}")
             friend_requests.delete()
             logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_CLEANUP_SUCCESS: Successfully deleted friend requests between {self.user1.username} and {self.user2.username}")
-        
+
         super().delete(*args, **kwargs)
         logger.info(f"FRIENDS_MODEL_FRIENDSHIP_DELETE_SUCCESS: Friendship {self.id} deleted successfully")
 
 
 class FriendRequest(models.Model):
     """Represents a pending friend request from one user to another."""
-    
+
     class Status(models.TextChoices):
         PENDING = 'pending', _('Pending')
         ACCEPTED = 'accepted', _('Accepted')
         REJECTED = 'rejected', _('Rejected')
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
-    
+
     # User who sent the request
     from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='sent_friend_requests'
     )
-    
+
     # User who received the request
     to_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='received_friend_requests'
     )
-    
+
     status = models.CharField(
         max_length=10,
         choices=Status.choices,
@@ -854,9 +854,9 @@ class FriendRequest(models.Model):
         """Validate that users are different."""
         import logging
         logger = logging.getLogger(__name__)
-        
+
         logger.debug(f"FRIENDS_MODEL_FRIEND_REQUEST_CLEAN: Cleaning friend request from {self.from_user.username} to {self.to_user.username}")
-        
+
         if self.from_user == self.to_user:
             logger.error(f"FRIENDS_MODEL_FRIEND_REQUEST_CLEAN_ERROR: User {self.from_user.username} cannot send friend request to themselves")
             raise ValidationError("Users cannot send friend requests to themselves.")
@@ -864,7 +864,7 @@ class FriendRequest(models.Model):
     def save(self, *args, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
-        
+
         is_new = self.pk is None
         old_status = None
         if not is_new:
@@ -873,14 +873,14 @@ class FriendRequest(models.Model):
                 old_status = old_instance.status
             except FriendRequest.DoesNotExist:
                 pass
-        
+
         logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE: {'Creating' if is_new else 'Updating'} friend request from {self.from_user.username} to {self.to_user.username}")
         if not is_new and old_status != self.status:
             logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE_STATUS_CHANGE: Status changed from {old_status} to {self.status}")
-        
+
         self.clean()
         super().save(*args, **kwargs)
-        
+
         if is_new:
             logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_SAVE_SUCCESS: Friend request {self.id} created from {self.from_user.username} to {self.to_user.username} with status {self.status}")
         else:
@@ -889,7 +889,7 @@ class FriendRequest(models.Model):
     def delete(self, *args, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
-        
+
         logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_DELETE: Deleting friend request {self.id} from {self.from_user.username} to {self.to_user.username}")
         super().delete(*args, **kwargs)
         logger.info(f"FRIENDS_MODEL_FRIEND_REQUEST_DELETE_SUCCESS: Friend request {self.id} deleted successfully")

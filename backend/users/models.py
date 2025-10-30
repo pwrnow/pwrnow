@@ -65,6 +65,10 @@ class User(AbstractUser):
             existing_usernames=lambda username: User.objects.filter(username=username).exists()
         )
 
+    def __str__(self):
+        """Return username for string representation."""
+        return self.username
+
     def save(self, *args, **kwargs):
         """Override save to auto-generate username if not provided"""
         if not self.username:

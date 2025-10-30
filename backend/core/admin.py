@@ -60,17 +60,17 @@ class OrganizationCodeInline(admin.TabularInline):
 class OrganizationCodeResource(resources.ModelResource):
     organization_name = fields.Field(attribute='organization__name', column_name='Organization Name')
     url = fields.Field(column_name='URL')
-    
+
     class Meta:
         model = OrganizationCode
         fields = ['organization', 'organization_name', 'code', 'url', 'created_at', 'last_used_at']
-    
+
     def dehydrate_url(self, obj):
         if settings.DEBUG:
             base_url = "http://localhost:3000"
         else:
             base_url = "https://pwrnow.pl"
-        
+
         return f"{base_url}/auth/{obj.code}"
 
 
@@ -446,7 +446,7 @@ admin.site.index_title = "Welcome to PWr Now Administration"
 class LikeAdmin(admin.ModelAdmin):
     list_display = ['user', 'event', 'created_at']
     list_filter = ['created_at']
-    search_fields = ['user__email', 'event__title']
+    search_fields = ['user__username', 'user__email', 'event__title']
     autocomplete_fields = ['user', 'event']
 
 
@@ -838,7 +838,7 @@ class QRCodeAdmin(admin.ModelAdmin):
 class EventParticipationAdmin(admin.ModelAdmin):
     list_display = ['user', 'event', 'participation_type', 'qr_code', 'confirmed_at']
     list_filter = ['participation_type', 'confirmed_at', 'event', 'qr_code']
-    search_fields = ['user__email', 'event__title', 'qr_code__name', 'notes']
+    search_fields = ['user__username', 'user__email', 'event__title', 'qr_code__name', 'notes']
     autocomplete_fields = ['user', 'event', 'qr_code']
     readonly_fields = ['id', 'created_at', 'updated_at', 'confirmed_at']
     ordering = ['-confirmed_at']
@@ -981,7 +981,7 @@ EventAdmin.inlines.append(EventMapInline)
 class FriendshipAdmin(admin.ModelAdmin):
     list_display = ['user1', 'user2', 'created_at']
     list_filter = ['created_at']
-    search_fields = ['user1__username', 'user1__email', 'user2__username', 'user2__email']
+    search_fields = ['user1__username', 'user2__username', 'user1__email', 'user2__email']
     autocomplete_fields = ['user1', 'user2']
     readonly_fields = ['id', 'created_at']
     ordering = ['-created_at']
@@ -1004,7 +1004,7 @@ class FriendshipAdmin(admin.ModelAdmin):
 class FriendRequestAdmin(admin.ModelAdmin):
     list_display = ['from_user', 'to_user', 'status', 'created_at', 'updated_at']
     list_filter = ['status', 'created_at', 'updated_at']
-    search_fields = ['from_user__username', 'from_user__email', 'to_user__username', 'to_user__email']
+    search_fields = ['from_user__username', 'to_user__username', 'from_user__email', 'to_user__email']
     autocomplete_fields = ['from_user', 'to_user']
     readonly_fields = ['id', 'created_at', 'updated_at']
     list_editable = ['status']
