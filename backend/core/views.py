@@ -321,6 +321,10 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
         if friend_ids:
             event_ids = [e.id for e in events]
             if event_ids:
+                # Initialize map with empty lists for all events to prevent fallback queries
+                for event_id in event_ids:
+                    friends_interested_map[event_id] = []
+
                 interested_rows = Like.objects.filter(
                     event_id__in=event_ids,
                     user_id__in=friend_ids
@@ -328,7 +332,7 @@ class EventViewSet(OrganizationAuthenticationMixin, viewsets.ModelViewSet):
 
                 for row in interested_rows:
                     ev_id = row['event_id']
-                    friends_interested_map.setdefault(ev_id, []).append({
+                    friends_interested_map[ev_id].append({
                         'id': str(row['user__id']),
                         'username': row['user__username'],
                     })
@@ -995,22 +999,28 @@ def suggest_friends(request):
         # Get friends of friends (excluding current user and existing friends)
         friends_of_friends_map = {}  # Maps suggested user ID to list of mutual friend IDs
 
-        for friend_id in friend_ids:
-            # Get this friend's friends
-            fof_friendships = Friendship.objects.filter(
-                Q(user1_id=friend_id) | Q(user2_id=friend_id)
-            ).values_list('user1_id', 'user2_id')
+        # Batch fetch all friendships for all friends in a single query
+        fof_friendships = Friendship.objects.filter(
+            Q(user1_id__in=friend_ids) | Q(user2_id__in=friend_ids)
+        ).values_list('user1_id', 'user2_id')
 
-            for user1_id, user2_id in fof_friendships:
-                fof_id = user1_id if user1_id != friend_id else user2_id
+        # Process all friendships to build the friends-of-friends map
+        for user1_id, user2_id in fof_friendships:
+            # Determine which user is the friend and which is the friend-of-friend
+            if user1_id in friend_ids:
+                friend_id = user1_id
+                fof_id = user2_id
+            else:
+                friend_id = user2_id
+                fof_id = user1_id
 
-                # Skip if it's the current user or already a friend
-                if fof_id == request.user.id or fof_id in friend_ids:
-                    continue
+            # Skip if it's the current user or already a friend
+            if fof_id == request.user.id or fof_id in friend_ids:
+                continue
 
-                if fof_id not in friends_of_friends_map:
-                    friends_of_friends_map[fof_id] = []
-                friends_of_friends_map[fof_id].append(friend_id)
+            if fof_id not in friends_of_friends_map:
+                friends_of_friends_map[fof_id] = []
+            friends_of_friends_map[fof_id].append(friend_id)
 
         logger.info(f"FRIENDS_SUGGEST_FOF: Found {len(friends_of_friends_map)} potential friends of friends")
 
@@ -1048,6 +1058,15 @@ def suggest_friends(request):
         suggested_user_ids = list(friends_of_friends_map.keys())
         users = User.objects.filter(id__in=suggested_user_ids).values('id', 'username')
 
+        # Batch fetch all source friend usernames in a single query
+        all_source_friend_ids = set()
+        for mutual_friends in friends_of_friends_map.values():
+            if mutual_friends:
+                all_source_friend_ids.add(mutual_friends[0])
+
+        source_friends_data = User.objects.filter(id__in=all_source_friend_ids).values('id', 'username')
+        source_friends_map = {sf['id']: sf['username'] for sf in source_friends_data}
+
         # Build suggestions with mutual friend count and source friend
         suggestions = []
         for user in users:
@@ -1057,13 +1076,13 @@ def suggest_friends(request):
 
             # Get the first mutual friend's username (to show as source)
             source_friend_id = mutual_friends[0]
-            source_friend = User.objects.filter(id=source_friend_id).values('username').first()
+            source_friend_username = source_friends_map.get(source_friend_id)
 
             suggestions.append({
                 'id': str(user_id),
                 'username': user['username'],
                 'mutual_friends_count': mutual_count,
-                'source_friend': source_friend['username'] if source_friend else None,
+                'source_friend': source_friend_username,
             })
 
             logger.debug(f"FRIENDS_SUGGEST_USER: Added suggestion {user['username']} with {mutual_count} mutual friends")
@@ -1158,7 +1177,14 @@ class EventMapViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter maps based on authentication and permissions."""
+        from django.db.models import Count, Q
+
         queryset = EventMap.objects.select_related('event').prefetch_related('locations')
+
+        # Add annotation for active locations count to avoid N+1 queries
+        queryset = queryset.annotate(
+            active_locations_count=Count('locations', filter=Q(locations__is_active=True))
+        )
 
         # For public access, only show active maps for verified events
         if not self.request.user.is_authenticated:

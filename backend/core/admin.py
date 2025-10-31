@@ -365,8 +365,12 @@ class OrganizationAdmin(admin.ModelAdmin):
     date_hierarchy = None
 
     def get_queryset(self, request):
+        from django.db.models import Count
         qs = super().get_queryset(request)
-        return qs.prefetch_related('auth_codes')
+        return qs.prefetch_related('auth_codes').annotate(
+            auth_codes_total=Count('auth_codes'),
+            events_total=Count('events')
+        )
 
     @admin.display(description='Has Image', boolean=True)
     def has_image(self, obj):
@@ -448,13 +452,15 @@ class OrganizationAdmin(admin.ModelAdmin):
 
     @admin.display(description='Auth Codes')
     def auth_codes_count(self, obj):
-        count = obj.auth_codes.count()
+        # Use annotated value to avoid N+1 queries
+        count = obj.auth_codes_total if hasattr(obj, 'auth_codes_total') else obj.auth_codes.count()
         url = reverse('admin:core_organizationcode_changelist') + f'?organization__id__exact={obj.id}'
         return format_html('<a href="{}">{} codes</a>', url, count)
 
     @admin.display(description='Events')
     def event_count(self, obj):
-        count = obj.events.count()
+        # Use annotated value to avoid N+1 queries
+        count = obj.events_total if hasattr(obj, 'events_total') else obj.events.count()
         url = reverse('admin:core_event_changelist') + f'?organization__id__exact={obj.id}'
         return format_html('<a href="{}">{} events</a>', url, count)
 

@@ -228,14 +228,14 @@ class EventSerializer(serializers.ModelSerializer):
     def get_friends_interested(self, obj):
         """Get friends who are interested in (have liked) this event."""
         from .models import Like
-        
+
         request = self.context.get('request')
         user = getattr(request, 'user', None)
-        
+
         # Return empty data if not authenticated
         if not user or not getattr(user, 'is_authenticated', False):
             return {'count': 0, 'friends': []}
-        
+
         # Use batched results from view when available
         friends_map = self.context.get('friends_interested_map') or {}
         precomputed = friends_map.get(getattr(obj, 'id'))
@@ -247,38 +247,38 @@ class EventSerializer(serializers.ModelSerializer):
 
         # Use cached friend_ids from context if available (optimized for list views)
         friend_ids = self.context.get('friend_ids')
-        
+
         # If friend_ids not in context, fetch them (fallback for detail views)
         if friend_ids is None:
             from django.db import models
             from .models import Friendship
-            
+
             friendships = Friendship.objects.filter(
                 models.Q(user1=user) | models.Q(user2=user)
             ).values_list('user1_id', 'user2_id')
-            
+
             friend_ids = set()
             for user1_id, user2_id in friendships:
                 friend_ids.add(user1_id)
                 friend_ids.add(user2_id)
             friend_ids.discard(user.id)
-        
+
         # If no friends, return early
         if not friend_ids:
             return {'count': 0, 'friends': []}
-        
+
         # Get friends who are interested in this event
         interested_friends = Like.objects.filter(
             event=obj,
             user_id__in=friend_ids
         ).select_related('user').values('user__id', 'user__username')
-        
+
         # Format the response
         friends_list = [
             {'id': str(friend['user__id']), 'username': friend['user__username']}
             for friend in interested_friends
         ]
-        
+
         return {
             'count': len(friends_list),
             'friends': friends_list
@@ -288,7 +288,7 @@ class EventSerializer(serializers.ModelSerializer):
         """Get the total number of likes for this event (staff only)."""
         request = self.context.get('request')
         user = getattr(request, 'user', None)
-        
+
         # Only return likes count for staff users
         if not user or not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_staff', False):
             return None
@@ -301,11 +301,11 @@ class EventSerializer(serializers.ModelSerializer):
         """Get publication status for this event (staff only)."""
         request = self.context.get('request')
         user = getattr(request, 'user', None)
-        
+
         # Only return publication status for staff users
         if not user or not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_staff', False):
             return None
-            
+
         return obj.is_published
 
 
@@ -631,6 +631,10 @@ class EventMapSerializer(serializers.ModelSerializer):
 
     def get_locations_count(self, obj):
         """Get the total number of active locations on this map."""
+        # Use annotated value when available to avoid N+1 queries
+        if hasattr(obj, 'active_locations_count'):
+            return obj.active_locations_count
+        # Fallback for when annotation is not present
         return obj.locations.filter(is_active=True).count()
 
 
@@ -808,18 +812,18 @@ class FriendRequestSerializer(serializers.ModelSerializer):
     """Serializer for friend requests."""
     from_user = serializers.SerializerMethodField()
     to_user = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = FriendRequest
         fields = ['id', 'from_user', 'to_user', 'status', 'created_at']
         read_only_fields = ['id', 'status', 'created_at']
-    
+
     def get_from_user(self, obj):
         return {
             'id': str(obj.from_user.id),
             'username': obj.from_user.username,
         }
-    
+
     def get_to_user(self, obj):
         return {
             'id': str(obj.to_user.id),
@@ -830,61 +834,61 @@ class FriendRequestSerializer(serializers.ModelSerializer):
 class FriendRequestCreateSerializer(serializers.Serializer):
     """Serializer for creating friend requests."""
     to_user_id = serializers.UUIDField(required=True)
-    
+
     def validate_to_user_id(self, value):
         """Validate that the target user exists."""
         import logging
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         logger = logging.getLogger(__name__)
         logger.debug(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID: Validating user ID {value}")
-        
+
         try:
             user = User.objects.get(id=value)
             logger.debug(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID_SUCCESS: User {user.username} found for ID {value}")
         except User.DoesNotExist:
             logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID_NOT_FOUND: User with ID {value} not found")
             raise serializers.ValidationError(_("User not found."))
-        
+
         # Check if trying to send request to self
         request = self.context.get('request')
         if request and request.user.id == value:
             logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_USER_ID_SELF: User {request.user.id} attempted to send friend request to themselves")
             raise serializers.ValidationError(_("You cannot send a friend request to yourself."))
-        
+
         return value
-    
+
     def validate(self, attrs):
         """Additional validation for friend requests."""
         import logging
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         logger = logging.getLogger(__name__)
         request = self.context.get('request')
         from_user = request.user
         to_user = User.objects.get(id=attrs['to_user_id'])
-        
+
         logger.info(f"FRIENDS_SERIALIZER_VALIDATE: Validating friend request from {from_user.username} to {to_user.username}")
-        
+
         # Check if users are already friends
         friendship_exists = Friendship.objects.filter(
             models.Q(user1=from_user, user2=to_user) |
             models.Q(user1=to_user, user2=from_user)
         ).exists()
-        
+
         if friendship_exists:
             logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_ALREADY_FRIENDS: Users {from_user.username} and {to_user.username} are already friends")
             raise serializers.ValidationError(_("You are already friends with this user."))
-        
+
         # Check if there's already a pending request in either direction
         existing_request = FriendRequest.objects.filter(
             (models.Q(from_user=from_user, to_user=to_user) |
              models.Q(from_user=to_user, to_user=from_user)),
             status=FriendRequest.Status.PENDING
         ).first()
-        
+
         if existing_request:
             if existing_request.from_user == from_user:
                 logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_DUPLICATE_SENT: User {from_user.username} already sent a friend request to {to_user.username}")
@@ -892,22 +896,22 @@ class FriendRequestCreateSerializer(serializers.Serializer):
             else:
                 logger.warning(f"FRIENDS_SERIALIZER_VALIDATE_DUPLICATE_RECEIVED: User {to_user.username} already sent a friend request to {from_user.username}")
                 raise serializers.ValidationError(_("This user has already sent you a friend request. Please accept it instead."))
-        
+
         logger.info(f"FRIENDS_SERIALIZER_VALIDATE_SUCCESS: Validation passed for friend request from {from_user.username} to {to_user.username}")
         return attrs
-    
+
     def create(self, validated_data):
         import logging
         from django.contrib.auth import get_user_model
         from django.db import IntegrityError
         User = get_user_model()
-        
+
         logger = logging.getLogger(__name__)
         request = self.context.get('request')
         to_user = User.objects.get(id=validated_data['to_user_id'])
-        
+
         logger.info(f"FRIENDS_SERIALIZER_CREATE: Creating friend request from {request.user.username} to {to_user.username}")
-        
+
         try:
             friend_request = FriendRequest.objects.create(
                 from_user=request.user,
