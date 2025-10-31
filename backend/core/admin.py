@@ -138,11 +138,11 @@ class OrganizationCodeResource(resources.ModelResource):
 
 @admin.register(OrganizationCode)
 class OrganizationCodeAdmin(ImportExportModelAdmin):
-    list_display = ['organization', 'code_preview', 'type', 'created_at', 'last_used_display', 'is_used']
+    list_display = ['organization', 'code_preview', 'type', 'code_actions', 'created_at', 'last_used_display', 'is_used']
     list_filter = ['type', 'created_at', 'last_used_at', 'organization']
     search_fields = ['organization__name', 'code']
     autocomplete_fields = ['organization']
-    readonly_fields = ['id','created_at', 'updated_at', 'last_used_at', 'code_actions']
+    readonly_fields = ['id','created_at', 'updated_at', 'last_used_at']
     ordering = ['-created_at']
     date_hierarchy = 'created_at'
 
@@ -174,7 +174,7 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
             'fields': ('organization',)
         }),
         ('Authentication Details', {
-            'fields': ('code', 'type', 'code_actions')
+            'fields': ('code', 'type')
         }),
         ('Usage Statistics', {
             'fields': ('last_used_at',),
@@ -200,31 +200,37 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
 
     @admin.display(description='Actions')
     def code_actions(self, obj):
-        """Display copy and mark as used buttons."""
+        """Display copy and visit buttons in list view."""
+        if settings.DEBUG:
+            base_url = "http://localhost:3000"
+        else:
+            base_url = "https://pwrnow.pl"
+
+        auth_url = f"{base_url}/auth/{obj.code}"
+
         copy_button = format_html(
             '''
             <button type="button"
                     onclick="navigator.clipboard.writeText('{}').then(() => alert('Code copied to clipboard!')).catch(() => alert('Failed to copy'))"
-                    style="background-color: #007bff; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px;">
-                📋 Copy Code
+                    style="background-color: #007bff; color: white; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; margin-right: 4px; font-size: 11px;">
+                📋 Copy
             </button>
             ''',
             obj.code
         )
 
-        mark_used_url = reverse('admin:core_organizationcode_mark_used', args=[obj.pk])
-        mark_used_button = format_html(
+        visit_button = format_html(
             '''
             <button type="button"
-                    onclick="if(confirm('Mark this code as used now?')) {{ window.location.href='{}'; }}"
-                    style="background-color: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">
-                ✓ Mark as Used
+                    onclick="window.open('{}', '_blank')"
+                    style="background-color: #28a745; color: white; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                🔗 Visit
             </button>
             ''',
-            mark_used_url
+            auth_url
         )
 
-        return format_html('{} {}', copy_button, mark_used_button)
+        return format_html('{} {}', copy_button, visit_button)
 
     @admin.display(description='Last Used', ordering='last_used_at')
     def last_used_display(self, obj):
@@ -437,7 +443,9 @@ class EventAdmin(TranslationAdmin):
             verified_badge = format_html(
                 '<span style="background-color: #EF4444; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-right: 4px;">UNVERIFIED</span>'
             )
-        return format_html('{} {}', verified_badge, title)
+        change_url = reverse('admin:core_event_change', args=[obj.pk])
+        title_link = format_html('<a href="{}">{}</a>', change_url, title)
+        return format_html('{} {}', verified_badge, title_link)
     compact_title.admin_order_field = 'title'
 
     @admin.display(description='Image')

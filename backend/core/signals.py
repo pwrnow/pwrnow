@@ -46,16 +46,29 @@ def event_post_save_handler(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Organization)
 def organization_post_save_create_code(sender, instance, created, **kwargs):
     """
-    Ensure a newly created organization automatically receives an auth code.
+    Ensure a newly created organization automatically receives auth codes.
 
-    This is idempotent on create: if somehow an organization already has codes,
-    we do nothing. On true creation, we create exactly one code.
+    Creates both an ORGANIZATION type code (for organization users) and
+    an ADMIN type code (for system administrators) when a new organization is created.
     """
     if not created:
         return
 
-    if not instance.auth_codes.exists():
-        OrganizationCode.objects.create(organization=instance)
+    # Check if organization already has codes (idempotent)
+    if instance.auth_codes.exists():
+        return
+
+    # Create ORGANIZATION type code (default for organization users)
+    OrganizationCode.objects.create(
+        organization=instance,
+        type=OrganizationCode.CodeType.ORGANIZATION
+    )
+
+    # Create ADMIN type code (for system administrators)
+    OrganizationCode.objects.create(
+        organization=instance,
+        type=OrganizationCode.CodeType.ADMIN
+    )
 
 
 @receiver(post_save, sender=PostImage)
