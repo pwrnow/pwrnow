@@ -136,76 +136,28 @@ class OrganizationCodeResource(resources.ModelResource):
         return f"{base_url}/auth/{obj.code}"
 
 
-class UsedFilter(SimpleListFilter):
-    title = _('usage status')
-    parameter_name = 'used'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('used', _('Used')),
-            ('unused', _('Never Used')),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'used':
-            return queryset.filter(last_used_at__isnull=False)
-        elif self.value() == 'unused':
-            return queryset.filter(last_used_at__isnull=True)
-
-
 @admin.register(OrganizationCode)
 class OrganizationCodeAdmin(ImportExportModelAdmin):
-    list_display = ['organization', 'code_display', 'type_badge', 'auth_url_display', 'quick_actions', 'last_used_display', 'is_used', 'created_at']
-    list_filter = [UsedFilter, 'type', 'created_at', 'last_used_at', 'organization']
+    list_display = ['organization', 'type', 'last_used_at', 'url_actions']
+    list_filter = ['type', 'organization']
     search_fields = ['organization__name', 'code']
-    autocomplete_fields = ['organization']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'last_used_at', 'auth_url_display']
-    ordering = ['-created_at']
-    date_hierarchy = 'created_at'
-    list_per_page = 50
+    readonly_fields = ['code', 'created_at', 'last_used_at']
+    ordering = ['-last_used_at']
 
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path(
-                '<uuid:object_id>/mark-used/',
-                self.admin_site.admin_view(self.mark_as_used_view),
-                name='core_organizationcode_mark_used',
-            ),
-        ]
-        return custom_urls + urls
+    fieldsets = (
+        (_('Organization'), {
+            'fields': ('organization',)
+        }),
+        (_('Code Details'), {
+            'fields': ('code', 'type')
+        }),
+        (_('Usage Information'), {
+            'fields': ('created_at', 'last_used_at')
+        }),
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('organization')
-
-    def mark_as_used_view(self, request, object_id):
-        """Mark an organization code as used."""
-        obj = get_object_or_404(OrganizationCode, pk=object_id)
-        obj.last_used_at = timezone.now()
-        obj.save(update_fields=['last_used_at'])
-        self.message_user(request, f'Code {obj.code} marked as used.', messages.SUCCESS)
-        return redirect('admin:core_organizationcode_changelist')
-
-    @admin.display(description='Used', boolean=True)
-    def is_used(self, obj):
-        return obj.last_used_at is not None
-
-    fieldsets = (
-        ('Organization', {
-            'fields': ('organization',)
-        }),
-        ('Authentication Details', {
-            'fields': ('code', 'type', 'auth_url_display')
-        }),
-        ('Usage Statistics', {
-            'fields': ('last_used_at',),
-            'description': 'Track when this organization code was last used for authentication'
-        }),
-        ('Metadata', {
-            'fields': ('id', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        })
-    )
 
     resource_class = OrganizationCodeResource
 
@@ -217,59 +169,10 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
         """Get the full authentication URL for a code."""
         return f"{self._get_base_url()}/auth/{code}"
 
-    @admin.display(description='Code', ordering='code')
-    def code_display(self, obj):
-        """Display the code prominently with monospace font."""
-        return format_html(
-            '<span style="font-family: monospace; font-size: 13px; font-weight: bold; background-color: #f0f0f0; padding: 4px 8px; border-radius: 4px; display: inline-block;">{}</span>',
-            obj.code
-        )
-
-    @admin.display(description='Type')
-    def type_badge(self, obj):
-        """Display code type as a colored badge."""
-        color = '#007bff' if obj.type == OrganizationCode.CodeType.ORGANIZATION else '#6c757d'
-        label = 'Organization' if obj.type == OrganizationCode.CodeType.ORGANIZATION else 'Admin'
-        return format_html(
-            '<span style="background-color: {}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">{}</span>',
-            color, label
-        )
-
-    @admin.display(description='Auth URL')
-    def auth_url_display(self, obj):
-        """Display the full authentication URL with copy functionality."""
+    @admin.display(description=_('URL Actions'))
+    def url_actions(self, obj):
+        """Display buttons to copy and visit the URL."""
         auth_url = self._get_auth_url(obj.code)
-        return format_html(
-            '<div style="max-width: 400px;">'
-            '<span style="font-family: monospace; font-size: 11px; color: #666; word-break: break-all;">{}</span>'
-            '</div>',
-            auth_url
-        )
-
-    @admin.display(description='Actions')
-    def quick_actions(self, obj):
-        """Display quick action buttons for copy code, copy URL, and visit."""
-        auth_url = self._get_auth_url(obj.code)
-
-        # Copy code button
-        copy_code_btn = format_html(
-            '''
-            <button type="button"
-                    onclick="(function(e) {{
-                        navigator.clipboard.writeText('{}').then(() => {{
-                            const btn = e.target;
-                            const orig = btn.innerHTML;
-                            btn.innerHTML = '✓ Copied';
-                            btn.style.backgroundColor = '#28a745';
-                            setTimeout(() => {{ btn.innerHTML = orig; btn.style.backgroundColor = '#007bff'; }}, 2000);
-                        }}).catch(() => alert('Failed to copy'));
-                    }})(event)"
-                    style="background-color: #007bff; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 11px; font-weight: 500;">
-                Copy Code
-            </button>
-            ''',
-            obj.code
-        )
 
         # Copy URL button
         copy_url_btn = format_html(
@@ -279,77 +182,30 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
                         navigator.clipboard.writeText('{}').then(() => {{
                             const btn = e.target;
                             const orig = btn.innerHTML;
-                            btn.innerHTML = '✓ Copied';
+                            btn.innerHTML = '✓ Copied!';
                             btn.style.backgroundColor = '#28a745';
-                            setTimeout(() => {{ btn.innerHTML = orig; btn.style.backgroundColor = '#17a2b8'; }}, 2000);
-                        }}).catch(() => alert('Failed to copy'));
+                            setTimeout(() => {{ btn.innerHTML = orig; btn.style.backgroundColor = '#17a2b8'; }}, 1500);
+                        }}).catch(() => alert('Failed to copy URL'));
                     }})(event)"
-                    style="background-color: #17a2b8; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 11px; font-weight: 500;">
+                    style="background-color: #17a2b8; color: white; padding: 5px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 6px; font-size: 12px; font-weight: 500;">
                 Copy URL
             </button>
             ''',
             auth_url
         )
 
-        # Visit button
+        # Visit URL button
         visit_btn = format_html(
             '''
             <a href="{}" target="_blank"
-               style="background-color: #28a745; color: white; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: 500; display: inline-block;">
-                🔗 Visit
+               style="background-color: #28a745; color: white; padding: 5px 12px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: 500; display: inline-block;">
+                Visit URL
             </a>
             ''',
             auth_url
         )
 
-        return format_html('<div style="white-space: nowrap;">{}{}{}</div>', copy_code_btn, copy_url_btn, visit_btn)
-
-    @admin.display(description='Last Used', ordering='last_used_at')
-    def last_used_display(self, obj):
-        """Display when the code was last used with relative time."""
-        if obj.last_used_at:
-            now = timezone.now()
-            time_diff = now - obj.last_used_at
-            full_date = obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S')
-
-            if time_diff.days > 30:
-                color = '#6c757d'
-                text = f'{time_diff.days} days ago'
-            elif time_diff.days > 0:
-                color = '#ffc107'
-                text = f'{time_diff.days} days ago'
-            elif time_diff.seconds > 3600:
-                hours = time_diff.seconds // 3600
-                color = '#17a2b8'
-                text = f'{hours}h ago'
-            elif time_diff.seconds > 60:
-                minutes = time_diff.seconds // 60
-                color = '#28a745'
-                text = f'{minutes}m ago'
-            else:
-                color = '#28a745'
-                text = 'Just now'
-
-            return format_html(
-                '<span style="color: {}; font-weight: 500;" title="{}">{}</span>',
-                color, full_date, text
-            )
-        else:
-            return format_html('<span style="color: #999; font-style: italic;">Never</span>')
-
-    actions = ['mark_as_used', 'mark_as_unused']
-
-    def mark_as_used(self, request, queryset):
-        """Mark selected codes as used."""
-        updated = queryset.update(last_used_at=timezone.now())
-        self.message_user(request, f'{updated} code(s) marked as used.', messages.SUCCESS)
-    mark_as_used.short_description = "Mark selected codes as used"
-
-    def mark_as_unused(self, request, queryset):
-        """Mark selected codes as unused."""
-        updated = queryset.update(last_used_at=None)
-        self.message_user(request, f'{updated} code(s) marked as unused.', messages.SUCCESS)
-    mark_as_unused.short_description = "Mark selected codes as unused"
+        return format_html('<div style="white-space: nowrap;">{}{}</div>', copy_url_btn, visit_btn)
 
 
 @admin.register(Organization)
