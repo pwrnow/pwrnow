@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.html import format_html
-from django.urls import reverse
+from django.urls import reverse, path
 from django.utils.safestring import mark_safe
 from django.utils.text import Truncator
 from django.conf import settings
@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 from django.db import models
+from django.shortcuts import redirect, get_object_or_404
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .forms import OrganizationAdminForm, EventAdminForm
@@ -115,7 +116,7 @@ class OrganizationCodeInline(admin.TabularInline):
     model = OrganizationCode
     extra = 0
     readonly_fields = ['code', 'created_at', 'last_used_at']
-    fields = ['code', 'created_at', 'last_used_at']
+    fields = ['code', 'type', 'created_at', 'last_used_at']
 
 
 class OrganizationCodeResource(resources.ModelResource):
@@ -137,13 +138,32 @@ class OrganizationCodeResource(resources.ModelResource):
 
 @admin.register(OrganizationCode)
 class OrganizationCodeAdmin(ImportExportModelAdmin):
-    list_display = ['organization', 'code_preview', 'created_at', 'last_used_display', 'is_used']
-    list_filter = ['created_at', 'last_used_at', 'organization']
+    list_display = ['organization', 'code_preview', 'type', 'created_at', 'last_used_display', 'is_used']
+    list_filter = ['type', 'created_at', 'last_used_at', 'organization']
     search_fields = ['organization__name', 'code']
     autocomplete_fields = ['organization']
-    readonly_fields = ['id','created_at', 'updated_at', 'last_used_at']
+    readonly_fields = ['id','created_at', 'updated_at', 'last_used_at', 'code_actions']
     ordering = ['-created_at']
     date_hierarchy = 'created_at'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<uuid:object_id>/mark-used/',
+                self.admin_site.admin_view(self.mark_as_used_view),
+                name='core_organizationcode_mark_used',
+            ),
+        ]
+        return custom_urls + urls
+
+    def mark_as_used_view(self, request, object_id):
+        """Mark an organization code as used."""
+        obj = get_object_or_404(OrganizationCode, pk=object_id)
+        obj.last_used_at = timezone.now()
+        obj.save(update_fields=['last_used_at'])
+        self.message_user(request, f'Code {obj.code} marked as used.', messages.SUCCESS)
+        return redirect('admin:core_organizationcode_change', object_id)
 
     @admin.display(description='Used', boolean=True)
     def is_used(self, obj):
@@ -154,7 +174,7 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
             'fields': ('organization',)
         }),
         ('Authentication Details', {
-            'fields': ('code',)
+            'fields': ('code', 'type', 'code_actions')
         }),
         ('Usage Statistics', {
             'fields': ('last_used_at',),
@@ -177,6 +197,34 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
 
         url = f"{base_url}/auth/{obj.code}"
         return format_html('<a href="{}" target="_blank">{}</a>', url, obj.code)
+
+    @admin.display(description='Actions')
+    def code_actions(self, obj):
+        """Display copy and mark as used buttons."""
+        copy_button = format_html(
+            '''
+            <button type="button"
+                    onclick="navigator.clipboard.writeText('{}').then(() => alert('Code copied to clipboard!')).catch(() => alert('Failed to copy'))"
+                    style="background-color: #007bff; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px;">
+                📋 Copy Code
+            </button>
+            ''',
+            obj.code
+        )
+
+        mark_used_url = reverse('admin:core_organizationcode_mark_used', args=[obj.pk])
+        mark_used_button = format_html(
+            '''
+            <button type="button"
+                    onclick="if(confirm('Mark this code as used now?')) {{ window.location.href='{}'; }}"
+                    style="background-color: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">
+                ✓ Mark as Used
+            </button>
+            ''',
+            mark_used_url
+        )
+
+        return format_html('{} {}', copy_button, mark_used_button)
 
     @admin.display(description='Last Used', ordering='last_used_at')
     def last_used_display(self, obj):
@@ -253,10 +301,14 @@ class OrganizationAdmin(admin.ModelAdmin):
 
     @admin.display(description='Last Active', ordering='auth_codes__last_used_at')
     def last_active(self, obj):
-        """Show the most recent last_used_at from any organization code."""
-        # Get the most recent last_used_at from all auth codes
+        """Show the most recent last_used_at from organization codes (excluding admin codes)."""
+        # Get the most recent last_used_at from organization auth codes only (filter out admin)
         # Use prefetched data to avoid N+1 queries
-        auth_codes_with_date = [code for code in obj.auth_codes.all() if code.last_used_at]
+        from .models import OrganizationCode
+        auth_codes_with_date = [
+            code for code in obj.auth_codes.all()
+            if code.last_used_at and code.type == OrganizationCode.CodeType.ORGANIZATION
+        ]
         if auth_codes_with_date:
             last_used = max(auth_codes_with_date, key=lambda x: x.last_used_at)
             if last_used.last_used_at:

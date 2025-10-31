@@ -105,6 +105,11 @@ class Organization(models.Model):
 
 class OrganizationCode(models.Model):
     """Authentication codes/links for organizations to verify their ownership."""
+
+    class CodeType(models.TextChoices):
+        ORGANIZATION = 'organization', _('Organization')
+        ADMIN = 'admin', _('Admin')
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
@@ -124,6 +129,13 @@ class OrganizationCode(models.Model):
         unique=True,
         default=generate_organization_code,
         help_text="Auto-generated unique authentication code"
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=CodeType.choices,
+        default=CodeType.ORGANIZATION,
+        db_index=True,
+        help_text="Type of organization code: Organization codes are for organization users, Admin codes are for system administrators"
     )
 
     class Meta:
