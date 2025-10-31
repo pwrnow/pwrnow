@@ -136,15 +136,33 @@ class OrganizationCodeResource(resources.ModelResource):
         return f"{base_url}/auth/{obj.code}"
 
 
+class UsedFilter(SimpleListFilter):
+    title = _('usage status')
+    parameter_name = 'used'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('used', _('Used')),
+            ('unused', _('Never Used')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'used':
+            return queryset.filter(last_used_at__isnull=False)
+        elif self.value() == 'unused':
+            return queryset.filter(last_used_at__isnull=True)
+
+
 @admin.register(OrganizationCode)
 class OrganizationCodeAdmin(ImportExportModelAdmin):
-    list_display = ['organization', 'code_preview', 'type', 'code_actions', 'created_at', 'last_used_display', 'is_used']
-    list_filter = ['type', 'created_at', 'last_used_at', 'organization']
+    list_display = ['organization', 'code_display', 'type_badge', 'auth_url_display', 'quick_actions', 'last_used_display', 'is_used', 'created_at']
+    list_filter = [UsedFilter, 'type', 'created_at', 'last_used_at', 'organization']
     search_fields = ['organization__name', 'code']
     autocomplete_fields = ['organization']
-    readonly_fields = ['id','created_at', 'updated_at', 'last_used_at']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'last_used_at', 'auth_url_display']
     ordering = ['-created_at']
     date_hierarchy = 'created_at'
+    list_per_page = 50
 
     def get_urls(self):
         urls = super().get_urls()
@@ -157,13 +175,16 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
         ]
         return custom_urls + urls
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('organization')
+
     def mark_as_used_view(self, request, object_id):
         """Mark an organization code as used."""
         obj = get_object_or_404(OrganizationCode, pk=object_id)
         obj.last_used_at = timezone.now()
         obj.save(update_fields=['last_used_at'])
         self.message_user(request, f'Code {obj.code} marked as used.', messages.SUCCESS)
-        return redirect('admin:core_organizationcode_change', object_id)
+        return redirect('admin:core_organizationcode_changelist')
 
     @admin.display(description='Used', boolean=True)
     def is_used(self, obj):
@@ -174,7 +195,7 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
             'fields': ('organization',)
         }),
         ('Authentication Details', {
-            'fields': ('code', 'type')
+            'fields': ('code', 'type', 'auth_url_display')
         }),
         ('Usage Statistics', {
             'fields': ('last_used_at',),
@@ -188,84 +209,147 @@ class OrganizationCodeAdmin(ImportExportModelAdmin):
 
     resource_class = OrganizationCodeResource
 
-    @admin.display(description='Code')
-    def code_preview(self, obj):
-        if settings.DEBUG:
-            base_url = "http://localhost:3000"
-        else:
-            base_url = "https://pwrnow.pl"
+    def _get_base_url(self):
+        """Get the base URL for auth links."""
+        return "http://localhost:3000" if settings.DEBUG else "https://pwrnow.pl"
 
-        url = f"{base_url}/auth/{obj.code}"
-        return format_html('<a href="{}" target="_blank">{}</a>', url, obj.code)
+    def _get_auth_url(self, code):
+        """Get the full authentication URL for a code."""
+        return f"{self._get_base_url()}/auth/{code}"
+
+    @admin.display(description='Code', ordering='code')
+    def code_display(self, obj):
+        """Display the code prominently with monospace font."""
+        return format_html(
+            '<span style="font-family: monospace; font-size: 13px; font-weight: bold; background-color: #f0f0f0; padding: 4px 8px; border-radius: 4px; display: inline-block;">{}</span>',
+            obj.code
+        )
+
+    @admin.display(description='Type')
+    def type_badge(self, obj):
+        """Display code type as a colored badge."""
+        color = '#007bff' if obj.type == OrganizationCode.CodeType.ORGANIZATION else '#6c757d'
+        label = 'Organization' if obj.type == OrganizationCode.CodeType.ORGANIZATION else 'Admin'
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">{}</span>',
+            color, label
+        )
+
+    @admin.display(description='Auth URL')
+    def auth_url_display(self, obj):
+        """Display the full authentication URL with copy functionality."""
+        auth_url = self._get_auth_url(obj.code)
+        return format_html(
+            '<div style="max-width: 400px;">'
+            '<span style="font-family: monospace; font-size: 11px; color: #666; word-break: break-all;">{}</span>'
+            '</div>',
+            auth_url
+        )
 
     @admin.display(description='Actions')
-    def code_actions(self, obj):
-        """Display copy and visit buttons in list view."""
-        if settings.DEBUG:
-            base_url = "http://localhost:3000"
-        else:
-            base_url = "https://pwrnow.pl"
+    def quick_actions(self, obj):
+        """Display quick action buttons for copy code, copy URL, and visit."""
+        auth_url = self._get_auth_url(obj.code)
 
-        auth_url = f"{base_url}/auth/{obj.code}"
-
-        copy_button = format_html(
+        # Copy code button
+        copy_code_btn = format_html(
             '''
             <button type="button"
-                    onclick="navigator.clipboard.writeText('{}').then(() => alert('Code copied to clipboard!')).catch(() => alert('Failed to copy'))"
-                    style="background-color: #007bff; color: white; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; margin-right: 4px; font-size: 11px;">
-                📋 Copy
+                    onclick="(function(e) {{
+                        navigator.clipboard.writeText('{}').then(() => {{
+                            const btn = e.target;
+                            const orig = btn.innerHTML;
+                            btn.innerHTML = '✓ Copied';
+                            btn.style.backgroundColor = '#28a745';
+                            setTimeout(() => {{ btn.innerHTML = orig; btn.style.backgroundColor = '#007bff'; }}, 2000);
+                        }}).catch(() => alert('Failed to copy'));
+                    }})(event)"
+                    style="background-color: #007bff; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 11px; font-weight: 500;">
+                Copy Code
             </button>
             ''',
             obj.code
         )
 
-        visit_button = format_html(
+        # Copy URL button
+        copy_url_btn = format_html(
             '''
             <button type="button"
-                    onclick="window.open('{}', '_blank')"
-                    style="background-color: #28a745; color: white; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
-                🔗 Visit
+                    onclick="(function(e) {{
+                        navigator.clipboard.writeText('{}').then(() => {{
+                            const btn = e.target;
+                            const orig = btn.innerHTML;
+                            btn.innerHTML = '✓ Copied';
+                            btn.style.backgroundColor = '#28a745';
+                            setTimeout(() => {{ btn.innerHTML = orig; btn.style.backgroundColor = '#17a2b8'; }}, 2000);
+                        }}).catch(() => alert('Failed to copy'));
+                    }})(event)"
+                    style="background-color: #17a2b8; color: white; padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 11px; font-weight: 500;">
+                Copy URL
             </button>
             ''',
             auth_url
         )
 
-        return format_html('{} {}', copy_button, visit_button)
+        # Visit button
+        visit_btn = format_html(
+            '''
+            <a href="{}" target="_blank"
+               style="background-color: #28a745; color: white; padding: 4px 10px; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: 500; display: inline-block;">
+                🔗 Visit
+            </a>
+            ''',
+            auth_url
+        )
+
+        return format_html('<div style="white-space: nowrap;">{}{}{}</div>', copy_code_btn, copy_url_btn, visit_btn)
 
     @admin.display(description='Last Used', ordering='last_used_at')
     def last_used_display(self, obj):
+        """Display when the code was last used with relative time."""
         if obj.last_used_at:
-            from django.utils import timezone
             now = timezone.now()
             time_diff = now - obj.last_used_at
+            full_date = obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S')
 
-            if time_diff.days > 0:
-                return format_html(
-                    '<span title="{}">{} days ago</span>',
-                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    time_diff.days
-                )
+            if time_diff.days > 30:
+                color = '#6c757d'
+                text = f'{time_diff.days} days ago'
+            elif time_diff.days > 0:
+                color = '#ffc107'
+                text = f'{time_diff.days} days ago'
             elif time_diff.seconds > 3600:
                 hours = time_diff.seconds // 3600
-                return format_html(
-                    '<span title="{}">{} hours ago</span>',
-                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    hours
-                )
+                color = '#17a2b8'
+                text = f'{hours}h ago'
             elif time_diff.seconds > 60:
                 minutes = time_diff.seconds // 60
-                return format_html(
-                    '<span title="{}">{} minutes ago</span>',
-                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    minutes
-                )
+                color = '#28a745'
+                text = f'{minutes}m ago'
             else:
-                return format_html(
-                    '<span title="{}">Just now</span>',
-                    obj.last_used_at.strftime('%Y-%m-%d %H:%M:%S')
-                )
+                color = '#28a745'
+                text = 'Just now'
+
+            return format_html(
+                '<span style="color: {}; font-weight: 500;" title="{}">{}</span>',
+                color, full_date, text
+            )
         else:
-            return format_html('<span style="color: #999;">Never used</span>')
+            return format_html('<span style="color: #999; font-style: italic;">Never</span>')
+
+    actions = ['mark_as_used', 'mark_as_unused']
+
+    def mark_as_used(self, request, queryset):
+        """Mark selected codes as used."""
+        updated = queryset.update(last_used_at=timezone.now())
+        self.message_user(request, f'{updated} code(s) marked as used.', messages.SUCCESS)
+    mark_as_used.short_description = "Mark selected codes as used"
+
+    def mark_as_unused(self, request, queryset):
+        """Mark selected codes as unused."""
+        updated = queryset.update(last_used_at=None)
+        self.message_user(request, f'{updated} code(s) marked as unused.', messages.SUCCESS)
+    mark_as_unused.short_description = "Mark selected codes as unused"
 
 
 @admin.register(Organization)
