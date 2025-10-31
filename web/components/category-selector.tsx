@@ -107,7 +107,9 @@ export default function CategorySelector({
                 transition-all duration-300 ease-in-out cursor-pointer
                 ${
                   currentCategory === category.slug
-                    ? 'text-primary-foreground'
+                    ? category.slug === 'rekrutacja'
+                      ? 'text-foreground'
+                      : 'text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 }
               `}
