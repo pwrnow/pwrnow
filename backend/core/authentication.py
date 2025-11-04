@@ -4,6 +4,10 @@ from django.conf import settings
 from django.utils import timezone
 from functools import wraps
 from .models import OrganizationCode, Organization
+import logging
+from utils.logging import bind_context
+
+logger = logging.getLogger(__name__)
 
 
 def authenticate_organization(request, organization_code):
@@ -37,9 +41,17 @@ def authenticate_organization(request, organization_code):
         request.session['authenticated_org_name'] = organization.name
         request.session.modified = True
 
+        ctx = bind_context(
+            user_id=getattr(getattr(request, 'user', None), 'id', None),
+            organization_id=getattr(organization, 'id', None),
+            endpoint='auth.authenticate_organization',
+        )
+        logger.info("ORG_AUTH_SUCCESS", extra=ctx)
+
         return organization
 
     except OrganizationCode.DoesNotExist:
+        logger.warning("ORG_AUTH_CODE_NOT_FOUND", extra=bind_context(endpoint='auth.authenticate_organization'))
         return None
 
 
@@ -63,6 +75,7 @@ def get_current_organization(request):
     except Organization.DoesNotExist:
         # Clear invalid session data
         clear_organization_session(request)
+        logger.warning("ORG_SESSION_INVALID", extra=bind_context(endpoint='auth.get_current_organization'))
         return None
 
 
@@ -77,6 +90,7 @@ def clear_organization_session(request):
     request.session.pop('authenticated_org_slug', None)
     request.session.pop('authenticated_org_name', None)
     request.session.modified = True
+    logger.info("ORG_SESSION_CLEARED", extra=bind_context(endpoint='auth.clear_organization_session'))
 
 
 def organization_required(view_func):
