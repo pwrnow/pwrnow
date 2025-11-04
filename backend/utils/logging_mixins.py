@@ -13,9 +13,17 @@ class ApiLoggingMixin:
     def initialize_request(self, request, *args, **kwargs):  # type: ignore[override]
         request._pwrnow_start_time = time.time()
         user_id = getattr(getattr(request, "user", None), "id", None)
+        try:
+            from core.authentication import get_current_organization  # local import to avoid cycles
+            org = get_current_organization(request)
+            org_id = getattr(org, "id", None)
+        except Exception:
+            org_id = None
         endpoint = f"{self.__class__.__name__}.{getattr(self, 'action', request.method.lower())}"
-        ctx = bind_context(user_id=user_id, organization_id=None, endpoint=endpoint)
-        logger.info("API_REQUEST", extra=ctx)
+        ctx = bind_context(user_id=user_id, organization_id=org_id, endpoint=endpoint)
+        method = getattr(request, "method", "").upper()
+        path = getattr(request, "path", "")
+        logger.info(f"API_REQUEST method={method} path={path}", extra=ctx)
         return super().initialize_request(request, *args, **kwargs)
 
     def finalize_response(self, request, response, *args, **kwargs):  # type: ignore[override]
@@ -27,8 +35,14 @@ class ApiLoggingMixin:
             duration_ms = None
 
         user_id = getattr(getattr(request, "user", None), "id", None)
+        try:
+            from core.authentication import get_current_organization  # local import to avoid cycles
+            org = get_current_organization(request)
+            org_id = getattr(org, "id", None)
+        except Exception:
+            org_id = None
         endpoint = f"{self.__class__.__name__}.{getattr(self, 'action', getattr(request, 'method', 'UNKNOWN').lower())}"
-        ctx = bind_context(user_id=user_id, organization_id=None, endpoint=endpoint)
+        ctx = bind_context(user_id=user_id, organization_id=org_id, endpoint=endpoint)
 
         level = logging.INFO
         if getattr(response, "status_code", 200) >= 500:
@@ -36,7 +50,9 @@ class ApiLoggingMixin:
         elif getattr(response, "status_code", 200) >= 400:
             level = logging.WARNING
 
-        msg = f"API_RESPONSE status={getattr(response, 'status_code', 'NA')} duration_ms={duration_ms}"
+        method = getattr(request, "method", "").upper()
+        path = getattr(request, "path", "")
+        msg = f"API_RESPONSE method={method} path={path} status={getattr(response, 'status_code', 'NA')} duration_ms={duration_ms}"
         logger.log(level, msg, extra=ctx)
         return super().finalize_response(request, response, *args, **kwargs)
 
@@ -48,9 +64,17 @@ def log_api_call(endpoint_name: Optional[str] = None) -> Callable:
         def wrapper(request, *args, **kwargs):  # type: ignore[misc]
             start = time.time()
             user_id = getattr(getattr(request, "user", None), "id", None)
+            try:
+                from core.authentication import get_current_organization  # local import to avoid cycles
+                org = get_current_organization(request)
+                org_id = getattr(org, "id", None)
+            except Exception:
+                org_id = None
             endpoint = endpoint_name or getattr(func, "__name__", "api.func")
-            ctx = bind_context(user_id=user_id, organization_id=None, endpoint=endpoint)
-            logger.info("API_REQUEST", extra=ctx)
+            ctx = bind_context(user_id=user_id, organization_id=org_id, endpoint=endpoint)
+            method = getattr(request, "method", "").upper()
+            path = getattr(request, "path", "")
+            logger.info(f"API_REQUEST method={method} path={path}", extra=ctx)
             try:
                 response = func(request, *args, **kwargs)
                 duration_ms = int((time.time() - start) * 1000)
@@ -60,11 +84,11 @@ def log_api_call(endpoint_name: Optional[str] = None) -> Callable:
                     level = logging.ERROR
                 elif status_code >= 400:
                     level = logging.WARNING
-                logger.log(level, f"API_RESPONSE status={status_code} duration_ms={duration_ms}", extra=ctx)
+                logger.log(level, f"API_RESPONSE method={method} path={path} status={status_code} duration_ms={duration_ms}", extra=ctx)
                 return response
             except Exception:
                 duration_ms = int((time.time() - start) * 1000)
-                logger.exception(f"API_EXCEPTION duration_ms={duration_ms}", extra=ctx)
+                logger.exception(f"API_EXCEPTION method={method} path={path} duration_ms={duration_ms}", extra=ctx)
                 raise
 
         return wrapper
