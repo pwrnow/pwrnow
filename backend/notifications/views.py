@@ -6,15 +6,25 @@ from django.utils import timezone
 from .models import Device
 from .serializers import DeviceSerializer, DeviceRegistrationSerializer
 from django.conf import settings
+import logging
+from utils.logging import bind_context
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_device(request):
     """Register or update a device for push notifications."""
-
+    ctx = bind_context(
+        user_id=getattr(getattr(request, "user", None), "id", None),
+        organization_id=None,
+        endpoint="notifications.register_device",
+    )
+    logger.info("NOTIF_DEVICE_REGISTER_REQUEST", extra=ctx)
     serializer_in = DeviceRegistrationSerializer(data=request.data)
     if not serializer_in.is_valid():
+        logger.warning("NOTIF_DEVICE_REGISTER_SCHEMA_ERRORS", extra=ctx)
         return Response(serializer_in.errors, status=status.HTTP_400_BAD_REQUEST)
 
     validated = serializer_in.validated_data
@@ -53,10 +63,15 @@ def register_device(request):
     device.last_active_at = timezone.now()
     device.save()
 
+    logger.info(
+        f"NOTIF_DEVICE_REGISTER_SUCCESS device_id={device.id} created={created}",
+        extra=ctx,
+    )
+
 
 
     serializer = DeviceSerializer(device)
-    return Response(
+    resp = Response(
         {
             'device': serializer.data,
             'created': created,
@@ -64,3 +79,4 @@ def register_device(request):
         },
         status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
     )
+    return resp

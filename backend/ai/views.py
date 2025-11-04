@@ -9,6 +9,7 @@ from .serializers import ScheduleParseRequestSerializer
 from .services import ScheduleParsingService
 from .throttles import OrganizationRateThrottle
 from feature_access.utils import has_feature_access
+from utils.logging_mixins import log_api_call
 import logging
 from utils.logging import bind_context
 import time
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([OrganizationRateThrottle])
+@log_api_call("ai.parse_schedule")
 def parse_schedule(request):
     """
     Parse raw schedule text using AI.
@@ -147,6 +149,7 @@ def parse_schedule(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@log_api_call("ai.parse_schedule_availability")
 def parse_schedule_availability(request):
     """
     Returns whether the current event can use AI parse now,
@@ -194,6 +197,7 @@ def parse_schedule_availability(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@log_api_call("ai.check_feature_access")
 def check_feature_access(request):
     """
     Check if a specific event has access to specific features.

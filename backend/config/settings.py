@@ -318,7 +318,8 @@ REST_FRAMEWORK = {
         'friend_read': '120/minute' if DEBUG else '60/minute',
         # dj_rest_auth throttling
         'dj_rest_auth': '1000/hour' if DEBUG else '100/hour',
-    }
+    },
+    'EXCEPTION_HANDLER': 'utils.drf.exception_handler',
 }
 
 
