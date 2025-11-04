@@ -131,6 +131,10 @@ msgstr ""
 msgid "New event available"
 msgstr "Nowe wydarzenie dostępne"
 
+#: notifications/services.py:631
+msgid "New event created"
+msgstr "Utworzono nowe wydarzenie"
+
 #: notifications/services.py:635
 msgid "tomorrow"
 msgstr "jutro"

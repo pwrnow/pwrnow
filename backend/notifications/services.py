@@ -594,7 +594,7 @@ class ExpoPushNotificationService:
             for device in devices:
                 try:
                     lang = getattr(device, 'preferred_language', 'pl') or 'pl'
-                    title, body, subtitle = self._build_notification_content(event, lang)
+                    title, body, subtitle = self._build_staff_new_event_content(event, lang)
 
                     payload = {
                         'to': device.expo_push_token,
@@ -732,6 +732,39 @@ class ExpoPushNotificationService:
             if event_time:
                 body_lines.append(event_time)
             body = self._truncate("\n".join(body_lines), 140)
+
+            return title, body, subtitle
+
+    def _build_staff_new_event_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
+        """Build notification content specifically for staff users when a new event is created."""
+        with override(lang):
+            # Title: Staff-specific with admin emoji
+            title_text = _("New event created")
+            title = self._truncate(f"🎯 {title_text}", 100)
+
+            # Subtitle: event title (localized)
+            localized_event_title = get_translated_field(event, 'title', lang) or event.title
+            subtitle = self._truncate(localized_event_title, 100)
+
+            # Body: Organization name + category + date
+            body_lines: List[str] = []
+
+            # Add organization name
+            if event.organization:
+                org_name = get_translated_field(event.organization, 'name', lang) or event.organization.name
+                body_lines.append(f"🏢 {org_name}")
+
+            # Add category
+            if event.category:
+                category_name = get_translated_field(event.category, 'name', lang) or event.category.name
+                body_lines.append(f"📂 {category_name}")
+
+            # Add event time
+            event_time = self._format_event_range(event.starts_at, event.ends_at, lang)
+            if event_time:
+                body_lines.append(f"📅 {event_time}")
+
+            body = self._truncate("\n".join(body_lines), 160)
 
             return title, body, subtitle
 
