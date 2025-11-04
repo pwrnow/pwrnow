@@ -38,7 +38,7 @@ warnings.filterwarnings(
     module="dj_rest_auth.registration.serializers"
 )
 warnings.filterwarnings(
-    "ignore", 
+    "ignore",
     message="app_settings.EMAIL_REQUIRED is deprecated, use: app_settings.SIGNUP_FIELDS\\['email'\\]\\['required'\\]",
     category=UserWarning,
     module="dj_rest_auth.registration.serializers"
@@ -57,6 +57,10 @@ SECRET_KEY = env(
 DEBUG = env.bool("DEBUG", default=True)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"] if DEBUG else [])
+
+# Always allow localhost for healthchecks
+if "localhost" not in ALLOWED_HOSTS and "127.0.0.1" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend(["localhost", "127.0.0.1"])
 
 
 # Application definition
@@ -98,6 +102,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
+    'utils.middleware.HealthCheckLocalhostMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
