@@ -24,7 +24,7 @@ def register_device(request):
     logger.info("NOTIF_DEVICE_REGISTER_REQUEST", extra=ctx)
     serializer_in = DeviceRegistrationSerializer(data=request.data)
     if not serializer_in.is_valid():
-        logger.warning("NOTIF_DEVICE_REGISTER_SCHEMA_ERRORS", extra=ctx)
+        logger.warning(f"NOTIF_DEVICE_REGISTER_SCHEMA_ERRORS errors={serializer_in.errors}", extra=ctx)
         return Response(serializer_in.errors, status=status.HTTP_400_BAD_REQUEST)
 
     validated = serializer_in.validated_data
@@ -33,6 +33,7 @@ def register_device(request):
     # Preferred language is validated/normalized by serializer
     normalized_lang = validated.get('preferredLanguage', settings.LANGUAGE_CODE)
 
+    logger.debug(f"NOTIF_DEVICE_REGISTER_LOOKUP token={expo_push_token[:10]}...", extra=ctx)
     # Get or create device
     device, created = Device.objects.get_or_create(
         expo_push_token=expo_push_token,
@@ -47,6 +48,7 @@ def register_device(request):
 
     # If device exists, update basic info and last_active_at
     if not created:
+        logger.debug(f"NOTIF_DEVICE_REGISTER_UPDATE device_id={device.id}", extra=ctx)
         device.platform = validated.get('platform', device.platform)
         device.device_name = validated.get('deviceName', device.device_name)
         device.app_version = validated.get('appVersion', device.app_version)
@@ -57,6 +59,8 @@ def register_device(request):
 
     # Assign device to authenticated user if present
     if request.user and request.user.is_authenticated:
+        if device.user != request.user:
+            logger.debug(f"NOTIF_DEVICE_REGISTER_USER_ASSIGN device_id={device.id} user_id={request.user.id}", extra=ctx)
         device.user = request.user
 
     # Always update last_active_at
@@ -64,7 +68,7 @@ def register_device(request):
     device.save()
 
     logger.info(
-        f"NOTIF_DEVICE_REGISTER_SUCCESS device_id={device.id} created={created}",
+        f"NOTIF_DEVICE_REGISTER_SUCCESS device_id={device.id} created={created} platform={device.platform} notifications_enabled={device.notifications_enabled}",
         extra=ctx,
     )
 

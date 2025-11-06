@@ -45,20 +45,23 @@ def parse_schedule(request):
             {"error": _("Event slug is required.")}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    logger.debug(f"AI_PARSE_SCHEDULE_EVENT_LOOKUP event_slug={event_slug}", **ctx)
+
     # Get the event
     try:
         from core.models import Event
 
         event = Event.objects.get(slug=event_slug)
+        logger.debug(f"AI_PARSE_SCHEDULE_EVENT_FOUND event_id={event.id}", **ctx)
     except Event.DoesNotExist:
-        logger.warning("AI_PARSE_SCHEDULE_EVENT_NOT_FOUND", **ctx)
+        logger.warning(f"AI_PARSE_SCHEDULE_EVENT_NOT_FOUND event_slug={event_slug}", **ctx)
         return Response(
             {"error": _("Event not found.")}, status=status.HTTP_404_NOT_FOUND
         )
 
     # Check if event has access to magic parsing feature
     if not has_feature_access(event, "magic_parsing"):
-        logger.info("AI_PARSE_SCHEDULE_FEATURE_DENIED", **ctx)
+        logger.info(f"AI_PARSE_SCHEDULE_FEATURE_DENIED event_id={event.id}", **ctx)
         return Response(
             {"error": _("Magic parsing feature is not available for this event.")},
             status=status.HTTP_403_FORBIDDEN,
@@ -73,6 +76,7 @@ def parse_schedule(request):
 
     try:
         # Create parsing service and process (configuration is hardcoded)
+        logger.debug(f"AI_PARSE_SCHEDULE_PARSING_START event_id={event.id}", **ctx)
         parsing_service = ScheduleParsingService()
         result = parsing_service.parse_schedule(
             raw_text=serializer.validated_data["raw_text"],
@@ -84,7 +88,7 @@ def parse_schedule(request):
         )
 
         if not result["success"]:
-            logger.error(f"AI_PARSE_SCHEDULE_FAILED error={result.get('error')}", **ctx)
+            logger.error(f"AI_PARSE_SCHEDULE_FAILED event_id={event.id} error={result.get('error')}", **ctx)
             return Response(
                 {"error": result.get("error", "Failed to parse schedule")},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -130,13 +134,13 @@ def parse_schedule(request):
         # Return in the expected format
         response_data = {"id": "temp-schedule-id", "items": formatted_items}
         logger.info(
-            f"AI_PARSE_SCHEDULE_SUCCESS items={len(formatted_items)} tokens={result.get('tokens_used', 0)}",
+            f"AI_PARSE_SCHEDULE_SUCCESS event_id={event.id} items={len(formatted_items)} tokens={result.get('tokens_used', 0)}",
             **ctx,
         )
         return Response(response_data, status=status.HTTP_200_OK)
 
     except Exception as e:
-        logger.error(f"AI_PARSE_SCHEDULE_EXCEPTION {str(e)}", **ctx)
+        logger.error(f"AI_PARSE_SCHEDULE_EXCEPTION event_id={event.id if 'event' in locals() else 'unknown'} error={str(e)}", **ctx, exc_info=True)
         return Response(
             {
                 "error": _(
@@ -156,9 +160,11 @@ def parse_schedule_availability(request):
     remaining requests in the current window, total limit, and retry-after seconds.
     This does not consume a request.
     """
+    logger.debug("AI_PARSE_SCHEDULE_AVAILABILITY_CHECK")
     # Get event slug from query parameters
     event_slug = request.GET.get("event_slug")
     if not event_slug:
+        logger.warning("AI_PARSE_SCHEDULE_AVAILABILITY_NO_SLUG")
         return Response(
             {"error": _("Event slug is required.")},
             status=status.HTTP_400_BAD_REQUEST,
@@ -169,7 +175,9 @@ def parse_schedule_availability(request):
         from core.models import Event
 
         event = Event.objects.get(slug=event_slug)
+        logger.debug(f"AI_PARSE_SCHEDULE_AVAILABILITY_EVENT_FOUND event_id={event.id}")
     except Event.DoesNotExist:
+        logger.warning(f"AI_PARSE_SCHEDULE_AVAILABILITY_EVENT_NOT_FOUND event_slug={event_slug}")
         return Response(
             {"error": _("Event not found.")},
             status=status.HTTP_404_NOT_FOUND,
@@ -177,6 +185,7 @@ def parse_schedule_availability(request):
 
     # Check if event has access to magic parsing feature
     if not has_feature_access(event, "magic_parsing"):
+        logger.info(f"AI_PARSE_SCHEDULE_AVAILABILITY_FEATURE_DENIED event_id={event.id}")
         return Response(
             {"error": _("Magic parsing feature is not available for this event.")},
             status=status.HTTP_403_FORBIDDEN,
@@ -184,6 +193,7 @@ def parse_schedule_availability(request):
 
     # For now, return unlimited availability for events
     # TODO: Implement event-based rate limiting if needed
+    logger.debug(f"AI_PARSE_SCHEDULE_AVAILABILITY_SUCCESS event_id={event.id}")
     return Response(
         {
             "available": True,
@@ -203,9 +213,11 @@ def check_feature_access(request):
     Check if a specific event has access to specific features.
     Returns a dictionary of feature names and their access status.
     """
+    logger.debug("AI_CHECK_FEATURE_ACCESS_REQUEST")
     # Get event slug from query parameters
     event_slug = request.GET.get("event_slug")
     if not event_slug:
+        logger.warning("AI_CHECK_FEATURE_ACCESS_NO_SLUG")
         return Response(
             {"error": _("Event slug is required.")}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -215,7 +227,9 @@ def check_feature_access(request):
         from core.models import Event
 
         event = Event.objects.get(slug=event_slug)
+        logger.debug(f"AI_CHECK_FEATURE_ACCESS_EVENT_FOUND event_id={event.id}")
     except Event.DoesNotExist:
+        logger.warning(f"AI_CHECK_FEATURE_ACCESS_EVENT_NOT_FOUND event_slug={event_slug}")
         return Response(
             {"error": _("Event not found.")}, status=status.HTTP_404_NOT_FOUND
         )
@@ -225,16 +239,20 @@ def check_feature_access(request):
 
     # If no features specified, return all available features
     if not requested_features:
+        logger.debug(f"AI_CHECK_FEATURE_ACCESS_ALL_FEATURES event_id={event.id}")
         from feature_access.utils import get_event_features
 
         available_features = get_event_features(event)
+        logger.info(f"AI_CHECK_FEATURE_ACCESS_SUCCESS event_id={event.id} features={available_features}")
         return Response(
             {"features": {"magic_parsing": "magic_parsing" in available_features}}
         )
 
     # Check specific features
+    logger.debug(f"AI_CHECK_FEATURE_ACCESS_SPECIFIC_FEATURES event_id={event.id} features={requested_features}")
     feature_access = {}
     for feature_name in requested_features:
         feature_access[feature_name] = has_feature_access(event, feature_name)
 
+    logger.info(f"AI_CHECK_FEATURE_ACCESS_SUCCESS event_id={event.id} results={feature_access}")
     return Response({"features": feature_access}, status=status.HTTP_200_OK)
