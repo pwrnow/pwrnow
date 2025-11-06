@@ -501,7 +501,7 @@ class EventAdmin(TranslationAdmin):
             'category', 'organization', 'verified_by'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h', 'translate_selected_events']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -612,6 +612,72 @@ class EventAdmin(TranslationAdmin):
                 level=messages.ERROR
             )
     send_event_reminder_24h.short_description = "Send 24h reminder notifications (manual)"
+
+    def translate_selected_events(self, request, queryset):
+        """Trigger AI translation for selected events with missing translations."""
+        from django.db.models import Q
+
+        # Filter events that need translation (have at least one empty translation field)
+        events_needing_translation = queryset.filter(
+            Q(title_pl__isnull=False, title_pl__gt='', title_en__isnull=True) |
+            Q(title_pl__isnull=False, title_pl__gt='', title_en='') |
+            Q(title_en__isnull=False, title_en__gt='', title_pl__isnull=True) |
+            Q(title_en__isnull=False, title_en__gt='', title_pl='') |
+            Q(description_pl__isnull=False, description_pl__gt='', description_en__isnull=True) |
+            Q(description_pl__isnull=False, description_pl__gt='', description_en='') |
+            Q(description_en__isnull=False, description_en__gt='', description_pl__isnull=True) |
+            Q(description_en__isnull=False, description_en__gt='', description_pl='')
+        ).distinct()
+
+        events_count = events_needing_translation.count()
+
+        if events_count == 0:
+            self.message_user(
+                request,
+                'No events selected that need translation. All selected events already have complete translations.',
+                level=messages.WARNING
+            )
+            return
+
+        queued_count = 0
+        failed_count = 0
+
+        for event in events_needing_translation:
+            try:
+                from .tasks import translate_event_content
+                # Queue the translation task asynchronously
+                translate_event_content.delay(str(event.id))
+                queued_count += 1
+            except Exception as e:
+                failed_count += 1
+                # Log error but continue processing other events
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to queue translation for event {event.id}: {str(e)}")
+
+        if queued_count > 0:
+            self.message_user(
+                request,
+                f'Successfully queued translation tasks for {queued_count} event(s). '
+                f'Translations will be processed in the background.'
+            )
+
+        if failed_count > 0:
+            self.message_user(
+                request,
+                f'Failed to queue {failed_count} event(s) for translation.',
+                level=messages.ERROR
+            )
+
+        # If some events in the selection don't need translation
+        skipped_count = queryset.count() - events_count
+        if skipped_count > 0:
+            self.message_user(
+                request,
+                f'Skipped {skipped_count} event(s) that already have complete translations.',
+                level=messages.INFO
+            )
+    translate_selected_events.short_description = "Translate selected events (AI)"
 
 
 admin.site.site_header = "PWr Now Admin"
