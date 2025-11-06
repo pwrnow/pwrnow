@@ -70,25 +70,65 @@ class Command(BaseCommand):
         if options['dry_run']:
             self.stdout.write(self.style.WARNING('\n=== DRY RUN - No changes will be made ===\n'))
 
-            for event in events:
-                self.stdout.write(f'\nEvent: {event.title} (ID: {event.id})')
+            from ai.services import EventTranslationService
 
-                # Show which fields need translation
-                missing_fields = []
-                if event.title_pl and not event.title_en:
-                    missing_fields.append('title_pl → title_en')
-                if event.title_en and not event.title_pl:
-                    missing_fields.append('title_en → title_pl')
-                if event.description_pl and not event.description_en:
-                    missing_fields.append('description_pl → description_en')
-                if event.description_en and not event.description_pl:
-                    missing_fields.append('description_en → description_pl')
+            for i, event in enumerate(events, 1):
+                self.stdout.write(f'\n[{i}/{count}] Event: {event.title} (ID: {event.id})')
+                self.stdout.write(f'Organization: {event.organization.name}')
+                self.stdout.write('')
 
-                for field in missing_fields:
-                    self.stdout.write(f'  - Would translate: {field}')
+                try:
+                    # Perform translation to show preview (but don't save)
+                    translation_service = EventTranslationService()
+                    result = translation_service.translate_event(
+                        event_id=str(event.id),
+                        organization=event.organization,
+                        user=None
+                    )
 
+                    if result.get('success'):
+                        translations = result.get('translations', [])
+                        warnings_list = result.get('warnings', [])
+                        skipped = result.get('skipped', [])
+
+                        if translations:
+                            self.stdout.write(self.style.SUCCESS('  Translations that would be applied:'))
+                            for translation in translations:
+                                source_field = translation['source_field']
+                                target_field = translation['target_field']
+                                source_text = getattr(event, source_field, '')
+                                translated_text = translation['translated_text']
+
+                                self.stdout.write(f'\n  {source_field} → {target_field}:')
+                                self.stdout.write(f'    Original:  {source_text[:100]}{"..." if len(source_text) > 100 else ""}')
+                                self.stdout.write(self.style.SUCCESS(f'    Translated: {translated_text[:100]}{"..." if len(translated_text) > 100 else ""}'))
+
+                        if warnings_list:
+                            self.stdout.write('')
+                            self.stdout.write(self.style.WARNING('  Warnings:'))
+                            for warning in warnings_list:
+                                self.stdout.write(
+                                    self.style.WARNING(f'    - {warning["field"]}: {warning["message"]}')
+                                )
+
+                        if skipped:
+                            self.stdout.write('')
+                            self.stdout.write('  Skipped:')
+                            for skip in skipped:
+                                self.stdout.write(f'    - {skip["field"]}: {skip["reason"]}')
+                    else:
+                        error_msg = result.get('error', 'Unknown error')
+                        self.stdout.write(self.style.ERROR(f'  ✗ Translation preview failed: {error_msg}'))
+
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'  ✗ Exception during preview: {str(e)}'))
+
+            self.stdout.write('')
             self.stdout.write(
-                self.style.WARNING(f'\nTotal: {count} event(s) would be processed')
+                self.style.WARNING(f'\n=== DRY RUN COMPLETE - {count} event(s) previewed ===')
+            )
+            self.stdout.write(
+                self.style.WARNING('No changes were saved to the database.')
             )
             return
 
@@ -119,6 +159,9 @@ class Command(BaseCommand):
                         warnings_count = result.get('warnings_count', 0)
                         skipped_count = result.get('skipped_count', 0)
 
+                        # Increment processed counter for all successful operations
+                        processed += 1
+
                         if translations_count > 0:
                             self.stdout.write(
                                 self.style.SUCCESS(
@@ -132,8 +175,6 @@ class Command(BaseCommand):
                                     f'    - {translation["source_field"]} → {translation["target_field"]} '
                                     f'({translation["tokens_used"]} tokens)'
                                 )
-
-                            processed += 1
                         else:
                             self.stdout.write(
                                 self.style.WARNING(f'  ⚠ No translations needed')

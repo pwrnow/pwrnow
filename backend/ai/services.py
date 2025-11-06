@@ -253,7 +253,7 @@ Please extract all schedule items and return them as a JSON array following the 
 
 
 class EventTranslationService:
-    """Service for translating event content using AI with LangChain."""
+    """Service for translating event content using AI with LangChain structured output."""
 
     # Provider configurations (same as ScheduleParsingService)
     PROVIDER_CONFIGS = {
@@ -272,37 +272,27 @@ class EventTranslationService:
     # Default provider
     DEFAULT_PROVIDER = 'openai'
 
-    # Language detection system message
-    LANGUAGE_DETECTION_SYSTEM_MESSAGE = """You are a language detection expert. Your task is to detect the language of the provided text and return ONLY a two-letter ISO 639-1 language code.
-
-Supported languages:
-- English: en
-- Polish: pl
-
-Return ONLY the two-letter code, nothing else."""
-
-    # Translation system message
-    TRANSLATION_SYSTEM_MESSAGE = """You are an expert translator specializing in event content translation. Your task is to translate event titles and descriptions while preserving proper nouns.
-
-Critical Guidelines:
-1. Preserve ALL proper nouns (names of events, festivals, venues, brands, organizations, places)
-2. Examples of what to keep unchanged:
-   - Event names: "Krakow Film Festival", "Open'er Festival", "Unsound"
-   - Venue names: "ICE Kraków", "Tauron Arena", "Klub Studio"
-   - Organization names: specific company and organization names
-   - Place names: "Kraków", "Warszawa", "Rynek Główny"
-3. Only translate generic descriptive words and phrases
-4. Maintain the original formatting and punctuation
-5. Return ONLY the translated text, no explanations or additional text
-6. If the text is already in the target language, return it unchanged
-
-Examples:
-- "Koncert w Tauron Arena" → "Concert at Tauron Arena" (translate "Koncert" but keep "Tauron Arena")
-- "Open'er Festival 2024" → "Open'er Festival 2024" (keep as-is, it's a proper noun)
-- "Wystawa sztuki współczesnej" → "Contemporary art exhibition" (translate all generic terms)"""
-
     def __init__(self):
         """Initialize the service with LangChain using the configured provider."""
+        from pydantic import BaseModel, Field
+        from typing import Literal
+
+        # Define Pydantic models for structured output
+        class LanguageDetection(BaseModel):
+            """Detected language of the text."""
+            language: Literal['en', 'pl'] = Field(
+                description="Two-letter ISO 639-1 language code. Only 'en' for English or 'pl' for Polish."
+            )
+
+        class Translation(BaseModel):
+            """Translated text with proper noun preservation."""
+            translated_text: str = Field(
+                description="The translated text. Preserve ALL proper nouns (event names, venues, places, brands, organizations). Only translate generic descriptive words."
+            )
+
+        self.LanguageDetection = LanguageDetection
+        self.Translation = Translation
+
         self.provider = getattr(settings, 'AI_PROVIDER', self.DEFAULT_PROVIDER)
 
         if self.provider not in self.PROVIDER_CONFIGS:
@@ -316,8 +306,6 @@ Examples:
         )
 
         try:
-            from langchain.schema import SystemMessage, HumanMessage
-
             if self.provider == 'openai':
                 from langchain_openai import ChatOpenAI
                 self.llm = ChatOpenAI(
@@ -335,9 +323,6 @@ Examples:
                     google_api_key=getattr(settings, 'GEMINI_API_KEY', None)
                 )
 
-            self.SystemMessage = SystemMessage
-            self.HumanMessage = HumanMessage
-
         except ImportError as e:
             if self.provider == 'openai':
                 raise ImportError("LangChain OpenAI packages are required. Install with: pip install langchain langchain-openai")
@@ -349,7 +334,7 @@ Examples:
 
     def detect_language(self, text: str) -> str:
         """
-        Detect the language of the provided text.
+        Detect the language of the provided text using structured output.
 
         Args:
             text: Text to detect language for
@@ -361,20 +346,19 @@ Examples:
             return 'unknown'
 
         try:
-            messages = [
-                self.SystemMessage(content=self.LANGUAGE_DETECTION_SYSTEM_MESSAGE),
-                self.HumanMessage(content=f"Detect the language of this text:\n\n{text}")
-            ]
+            # Create LLM with structured output
+            structured_llm = self.llm.with_structured_output(self.LanguageDetection)
 
-            response = self.llm.invoke(messages, callbacks=[self.callback_handler])
-            detected_lang = response.content.strip().lower()
+            # Invoke with the text
+            prompt = f"""Detect the language of the following text and return only the language code.
 
-            # Validate the response
-            if detected_lang in ['en', 'pl']:
-                return detected_lang
+Text: {text}
 
-            logger.warning(f"Unexpected language detection response: {detected_lang}, defaulting to 'unknown'")
-            return 'unknown'
+Return the language code ('en' for English or 'pl' for Polish)."""
+
+            result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+
+            return result.language
 
         except Exception as e:
             logger.error(f"Language detection failed: {str(e)}")
@@ -382,7 +366,7 @@ Examples:
 
     def translate_text(self, text: str, source_lang: str, target_lang: str, is_title: bool = False) -> Dict[str, Any]:
         """
-        Translate text from source language to target language.
+        Translate text from source language to target language using structured output.
 
         Args:
             text: Text to translate
@@ -414,30 +398,41 @@ Examples:
         source_name = lang_names.get(source_lang, source_lang)
         target_name = lang_names.get(target_lang, target_lang)
 
-        prompt = f"""Translate the following event {content_type} from {source_name} to {target_name}.
+        prompt = f"""You are an expert translator specializing in event content translation.
 
-Original text:
-{text}
+CRITICAL GUIDELINES:
+1. Preserve ALL proper nouns (names of events, festivals, venues, brands, organizations, places)
+2. Examples of what to keep unchanged:
+   - Event names: "Krakow Film Festival", "Open'er Festival", "Unsound"
+   - Venue names: "ICE Kraków", "Tauron Arena", "Klub Studio"
+   - Organization names: specific company and organization names
+   - Place names: "Kraków", "Warszawa", "Rynek Główny"
+3. Only translate generic descriptive words and phrases
+4. Maintain the original formatting and punctuation
 
-Translated text:"""
+Examples:
+- "Koncert w Tauron Arena" → "Concert at Tauron Arena" (translate "Koncert" but keep "Tauron Arena")
+- "Open'er Festival 2024" → "Open'er Festival 2024" (keep as-is, it's a proper noun)
+- "Wystawa sztuki współczesnej" → "Contemporary art exhibition" (translate all generic terms)
+
+Now translate this event {content_type} from {source_name} to {target_name}:
+
+{text}"""
 
         try:
-            messages = [
-                self.SystemMessage(content=self.TRANSLATION_SYSTEM_MESSAGE),
-                self.HumanMessage(content=prompt)
-            ]
+            # Create LLM with structured output
+            structured_llm = self.llm.with_structured_output(self.Translation)
 
-            response = self.llm.invoke(messages, callbacks=[self.callback_handler])
-            translated_text = response.content.strip()
+            result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
 
             processing_time = int((time.time() - start_time) * 1000)
 
             return {
                 'success': True,
-                'translated_text': translated_text,
+                'translated_text': result.translated_text,
                 'source_lang': source_lang,
                 'target_lang': target_lang,
-                'tokens_used': getattr(response, 'usage_metadata', {}).get('total_tokens', 0),
+                'tokens_used': 0,  # LangChain structured output doesn't expose token counts directly
                 'processing_time_ms': processing_time
             }
 
