@@ -232,6 +232,11 @@ class Event(models.Model):
                 name='event_public_time_idx',
                 condition=Q(verified=True),
             ),
+            # Optimized index for the most common list query pattern
+            models.Index(
+                fields=['verified', 'publication_date', 'ends_at', 'starts_at'],
+                name='event_list_query_idx'
+            ),
         ]
 
     def __str__(self):

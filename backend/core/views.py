@@ -216,26 +216,34 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
 
     def get_queryset(self):
         """Optimized version with better database performance"""
+        from django.db.models import Q, Value, BooleanField, Case, When, Prefetch
+        from django.db.models.functions import Cast, TruncDate
+
         now = timezone.now()
         today = now.date()
 
-        # Use raw SQL for better performance on large datasets
+        # Always select_related for required ForeignKeys (category, organization)
         queryset = Event.objects.select_related('category', 'organization').prefetch_related('tags')
 
         # For retrieve action, prefetch posts and schedule to avoid N+1 queries
         if self.action == 'retrieve':
-            queryset = queryset.select_related('schedule').prefetch_related(
+            # Use Prefetch for optional relationships instead of select_related to avoid unnecessary JOINs
+            queryset = queryset.prefetch_related(
+                Prefetch('schedule'),
+                Prefetch('schedule__items'),
                 'posts__organization',
-                'posts__images',
-                'schedule__items'
+                'posts__images'
             )
         # For list action, prefetch posts, schedule, and event_map to avoid N+1 queries
         elif self.action == 'list':
-            queryset = queryset.select_related('schedule', 'event_map').prefetch_related(
+            # Use Prefetch for optional 1-to-1 relationships to avoid LEFT JOINs when not needed
+            queryset = queryset.prefetch_related(
+                Prefetch('schedule'),
+                Prefetch('schedule__items'),
+                Prefetch('event_map'),
+                Prefetch('event_map__locations'),
                 'posts__organization',
-                'posts__images',
-                'schedule__items',
-                'event_map__locations'
+                'posts__images'
             )
 
         current_org = self.get_current_organization()
@@ -279,15 +287,22 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
             if getattr(request.user, 'is_staff', False):
                 queryset = queryset.annotate(likes_total=Count('likes'))
 
-        # Simpler ordering - avoid complex CASE statements
-        return queryset.extra(
-            select={
-                'is_today': "DATE(starts_at) = %s",
-                'is_new': "publication_date = %s"
-            },
-            select_params=[today, today],
-            order_by=['-is_today', '-is_new', 'starts_at']
-        )
+        # Use modern Django ORM instead of deprecated .extra()
+        # Annotate is_today and is_new for ordering
+        queryset = queryset.annotate(
+            is_today=Case(
+                When(Q(starts_at__date=today), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            ),
+            is_new=Case(
+                When(publication_date=today, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+        ).order_by('-is_today', '-is_new', 'starts_at')
+
+        return queryset
 
     def _is_staff_user(self):
         """
