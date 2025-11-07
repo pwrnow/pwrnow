@@ -58,8 +58,10 @@ class CategoryViewSet(ApiLoggingMixin, viewsets.GenericViewSet):
 
     def list(self, request, *args, **kwargs):
         """List all categories ordered by order_index and name."""
+        logger.debug("Fetching all categories")
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        logger.info(f"Listed {len(serializer.data)} categories")
         return Response(serializer.data)
 
 
@@ -80,9 +82,11 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
         Authenticate organization using a code and store in session
         PUBLIC ENDPOINT - No authentication required
         """
+        logger.debug("Organization authentication attempt")
         serializer = OrganizationAuthSerializer(data=request.data)
 
         if not serializer.is_valid():
+            logger.warning(f"Organization authentication validation failed: {serializer.errors}")
             return Response(
                 {'error': 'Invalid request data', 'details': serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
@@ -95,12 +99,14 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
         )
 
         if not organization:
+            logger.warning("Organization authentication failed: Invalid code")
             return Response(
                 {'error': 'Authentication failed'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
         # Return organization data
+        logger.info(f"Organization authenticated successfully: org_id={organization.id} name={organization.name}")
         org_serializer = self.get_serializer(organization, context={'request': request})
         return Response({
             'organization': org_serializer.data,
@@ -113,7 +119,9 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
         Clear organization authentication from session
         PUBLIC ENDPOINT - No authentication required
         """
+        logger.debug("Organization logout initiated")
         clear_organization_session(request)
+        logger.info("Organization logged out successfully")
         return Response({
             'message': _('Successfully logged out')
         }, status=status.HTTP_200_OK)
@@ -124,13 +132,16 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
         Get current authenticated organization
         PUBLIC ENDPOINT - Returns organization if session exists, 401 if not
         """
+        logger.debug("Fetching current authenticated organization")
         organization = get_current_organization(request)
         if not organization:
+            logger.debug("No organization authenticated in session")
             return Response(
                 {'error': _('No organization authenticated')},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
+        logger.debug(f"Current organization retrieved: org_id={organization.id}")
         serializer = self.get_serializer(organization, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -140,9 +151,11 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
         Upload organization image
         REQUIRES ORGANIZATION AUTHENTICATION
         """
+        logger.debug(f"Organization image upload attempt: slug={slug}")
         # Check if user is authenticated for this organization
         current_org = get_current_organization(request)
         if not current_org:
+            logger.warning(f"Organization image upload failed: No organization authenticated")
             return Response(
                 {'error': _('No organization authenticated')},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -152,12 +165,14 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         # Verify the authenticated org matches the requested org
         if str(organization.id) != str(current_org.id):
+            logger.warning(f"Organization image upload denied: org_id={organization.id} != current_org_id={current_org.id}")
             return Response(
                 {'error': _('Access denied')},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         if 'image' not in request.FILES:
+            logger.warning(f"Organization image upload failed: No image file provided for org_id={organization.id}")
             return Response(
                 {'error': _('No image file provided')},
                 status=status.HTTP_400_BAD_REQUEST
@@ -167,6 +182,7 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         # Validate image size (5MB limit)
         if image_file.size > 5 * 1024 * 1024:
+            logger.warning(f"Organization image upload failed: File too large ({image_file.size} bytes) for org_id={organization.id}")
             return Response(
                 {'error': _('Image size cannot exceed 5MB')},
                 status=status.HTTP_400_BAD_REQUEST
@@ -176,6 +192,7 @@ class OrganizationViewSet(ApiLoggingMixin, viewsets.ReadOnlyModelViewSet):
         organization.image = image_file
         organization.save()
 
+        logger.info(f"Organization image uploaded successfully: org_id={organization.id} file_size={image_file.size}")
         # Return updated organization data
         serializer = self.get_serializer(organization, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -216,26 +233,34 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
 
     def get_queryset(self):
         """Optimized version with better database performance"""
+        from django.db.models import Q, Value, BooleanField, Case, When, Prefetch
+        from django.db.models.functions import Cast, TruncDate
+
         now = timezone.now()
         today = now.date()
 
-        # Use raw SQL for better performance on large datasets
+        # Always select_related for required ForeignKeys (category, organization)
         queryset = Event.objects.select_related('category', 'organization').prefetch_related('tags')
 
         # For retrieve action, prefetch posts and schedule to avoid N+1 queries
         if self.action == 'retrieve':
-            queryset = queryset.select_related('schedule').prefetch_related(
+            # Use Prefetch for optional relationships instead of select_related to avoid unnecessary JOINs
+            queryset = queryset.prefetch_related(
+                Prefetch('schedule'),
+                Prefetch('schedule__items'),
                 'posts__organization',
-                'posts__images',
-                'schedule__items'
+                'posts__images'
             )
         # For list action, prefetch posts, schedule, and event_map to avoid N+1 queries
         elif self.action == 'list':
-            queryset = queryset.select_related('schedule', 'event_map').prefetch_related(
+            # Use Prefetch for optional 1-to-1 relationships to avoid LEFT JOINs when not needed
+            queryset = queryset.prefetch_related(
+                Prefetch('schedule'),
+                Prefetch('schedule__items'),
+                Prefetch('event_map'),
+                Prefetch('event_map__locations'),
                 'posts__organization',
-                'posts__images',
-                'schedule__items',
-                'event_map__locations'
+                'posts__images'
             )
 
         current_org = self.get_current_organization()
@@ -279,15 +304,22 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
             if getattr(request.user, 'is_staff', False):
                 queryset = queryset.annotate(likes_total=Count('likes'))
 
-        # Simpler ordering - avoid complex CASE statements
-        return queryset.extra(
-            select={
-                'is_today': "DATE(starts_at) = %s",
-                'is_new': "publication_date = %s"
-            },
-            select_params=[today, today],
-            order_by=['-is_today', '-is_new', 'starts_at']
-        )
+        # Use modern Django ORM instead of deprecated .extra()
+        # Annotate is_today and is_new for ordering
+        queryset = queryset.annotate(
+            is_today=Case(
+                When(Q(starts_at__date=today), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            ),
+            is_new=Case(
+                When(publication_date=today, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+        ).order_by('-is_today', '-is_new', 'starts_at')
+
+        return queryset
 
     def _is_staff_user(self):
         """
@@ -356,21 +388,25 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
         Create a new event (requires authenticated organization)
         ORGANIZATION AUTH REQUIRED
         """
+        logger.debug("Event creation initiated")
         # Check if organization is authenticated using our session-based auth
         self.check_organization_authentication()
 
         serializer = self.get_serializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             event = serializer.save()
+            logger.info(f"Event created successfully: event_id={event.id} title={event.title} org_id={event.organization_id}")
 
             # Send Discord notification unless suppressed via settings
             if not (getattr(settings, "SUPPRESS_NOTIFICATIONS", False) or getattr(settings, "SUPPRESS_DISCORD_NOTIFICATIONS", False)):
+                logger.debug(f"Sending Discord notification for event_id={event.id}")
                 send_discord_notification.delay(str(event.id))
 
             # Return the created event using the read serializer
             read_serializer = EventSerializer(event, context={'request': request})
             return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
+        logger.warning(f"Event creation validation failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
@@ -380,12 +416,16 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
         return Response({'detail': 'Method "PATCH" not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def destroy(self, request, *args, **kwargs):
+        logger.debug("Event deletion initiated")
         organization = self.get_current_organization()
         if not organization:
+            logger.warning("Event deletion failed: No organization authenticated")
             return Response({'detail': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
         event = self.get_object()
         if not event.organization or event.organization.id != organization.id:
+            logger.warning(f"Event deletion denied: event_id={event.id} org_id={event.organization_id} != current_org_id={organization.id}")
             return Response({'detail': 'You do not have permission to delete this event.'}, status=status.HTTP_403_FORBIDDEN)
+        logger.info(f"Event deleted: event_id={event.id} title={event.title} org_id={organization.id}")
         self.perform_destroy(event)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -396,6 +436,7 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
         Public: returns only verified posts.
         If an organization is authenticated and owns the event, include unverified as well.
         """
+        logger.debug(f"Fetching posts for event: slug={slug}")
         event = self.get_object()
         current_org = self.get_current_organization()
 
@@ -404,6 +445,8 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
             queryset = queryset.filter(verified=True)
 
         page = self.paginate_queryset(queryset)
+        posts_count = len(page) if page else queryset.count()
+        logger.info(f"Listed {posts_count} posts for event_id={event.id}")
         serializer = PostSerializer(page or queryset, many=True, context={'request': request})
         if page is not None:
             return self.get_paginated_response(serializer.data)
@@ -416,16 +459,20 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
         - Public: only if event is verified
         - Owner org: return schedule regardless of verification
         """
+        logger.debug(f"Fetching schedule for event: slug={slug}")
         event = self.get_object()
         current_org = self.get_current_organization()
 
         if not (current_org and str(current_org.id) == str(event.organization_id)) and not event.verified:
+            logger.warning(f"Schedule access denied for unverified event: event_id={event.id}")
             return Response({'detail': _('Event not verified.')}, status=status.HTTP_404_NOT_FOUND)
 
         schedule = getattr(event, 'schedule', None)
         if not schedule:
+            logger.debug(f"No schedule found for event_id={event.id}")
             return Response(None, status=status.HTTP_200_OK)
 
+        logger.info(f"Schedule retrieved for event_id={event.id} schedule_id={schedule.id}")
         serializer = ScheduleSerializer(schedule, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -435,9 +482,11 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
         Verify an event (staff only).
         POST /events/{slug}/verify/
         """
+        logger.debug(f"Event verification attempt: slug={slug} by user_id={request.user.id}")
         event = self.get_object()
 
         if event.verified:
+            logger.warning(f"Event verification failed: Event already verified event_id={event.id}")
             return Response(
                 {'detail': _('Event is already verified.')},
                 status=status.HTTP_400_BAD_REQUEST
@@ -448,6 +497,7 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
         event.verified_by = request.user
         event.save()
 
+        logger.info(f"Event verified successfully: event_id={event.id} title={event.title} by user_id={request.user.id}")
         # Return updated event data
         serializer = self.get_serializer(event)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -468,20 +518,26 @@ class PostViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Gen
         return PostSerializer
 
     def create(self, request, *args, **kwargs):
+        logger.debug("Post creation initiated")
         self.check_organization_authentication()
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         post = serializer.save()
+        logger.info(f"Post created successfully: post_id={post.id} event_id={post.event_id} org_id={post.organization_id}")
         read_serializer = PostSerializer(post, context={'request': request})
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
+        logger.debug("Post deletion initiated")
         organization = self.get_current_organization()
         if not organization:
+            logger.warning("Post deletion failed: No organization authenticated")
             return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
         post = self.get_object()
         if not post.organization or str(post.organization_id) != str(organization.id):
+            logger.warning(f"Post deletion denied: post_id={post.id} org_id={post.organization_id} != current_org_id={organization.id}")
             return Response({'detail': _('You do not have permission to delete this post.')}, status=status.HTTP_403_FORBIDDEN)
+        logger.info(f"Post deleted: post_id={post.id} event_id={post.event_id} org_id={organization.id}")
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -501,21 +557,27 @@ class ScheduleItemViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, view
         return ScheduleItemSerializer
 
     def create(self, request, *args, **kwargs):
+        logger.debug("Schedule item creation initiated")
         self.check_organization_authentication()
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         item = serializer.save()
+        logger.info(f"Schedule item created: item_id={item.id} schedule_id={item.schedule_id} title={item.title}")
         read = ScheduleItemSerializer(item, context={'request': request})
         return Response(read.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
+        logger.debug("Schedule item deletion initiated")
         organization = self.get_current_organization()
         if not organization:
+            logger.warning("Schedule item deletion failed: No organization authenticated")
             return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
         item = self.get_object()
         event_org_id = str(item.schedule.event.organization_id)
         if event_org_id != str(organization.id):
+            logger.warning(f"Schedule item deletion denied: item_id={item.id} event_org_id={event_org_id} != current_org_id={organization.id}")
             return Response({'detail': _('You do not have permission to delete this schedule item.')}, status=status.HTTP_403_FORBIDDEN)
+        logger.info(f"Schedule item deleted: item_id={item.id} schedule_id={item.schedule_id} org_id={organization.id}")
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -531,13 +593,19 @@ def event_like(request, slug):
     event = get_object_or_404(Event, slug=slug)
 
     if request.method == "POST":
+        logger.debug(f"Like creation attempt: user_id={request.user.id} event_id={event.id}")
         like, created = Like.objects.get_or_create(user=request.user, event=event)
         if created:
+            logger.info(f"Like created: user_id={request.user.id} event_id={event.id}")
             return Response({"liked": True}, status=status.HTTP_201_CREATED)
+        logger.debug(f"Like already exists: user_id={request.user.id} event_id={event.id}")
         return Response({"liked": True}, status=status.HTTP_200_OK)
 
     # DELETE
-    Like.objects.filter(user=request.user, event=event).delete()
+    logger.debug(f"Like deletion attempt: user_id={request.user.id} event_id={event.id}")
+    deleted_count = Like.objects.filter(user=request.user, event=event).delete()[0]
+    if deleted_count > 0:
+        logger.info(f"Like deleted: user_id={request.user.id} event_id={event.id}")
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -552,8 +620,10 @@ def scan_qr_code(request):
     """
     scan_qr_code.throttle_scope = 'qr_scan'
 
+    logger.debug(f"QR code scan attempt: user_id={request.user.id}")
     serializer = QRCodeScanSerializer(data=request.data)
     if not serializer.is_valid():
+        logger.warning(f"QR code scan validation failed: user_id={request.user.id} errors={serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     qr_code = serializer.validated_data['code']
@@ -565,6 +635,7 @@ def scan_qr_code(request):
     ).first()
 
     if existing_participation:
+        logger.warning(f"QR code scan failed: Duplicate participation user_id={request.user.id} event_id={qr_code.event.id}")
         return Response({
             'error': 'You have already confirmed participation for this event.',
             'participation': {
@@ -587,6 +658,7 @@ def scan_qr_code(request):
     qr_code.last_used_at = timezone.now()
     qr_code.save(update_fields=['usage_count', 'last_used_at'])
 
+    logger.info(f"QR code scan successful: user_id={request.user.id} event_id={qr_code.event.id} qr_code_id={qr_code.id} participation_id={participation.id}")
     # Return success response
     return Response({
         'success': True,
@@ -622,7 +694,9 @@ def search_users(request):
     User = get_user_model()
     query = request.query_params.get('q', '').strip()
 
+    logger.debug(f"User search initiated: user_id={request.user.id} query_length={len(query)}")
     if len(query) < 3:
+        logger.warning(f"User search failed: Query too short user_id={request.user.id}")
         return Response({
             'error': _('Search query must be at least 3 characters long.')
         }, status=status.HTTP_400_BAD_REQUEST)
@@ -672,6 +746,7 @@ def search_users(request):
         )
         results.append(user)
 
+    logger.info(f"User search completed: user_id={request.user.id} results_count={len(results)}")
     serializer = UserSearchSerializer(results, many=True)
     return Response(serializer.data)
 
@@ -695,6 +770,7 @@ def get_friends_attending_event(request, slug):
     try:
         event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
+        logger.warning(f"Friends attending lookup failed: Event not found slug={slug}")
         return Response({'error': _('Event not found.')}, status=status.HTTP_404_NOT_FOUND)
 
     # Get current user's friendships
@@ -720,6 +796,7 @@ def get_friends_attending_event(request, slug):
         for friend in attending_friends
     ]
 
+    logger.info(f"Friends attending event retrieved: user_id={start_user_id} event_id={event.id} friends_count={len(friends_list)}")
     return Response({
         'count': len(friends_list),
         'friends': friends_list
@@ -1166,7 +1243,7 @@ def remove_friend(request, friend_id):
         return Response({'error': 'Failed to remove friend'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class EventMapViewSet(viewsets.ModelViewSet):
+class EventMapViewSet(ApiLoggingMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing event maps.
     Only authenticated organizations can create/update/delete maps for their own events.
@@ -1216,20 +1293,25 @@ class EventMapViewSet(viewsets.ModelViewSet):
         from .authentication import get_current_organization
         organization = get_current_organization(self.request)
         if not organization:
+            logger.warning("Event map creation failed: No authenticated organization")
             raise serializers.ValidationError(_('No authenticated organization found.'))
 
         # The serializer handles the actual creation
-        return serializer.save()
+        event_map = serializer.save()
+        logger.info(f"Event map created: map_id={event_map.id} event_id={event_map.event_id} org_id={organization.id}")
+        return event_map
 
     @action(detail=True, methods=['post'], url_path='add-location')
     def add_location(self, request, pk=None):
         """Add a location to an existing event map."""
+        logger.debug(f"Event map location addition attempt: map_id={pk}")
         event_map = self.get_object()
 
         # Check if organization owns the event
         from .authentication import get_current_organization
         organization = get_current_organization(request)
         if not organization or str(event_map.event.organization_id) != str(organization.id):
+            logger.warning(f"Event map location addition denied: map_id={event_map.id} org_id={event_map.event.organization_id}")
             return Response(
                 {'error': _('You do not have permission to modify this event map.')},
                 status=status.HTTP_403_FORBIDDEN
@@ -1256,23 +1338,27 @@ class EventMapViewSet(viewsets.ModelViewSet):
                 is_active=True
             )
 
+            logger.info(f"Event map location added: location_id={location.id} map_id={event_map.id} name={location.name}")
             return Response(
                 EventMapLocationSerializer(location).data,
                 status=status.HTTP_201_CREATED
             )
 
+        logger.warning(f"Event map location addition validation failed: map_id={event_map.id} errors={serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get'], url_path='locations')
     def get_locations(self, request, pk=None):
         """Get all locations for an event map."""
+        logger.debug(f"Fetching locations for event map: map_id={pk}")
         event_map = self.get_object()
         locations = event_map.locations.filter(is_active=True).order_by('order_index')
+        logger.info(f"Event map locations retrieved: map_id={event_map.id} locations_count={locations.count()}")
         serializer = EventMapLocationSerializer(locations, many=True)
         return Response(serializer.data)
 
 
-class EventMapLocationViewSet(viewsets.ModelViewSet):
+class EventMapLocationViewSet(ApiLoggingMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing individual event map locations.
     """
@@ -1313,35 +1399,45 @@ class EventMapLocationViewSet(viewsets.ModelViewSet):
         from .authentication import get_current_organization
         organization = get_current_organization(self.request)
         if not organization:
+            logger.warning("Event map location creation failed: No authenticated organization")
             raise serializers.ValidationError(_('No authenticated organization found.'))
 
         # The serializer handles the actual creation
-        return serializer.save()
+        location = serializer.save()
+        logger.info(f"Event map location created: location_id={location.id} map_id={location.event_map_id} name={location.name}")
+        return location
 
     def perform_update(self, serializer):
         """Update event map location with organization authentication."""
         from .authentication import get_current_organization
         organization = get_current_organization(self.request)
         if not organization:
+            logger.warning("Event map location update failed: No authenticated organization")
             raise serializers.ValidationError(_('No authenticated organization found.'))
 
         # Check if organization owns the event
         if str(serializer.instance.event_map.event.organization_id) != str(organization.id):
+            logger.warning(f"Event map location update denied: location_id={serializer.instance.id} org_id={serializer.instance.event_map.event.organization_id}")
             raise serializers.ValidationError(_('You do not have permission to modify this event map location.'))
 
-        return serializer.save()
+        location = serializer.save()
+        logger.info(f"Event map location updated: location_id={location.id} map_id={location.event_map_id}")
+        return location
 
     def perform_destroy(self, instance):
         """Delete event map location with organization authentication."""
         from .authentication import get_current_organization
         organization = get_current_organization(self.request)
         if not organization:
+            logger.warning("Event map location deletion failed: No authenticated organization")
             raise serializers.ValidationError(_('No authenticated organization found.'))
 
         # Check if organization owns the event
         if str(instance.event_map.event.organization_id) != str(organization.id):
+            logger.warning(f"Event map location deletion denied: location_id={instance.id} org_id={instance.event_map.event.organization_id}")
             raise serializers.ValidationError(_('You do not have permission to delete this event map location.'))
 
+        logger.info(f"Event map location deleted: location_id={instance.id} map_id={instance.event_map_id}")
         instance.delete()
 
 

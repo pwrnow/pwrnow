@@ -1,6 +1,7 @@
 import uuid
 from django.db.models import Q
 import secrets
+import os
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -18,6 +19,30 @@ def generate_organization_code():
     # Generate a random number to encode
     random_number = secrets.randbits(32)  # 32-bit random number
     return sqids.encode([random_number])
+
+
+def upload_to_uuid_filename(directory):
+    """Generate a callable that creates UUID-based filenames for a given directory.
+
+    Args:
+        directory: The directory name where files should be stored
+
+    Returns:
+        A callable suitable for use as ImageField.upload_to
+    """
+    def upload_handler(instance, filename):
+        """Generate UUID-based filename preserving original extension."""
+        ext = os.path.splitext(filename)[1]
+        filename = f"{uuid.uuid4()}{ext}"
+        return os.path.join(directory, filename)
+    return upload_handler
+
+
+# Create upload handlers for each model
+upload_to_organization_image = upload_to_uuid_filename('organizations')
+upload_to_event_image = upload_to_uuid_filename('events')
+upload_to_post_image = upload_to_uuid_filename('posts')
+upload_to_event_map_location_image = upload_to_uuid_filename('event_map_locations')
 
 
 class Category(models.Model):
@@ -82,7 +107,7 @@ class Organization(models.Model):
     name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=220, unique=True, db_index=True)
     image = models.ImageField(
-        upload_to='organizations/',
+        upload_to=upload_to_organization_image,
         blank=True,
         null=True,
         help_text="Organization logo/image"
@@ -164,7 +189,7 @@ class Event(models.Model):
 
     # Media and external links
     image = models.ImageField(
-        upload_to='events/',
+        upload_to=upload_to_event_image,
         blank=True,
         null=True,
         help_text="Event image/poster"
@@ -231,6 +256,11 @@ class Event(models.Model):
                 fields=['ends_at', 'starts_at'],
                 name='event_public_time_idx',
                 condition=Q(verified=True),
+            ),
+            # Optimized index for the most common list query pattern
+            models.Index(
+                fields=['verified', 'publication_date', 'ends_at', 'starts_at'],
+                name='event_list_query_idx'
             ),
         ]
 
@@ -432,7 +462,7 @@ class PostImage(models.Model):
         on_delete=models.CASCADE,
         related_name='images'
     )
-    image = models.ImageField(upload_to='posts/', help_text=_('Image file'))
+    image = models.ImageField(upload_to=upload_to_post_image, help_text=_('Image file'))
     aspect_ratio = models.CharField(
         max_length=10,
         blank=True,
@@ -707,7 +737,7 @@ class EventMapLocation(models.Model):
         help_text="Order for displaying locations"
     )
     image = models.ImageField(
-        upload_to='event_map_locations/',
+        upload_to=upload_to_event_map_location_image,
         blank=True,
         null=True,
         help_text="Custom marker image for this location"

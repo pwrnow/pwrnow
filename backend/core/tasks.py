@@ -200,39 +200,78 @@ def send_discord_notification(event_id):
 @shared_task
 def translate_event_content(event_id, target_languages=None):
     """
-    TODO: Implement automatic translation for event content.
+    Automatically translate event title and description using AI.
 
-    This task should translate event title and description from Polish to English
-    when a new event is created.
+    This task translates event content from filled fields to empty fields,
+    with language detection to ensure correct translation direction.
 
     Args:
         event_id: The UUID of the event to translate
-        target_languages: List of language codes to translate to (defaults to ['en'])
+        target_languages: List of language codes to translate to (optional, auto-detected)
     """
     from .models import Event
-
-    if target_languages is None:
-        target_languages = ['en']  # Default to English translation
+    from ai.services import EventTranslationService
 
     try:
         # Get the event
         event = Event.objects.get(id=event_id)
 
-        logger.info(f"TODO: Implement translation for event: {event.title} (ID: {event_id})")
+        logger.info(f"Starting translation for event: {event.title} (ID: {event_id})")
 
-        # TODO: Implement actual translation logic here
-        # 1. Check if translation fields are empty
-        # 2. Call translation service (Google Translate, OpenAI, DeepL, etc.)
-        # 3. Update the translation fields:
-        #    - event.title_en = translated_title
-        #    - event.description_en = translated_description
-        # 4. Save the event with updated fields
+        # Create translation service
+        translation_service = EventTranslationService()
+
+        # Perform translation (service will handle language detection and field mapping)
+        result = translation_service.translate_event(
+            event_id=str(event_id),
+            organization=event.organization,
+            user=None
+        )
+
+        if not result['success']:
+            logger.error(f"Translation failed for event {event_id}: {result.get('error')}")
+            return result
+
+        # Update event with translations
+        if result['translations']:
+            fields_to_update = []
+
+            for translation in result['translations']:
+                target_field = translation['target_field']
+                translated_text = translation['translated_text']
+
+                # Update the event field
+                setattr(event, target_field, translated_text)
+                fields_to_update.append(target_field)
+
+                logger.info(
+                    f"Event {event_id}: Translated {translation['source_field']} → {target_field} "
+                    f"({translation['tokens_used']} tokens, {translation['processing_time_ms']}ms)"
+                )
+
+            # Save with update_fields to avoid triggering signals recursively
+            if fields_to_update:
+                event.save(update_fields=fields_to_update)
+                logger.info(f"Event {event_id}: Saved {len(fields_to_update)} translated field(s)")
+
+        # Log warnings if any
+        if result['warnings']:
+            for warning in result['warnings']:
+                logger.warning(f"Event {event_id}: {warning['field']} - {warning['message']}")
+
+        # Log skipped fields if any
+        if result['skipped']:
+            for skipped in result['skipped']:
+                logger.info(f"Event {event_id}: Skipped {skipped['field']} - {skipped['reason']}")
 
         return {
             'event_id': str(event_id),
-            'event_title': event.title,
-            'message': 'Translation not implemented yet - TODO',
-            'success': False
+            'success': True,
+            'translations_count': len(result['translations']),
+            'warnings_count': len(result['warnings']),
+            'skipped_count': len(result['skipped']),
+            'translations': result['translations'],
+            'warnings': result['warnings']
         }
 
     except Event.DoesNotExist:
@@ -245,7 +284,7 @@ def translate_event_content(event_id, target_languages=None):
         }
     except Exception as e:
         error_msg = f"Error in translation task: {str(e)}"
-        logger.error(error_msg)
+        logger.error(error_msg, exc_info=True)
         return {
             'event_id': str(event_id),
             'error': error_msg,
