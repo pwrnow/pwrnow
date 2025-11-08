@@ -8,12 +8,6 @@ if (typeof window !== 'undefined' && key) {
   posthog.init(key, {
     ...(host ? { api_host: host } : {}),
     defaults: '2025-05-24',
-    autocapture: {
-      url_allowlist: [
-        // Allow all URLs except /auth paths
-        /^(?!.*\/auth).*$/
-      ],
-    }
   });
 }
 
