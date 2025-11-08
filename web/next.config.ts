@@ -31,11 +31,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/hedgehog/static/:path*',
+        source: '/ingest/static/:path*',
         destination: 'https://eu-assets.i.posthog.com/static/:path*',
       },
       {
-        source: '/hedgehog/:path*',
+        source: '/ingest/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
     ];
@@ -73,7 +73,7 @@ export default withSentryConfig(withMDX(withNextIntl(nextConfig)), {
   // This can increase your server load as well as your hosting bill.
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
   // side errors will fail.
-  tunnelRoute: "/moon",
+  tunnelRoute: "/monitoring",
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
