@@ -1,13 +1,25 @@
 import posthog from "posthog-js"
 import * as Sentry from "@sentry/nextjs";
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-  api_host: "/ingest",
-  ui_host: "https://eu.posthog.com",
-  defaults: '2025-05-24',
-  capture_exceptions: true, // This enables capturing exceptions using Error Tracking
-  debug: process.env.NODE_ENV === "development",
-});
+// Initialize PostHog only if API key is provided
+if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "/ingest",
+    ui_host: "https://eu.posthog.com",
+    defaults: '2025-05-24',
+    capture_pageview: true, // Auto capture pageviews
+    capture_pageleave: true, // Auto capture page leave events
+    autocapture: true, // Enable autocapture for button clicks etc
+    capture_exceptions: true, // This enables capturing exceptions using Error Tracking
+    debug: process.env.NODE_ENV === "development",
+  });
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[PostHog] Initialized with key:", process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(0, 10) + "...");
+  }
+} else {
+  console.warn("[PostHog] Not initialized - NEXT_PUBLIC_POSTHOG_KEY is missing");
+}
 
 // This file configures the initialization of Sentry on the client.
 // The added config here will be used whenever a users loads a page in their browser.

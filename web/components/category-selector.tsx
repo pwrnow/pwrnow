@@ -20,7 +20,7 @@ export default function CategorySelector({
   const [currentCategory, setCurrentCategory] = useState(
     () => searchParams.get('category') || 'wszystkie'
   );
-  const { trackCategoryFilter } = useAnalytics();
+  const { trackCategorySelected } = useAnalytics();
   const t = useTranslations('CategorySelector');
 
   // Add "Wszystkie" category to the beginning of the list
@@ -38,8 +38,10 @@ export default function CategorySelector({
 
     if (categorySlug === currentCategory) return;
 
-    // Track category selection
-    trackCategoryFilter(categorySlug);
+    const categoryName = allCategories.find(c => c.slug === categorySlug)?.name || categorySlug;
+
+    // Track category selection (matches mobile app event name)
+    trackCategorySelected(categorySlug, categoryName, 'feed');
 
     // Update local state immediately
     setCurrentCategory(categorySlug);

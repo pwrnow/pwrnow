@@ -20,7 +20,7 @@ interface EventCardProps {
 export default function EventCard({ event }: EventCardProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
-  const { trackEventClick, trackEventInteraction } = useAnalytics();
+  const { trackEventCtaClicked, trackEventPillClicked } = useAnalytics();
   const t = useTranslations('EventCard');
   const locale = useLocale();
 
@@ -48,14 +48,8 @@ export default function EventCard({ event }: EventCardProps) {
   const handleMapLinkClick = () => {
     if (!event.location) return;
 
-    // Track map click with organization info
-    trackEventInteraction(
-      'map_click',
-      event.id,
-      event.title,
-      event.organization?.id,
-      event.organization?.name
-    );
+    // Track location pill click (matches mobile app)
+    trackEventPillClicked(event, 'location');
 
     const isIOS =
       typeof navigator !== 'undefined' &&
@@ -68,13 +62,8 @@ export default function EventCard({ event }: EventCardProps) {
   };
 
   const handleEventLinkClick = () => {
-    // Track event link click with organization info
-    trackEventClick(
-      event.id,
-      event.title,
-      event.organization?.id,
-      event.organization?.name
-    );
+    // Track CTA click (matches mobile app event name)
+    trackEventCtaClicked(event, 'card_cta');
   };
   const truncateDescription = (text: string, maxLength: number) => {
     if (!text || text.length <= maxLength) return text;

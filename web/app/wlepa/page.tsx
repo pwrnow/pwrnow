@@ -6,7 +6,7 @@ import { useAnalytics } from '@/lib/useAnalytics';
 
 export default function WlepaPage() {
   const router = useRouter();
-  const { trackEvent } = useAnalytics();
+  const { safeCapture } = useAnalytics();
 
   useEffect(() => {
     const isIOS = () => {
@@ -27,30 +27,30 @@ export default function WlepaPage() {
     const isiOSDevice = isIOS();
 
     // Track the visit
-    trackEvent('wlepa_page_visited', {
-      'Is iOS': isiOSDevice,
-      'User Agent': navigator.userAgent,
-      'Platform': navigator.platform,
+    safeCapture('wlepa_page_visited', {
+      is_ios: isiOSDevice,
+      user_agent: navigator.userAgent,
+      platform: navigator.platform,
     });
 
     // Redirect iOS users to /aplikacja
     if (isiOSDevice) {
-      trackEvent('wlepa_redirect_to_app', {
-        'From': '/wlepa',
-        'To': '/aplikacja',
-        'Reason': 'iOS device detected',
+      safeCapture('wlepa_redirect_to_app', {
+        from: '/wlepa',
+        to: '/aplikacja',
+        reason: 'iOS device detected',
       });
       router.push('/aplikacja');
     } else {
       // Redirect non-iOS users to home
-      trackEvent('wlepa_redirect_to_home', {
-        'From': '/wlepa',
-        'To': '/',
-        'Reason': 'Non-iOS device',
+      safeCapture('wlepa_redirect_to_home', {
+        from: '/wlepa',
+        to: '/',
+        reason: 'Non-iOS device',
       });
       router.push('/');
     }
-  }, [router, trackEvent]);
+  }, [router, safeCapture]);
 
   return (
     <div className='min-h-screen flex items-center justify-center bg-background'>

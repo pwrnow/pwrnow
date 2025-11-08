@@ -9,14 +9,16 @@ import AppStoreDownload from './app-store-download';
 export default function AppPageContent() {
   const t = useTranslations('AppPage');
   const locale = useLocale();
-  const { trackPageView } = useAnalytics();
+  const { safeCapture } = useAnalytics();
 
   useEffect(() => {
-    trackPageView('/aplikacja', {
+    // Track custom page view (PostHog auto-captures pageviews via defaults: '2025-05-24')
+    safeCapture('app_page_viewed', {
       locale,
       page_type: 'app_announcement',
+      page_path: '/aplikacja',
     });
-  }, [trackPageView, locale]);
+  }, [safeCapture, locale]);
 
   return (
     <div className='min-h-screen bg-background relative overflow-hidden'>
