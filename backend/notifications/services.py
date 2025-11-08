@@ -40,6 +40,11 @@ class ExpoPushNotificationService:
     ) -> bool:
         """Send a single notification to a device."""
 
+        # Check if notifications are suppressed globally
+        if getattr(settings, "SUPPRESS_NOTIFICATIONS", False):
+            logger.info(f"Notifications suppressed by SUPPRESS_NOTIFICATIONS setting, skipping notification to device {device.id}")
+            return False
+
         if not device.notifications_enabled:
             logger.info(f"Notifications disabled for device {device.id}")
             return False
@@ -175,6 +180,11 @@ class ExpoPushNotificationService:
         Returns:
             Dict with counts: {'sent': int, 'failed': int}
         """
+        # Check if notifications are suppressed globally
+        if getattr(settings, "SUPPRESS_NOTIFICATIONS", False):
+            logger.info(f"Notifications suppressed by SUPPRESS_NOTIFICATIONS setting, skipping batch of {len(notifications_batch)} notifications")
+            return {'sent': 0, 'failed': 0}
+
         if not notifications_batch:
             return {'sent': 0, 'failed': 0}
 
