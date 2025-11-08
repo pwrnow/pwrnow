@@ -4,7 +4,7 @@ import { detectLocaleFromHeaders } from './lib/locale-detection';
 import { i18nConfig } from './i18n/config';
 import { trackServerEvent } from './lib/posthog-server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Handle /wlepa redirect
   if (request.nextUrl.pathname === '/wlepa') {
     console.log('🔗 User accessed /wlepa path');
