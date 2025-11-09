@@ -21,72 +21,83 @@ export default function AppPageContent() {
   }, [safeCapture, locale]);
 
   return (
-    <div className='min-h-screen bg-background relative overflow-hidden'>
-      {/* Minimalistic animated background elements */}
+    <div className='relative h-screen w-full overflow-hidden bg-background'>
+      {/* Background gradient orbs */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-        {/* Soft gradient orbs */}
-        <div className='absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-drift-slow' />
-        <div className='absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-drift-reverse' />
-        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] bg-secondary/3 rounded-full blur-3xl animate-drift-gentle' />
-
-        {/* Floating dots */}
-        <div className='absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-primary/30 animate-float' />
-        <div className='absolute top-3/4 right-1/4 w-2 h-2 rounded-full bg-accent/30 animate-float' style={{ animationDelay: '1s' }} />
-        <div className='absolute top-1/2 right-1/3 w-2 h-2 rounded-full bg-secondary/30 animate-float' style={{ animationDelay: '2s' }} />
+        <div className='absolute top-0 left-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl animate-drift-slow' />
+        <div className='absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl animate-drift-reverse' />
+        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-secondary/5 rounded-full blur-3xl animate-drift-gentle' />
       </div>
 
-      {/* Main content */}
-      <section className='relative z-10 pt-32 pb-24 px-6'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='flex flex-col lg:flex-row items-center gap-12 lg:gap-20'>
-            {/* Text content */}
-            <div className='flex-1 text-center lg:text-left space-y-8 animate-slide-up'>
-              {/* Headline */}
-              <div className='space-y-4'>
-                <h1 className='text-5xl lg:text-7xl font-bold gradient-text leading-tight'>
-                  {t('headline')}
+      {/* Main content container */}
+      <div className='relative z-10 h-full w-full flex items-center justify-center px-4 sm:px-6 lg:px-8'>
+        <div className='w-full max-w-[1800px] mx-auto'>
+          <div className='grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 lg:gap-12 xl:gap-16 items-center h-full'>
+
+            {/* Left side - Text content */}
+            <div className='flex flex-col justify-center space-y-6 lg:space-y-8 xl:space-y-10 text-center lg:text-left lg:pl-8 xl:pl-12'>
+              <div
+                className='space-y-4 lg:space-y-5 animate-slide-up opacity-0'
+                style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
+              >
+                <h1 className='text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.1]'>
+                  <span className='gradient-text'>{t('headline')}</span>
                 </h1>
-                <p className='text-xl lg:text-2xl text-muted-foreground'>
+                <p className='text-xl sm:text-2xl lg:text-3xl text-muted-foreground font-light max-w-2xl mx-auto lg:mx-0'>
                   {t('subheadline')}
                 </p>
               </div>
 
-              {/* Download buttons */}
               <div
-                className='animate-slide-up'
-                style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
+                className='space-y-5 lg:space-y-6 animate-slide-up opacity-0'
+                style={{ animationDelay: '250ms', animationFillMode: 'forwards' }}
               >
-                <AppStoreDownload />
-              </div>
+                <div className='inline-block'>
+                  <p className='text-base sm:text-lg lg:text-xl text-muted-foreground/90 font-medium px-4 py-2 rounded-full bg-primary/5 border border-primary/10'>
+                    {t('bothAppsAvailable')}
+                  </p>
+                </div>
 
-              {/* Android notice */}
-              <p
-                className='text-muted-foreground text-sm lg:text-base animate-slide-up'
-                style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
-              >
-                {t('androidComingSoon')}
-              </p>
+                <AppStoreDownload className='justify-center lg:justify-start' />
+              </div>
             </div>
 
-            {/* iPhone mockup */}
+            {/* Right side - Phone mockups */}
             <div
-              className='flex-1 flex justify-center lg:justify-end animate-slide-up animate-float-gentle'
-              style={{ animationDelay: '0.4s', animationFillMode: 'both' }}
+              className='relative flex items-center justify-center lg:justify-end animate-slide-up opacity-0'
+              style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}
             >
-              <div className='relative w-[280px] sm:w-[320px] lg:w-[360px]'>
-                <Image
-                  src='/iphone-mockup.png'
-                  alt={t('appScreenshot')}
-                  width={360}
-                  height={720}
-                  className='w-full h-auto drop-shadow-2xl'
-                  priority
-                />
+              <div className='relative w-full max-w-[700px] lg:max-w-[800px]'>
+                <div className='relative w-full' style={{ paddingBottom: '120%' }}>
+                  {/* Android phone - left/back */}
+                  <div className='absolute left-0 top-0 w-[52%] z-10'>
+                    <Image
+                      src='/android-light-mockup.png'
+                      alt={t('androidScreenshot')}
+                      width={400}
+                      height={800}
+                      className='w-full h-auto drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
+                      priority
+                    />
+                  </div>
+
+                  {/* iPhone - right/front */}
+                  <div className='absolute right-0 top-0 w-[52%] z-20'>
+                    <Image
+                      src='/iphone-mockup.png'
+                      alt={t('iosScreenshot')}
+                      width={400}
+                      height={800}
+                      className='w-full h-auto drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
+                      priority
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

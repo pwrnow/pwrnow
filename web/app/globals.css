@@ -476,6 +476,33 @@ body {
   animation: slide-diagonal 30s ease-in-out infinite;
 }
 
+/* Phone mockup animations */
+@keyframes phone-float-left {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-50%) translateX(-5px) rotate(-3deg);
+  }
+}
+
+@keyframes phone-float-right {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-50%) translateX(5px) rotate(3deg);
+  }
+}
+
+.animate-phone-float-left {
+  animation: phone-float-left 6s ease-in-out infinite;
+}
+
+.animate-phone-float-right {
+  animation: phone-float-right 5s ease-in-out infinite;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .contact-card:hover {

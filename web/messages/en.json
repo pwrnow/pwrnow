@@ -490,18 +490,24 @@
     "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later."
   },
   "AppPage": {
-    "title": "PWr Now - iOS App Available Now! | Download on App Store",
-    "description": "The PWr Now mobile app is now available on iOS! Discover events at Wrocław University of Technology from your phone. Download now from the App Store. Android version coming soon!",
-    "headline": "PWr Now on iOS!",
+    "title": "PWr Now - Mobile App Available Now! | Download on iOS & Android",
+    "description": "The PWr Now mobile app is now available on iOS and Android! Discover events at Wrocław University of Technology from your phone. Download now from the App Store or Google Play Store.",
+    "headline": "PWr Now on Mobile!",
     "subheadline": "Stay connected with campus events wherever you are.",
     "downloadOnAppStore": "Download on the App Store",
+    "downloadOnPlayStore": "Get it on Google Play",
     "comingSoon": "Coming Soon",
-    "androidComingSoon": "Android version coming soon",
+    "availableNow": "Available Now",
+    "bothAppsAvailable": "Available on iOS and Android",
     "appScreenshot": "PWr Now mobile app screenshot",
+    "iosScreenshot": "PWr Now iOS app screenshot",
+    "androidScreenshot": "PWr Now Android app screenshot",
     "keywords": {
       "mobileApp": "PWr Now mobile app",
       "iosApp": "PWr Now iOS",
+      "androidApp": "PWr Now Android",
       "appStore": "PWr Now App Store",
+      "playStore": "PWr Now Google Play",
       "pwrApp": "Wrocław University of Technology app",
       "studentApp": "student events app",
       "eventsApp": "university events app"

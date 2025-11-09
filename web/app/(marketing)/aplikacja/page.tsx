@@ -16,7 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: [
       t('keywords.mobileApp'),
       t('keywords.iosApp'),
+      t('keywords.androidApp'),
       t('keywords.appStore'),
+      t('keywords.playStore'),
       t('keywords.pwrApp'),
       t('keywords.studentApp'),
       t('keywords.eventsApp'),

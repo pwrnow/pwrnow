@@ -6,12 +6,12 @@ import { APP_CONFIG } from '@/lib/config';
 
 interface AppStoreDownloadProps {
   className?: string;
-  showComingSoon?: boolean;
+  showPlayStore?: boolean;
 }
 
 export default function AppStoreDownload({
   className = '',
-  showComingSoon = true
+  showPlayStore = true
 }: AppStoreDownloadProps) {
   const locale = useLocale();
   const t = useTranslations('AppPage');
@@ -22,8 +22,11 @@ export default function AppStoreDownload({
   const appStoreBadgeDark =
     locale === 'pl' ? '/app-store/pl-white.svg' : '/app-store/en-white.svg';
 
+  const playStoreBadge =
+    locale === 'pl' ? '/play-store/pl-dark.png' : '/play-store/en-dark.png';
+
   return (
-    <div className={`flex flex-col sm:flex-row gap-6 items-center justify-center ${className}`}>
+    <div className={`flex flex-col sm:flex-row gap-6 items-center ${className}`}>
       {/* App Store button */}
       <a
         href={APP_CONFIG.IOS_APP_URL}
@@ -47,20 +50,22 @@ export default function AppStoreDownload({
         />
       </a>
 
-      {/* Google Play coming soon - only show if requested */}
-      {showComingSoon && (
-        <div className='relative'>
-          <div className='opacity-50 grayscale pointer-events-none'>
-            <div className='w-[160px] h-[53px] rounded-lg bg-muted border border-border flex items-center justify-center'>
-              <span className='text-sm font-semibold text-muted-foreground'>
-                Google Play
-              </span>
-            </div>
-          </div>
-          <div className='absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded-md'>
-            {t('comingSoon')}
-          </div>
-        </div>
+      {/* Google Play button */}
+      {showPlayStore && (
+        <a
+          href={APP_CONFIG.ANDROID_APP_URL}
+          target='_blank'
+          rel='noopener noreferrer'
+          className='group relative transition-transform hover:scale-105 duration-200'
+        >
+          <Image
+            src={playStoreBadge}
+            alt={t('downloadOnPlayStore')}
+            width={155}
+            height={60}
+            className='h-[53px] w-auto'
+          />
+        </a>
       )}
     </div>
   );
