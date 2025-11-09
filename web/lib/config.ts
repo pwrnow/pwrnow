@@ -12,7 +12,7 @@ export const CONTACT_CONFIG = {
 // App Store Configuration
 export const APP_CONFIG = {
   APP_STORE_ID: '6751172859',
-  IOS_APP_URL: 'https://apps.apple.com/app/id6751172859',
+  IOS_APP_URL: 'https://apps.apple.com/pl/app/pwr-now/id6751172859',
   ANDROID_APP_URL: 'https://play.google.com/store/apps/details?id=com.pwrnow.pwrnow',
 };
 

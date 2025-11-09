@@ -156,16 +156,28 @@ body {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-space-grotesk), sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
   h1,
   h2,
   h3,
   .display-font {
     font-family: var(--font-righteous), cursive;
+  }
+  img,
+  picture,
+  video {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
   }
 }
 

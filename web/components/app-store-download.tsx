@@ -26,27 +26,27 @@ export default function AppStoreDownload({
     locale === 'pl' ? '/play-store/pl-dark.png' : '/play-store/en-dark.png';
 
   return (
-    <div className={`flex flex-col sm:flex-row gap-6 items-center ${className}`}>
+    <div className={`flex flex-col sm:flex-row gap-4 items-center ${className}`}>
       {/* App Store button */}
       <a
         href={APP_CONFIG.IOS_APP_URL}
         target='_blank'
         rel='noopener noreferrer'
-        className='group relative transition-transform hover:scale-105 duration-200'
+        className='group relative transition-transform hover:scale-105 duration-200 flex-shrink-0'
       >
         <Image
           src={appStoreBadge}
           alt={t('downloadOnAppStore')}
           width={160}
           height={53}
-          className='dark:hidden'
+          className='dark:hidden h-[53px] w-[160px]'
         />
         <Image
           src={appStoreBadgeDark}
           alt={t('downloadOnAppStore')}
           width={160}
           height={53}
-          className='hidden dark:block'
+          className='hidden dark:block h-[53px] w-[160px]'
         />
       </a>
 
@@ -56,14 +56,14 @@ export default function AppStoreDownload({
           href={APP_CONFIG.ANDROID_APP_URL}
           target='_blank'
           rel='noopener noreferrer'
-          className='group relative transition-transform hover:scale-105 duration-200'
+          className='group relative transition-transform hover:scale-105 duration-200 flex-shrink-0'
         >
           <Image
             src={playStoreBadge}
             alt={t('downloadOnPlayStore')}
-            width={155}
-            height={60}
-            className='h-[53px] w-auto'
+            width={160}
+            height={53}
+            className='h-[53px] w-[160px] object-contain'
           />
         </a>
       )}
