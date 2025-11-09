@@ -3,13 +3,50 @@
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import { useAnalytics } from '@/lib/useAnalytics';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import AppStoreDownload from './app-store-download';
 
 export default function AppPageContent() {
   const t = useTranslations('AppPage');
   const locale = useLocale();
   const { safeCapture } = useAnalytics();
+
+  // Mouse tracking for 3D parallax effect
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Smooth spring animation for mouse movement
+  const springConfig = { damping: 25, stiffness: 150 };
+  const smoothMouseX = useSpring(mouseX, springConfig);
+  const smoothMouseY = useSpring(mouseY, springConfig);
+
+  // Transform mouse position to rotation values for 3D effect
+  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-15, 15]);
+  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [15, -15]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const x = (e.clientX - centerX) / rect.width;
+    const y = (e.clientY - centerY) / rect.height;
+
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   useEffect(() => {
     // Track custom page view (PostHog auto-captures pageviews via defaults: '2025-05-24')
@@ -62,39 +99,151 @@ export default function AppPageContent() {
               </div>
             </div>
 
-            {/* Right side - Phone mockups */}
-            <div
-              className='relative flex items-center justify-center lg:justify-end animate-slide-up opacity-0'
-              style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}
+            {/* Right side - Phone mockups with 3D animations */}
+            <motion.div
+              ref={containerRef}
+              className='relative flex items-center justify-center lg:justify-end'
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: [0.43, 0.13, 0.23, 0.96] }}
+              onMouseMove={handleMouseMove}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={handleMouseLeave}
+              style={{ perspective: '1500px' }}
             >
               <div className='relative w-full max-w-[700px] lg:max-w-[800px]'>
                 <div className='relative w-full' style={{ paddingBottom: '120%' }}>
-                  {/* Android phone - left/back */}
-                  <div className='absolute left-0 top-0 w-[52%] z-10'>
-                    <Image
-                      src='/android-light-mockup.png'
-                      alt={t('androidScreenshot')}
-                      width={400}
-                      height={800}
-                      className='w-full h-auto drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
-                      priority
-                    />
-                  </div>
+                  {/* Android phone - left/back with stunning entrance and 3D effect */}
+                  <motion.div
+                    className='absolute left-0 top-0 w-[52%] z-10'
+                    initial={{
+                      x: -200,
+                      y: 100,
+                      opacity: 0,
+                      rotate: -25,
+                      scale: 0.5
+                    }}
+                    animate={{
+                      x: 0,
+                      y: 0,
+                      opacity: 1,
+                      rotate: 0,
+                      scale: 1
+                    }}
+                    transition={{
+                      duration: 1.2,
+                      delay: 0.6,
+                      ease: [0.34, 1.56, 0.64, 1],
+                      type: 'spring',
+                      stiffness: 80
+                    }}
+                    style={{
+                      rotateY,
+                      rotateX,
+                      transformStyle: 'preserve-3d',
+                      z: -50
+                    }}
+                    whileHover={{
+                      scale: 1.05,
+                      z: 0,
+                      transition: { duration: 0.3 }
+                    }}
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -15, 0],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                        delay: 0.2
+                      }}
+                    >
+                      <Image
+                        src='/android-light-mockup.png'
+                        alt={t('androidScreenshot')}
+                        width={400}
+                        height={800}
+                        className='w-full h-auto drop-shadow-[0_30px_60px_rgba(0,0,0,0.6)] hover:drop-shadow-[0_40px_80px_rgba(16,185,129,0.4)] transition-all duration-300'
+                        priority
+                      />
+                    </motion.div>
+                  </motion.div>
 
-                  {/* iPhone - right/front */}
-                  <div className='absolute right-0 top-0 w-[52%] z-20'>
-                    <Image
-                      src='/iphone-mockup.png'
-                      alt={t('iosScreenshot')}
-                      width={400}
-                      height={800}
-                      className='w-full h-auto drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
-                      priority
-                    />
-                  </div>
+                  {/* iPhone - right/front with stunning entrance and enhanced 3D effect */}
+                  <motion.div
+                    className='absolute right-0 top-0 w-[52%] z-20'
+                    initial={{
+                      x: 200,
+                      y: -100,
+                      opacity: 0,
+                      rotate: 25,
+                      scale: 0.5
+                    }}
+                    animate={{
+                      x: 0,
+                      y: 0,
+                      opacity: 1,
+                      rotate: 0,
+                      scale: 1
+                    }}
+                    transition={{
+                      duration: 1.2,
+                      delay: 0.8,
+                      ease: [0.34, 1.56, 0.64, 1],
+                      type: 'spring',
+                      stiffness: 80
+                    }}
+                    style={{
+                      rotateY: useTransform(rotateY, (value) => value * 1.3),
+                      rotateX: useTransform(rotateX, (value) => value * 1.3),
+                      transformStyle: 'preserve-3d',
+                      z: 50
+                    }}
+                    whileHover={{
+                      scale: 1.08,
+                      z: 100,
+                      transition: { duration: 0.3 }
+                    }}
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -20, 0],
+                      }}
+                      transition={{
+                        duration: 4.5,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    >
+                      <motion.div
+                        animate={isHovered ? {
+                          boxShadow: [
+                            '0 30px 60px rgba(0,0,0,0.6)',
+                            '0 40px 80px rgba(59,130,246,0.5)',
+                            '0 30px 60px rgba(0,0,0,0.6)',
+                          ],
+                        } : {}}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                        }}
+                      >
+                        <Image
+                          src='/iphone-mockup.png'
+                          alt={t('iosScreenshot')}
+                          width={400}
+                          height={800}
+                          className='w-full h-auto drop-shadow-[0_35px_70px_rgba(0,0,0,0.7)] transition-all duration-300'
+                          priority
+                        />
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
