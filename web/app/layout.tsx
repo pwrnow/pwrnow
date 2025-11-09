@@ -62,6 +62,9 @@ export async function generateMetadata(): Promise<Metadata> {
       description: t('ogDescription'),
     },
     category: 'education',
+    other: {
+      'apple-itunes-app': `app-id=${APP_CONFIG.APP_STORE_ID}`,
+    },
   };
 }
 
