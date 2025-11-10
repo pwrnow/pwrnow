@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Smartphone } from 'lucide-react';
 import Logo from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import LocaleSelector from '@/components/locale-selector';
@@ -50,6 +50,13 @@ export default function Header({ currentLocale }: HeaderProps) {
               {t('forOrganizations')}
             </Link>
             <Link
+              href='/aplikacja'
+              className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'
+            >
+              <Smartphone className='h-4 w-4' />
+              {t('app')}
+            </Link>
+            <Link
               href='/kontakt'
               className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
             >
@@ -85,6 +92,14 @@ export default function Header({ currentLocale }: HeaderProps) {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t('forOrganizations')}
+            </Link>
+            <Link
+              href='/aplikacja'
+              className='px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors flex items-center gap-2'
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Smartphone className='h-4 w-4' />
+              {t('app')}
             </Link>
             <Link
               href='/kontakt'
