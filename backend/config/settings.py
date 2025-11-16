@@ -541,7 +541,7 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 # Helper function to read Apple private key from file
 def get_apple_private_key():
     """Read Apple private key from file path specified in environment variable."""
-    private_key_path = env("APPLE_PRIVATE_KEY_PATH")
+    private_key_path = env("APPLE_PRIVATE_KEY_PATH", default="")
     if not private_key_path:
         return ""
 
