@@ -38,10 +38,11 @@ export default function Header({ currentLocale }: HeaderProps) {
           {/* Desktop navigation - hidden on mobile */}
           <nav className='hidden lg:flex items-center space-x-6'>
             <Link
-              href='/zespol'
-              className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
+              href='/aplikacja'
+              className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'
             >
-              {t('team')}
+              <Smartphone className='h-4 w-4' />
+              {t('app')}
             </Link>
             <Link
               href='/dla-organizacji'
@@ -50,11 +51,10 @@ export default function Header({ currentLocale }: HeaderProps) {
               {t('forOrganizations')}
             </Link>
             <Link
-              href='/aplikacja'
-              className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'
+              href='/zespol'
+              className='text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'
             >
-              <Smartphone className='h-4 w-4' />
-              {t('app')}
+              {t('team')}
             </Link>
             <Link
               href='/kontakt'
@@ -80,11 +80,12 @@ export default function Header({ currentLocale }: HeaderProps) {
         <div className='lg:hidden border-t border-muted/50 bg-background/95 backdrop-blur-md'>
           <nav className='flex flex-col space-y-1 p-4'>
             <Link
-              href='/zespol'
-              className='px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors'
+              href='/aplikacja'
+              className='px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors flex items-center gap-2'
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              {t('team')}
+              <Smartphone className='h-4 w-4' />
+              {t('app')}
             </Link>
             <Link
               href='/dla-organizacji'
@@ -94,12 +95,11 @@ export default function Header({ currentLocale }: HeaderProps) {
               {t('forOrganizations')}
             </Link>
             <Link
-              href='/aplikacja'
-              className='px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors flex items-center gap-2'
+              href='/zespol'
+              className='px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors'
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <Smartphone className='h-4 w-4' />
-              {t('app')}
+              {t('team')}
             </Link>
             <Link
               href='/kontakt'
