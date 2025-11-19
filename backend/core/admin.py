@@ -414,7 +414,19 @@ class EventAdmin(TranslationAdmin):
             '<span style="background-color: {}; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-left: 4px;">{}</span>',
             status_color, status_text
         )
-        return format_html('{} {}', date_str, status_badge)
+
+        # Show scheduled publication date for upcoming events that are not yet published
+        publication_info = ''
+        if status_text == 'Upcoming' and obj.publication_date:
+            today = timezone.localdate()
+            if obj.publication_date > today:
+                pub_date_str = obj.publication_date.strftime('%Y-%m-%d')
+                publication_info = format_html(
+                    '<div style="color: #d97706; font-size: 10px; margin-top: 2px;">Scheduled: {}</div>',
+                    pub_date_str
+                )
+
+        return format_html('{} {}{}', date_str, status_badge, publication_info)
     compact_dates.admin_order_field = 'starts_at'
 
     @admin.display(description='Status')
