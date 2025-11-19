@@ -1,7 +1,8 @@
 import json
 import time
 import logging
-from typing import Dict, Any, List, Literal, Optional
+import re
+from typing import Dict, Any, List
 from django.conf import settings
 from .models import AIProcessingLog
 
@@ -15,40 +16,11 @@ except ImportError:
         def __init__(self, client, privacy_mode=False):
             pass
 
-from pydantic import BaseModel, Field
-
 logger = logging.getLogger(__name__)
-
-# --- Pydantic Models for Structured Output ---
-
-class ScheduleItem(BaseModel):
-    """A single schedule item extracted from text."""
-    date: str = Field(description="Date of the event in YYYY-MM-DD format")
-    start_time: str = Field(description="Start time in HH:MM format")
-    end_time: Optional[str] = Field(description="End time in HH:MM format (optional)", default=None)
-    title: str = Field(description="Title of the session/event")
-    description: Optional[str] = Field(description="Description of the session/event", default=None)
-
-class ScheduleParsingOutput(BaseModel):
-    """Output for schedule parsing containing a list of items."""
-    schedule_items: List[ScheduleItem] = Field(description="List of extracted schedule items")
-
-
-class LanguageDetectionOutput(BaseModel):
-    """Detected language of the text."""
-    language: Literal['en', 'pl'] = Field(
-        description="Two-letter ISO 639-1 language code. Only 'en' for English or 'pl' for Polish."
-    )
-
-class TranslationOutput(BaseModel):
-    """Translated text output."""
-    translated_text: str = Field(
-        description="The translated text in the target language. Preserve proper nouns, formatting, emojis, and line breaks."
-    )
 
 
 class BaseAIService:
-    """Base service for AI operations using LangChain structured output."""
+    """Base service for AI operations using simple prompts and JSON parsing."""
 
     PROVIDER_CONFIGS = {
         'openai': {
@@ -81,7 +53,7 @@ class BaseAIService:
         self._init_llm()
 
     def _init_llm(self):
-        """Initialize the base LLM without structured output."""
+        """Initialize the base LLM."""
         try:
             if self.provider == 'openai':
                 from langchain_openai import ChatOpenAI
@@ -110,22 +82,48 @@ class BaseAIService:
             logger.error(f"Failed to initialize LangChain for provider {self.provider}: {str(e)}")
             raise
 
+    def _parse_json_response(self, text: str) -> Any:
+        """Parse JSON from LLM response, handling markdown code blocks."""
+        try:
+            # Remove markdown code blocks if present
+            text = text.strip()
+
+            # Pattern for ```json ... ``` or ``` ... ```
+            if text.startswith("```"):
+                match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
+                if match:
+                    text = match.group(1).strip()
+
+            # Try to parse JSON
+            return json.loads(text)
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parse error: {e}\nText: {text[:200]}")
+            # Try to find JSON in the text
+            json_match = re.search(r'\{.*\}|\[.*\]', text, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group())
+                except:
+                    pass
+            raise ValueError(f"Could not parse JSON from response: {text[:200]}")
+
 
 class ScheduleParsingService(BaseAIService):
-    """Service for parsing schedule text using AI with LangChain structured output."""
+    """Service for parsing schedule text using AI with simple prompts."""
 
     def parse_schedule(self, raw_text: str, organization, user=None, event_title=None, event_start_date=None, event_end_date=None) -> Dict[str, Any]:
         start_time = time.time()
 
-        prompt = f"""You are an expert at parsing event schedules from raw text. Extract schedule items and return them as structured data.
+        prompt = f"""You are an expert at parsing event schedules from raw text. Extract schedule items and return them as JSON.
 
 Guidelines:
 1. Extract all schedule items with dates, times, titles, and descriptions
-2. Parse dates (MM/DD/YYYY, DD/MM/YYYY, "Monday", etc.) to YYYY-MM-DD
-3. Parse times to HH:MM format
+2. Parse dates (MM/DD/YYYY, DD/MM/YYYY, "Monday", etc.) to YYYY-MM-DD format
+3. Parse times to HH:MM format (24-hour)
 4. Use today's date if not specified
-5. Estimate duration if end time missing
-6. Handle Polish time expressions (od/do)
+5. Estimate duration if end time is missing
+6. Handle Polish time expressions (od/do means from/to)
 7. Always return at least one item if time info exists
 
 Event Information:
@@ -133,7 +131,20 @@ Event Information:
 - Date Range: {event_start_date or 'N/A'} to {event_end_date or 'N/A'}
 
 Raw Schedule Text:
-{raw_text}"""
+{raw_text}
+
+Return ONLY a JSON array with this exact structure:
+[
+  {{
+    "date": "YYYY-MM-DD",
+    "start_time": "HH:MM",
+    "end_time": "HH:MM",
+    "title": "Session title",
+    "description": "Optional description"
+  }}
+]
+
+JSON OUTPUT:"""
 
         log = AIProcessingLog.objects.create(
             provider_name=self.provider,
@@ -146,33 +157,34 @@ Raw Schedule Text:
         )
 
         try:
-            # Create structured LLM
-            structured_llm = self.llm.with_structured_output(ScheduleParsingOutput)
+            # Invoke LLM
+            response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            response_text = response.content if hasattr(response, 'content') else str(response)
 
-            # Invoke with structured output
-            result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            logger.info(f"Schedule parsing raw response: {response_text[:200]}...")
 
-            logger.info(f"Schedule parsing result type: {type(result)}")
-            logger.info(f"Schedule parsing result: {result}")
+            # Parse JSON
+            parsed_json = self._parse_json_response(response_text)
 
-            if not result or not hasattr(result, 'schedule_items'):
-                raise ValueError(f"Invalid structured output: {result}")
+            # Ensure it's a list
+            if isinstance(parsed_json, dict):
+                parsed_json = [parsed_json]
 
-            # Convert Pydantic model to dict
-            parsed_schedule = [item.model_dump() for item in result.schedule_items]
+            if not isinstance(parsed_json, list):
+                raise ValueError(f"Expected list, got {type(parsed_json)}")
 
             processing_time = int((time.time() - start_time) * 1000)
             log.status = 'completed'
-            log.output_text = json.dumps(parsed_schedule)
+            log.output_text = json.dumps(parsed_json)
             log.processing_time_ms = processing_time
             log.save()
 
-            logger.info(f"Schedule parsing successful: {len(parsed_schedule)} items")
+            logger.info(f"Schedule parsing successful: {len(parsed_json)} items")
 
             return {
                 'success': True,
-                'schedule_items': parsed_schedule,
-                'raw_response': log.output_text,
+                'schedule_items': parsed_json,
+                'raw_response': response_text,
                 'processing_time_ms': processing_time
             }
 
@@ -192,35 +204,43 @@ Raw Schedule Text:
 
 
 class EventTranslationService(BaseAIService):
-    """Service for translating event content using AI with LangChain structured output."""
+    """Service for translating event content using AI with simple prompts."""
 
     def detect_language(self, text: str, lenient: bool = False) -> str:
-        """Detect language of text using LangChain structured output."""
+        """Detect language of text using simple prompt."""
         if not text or not text.strip():
             return 'unknown'
 
         try:
             if lenient:
-                prompt = f"""Detect the PRIMARY language of the following text.
+                prompt = f"""Detect the PRIMARY language of this text. If it's mostly Polish but has some English words (like event names), return "pl". If it's mostly English but has some Polish words, return "en".
 
-If the text is mostly Polish (contains Polish words) but has some English words (like event names), return 'pl'.
-If the text is mostly English but has some Polish words, return 'en'.
+Text: {text}
 
-Text: {text}"""
+Return ONLY the language code as JSON:
+{{"language": "en"}} or {{"language": "pl"}}
+
+JSON OUTPUT:"""
             else:
-                prompt = f"""Detect the language of the following text. Return 'en' for English or 'pl' for Polish.
+                prompt = f"""Detect the language of this text. Return "en" for English or "pl" for Polish.
 
-Text: {text}"""
+Text: {text}
 
-            structured_llm = self.llm.with_structured_output(LanguageDetectionOutput)
-            result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+Return ONLY the language code as JSON:
+{{"language": "en"}} or {{"language": "pl"}}
 
-            if not result or not hasattr(result, 'language'):
-                logger.warning(f"Invalid language detection result: {result}")
-                return 'unknown'
+JSON OUTPUT:"""
 
-            logger.info(f"Language detection for '{text[:50]}...': {result.language}")
-            return result.language
+            response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            response_text = response.content if hasattr(response, 'content') else str(response)
+
+            logger.info(f"Language detection raw response: {response_text}")
+
+            result = self._parse_json_response(response_text)
+            language = result.get('language', 'unknown')
+
+            logger.info(f"Language detected for '{text[:50]}...': {language}")
+            return language
 
         except Exception as e:
             logger.error(f"Language detection failed: {str(e)}", exc_info=True)
@@ -247,67 +267,51 @@ Text: {text}"""
 
 CRITICAL RULES:
 1. Translate naturally and accurately
-2. PRESERVE ALL proper nouns (event names, venue names, brand names, city names like "Kraków", "Warszawa", "Heroes of the Brain")
-3. PRESERVE ALL formatting, emojis, and line breaks exactly as they appear
+2. PRESERVE ALL proper nouns (event names, venue names, brand names, city names like "Kraków", "Warszawa", "Heroes of the Brain", "Neurohackathon")
+3. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, etc.), and line breaks exactly as they appear
 4. Only translate generic descriptive words and phrases
 
 Text to translate:
-{text}"""
+{text}
+
+Return ONLY a JSON object with this exact structure:
+{{"translated_text": "your translation here"}}
+
+JSON OUTPUT:"""
 
         logger.info(f"Translation: {content_type} {source_lang}->{target_lang}, length={len(text)}")
 
         try:
-            # Use structured output
-            structured_llm = self.llm.with_structured_output(TranslationOutput)
+            # Invoke LLM
+            response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            response_text = response.content if hasattr(response, 'content') else str(response)
 
-            result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            logger.info(f"Translation raw response: {response_text[:200]}...")
 
-            logger.info(f"Translation result type: {type(result)}")
-            logger.info(f"Translation result: {result}")
+            # Parse JSON
+            result = self._parse_json_response(response_text)
 
-            if not result:
-                error_msg = "LLM returned None"
-                logger.error(error_msg)
-                return {
-                    'success': False,
-                    'error': error_msg,
-                    'source_lang': source_lang,
-                    'target_lang': target_lang,
-                    'processing_time_ms': int((time.time() - start_time) * 1000)
-                }
+            if not isinstance(result, dict):
+                raise ValueError(f"Expected dict, got {type(result)}")
 
-            if not hasattr(result, 'translated_text'):
-                error_msg = f"Result missing 'translated_text': {result}"
-                logger.error(error_msg)
-                return {
-                    'success': False,
-                    'error': error_msg,
-                    'source_lang': source_lang,
-                    'target_lang': target_lang,
-                    'processing_time_ms': int((time.time() - start_time) * 1000)
-                }
+            if 'translated_text' not in result:
+                raise ValueError(f"Missing 'translated_text' in response: {result}")
 
-            if not result.translated_text:
-                error_msg = f"Empty translated_text: {result}"
-                logger.warning(error_msg)
-                return {
-                    'success': False,
-                    'error': error_msg,
-                    'source_lang': source_lang,
-                    'target_lang': target_lang,
-                    'processing_time_ms': int((time.time() - start_time) * 1000)
-                }
+            translated_text = result['translated_text']
+
+            if not translated_text:
+                raise ValueError("Empty translated_text")
 
             processing_time = int((time.time() - start_time) * 1000)
-            logger.info(f"Translation SUCCESS: {result.translated_text[:100]}...")
+            logger.info(f"Translation SUCCESS: {translated_text[:100]}...")
 
             return {
                 'success': True,
-                'translated_text': result.translated_text,
+                'translated_text': translated_text,
                 'source_lang': source_lang,
                 'target_lang': target_lang,
                 'processing_time_ms': processing_time,
-                'raw_response': str(result)
+                'raw_response': response_text
             }
 
         except Exception as e:
