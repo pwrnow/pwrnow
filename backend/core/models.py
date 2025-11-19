@@ -21,28 +21,32 @@ def generate_organization_code():
     return sqids.encode([random_number])
 
 
-def upload_to_uuid_filename(directory):
-    """Generate a callable that creates UUID-based filenames for a given directory.
-
-    Args:
-        directory: The directory name where files should be stored
-
-    Returns:
-        A callable suitable for use as ImageField.upload_to
-    """
-    def upload_handler(instance, filename):
-        """Generate UUID-based filename preserving original extension."""
-        ext = os.path.splitext(filename)[1]
-        filename = f"{uuid.uuid4()}{ext}"
-        return os.path.join(directory, filename)
-    return upload_handler
+def upload_to_organization_image(instance, filename):
+    """Generate UUID-based filename for organization images."""
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join('organizations', filename)
 
 
-# Create upload handlers for each model
-upload_to_organization_image = upload_to_uuid_filename('organizations')
-upload_to_event_image = upload_to_uuid_filename('events')
-upload_to_post_image = upload_to_uuid_filename('posts')
-upload_to_event_map_location_image = upload_to_uuid_filename('event_map_locations')
+def upload_to_event_image(instance, filename):
+    """Generate UUID-based filename for event images."""
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join('events', filename)
+
+
+def upload_to_post_image(instance, filename):
+    """Generate UUID-based filename for post images."""
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join('posts', filename)
+
+
+def upload_to_event_map_location_image(instance, filename):
+    """Generate UUID-based filename for event map location images."""
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join('event_map_locations', filename)
 
 
 class Category(models.Model):

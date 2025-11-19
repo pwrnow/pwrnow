@@ -541,7 +541,7 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 # Helper function to read Apple private key from file
 def get_apple_private_key():
     """Read Apple private key from file path specified in environment variable."""
-    private_key_path = env("APPLE_PRIVATE_KEY_PATH")
+    private_key_path = env("APPLE_PRIVATE_KEY_PATH", default="")
     if not private_key_path:
         return ""
 
@@ -562,8 +562,8 @@ def get_apple_private_key():
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
-            "client_id": env("GOOGLE_CLIENT_ID"),
-            "secret": env("GOOGLE_CLIENT_SECRET"),
+            "client_id": env("GOOGLE_CLIENT_ID", default=""),
+            "secret": env("GOOGLE_CLIENT_SECRET", default=""),
         },
     },
     # "facebook": {
@@ -577,9 +577,9 @@ SOCIALACCOUNT_PROVIDERS = {
     # },
     "apple": {
         "APP": {
-            "client_id": env("APPLE_CLIENT_ID"),  # Service ID
-            "secret": env("APPLE_KEY_ID"),
-            "key": env("APPLE_TEAM_ID"),  # Apple Team ID
+            "client_id": env("APPLE_CLIENT_ID", default=""),  # Service ID
+            "secret": env("APPLE_KEY_ID", default=""),
+            "key": env("APPLE_TEAM_ID", default=""),  # Apple Team ID
             "settings": {
                 "certificate_key": get_apple_private_key(),
             },
