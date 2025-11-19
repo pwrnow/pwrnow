@@ -36,6 +36,28 @@ class AIProcessingLog(models.Model):
     output_text = models.TextField(blank=True, null=True)
     tokens_used = models.IntegerField(null=True, blank=True)
     processing_time_ms = models.IntegerField(null=True, blank=True)
+    
+    # Debug metadata - complete raw data
+    raw_llm_request = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_('Complete raw request sent to LLM including all parameters')
+    )
+    raw_llm_response = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_('Complete raw response from LLM with all metadata')
+    )
+    parsed_output = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_('Parsed JSON output from LLM response')
+    )
+    debug_info = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_('Additional debug information (parse errors, retries, etc.)')
+    )
 
     # Status and metadata
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

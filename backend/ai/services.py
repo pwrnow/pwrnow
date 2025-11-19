@@ -153,7 +153,17 @@ JSON OUTPUT:"""
             model_used=self.config['model_name'],
             status='processing',
             organization=organization,
-            user=user
+            user=user,
+            raw_llm_request={
+                'provider': self.provider,
+                'model': self.config['model_name'],
+                'temperature': self.config['temperature'],
+                'max_tokens': self.config['max_tokens'],
+                'prompt': prompt,
+                'event_title': event_title,
+                'event_start_date': event_start_date,
+                'event_end_date': event_end_date
+            }
         )
 
         try:
@@ -161,22 +171,51 @@ JSON OUTPUT:"""
             response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
             response_text = response.content if hasattr(response, 'content') else str(response)
 
+            # Store raw LLM response
+            raw_response_data = {
+                'content': response_text,
+                'type': str(type(response)),
+                'response_metadata': getattr(response, 'response_metadata', None),
+                'usage_metadata': getattr(response, 'usage_metadata', None),
+            }
+
             logger.info(f"Schedule parsing raw response: {response_text[:200]}...")
 
             # Parse JSON
-            parsed_json = self._parse_json_response(response_text)
+            debug_info = {'parsing_attempts': []}
+
+            try:
+                parsed_json = self._parse_json_response(response_text)
+                debug_info['parsing_attempts'].append({
+                    'success': True,
+                    'method': 'standard',
+                    'result_type': str(type(parsed_json))
+                })
+            except Exception as parse_error:
+                debug_info['parsing_attempts'].append({
+                    'success': False,
+                    'method': 'standard',
+                    'error': str(parse_error)
+                })
+                raise
 
             # Ensure it's a list
             if isinstance(parsed_json, dict):
                 parsed_json = [parsed_json]
+                debug_info['converted_dict_to_list'] = 'true'
 
             if not isinstance(parsed_json, list):
                 raise ValueError(f"Expected list, got {type(parsed_json)}")
 
             processing_time = int((time.time() - start_time) * 1000)
+
+            # Update log with complete debug info
             log.status = 'completed'
             log.output_text = json.dumps(parsed_json)
             log.processing_time_ms = processing_time
+            log.raw_llm_response = raw_response_data
+            log.parsed_output = parsed_json
+            log.debug_info = debug_info
             log.save()
 
             logger.info(f"Schedule parsing successful: {len(parsed_json)} items")
@@ -190,9 +229,15 @@ JSON OUTPUT:"""
 
         except Exception as e:
             processing_time = int((time.time() - start_time) * 1000)
+
+            # Update log with error debug info
             log.status = 'failed'
             log.error_message = str(e)
             log.processing_time_ms = processing_time
+            if 'raw_response_data' in locals():
+                log.raw_llm_response = raw_response_data
+            if 'debug_info' in locals():
+                log.debug_info = debug_info
             log.save()
 
             logger.error(f"Schedule parsing failed: {str(e)}", exc_info=True)
@@ -235,6 +280,7 @@ JSON OUTPUT:"""
             response_text = response.content if hasattr(response, 'content') else str(response)
 
             logger.info(f"Language detection raw response: {response_text}")
+            logger.info(f"Language detection response metadata: {getattr(response, 'response_metadata', None)}")
 
             result = self._parse_json_response(response_text)
             language = result.get('language', 'unknown')
@@ -281,15 +327,48 @@ JSON OUTPUT:"""
 
         logger.info(f"Translation: {content_type} {source_lang}->{target_lang}, length={len(text)}")
 
+        debug_info = {
+            'content_type': content_type,
+            'source_lang': source_lang,
+            'target_lang': target_lang,
+            'is_title': is_title,
+            'input_length': len(text),
+            'parsing_attempts': []
+        }
+
         try:
             # Invoke LLM
             response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
             response_text = response.content if hasattr(response, 'content') else str(response)
 
+            # Collect raw response data
+            raw_response_data = {
+                'content': response_text,
+                'type': str(type(response)),
+                'response_metadata': getattr(response, 'response_metadata', None),
+                'usage_metadata': getattr(response, 'usage_metadata', None),
+                'additional_kwargs': getattr(response, 'additional_kwargs', None),
+            }
+
             logger.info(f"Translation raw response: {response_text[:200]}...")
+            logger.info(f"Translation response metadata: {raw_response_data['response_metadata']}")
 
             # Parse JSON
-            result = self._parse_json_response(response_text)
+            try:
+                result = self._parse_json_response(response_text)
+                debug_info['parsing_attempts'].append({
+                    'success': True,
+                    'method': 'standard',
+                    'result_type': str(type(result))
+                })
+            except Exception as parse_error:
+                debug_info['parsing_attempts'].append({
+                    'success': False,
+                    'method': 'standard',
+                    'error': str(parse_error),
+                    'raw_text_preview': response_text[:500]
+                })
+                raise
 
             if not isinstance(result, dict):
                 raise ValueError(f"Expected dict, got {type(result)}")
@@ -311,18 +390,27 @@ JSON OUTPUT:"""
                 'source_lang': source_lang,
                 'target_lang': target_lang,
                 'processing_time_ms': processing_time,
-                'raw_response': response_text
+                'raw_response': response_text,
+                'raw_response_data': raw_response_data,
+                'parsed_output': result,
+                'debug_info': debug_info
             }
 
         except Exception as e:
             processing_time = int((time.time() - start_time) * 1000)
+            debug_info['error'] = str(e)
+            debug_info['error_type'] = str(type(e))
+
             logger.error(f"Translation exception: {str(e)}", exc_info=True)
+
             return {
                 'success': False,
                 'error': str(e),
                 'source_lang': source_lang,
                 'target_lang': target_lang,
-                'processing_time_ms': processing_time
+                'processing_time_ms': processing_time,
+                'raw_response_data': raw_response_data if 'raw_response_data' in locals() else None,
+                'debug_info': debug_info
             }
 
     def translate_event(self, event_id: str, organization, user=None) -> Dict[str, Any]:
@@ -391,6 +479,18 @@ JSON OUTPUT:"""
                 output_text=translation.get('translated_text', ''),
                 error_message=translation.get('error'),
                 processing_time_ms=translation.get('processing_time_ms', 0),
+                raw_llm_request={
+                    'source_field': source_field,
+                    'target_field': target_field,
+                    'source_lang': source_lang,
+                    'target_lang': target_lang,
+                    'is_title': is_title,
+                    'provider': self.provider,
+                    'model': self.config['model_name']
+                },
+                raw_llm_response=translation.get('raw_response_data'),
+                parsed_output=translation.get('parsed_output'),
+                debug_info=translation.get('debug_info'),
                 organization=organization,
                 user=user
             )
