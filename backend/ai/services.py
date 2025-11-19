@@ -313,9 +313,18 @@ JSON OUTPUT:"""
 
 CRITICAL RULES:
 1. Translate naturally and accurately
-2. PRESERVE ALL proper nouns (event names, venue names, brand names, city names like "Kraków", "Warszawa", "Heroes of the Brain", "Neurohackathon")
-3. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, etc.), and line breaks exactly as they appear
-4. Only translate generic descriptive words and phrases
+2. DO NOT translate ANY proper nouns:
+   - Event names (e.g., "Neurohackathon", "Heroes of the Brain", "Open'er Festival")
+   - Venue names (e.g., "Tauron Arena", "ICE Kraków", "Klub Studio")
+   - Brand names and organization names
+   - City names (e.g., "Kraków", "Warszawa", "Gdańsk")
+   - People's names
+   - Product names
+3. ONLY translate:
+   - Common descriptive words (e.g., "concert", "festival", "exhibition" → "koncert", "festiwal", "wystawa")
+   - Generic terms (e.g., "event", "tickets", "schedule")
+   - Action words and adjectives
+4. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, etc.), and line breaks exactly as they appear
 
 Text to translate:
 {text}
