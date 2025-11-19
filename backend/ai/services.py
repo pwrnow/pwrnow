@@ -311,25 +311,35 @@ JSON OUTPUT:"""
 
         prompt = f"""You are an expert translator. Translate this event {content_type} from {source_name} to {target_name}.
 
-CRITICAL RULES:
-1. Translate naturally and accurately
-2. DO NOT translate ANY proper nouns:
-   - Event names (e.g., "Neurohackathon", "Heroes of the Brain", "Open'er Festival")
-   - Venue names (e.g., "Tauron Arena", "ICE Kraków", "Klub Studio")
-   - Brand names and organization names
-   - City names (e.g., "Kraków", "Warszawa", "Gdańsk")
+CRITICAL RULES - READ CAREFULLY:
+
+1. DO NOT TRANSLATE ANY PROPER NOUNS OR UNIQUE NAMES:
+   - Event names: "Neurohackathon", "Heroes of the Brain", "BudQuiz", "Open'er Festival", "Unsound"
+   - Venue names: "Tauron Arena", "ICE Kraków", "Klub Studio"
+   - Brand/product names: ANY capitalized unique names
+   - Organization names
+   - City names: "Kraków", "Warszawa", "Gdańsk"
    - People's names
-   - Product names
+   - ANY word that looks like a unique name or brand (capitalized, mixed-case, or unique combination)
+
+2. ESPECIALLY: If you see words like "BudQuiz", "TechFest", "CodeNight" - these are UNIQUE EVENT NAMES, DO NOT TRANSLATE THEM!
+
 3. ONLY translate:
-   - Common descriptive words (e.g., "concert", "festival", "exhibition" → "koncert", "festiwal", "wystawa")
-   - Generic terms (e.g., "event", "tickets", "schedule")
-   - Action words and adjectives
-4. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, etc.), and line breaks exactly as they appear
+   - Common generic words: "concert", "festival", "exhibition", "event", "tickets"
+   - Descriptive adjectives: "amazing", "great", "beautiful"
+   - Action verbs: "join", "participate", "watch"
+   - Generic nouns: "music", "art", "food", "drinks"
+
+4. WHEN IN DOUBT - DO NOT TRANSLATE! If a word could be a name, leave it unchanged.
+
+5. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, etc.), and line breaks exactly.
 
 Text to translate:
 {text}
 
-Return ONLY a JSON object with this exact structure:
+Remember: Proper nouns and unique event names MUST stay in original language!
+
+Return ONLY a JSON object:
 {{"translated_text": "your translation here"}}
 
 JSON OUTPUT:"""
