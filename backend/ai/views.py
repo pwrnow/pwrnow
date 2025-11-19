@@ -102,10 +102,16 @@ def parse_schedule(request):
         for i, item_data in enumerate(result["schedule_items"]):
             # Calculate duration in minutes
             start_time_str = item_data["start_time"]
-            end_time_str = item_data["end_time"]
+            end_time_str = item_data.get("end_time")
 
-            # Handle 24:00 format (convert to 00:00 next day)
-            if end_time_str == "24:00":
+            start_time = datetime.strptime(start_time_str, "%H:%M").time()
+            start_datetime = datetime.combine(datetime.today(), start_time)
+
+            if not end_time_str:
+                # Default duration 60 minutes if end time is missing
+                end_datetime = start_datetime + timedelta(minutes=60)
+                end_time_str = end_datetime.strftime("%H:%M")
+            elif end_time_str == "24:00":
                 end_time_str = "00:00"
                 end_time = datetime.strptime(end_time_str, "%H:%M").time()
                 end_datetime = datetime.combine(datetime.today(), end_time) + timedelta(
@@ -115,8 +121,9 @@ def parse_schedule(request):
                 end_time = datetime.strptime(end_time_str, "%H:%M").time()
                 end_datetime = datetime.combine(datetime.today(), end_time)
 
-            start_time = datetime.strptime(start_time_str, "%H:%M").time()
-            start_datetime = datetime.combine(datetime.today(), start_time)
+                # Handle case where end time is earlier than start time (overnight event)
+                if end_datetime < start_datetime:
+                     end_datetime += timedelta(days=1)
 
             duration_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
 
