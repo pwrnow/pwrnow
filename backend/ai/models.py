@@ -21,7 +21,7 @@ class AIProcessingLog(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     provider_name = models.CharField(
-        max_length=50, 
+        max_length=50,
         choices=PROVIDER_CHOICES,
         default='openai',
         help_text=_('AI provider used for processing')
@@ -36,7 +36,7 @@ class AIProcessingLog(models.Model):
     output_text = models.TextField(blank=True, null=True)
     tokens_used = models.IntegerField(null=True, blank=True)
     processing_time_ms = models.IntegerField(null=True, blank=True)
-    
+
     # Debug metadata - complete raw data
     raw_llm_request = models.JSONField(
         null=True,
