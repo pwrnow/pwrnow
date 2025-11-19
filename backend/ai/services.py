@@ -5,19 +5,17 @@ from typing import Dict, Any, List, Literal, Optional
 from django.conf import settings
 from .models import AIProcessingLog
 
-# Try to import local utils, handle potential import errors gracefully if running in isolation
+# Try to import local utils, handle potential import errors gracefully
 try:
     from utils.posthog_ai import posthog
     from posthog.ai.langchain import CallbackHandler
 except ImportError:
-    # Fallback for testing environment or if modules are missing
     posthog = None
     class CallbackHandler:
         def __init__(self, client, privacy_mode=False):
             pass
 
 from pydantic import BaseModel, Field
-from langchain.schema import SystemMessage, HumanMessage
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +43,12 @@ class LanguageDetectionOutput(BaseModel):
 class TranslationOutput(BaseModel):
     """Translated text output."""
     translated_text: str = Field(
-        description="The translated text in the target language. Proper nouns should be preserved."
+        description="The translated text in the target language. Preserve proper nouns, formatting, emojis, and line breaks."
     )
 
 
 class BaseAIService:
-    """Base service for AI operations."""
+    """Base service for AI operations using LangChain structured output."""
 
     PROVIDER_CONFIGS = {
         'openai': {
@@ -83,6 +81,7 @@ class BaseAIService:
         self._init_llm()
 
     def _init_llm(self):
+        """Initialize the base LLM without structured output."""
         try:
             if self.provider == 'openai':
                 from langchain_openai import ChatOpenAI
@@ -113,45 +112,33 @@ class BaseAIService:
 
 
 class ScheduleParsingService(BaseAIService):
-    """Service for parsing schedule text using AI."""
-
-    SYSTEM_MESSAGE = """You are an expert at parsing event schedules from raw text.
-    Extract schedule items and format them as structured JSON data.
-
-    Guidelines:
-    1. Extract all schedule items with dates, times, titles, and descriptions
-    2. Parse dates (MM/DD/YYYY, DD/MM/YYYY, "Monday", etc.) to YYYY-MM-DD
-    3. Parse times to HH:MM
-    4. Use today's date if not specified
-    5. Estimate duration if end time missing
-    6. Handle Polish time expressions (od/do)
-    7. Split compound items ("breakfast then party")
-    8. Always return at least one item if time info exists
-    """
-
-    PROMPT_TEMPLATE = """Event Info:
-    Title: {event_title}
-    Date Range: {event_start_date} to {event_end_date}
-
-    Raw Text:
-    {raw_text}
-
-    Extract schedule items."""
+    """Service for parsing schedule text using AI with LangChain structured output."""
 
     def parse_schedule(self, raw_text: str, organization, user=None, event_title=None, event_start_date=None, event_end_date=None) -> Dict[str, Any]:
         start_time = time.time()
 
-        prompt_content = self.PROMPT_TEMPLATE.format(
-            raw_text=raw_text,
-            event_title=event_title or '',
-            event_start_date=event_start_date or '',
-            event_end_date=event_end_date or ''
-        )
+        prompt = f"""You are an expert at parsing event schedules from raw text. Extract schedule items and return them as structured data.
+
+Guidelines:
+1. Extract all schedule items with dates, times, titles, and descriptions
+2. Parse dates (MM/DD/YYYY, DD/MM/YYYY, "Monday", etc.) to YYYY-MM-DD
+3. Parse times to HH:MM format
+4. Use today's date if not specified
+5. Estimate duration if end time missing
+6. Handle Polish time expressions (od/do)
+7. Always return at least one item if time info exists
+
+Event Information:
+- Title: {event_title or 'N/A'}
+- Date Range: {event_start_date or 'N/A'} to {event_end_date or 'N/A'}
+
+Raw Schedule Text:
+{raw_text}"""
 
         log = AIProcessingLog.objects.create(
             provider_name=self.provider,
             input_text=raw_text,
-            prompt_used=prompt_content,
+            prompt_used=prompt,
             model_used=self.config['model_name'],
             status='processing',
             organization=organization,
@@ -159,17 +146,19 @@ class ScheduleParsingService(BaseAIService):
         )
 
         try:
-            # Use structured output for schedule parsing too
+            # Create structured LLM
             structured_llm = self.llm.with_structured_output(ScheduleParsingOutput)
 
-            messages = [
-                SystemMessage(content=self.SYSTEM_MESSAGE),
-                HumanMessage(content=prompt_content)
-            ]
+            # Invoke with structured output
+            result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
 
-            result = structured_llm.invoke(messages, config={'callbacks': [self.callback_handler]})
+            logger.info(f"Schedule parsing result type: {type(result)}")
+            logger.info(f"Schedule parsing result: {result}")
 
-            # Convert Pydantic models to dicts
+            if not result or not hasattr(result, 'schedule_items'):
+                raise ValueError(f"Invalid structured output: {result}")
+
+            # Convert Pydantic model to dict
             parsed_schedule = [item.model_dump() for item in result.schedule_items]
 
             processing_time = int((time.time() - start_time) * 1000)
@@ -177,6 +166,8 @@ class ScheduleParsingService(BaseAIService):
             log.output_text = json.dumps(parsed_schedule)
             log.processing_time_ms = processing_time
             log.save()
+
+            logger.info(f"Schedule parsing successful: {len(parsed_schedule)} items")
 
             return {
                 'success': True,
@@ -192,7 +183,7 @@ class ScheduleParsingService(BaseAIService):
             log.processing_time_ms = processing_time
             log.save()
 
-            logger.error(f"Schedule parsing failed: {str(e)}")
+            logger.error(f"Schedule parsing failed: {str(e)}", exc_info=True)
             return {
                 'success': False,
                 'error': str(e),
@@ -203,23 +194,36 @@ class ScheduleParsingService(BaseAIService):
 class EventTranslationService(BaseAIService):
     """Service for translating event content using AI with LangChain structured output."""
 
-    def detect_language(self, text: str) -> str:
-        """Detect language of text."""
+    def detect_language(self, text: str, lenient: bool = False) -> str:
+        """Detect language of text using LangChain structured output."""
         if not text or not text.strip():
             return 'unknown'
 
         try:
+            if lenient:
+                prompt = f"""Detect the PRIMARY language of the following text.
+
+If the text is mostly Polish (contains Polish words) but has some English words (like event names), return 'pl'.
+If the text is mostly English but has some Polish words, return 'en'.
+
+Text: {text}"""
+            else:
+                prompt = f"""Detect the language of the following text. Return 'en' for English or 'pl' for Polish.
+
+Text: {text}"""
+
             structured_llm = self.llm.with_structured_output(LanguageDetectionOutput)
-
-            prompt = f"""Detect the language of the following text.
-
-            Text: {text}"""
-
             result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+
+            if not result or not hasattr(result, 'language'):
+                logger.warning(f"Invalid language detection result: {result}")
+                return 'unknown'
+
+            logger.info(f"Language detection for '{text[:50]}...': {result.language}")
             return result.language
 
         except Exception as e:
-            logger.error(f"Language detection failed: {str(e)}")
+            logger.error(f"Language detection failed: {str(e)}", exc_info=True)
             return 'unknown'
 
     def translate_text(self, text: str, source_lang: str, target_lang: str, is_title: bool = False) -> Dict[str, Any]:
@@ -239,35 +243,76 @@ class EventTranslationService(BaseAIService):
         source_name = lang_names.get(source_lang, source_lang)
         target_name = lang_names.get(target_lang, target_lang)
 
-        # Revised prompt to be less restrictive but still safe
-        prompt = f"""Translate the following event {content_type} from {source_name} to {target_name}.
+        prompt = f"""You are an expert translator. Translate this event {content_type} from {source_name} to {target_name}.
 
-Rules:
-1. Translate the content naturally.
-2. Do NOT translate proper nouns (e.g., specific names of events, bands, venues, cities like "Kraków", "Warszawa").
-3. Keep original formatting.
+CRITICAL RULES:
+1. Translate naturally and accurately
+2. PRESERVE ALL proper nouns (event names, venue names, brand names, city names like "Kraków", "Warszawa", "Heroes of the Brain")
+3. PRESERVE ALL formatting, emojis, and line breaks exactly as they appear
+4. Only translate generic descriptive words and phrases
 
 Text to translate:
 {text}"""
 
+        logger.info(f"Translation: {content_type} {source_lang}->{target_lang}, length={len(text)}")
+
         try:
+            # Use structured output
             structured_llm = self.llm.with_structured_output(TranslationOutput)
 
             result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
 
+            logger.info(f"Translation result type: {type(result)}")
+            logger.info(f"Translation result: {result}")
+
+            if not result:
+                error_msg = "LLM returned None"
+                logger.error(error_msg)
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'source_lang': source_lang,
+                    'target_lang': target_lang,
+                    'processing_time_ms': int((time.time() - start_time) * 1000)
+                }
+
+            if not hasattr(result, 'translated_text'):
+                error_msg = f"Result missing 'translated_text': {result}"
+                logger.error(error_msg)
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'source_lang': source_lang,
+                    'target_lang': target_lang,
+                    'processing_time_ms': int((time.time() - start_time) * 1000)
+                }
+
+            if not result.translated_text:
+                error_msg = f"Empty translated_text: {result}"
+                logger.warning(error_msg)
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'source_lang': source_lang,
+                    'target_lang': target_lang,
+                    'processing_time_ms': int((time.time() - start_time) * 1000)
+                }
+
             processing_time = int((time.time() - start_time) * 1000)
+            logger.info(f"Translation SUCCESS: {result.translated_text[:100]}...")
 
             return {
                 'success': True,
                 'translated_text': result.translated_text,
                 'source_lang': source_lang,
                 'target_lang': target_lang,
-                'processing_time_ms': processing_time
+                'processing_time_ms': processing_time,
+                'raw_response': str(result)
             }
 
         except Exception as e:
             processing_time = int((time.time() - start_time) * 1000)
-            logger.error(f"Translation failed: {str(e)}")
+            logger.error(f"Translation exception: {str(e)}", exc_info=True)
             return {
                 'success': False,
                 'error': str(e),
@@ -293,8 +338,6 @@ Text to translate:
             'skipped': []
         }
 
-        # Check which fields need translation
-        # (source_field, target_field, source_lang, target_lang, is_title)
         fields_to_check = [
             ('title_pl', 'title_en', 'pl', 'en', True),
             ('title_en', 'title_pl', 'en', 'pl', True),
@@ -313,30 +356,34 @@ Text to translate:
                 results['skipped'].append({'field': target_field, 'reason': 'Already exists'})
                 continue
 
-            # Detect language
-            detected_lang = self.detect_language(source_text)
+            # Detect language (lenient for titles)
+            detected_lang = self.detect_language(source_text, lenient=is_title)
 
             if detected_lang == 'unknown':
                 results['warnings'].append({'field': source_field, 'message': 'Could not detect language'})
                 continue
 
             if detected_lang != source_lang:
-                msg = f'Language mismatch in {source_field}: expected {source_lang}, detected {detected_lang}'
-                logger.warning(f"Event {event_id}: {msg}")
-                results['warnings'].append({'field': source_field, 'message': msg})
-                continue
+                msg = f'Language mismatch: expected {source_lang}, detected {detected_lang}'
+                logger.warning(f"Event {event_id} {source_field}: {msg}")
+
+                # Be lenient for short titles with English words
+                if is_title and len(source_text) < 100:
+                    logger.info(f"Ignoring mismatch for title {source_field}")
+                else:
+                    results['warnings'].append({'field': source_field, 'message': msg})
+                    continue
 
             # Translate
             translation = self.translate_text(source_text, source_lang, target_lang, is_title)
 
             # Log
-            log_status = 'completed' if translation['success'] else 'failed'
             AIProcessingLog.objects.create(
                 provider_name=self.provider,
                 input_text=source_text,
                 prompt_used=f"Translate {source_field} to {target_field}",
                 model_used=self.config['model_name'],
-                status=log_status,
+                status='completed' if translation['success'] else 'failed',
                 output_text=translation.get('translated_text', ''),
                 error_message=translation.get('error'),
                 processing_time_ms=translation.get('processing_time_ms', 0),
@@ -350,8 +397,9 @@ Text to translate:
                     'source_field': source_field,
                     'target_field': target_field,
                     'translated_text': translation['translated_text'],
-                    'tokens_used': translation.get('tokens_used', 0),
-                    'processing_time_ms': translation.get('processing_time_ms', 0)
+                    'tokens_used': 0,
+                    'processing_time_ms': translation.get('processing_time_ms', 0),
+                    'raw_response': translation.get('raw_response', '')
                 })
             else:
                 results['warnings'].append({

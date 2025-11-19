@@ -187,9 +187,15 @@ class Command(BaseCommand):
             self.stdout.write('\nTranslation Summary:')
             self.stdout.write(f"Success: {result['success']}")
 
+            # Print raw results first if available
+            if not result['success']:
+                self.stdout.write(self.style.ERROR(f"Error: {result.get('error')}"))
+
             for trans in result.get('translations', []):
                 self.stdout.write(f"\nField: {trans['source_field']} -> {trans['target_field']}")
                 self.stdout.write(f"Result: {trans['translated_text']}")
+                if 'raw_response' in trans:
+                     self.stdout.write(f"Raw Model Response: {trans['raw_response'][:200]}...")
 
             for warn in result.get('warnings', []):
                 self.stdout.write(self.style.WARNING(f"Warning [{warn['field']}]: {warn['message']}"))
