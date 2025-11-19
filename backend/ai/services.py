@@ -108,6 +108,61 @@ class BaseAIService:
                     pass
             raise ValueError(f"Could not parse JSON from response: {text[:200]}")
 
+    def _handle_rate_limit_error(self, error: Exception) -> None:
+        """
+        Handle rate limit errors by extracting retry delay and sleeping.
+        This is a one-time backoff - no retry mechanism.
+
+        Args:
+            error: The exception that occurred
+
+        Raises:
+            Exception: Always raises the original error after delay
+        """
+        error_str = str(error)
+
+        # Check if it's a rate limit error
+        is_rate_limit = (
+            '429' in error_str or
+            'quota exceeded' in error_str.lower() or
+            'rate limit' in error_str.lower() or
+            'too many requests' in error_str.lower()
+        )
+
+        if not is_rate_limit:
+            return
+
+        # Extract retry delay from error message
+        # Look for "Please retry in X.XXs" or "retry_delay { seconds: X }"
+        retry_delay = None
+
+        # Pattern 1: "Please retry in 9.209666008s"
+        retry_match = re.search(r'retry in ([\d.]+)s?', error_str, re.IGNORECASE)
+        if retry_match:
+            retry_delay = float(retry_match.group(1))
+        else:
+            # Pattern 2: "retry_delay { seconds: 9 }" or "seconds: 9"
+            retry_match = re.search(r'(?:retry[_\s]*delay|seconds)[^\d]*(\d+\.?\d*)', error_str, re.IGNORECASE)
+            if retry_match:
+                retry_delay = float(retry_match.group(1))
+
+        if retry_delay:
+            # Add small buffer to be safe
+            delay = retry_delay + 1.0
+            logger.warning(
+                f"Rate limit error detected. Waiting {delay:.2f} seconds before failing gracefully. "
+                f"Error: {error_str[:200]}"
+            )
+            time.sleep(delay)
+            logger.info(f"Rate limit backoff completed. Raising error.")
+        else:
+            # Default delay if we can't extract it
+            logger.warning(
+                f"Rate limit error detected but couldn't extract delay. Using default 10s backoff. "
+                f"Error: {error_str[:200]}"
+            )
+            time.sleep(10.0)
+
 
 class ScheduleParsingService(BaseAIService):
     """Service for parsing schedule text using AI with simple prompts."""
@@ -168,7 +223,14 @@ JSON OUTPUT:"""
 
         try:
             # Invoke LLM
-            response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            try:
+                response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            except Exception as llm_error:
+                # Handle rate limit errors with backoff
+                self._handle_rate_limit_error(llm_error)
+                # Re-raise after backoff
+                raise
+
             response_text = response.content if hasattr(response, 'content') else str(response)
 
             # Store raw LLM response
@@ -276,7 +338,14 @@ Return ONLY the language code as JSON:
 
 JSON OUTPUT:"""
 
-            response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            try:
+                response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            except Exception as llm_error:
+                # Handle rate limit errors with backoff
+                self._handle_rate_limit_error(llm_error)
+                # Re-raise after backoff
+                raise
+
             response_text = response.content if hasattr(response, 'content') else str(response)
 
             logger.info(f"Language detection raw response: {response_text}")
@@ -314,30 +383,42 @@ JSON OUTPUT:"""
 CRITICAL RULES - READ CAREFULLY:
 
 1. DO NOT TRANSLATE ANY PROPER NOUNS OR UNIQUE NAMES:
-   - Event names: "Neurohackathon", "Heroes of the Brain", "BudQuiz", "Open'er Festival", "Unsound"
-   - Venue names: "Tauron Arena", "ICE Kraków", "Klub Studio"
+   - Event names: "Neurohackathon", "Heroes of the Brain", "BudQuiz", "Open'er Festival", "Unsound", "PWr Party"
+   - Venue names: "Tauron Arena", "ICE Kraków", "Klub Studio", "Klub Cherry"
    - Brand/product names: ANY capitalized unique names
-   - Organization names
-   - City names: "Kraków", "Warszawa", "Gdańsk"
+   - Organization / institution names: "PWr", "Politechnika Wrocławska"
+   - City names: "Kraków", "Warszawa", "Gdańsk", "Wrocław"
    - People's names
    - ANY word that looks like a unique name or brand (capitalized, mixed-case, or unique combination)
 
-2. ESPECIALLY: If you see words like "BudQuiz", "TechFest", "CodeNight" - these are UNIQUE EVENT NAMES, DO NOT TRANSLATE THEM!
+2. ESPECIALLY (VERY IMPORTANT):
+   - "BudQuiz", "PWr Party" = event series names, DO NOT TRANSLATE
+   - "Klub Cherry", "Klub Studio" = venue names, DO NOT TRANSLATE
 
-3. ONLY translate:
-   - Common generic words: "concert", "festival", "exhibition", "event", "tickets"
-   - Descriptive adjectives: "amazing", "great", "beautiful"
-   - Action verbs: "join", "participate", "watch"
-   - Generic nouns: "music", "art", "food", "drinks"
+3. DO TRANSLATE (these are NOT proper nouns):
+   - Field labels: "Miejsce:" → "Location:", "Szatnia:" → "Cloakroom:", "Data:" → "Date:", "Dress code:" → "Dress code:"
+   - Category labels: "Studenci PWr" → "PWr Students", "Reszta świata" → "Rest of the world"
+   - Generic descriptive text and phrases
 
-4. WHEN IN DOUBT - DO NOT TRANSLATE! If a word could be a name, leave it unchanged.
+4. ONLY translate:
+   - Descriptive sentences and phrases
+   - Field labels and category names (as listed above)
+   - Common generic words: "concert", "festival", "exhibition", "event", "tickets", "party"
+   - Descriptive adjectives: "amazing", "great", "beautiful", "magical"
+   - Action verbs: "join", "participate", "watch", "prepare", "see"
+   - Generic nouns: "music", "art", "food", "drinks", "atmosphere"
 
-5. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, etc.), and line breaks exactly.
+5. WHEN IN DOUBT - DO NOT TRANSLATE! If a word/phrase could be a unique name or brand, leave it unchanged.
+
+6. PRESERVE ALL formatting, emojis (🧠, 🦸‍♀️, 🎁, 🎄, 🍒, etc.), and line breaks exactly.
 
 Text to translate:
 {text}
 
-Remember: Proper nouns and unique event names MUST stay in original language!
+Remember:
+- Proper nouns, event names, venue names MUST stay in original language
+- Field labels (e.g. "Miejsce:", "Szatnia:") and category names (e.g. "Studenci PWr", "Reszta świata") SHOULD be translated
+- Only translate descriptive content, generic words, labels, and categories
 
 Return ONLY a JSON object:
 {{"translated_text": "your translation here"}}
@@ -357,7 +438,14 @@ JSON OUTPUT:"""
 
         try:
             # Invoke LLM
-            response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            try:
+                response = self.llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
+            except Exception as llm_error:
+                # Handle rate limit errors with backoff
+                self._handle_rate_limit_error(llm_error)
+                # Re-raise after backoff
+                raise
+
             response_text = response.content if hasattr(response, 'content') else str(response)
 
             # Collect raw response data
