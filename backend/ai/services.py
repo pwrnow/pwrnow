@@ -51,7 +51,7 @@ class TranslationOutput(BaseModel):
 
 class BaseAIService:
     """Base service for AI operations."""
-    
+
     PROVIDER_CONFIGS = {
         'openai': {
             'model_name': 'gpt-4o-mini',
@@ -64,22 +64,22 @@ class BaseAIService:
             'max_tokens': 4000,
         }
     }
-    
+
     DEFAULT_PROVIDER = 'openai'
 
     def __init__(self):
         self.provider = getattr(settings, 'AI_PROVIDER', self.DEFAULT_PROVIDER)
-        
+
         if self.provider not in self.PROVIDER_CONFIGS:
             raise ValueError(f"Unsupported provider: {self.provider}. Supported providers: {list(self.PROVIDER_CONFIGS.keys())}")
-            
+
         self.config = self.PROVIDER_CONFIGS[self.provider]
-        
+
         self.callback_handler = CallbackHandler(
             client=posthog,
             privacy_mode=False
         )
-        
+
         self._init_llm()
 
     def _init_llm(self):
@@ -117,7 +117,7 @@ class ScheduleParsingService(BaseAIService):
 
     SYSTEM_MESSAGE = """You are an expert at parsing event schedules from raw text.
     Extract schedule items and format them as structured JSON data.
-    
+
     Guidelines:
     1. Extract all schedule items with dates, times, titles, and descriptions
     2. Parse dates (MM/DD/YYYY, DD/MM/YYYY, "Monday", etc.) to YYYY-MM-DD
@@ -140,7 +140,7 @@ class ScheduleParsingService(BaseAIService):
 
     def parse_schedule(self, raw_text: str, organization, user=None, event_title=None, event_start_date=None, event_end_date=None) -> Dict[str, Any]:
         start_time = time.time()
-        
+
         prompt_content = self.PROMPT_TEMPLATE.format(
             raw_text=raw_text,
             event_title=event_title or '',
@@ -161,17 +161,17 @@ class ScheduleParsingService(BaseAIService):
         try:
             # Use structured output for schedule parsing too
             structured_llm = self.llm.with_structured_output(ScheduleParsingOutput)
-            
+
             messages = [
                 SystemMessage(content=self.SYSTEM_MESSAGE),
                 HumanMessage(content=prompt_content)
             ]
-            
+
             result = structured_llm.invoke(messages, config={'callbacks': [self.callback_handler]})
-            
+
             # Convert Pydantic models to dicts
             parsed_schedule = [item.model_dump() for item in result.schedule_items]
-            
+
             processing_time = int((time.time() - start_time) * 1000)
             log.status = 'completed'
             log.output_text = json.dumps(parsed_schedule)
@@ -191,7 +191,7 @@ class ScheduleParsingService(BaseAIService):
             log.error_message = str(e)
             log.processing_time_ms = processing_time
             log.save()
-            
+
             logger.error(f"Schedule parsing failed: {str(e)}")
             return {
                 'success': False,
@@ -210,9 +210,9 @@ class EventTranslationService(BaseAIService):
 
         try:
             structured_llm = self.llm.with_structured_output(LanguageDetectionOutput)
-            
+
             prompt = f"""Detect the language of the following text.
-            
+
             Text: {text}"""
 
             result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
@@ -252,9 +252,9 @@ Text to translate:
 
         try:
             structured_llm = self.llm.with_structured_output(TranslationOutput)
-            
+
             result = structured_llm.invoke(prompt, config={'callbacks': [self.callback_handler]})
-            
+
             processing_time = int((time.time() - start_time) * 1000)
 
             return {
@@ -279,7 +279,7 @@ Text to translate:
     def translate_event(self, event_id: str, organization, user=None) -> Dict[str, Any]:
         """Translate event content from filled fields to empty fields."""
         from core.models import Event
-        
+
         try:
             event = Event.objects.get(id=event_id)
         except Event.DoesNotExist:
@@ -315,7 +315,7 @@ Text to translate:
 
             # Detect language
             detected_lang = self.detect_language(source_text)
-            
+
             if detected_lang == 'unknown':
                 results['warnings'].append({'field': source_field, 'message': 'Could not detect language'})
                 continue
@@ -328,7 +328,7 @@ Text to translate:
 
             # Translate
             translation = self.translate_text(source_text, source_lang, target_lang, is_title)
-            
+
             # Log
             log_status = 'completed' if translation['success'] else 'failed'
             AIProcessingLog.objects.create(
