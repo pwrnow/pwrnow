@@ -81,9 +81,9 @@ const teamMembers: TeamMember[] = [
     {
         id: "kuba-krolak",
         name: "Kuba Królak",
+        image: "team/kuba.jpeg",
         description:
             "Taking care of marketing, communication and all the behind-the-scenes stuff",
-        image: null,
         social: {},
     },
 ];
