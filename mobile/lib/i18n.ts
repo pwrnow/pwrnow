@@ -14,6 +14,7 @@ const translations: Record<string, TranslationMap> = {
     permissionDeniedMessage:
       'The app needs access to your calendar to add the event.',
     cancel: 'Cancel',
+    close: 'Close',
     settings: 'Settings',
     successTitle: 'Success!',
     eventAddedToCalendar:
@@ -263,6 +264,7 @@ const translations: Record<string, TranslationMap> = {
       friendsAttending: 'Friends Attending',
       and: 'and',
       andOthers: '+ {{count}} more',
+      friendsInterestedModalTitle: 'Friends interested ({{count}})',
     alreadyFriends: 'Already friends',
     suggestFriends: 'Suggest Friends',
     friendOf: 'Friend of {{username}}',
@@ -296,6 +298,7 @@ const translations: Record<string, TranslationMap> = {
     permissionDeniedMessage:
       'Aplikacja potrzebuje dostępu do kalendarza, aby dodać wydarzenie.',
     cancel: 'Anuluj',
+    close: 'Zamknij',
     settings: 'Ustawienia',
     successTitle: 'Sukces!',
     eventAddedToCalendar:
@@ -553,6 +556,7 @@ const translations: Record<string, TranslationMap> = {
       friendsAttending: 'Znajomi uczestniczący',
       and: 'i',
       andOthers: '+ {{count}} więcej',
+      friendsInterestedModalTitle: 'Znajomi zainteresowani ({{count}})',
     alreadyFriends: 'Już znajomi',
     suggestFriends: 'Sugerowani znajomi',
     friendOf: 'Znajomy {{username}}',

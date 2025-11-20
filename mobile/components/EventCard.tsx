@@ -34,6 +34,7 @@ import { useLikeEvent, useUnlikeEvent } from '../lib/queries';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useEventActions } from '../hooks/useEventActions';
 import FriendsAttending from './FriendsAttending';
+import FriendsInterestedModal from './FriendsInterestedModal';
 import StaffBadge from './StaffBadge';
 
 interface EventCardProps {
@@ -57,8 +58,9 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   // Use the event actions hook
   const { handleHeartPress, showFirstLikeModal, setShowFirstLikeModal } =
     useEventActions(event, setShowAuthModal);
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
 
-  
+
 
   // CTA button animations
   const ctaScale = useSharedValue(1);
@@ -132,7 +134,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     analytics.trackEventImageClicked(event as any);
   };
 
-  
+
 
   const handleCtaPressIn = async () => {
     ctaScale.value = withSpring(0.96, { damping: 14, stiffness: 300 });
@@ -546,6 +548,11 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             <FriendsAttending
               friends={event.friends_interested.friends}
               count={event.friends_interested.count}
+              onPress={
+                event.friends_interested.count > 3
+                  ? () => setShowFriendsModal(true)
+                  : undefined
+              }
             />
           )}
 
@@ -562,6 +569,13 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             visible={showFirstLikeModal}
             onClose={() => setShowFirstLikeModal(false)}
             eventTitle={event.title}
+          />
+
+          <FriendsInterestedModal
+            visible={showFriendsModal}
+            onClose={() => setShowFriendsModal(false)}
+            friends={event.friends_interested?.friends ?? []}
+            count={event.friends_interested?.count ?? 0}
           />
         </Pressable>
       </Pressable>
