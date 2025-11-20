@@ -12,12 +12,10 @@ import {
   ShieldCheck,
   Clock3,
   Share2,
-  Copy,
   Check,
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
-import { CATEGORY_SLUGS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
@@ -34,7 +32,6 @@ import {
   checkFeatureAccess,
 } from '@/lib/api';
 import { Event, Organization, Post, Schedule, ScheduleItem } from '@/lib/types';
-import { EventBadge } from '@/components/event-badge';
 import { useTranslations } from 'next-intl';
 import PostsList from '@/components/posts-list';
 import CreatePostModal from '@/components/create-post-modal';
@@ -68,9 +65,9 @@ export default function OrgEventDetailsPage() {
   const [parseAvailable, setParseAvailable] = useState<boolean | null>(null);
   const [parseUnavailableMessage, setParseUnavailableMessage] = useState<string>('');
   const [hasMagicParsingAccess, setHasMagicParsingAccess] = useState<boolean>(false);
-  
+
   // Feature flag to disable schedule tab for organization editing
-  const isScheduleTabEnabled = false;
+  const isScheduleTabEnabled = true;
 
   useEffect(() => {
     async function loadData() {
@@ -131,19 +128,19 @@ export default function OrgEventDetailsPage() {
   useEffect(() => {
     async function checkAvailability() {
       if (!event?.slug) return;
-      
+
       try {
         // Check feature access first
         const featureAccess = await checkFeatureAccess(event.slug, ['magic_parsing']);
         const hasAccess = featureAccess.features.magic_parsing;
         setHasMagicParsingAccess(hasAccess);
-        
+
         if (!hasAccess) {
           setParseAvailable(false);
           setParseUnavailableMessage(t('featureNotAvailable'));
           return;
         }
-        
+
         // If feature access is granted, check rate limiting
         const res = await getParseScheduleAvailability(event.slug);
         setParseAvailable(res.available);
@@ -580,15 +577,9 @@ export default function OrgEventDetailsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-        <TabsList className={`grid w-full ${
-          event.category.slug === CATEGORY_SLUGS.REKRUTACJA 
-            ? (isScheduleTabEnabled ? 'grid-cols-2' : 'grid-cols-1')
-            : (isScheduleTabEnabled ? 'grid-cols-3' : 'grid-cols-2')
-        }`}>
+        <TabsList className={`grid w-full ${isScheduleTabEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value='details'>{t('details')}</TabsTrigger>
-          {event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
-            <TabsTrigger value='posts'>{t('posts')}</TabsTrigger>
-          )}
+          <TabsTrigger value='posts'>{t('posts')}</TabsTrigger>
           {isScheduleTabEnabled && (
             <TabsTrigger value='schedule'>{t('schedule')}</TabsTrigger>
           )}
@@ -692,36 +683,34 @@ export default function OrgEventDetailsPage() {
           </Card>
         </TabsContent>
 
-        {event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
-          <TabsContent value='posts' className='mt-6'>
-            <div className='mb-4'>
-              <CreatePostComposer
-                onPostCreated={handlePostCreated}
-                eventSlug={event.slug}
-              />
-            </div>
+        <TabsContent value='posts' className='mt-6'>
+          <div className='mb-4'>
+            <CreatePostComposer
+              onPostCreated={handlePostCreated}
+              eventSlug={event.slug}
+            />
+          </div>
 
-            {event?.posts && event.posts.length > 0 ? (
-              <PostsList
-                posts={event.posts}
-                onPostDeleted={handlePostDeleted}
-                organizationId={organization.id}
-              />
-            ) : (
-              <Card className='p-12 text-center'>
-                <div className='max-w-md mx-auto'>
-                  <div className='w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6'>
-                    <Plus className='w-10 h-10 text-muted-foreground' />
-                  </div>
-                  <h3 className='text-xl font-semibold mb-3'>{t('noPosts')}</h3>
-                  <p className='text-muted-foreground mb-6'>
-                    {t('noPostsDescription')}
-                  </p>
+          {event?.posts && event.posts.length > 0 ? (
+            <PostsList
+              posts={event.posts}
+              onPostDeleted={handlePostDeleted}
+              organizationId={organization.id}
+            />
+          ) : (
+            <Card className='p-12 text-center'>
+              <div className='max-w-md mx-auto'>
+                <div className='w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6'>
+                  <Plus className='w-10 h-10 text-muted-foreground' />
                 </div>
-              </Card>
-            )}
-          </TabsContent>
-        )}
+                <h3 className='text-xl font-semibold mb-3'>{t('noPosts')}</h3>
+                <p className='text-muted-foreground mb-6'>
+                  {t('noPostsDescription')}
+                </p>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
 
         {/* Schedule tab - disabled for now */}
         {isScheduleTabEnabled && (
