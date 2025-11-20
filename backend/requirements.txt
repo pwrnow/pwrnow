@@ -30,4 +30,4 @@ djangorestframework-simplejwt
 cryptography
 posthog
 django-import-export[all]
-sentry-sdk[django]
+sentry-sdk[django]==2.45.0
