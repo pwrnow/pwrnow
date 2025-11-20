@@ -358,10 +358,14 @@ class ExpoPushNotificationService:
             logger.error(f"Error sending batch publication notifications: {str(e)}")
             return {'sent': 0, 'failed': 0, 'total': 0}
 
-    def send_event_reminders_for_events(self, events):
+    def send_event_reminders_for_events(self, events, reminder_type='event_reminder_24h'):
         """
-        Send 24h-before reminders to users who liked the events.
+        Send reminders to users who liked the events.
         Ensures only one notification per event per user is sent.
+
+        Args:
+            events: List of Event objects
+            reminder_type: Type of reminder ('event_reminder_24h' or 'event_reminder_3h')
 
         Returns dict: {'sent': int, 'failed': int, 'total': int}
         """
@@ -373,7 +377,7 @@ class ExpoPushNotificationService:
             liked_users = Like.objects.filter(event_id__in=event_ids).values_list('user_id', flat=True)
 
             if not liked_users.exists():
-                logger.info("No liked users to notify for reminders")
+                logger.info(f"No liked users to notify for reminders ({reminder_type})")
                 return {'sent': 0, 'failed': 0, 'total': 0}
 
             devices = Device.objects.filter(
@@ -394,7 +398,7 @@ class ExpoPushNotificationService:
 
             existing_notifications = PushNotification.objects.filter(
                 device_id__in=device_ids,
-                data__type='event_reminder_24h',
+                data__type=reminder_type,
                 status__in=['sent', 'delivered']
             ).values_list('device_id', 'data')
 
@@ -410,17 +414,22 @@ class ExpoPushNotificationService:
                     try:
                         # Check if we already sent a reminder notification for this event to this device
                         if (device.id, str(event.id)) in sent_reminders:
-                            logger.info(f"Reminder notification already sent for event {event.id} to device {device.id}, skipping")
+                            logger.info(f"Reminder ({reminder_type}) already sent for event {event.id} to device {device.id}, skipping")
                             continue
 
                         lang = getattr(device, 'preferred_language', 'pl') or 'pl'
-                        title, body, subtitle = self._build_event_reminder_content(event, lang)
+
+                        if reminder_type == 'event_reminder_3h':
+                            title, body, subtitle = self._build_event_reminder_3h_content(event, lang)
+                        else:
+                            title, body, subtitle = self._build_event_reminder_content(event, lang)
+
                         notification_data = {
                             'to': device.expo_push_token,
                             'title': title,
                             'body': body,
                             'data': {
-                                'type': 'event_reminder_24h',
+                                'type': reminder_type,
                                 'event_id': str(event.id),
                                 'event_slug': event.slug,
                                 'organization_slug': event.organization.slug if event.organization else None,
@@ -442,11 +451,11 @@ class ExpoPushNotificationService:
                             'device': device,
                         })
                     except Exception as e:
-                        logger.error(f"Error preparing reminder for device {device.id}: {str(e)}")
+                        logger.error(f"Error preparing reminder ({reminder_type}) for device {device.id}: {str(e)}")
                         continue
 
             if not all_notifications_data:
-                logger.info("No new reminder notifications to send (all already sent)")
+                logger.info(f"No new reminder notifications ({reminder_type}) to send (all already sent)")
                 return {'sent': 0, 'failed': 0, 'total': 0}
 
             result = self.send_multiple_notifications(all_notifications_data)
@@ -467,7 +476,7 @@ class ExpoPushNotificationService:
             return result
 
         except Exception as e:
-            logger.error(f"Error sending event reminder notifications: {str(e)}")
+            logger.error(f"Error sending event reminder notifications ({reminder_type}): {str(e)}")
             return {'sent': 0, 'failed': 0, 'total': 0}
 
     def send_post_verification_notifications(self, post):
@@ -776,6 +785,43 @@ class ExpoPushNotificationService:
 
             body = self._truncate("\n".join(body_lines), 160)
 
+            return title, body, subtitle
+
+    def _build_event_reminder_3h_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
+        """Fun/Urgent 3h reminder."""
+        with override(lang):
+            localized_event_title = get_translated_field(event, 'title', lang) or event.title
+
+            phrases = [
+                _("Only 3 hours left! Are you ready?"),
+                _("Tick tock... 3 hours to go! ⏰"),
+                _("Almost there! The fun begins in 3h."),
+                _("Hey! Just a friendly nudge: 3h until the event."),
+                _("3 hours! Get your shoes on!"),
+                _("Hype! Starts in 3 hours!"),
+                _("Soon... very soon. (3h)"),
+            ]
+
+            # Deterministic pick per event to avoid flickering if retried
+            idx = int(hashlib.sha256((str(event.id) + "3h").encode('utf-8')).hexdigest(), 16) % len(phrases)
+            title_text = phrases[idx]
+
+            title = self._truncate(f"🚀 {title_text}", 100)
+
+            # When
+            when_line = self._format_event_range(event.starts_at, event.ends_at, lang)
+            # Where
+            where_text = (get_translated_field(event, 'location', lang) or event.location or "")
+            where_line = f"📍 {where_text}" if where_text else ""
+
+            body_lines: List[str] = []
+            if when_line:
+                body_lines.append(when_line)
+            if where_line:
+                body_lines.append(where_line)
+
+            body = "\n".join([l for l in body_lines if l])
+            subtitle = localized_event_title
             return title, body, subtitle
 
     def _build_event_reminder_content(self, event: Event, lang: str) -> Tuple[str, str, Optional[str]]:
