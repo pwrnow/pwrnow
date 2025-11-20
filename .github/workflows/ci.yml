@@ -8,11 +8,13 @@ env:
 on:
   pull_request:
     branches: ['main']
-    paths-ignore: ['docs/**']
+    paths:
+      - 'backend/**'
 
   push:
     branches: ['main']
-    paths-ignore: ['docs/**']
+    paths:
+      - 'backend/**'
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
