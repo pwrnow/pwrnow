@@ -1,24 +1,31 @@
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useThemeColors } from '../hooks/useThemeColors';
 import Avatar from './Avatar';
+import { t } from '../lib/i18n';
 
-interface Friend {
+export interface FriendSummary {
   id: string;
   username: string;
 }
 
 interface FriendsAttendingProps {
-  friends: Friend[];
+  friends: FriendSummary[];
   count: number;
+  onPress?: () => void;
 }
 
-export default function FriendsAttending({ friends, count }: FriendsAttendingProps) {
-  const { colors, isDark } = useThemeColors();
+export default function FriendsAttending({
+  friends,
+  count,
+  onPress,
+}: FriendsAttendingProps) {
+  const { isDark } = useThemeColors();
 
   if (count === 0) return null;
 
   const displayedFriends = friends.slice(0, 3);
   const remainingCount = count - displayedFriends.length;
+  const isPressable = typeof onPress === 'function';
 
   // Get usernames text
   const getUsernamesText = () => {
@@ -32,8 +39,11 @@ export default function FriendsAttending({ friends, count }: FriendsAttendingPro
     return '';
   };
 
+  const Container = isPressable ? Pressable : View;
+
   return (
-    <View
+    <Container
+      onPress={onPress}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -81,11 +91,11 @@ export default function FriendsAttending({ friends, count }: FriendsAttendingPro
               fontWeight: '500',
             }}
           >
-            +{remainingCount} {remainingCount === 1 ? 'other' : 'others'}
+            {t('andOthers', { count: remainingCount })}
           </Text>
         )}
       </View>
-    </View>
+    </Container>
   );
 }
 
