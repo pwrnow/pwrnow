@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'dstatic.pwrnow.pl',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async rewrites() {
