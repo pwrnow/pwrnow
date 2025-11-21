@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-02 09:54+0000\n"
+"POT-Creation-Date: 2025-11-20 14:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,149 +19,585 @@ msgstr ""
 "(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && "
 "n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
 
-#: config/settings.py:158
+#: ai/admin.py:22 feature_access/admin.py:19
+msgid "Basic Information"
+msgstr ""
+
+#: ai/admin.py:25
+msgid "Request Data"
+msgstr ""
+
+#: ai/admin.py:28
+msgid "Response Data"
+msgstr ""
+
+#: ai/admin.py:31
+msgid "Error Information"
+msgstr ""
+
+#: ai/admin.py:34
+msgid "Relationships"
+msgstr ""
+
+#: ai/admin.py:37 feature_access/admin.py:24 feature_access/admin.py:69
+msgid "Timestamps"
+msgstr ""
+
+#: ai/models.py:27
+msgid "AI provider used for processing"
+msgstr ""
+
+#: ai/models.py:44
+msgid "Complete raw request sent to LLM including all parameters"
+msgstr ""
+
+#: ai/models.py:49
+msgid "Complete raw response from LLM with all metadata"
+msgstr ""
+
+#: ai/models.py:54
+msgid "Parsed JSON output from LLM response"
+msgstr ""
+
+#: ai/models.py:59
+msgid "Additional debug information (parse errors, retries, etc.)"
+msgstr ""
+
+#: ai/serializers.py:9
+msgid "Raw schedule text to parse"
+msgstr ""
+
+#: ai/serializers.py:12
+msgid "Event slug to identify the event"
+msgstr ""
+
+#: ai/serializers.py:15
+msgid "Event title for context"
+msgstr ""
+
+#: ai/serializers.py:18
+msgid "Event start date for context"
+msgstr ""
+
+#: ai/serializers.py:21
+msgid "Event end date for context"
+msgstr ""
+
+#: ai/serializers.py:27
+msgid "Raw text cannot be empty."
+msgstr ""
+
+#: ai/serializers.py:31
+msgid "Raw text is too long. Maximum 50,000 characters allowed."
+msgstr ""
+
+#: ai/serializers.py:44
+msgid "Parsed schedule items"
+msgstr ""
+
+#: ai/serializers.py:46
+msgid "Raw AI response"
+msgstr ""
+
+#: ai/serializers.py:48
+msgid "Error message if parsing failed"
+msgstr ""
+
+#: ai/serializers.py:51
+msgid "Number of tokens used"
+msgstr ""
+
+#: ai/serializers.py:54
+msgid "Processing time in milliseconds"
+msgstr ""
+
+#: ai/views.py:45 ai/views.py:176 ai/views.py:229
+msgid "Event slug is required."
+msgstr ""
+
+#: ai/views.py:59 ai/views.py:189 ai/views.py:241 core/views.py:774
+msgid "Event not found."
+msgstr ""
+
+#: ai/views.py:66 ai/views.py:197
+msgid "Magic parsing feature is not available for this event."
+msgstr ""
+
+#: ai/views.py:154
+msgid "Failed to parse schedule. Please try again or contact support."
+msgstr ""
+
+#: config/settings.py:191
 msgid "Polish"
 msgstr "Polski"
 
-#: config/settings.py:159
+#: config/settings.py:192
 msgid "English"
 msgstr "Angielski"
 
-#: core/models.py:338
-msgid "Optional text content"
+#: core/admin.py:23
+msgid "has image"
 msgstr ""
 
-#: core/models.py:346
-msgid "Timestamp of when the post was verified"
+#: core/admin.py:28 core/admin.py:66
+msgid "Yes"
 msgstr ""
 
-#: core/models.py:367 core/serializers.py:239
-msgid "Post must include text or at least one image."
+#: core/admin.py:29 core/admin.py:67
+msgid "No"
 msgstr ""
 
-#: core/models.py:401
-msgid "Image file"
+#: core/admin.py:40
+msgid "status"
+msgstr ""
+
+#: core/admin.py:45
+msgid "Past"
+msgstr ""
+
+#: core/admin.py:46
+msgid "Ongoing"
+msgstr ""
+
+#: core/admin.py:47
+msgid "Upcoming"
+msgstr ""
+
+#: core/admin.py:61
+msgid "aspect ratio"
+msgstr ""
+
+#: core/admin.py:148 core/models.py:139 feature_access/admin.py:89
+msgid "Organization"
+msgstr ""
+
+#: core/admin.py:151
+msgid "Code Details"
+msgstr ""
+
+#: core/admin.py:154
+msgid "Usage Information"
+msgstr ""
+
+#: core/admin.py:172
+msgid "URL Actions"
+msgstr ""
+
+#: core/models.py:140
+msgid "Admin"
 msgstr ""
 
 #: core/models.py:406
+msgid "Optional text content"
+msgstr ""
+
+#: core/models.py:414
+msgid "Timestamp of when the post was verified"
+msgstr ""
+
+#: core/models.py:435 core/serializers.py:453
+msgid "Post must include text or at least one image."
+msgstr ""
+
+#: core/models.py:469
+msgid "Image file"
+msgstr ""
+
+#: core/models.py:474
 msgid "Detected aspect ratio of the post image (e.g., '16:9', '1:1')"
 msgstr ""
 
-#: core/serializers.py:52
+#: core/models.py:606
+msgid "QR Code Scan"
+msgstr ""
+
+#: core/models.py:858
+msgid "Pending"
+msgstr ""
+
+#: core/models.py:859
+msgid "Accepted"
+msgstr ""
+
+#: core/models.py:860
+msgid "Rejected"
+msgstr ""
+
+#: core/serializers.py:56
 msgid "Invalid authentication code"
 msgstr ""
 
-#: core/serializers.py:142 core/serializers.py:354
+#: core/serializers.py:335 core/serializers.py:534
 msgid "End time must be after start time."
 msgstr ""
 
-#: core/serializers.py:151
+#: core/serializers.py:344
 msgid "Publication date must be in the future (not today or earlier)."
 msgstr ""
 
-#: core/serializers.py:159
+#: core/serializers.py:353
+msgid "Publication date cannot be later than the event start date."
+msgstr ""
+
+#: core/serializers.py:366
+msgid "Image is required for this category."
+msgstr ""
+
+#: core/serializers.py:373
 msgid "Image size cannot exceed 5MB."
 msgstr ""
 
-#: core/serializers.py:166 core/serializers.py:245 core/serializers.py:380
+#: core/serializers.py:380 core/serializers.py:459 core/serializers.py:560
+#: core/serializers.py:691 core/serializers.py:768
 msgid "No request context found."
 msgstr ""
 
-#: core/serializers.py:173 core/serializers.py:250 core/serializers.py:385
+#: core/serializers.py:387 core/serializers.py:464 core/serializers.py:565
+#: core/serializers.py:696 core/serializers.py:773 core/views.py:1297
+#: core/views.py:1403 core/views.py:1416 core/views.py:1433
 msgid "No authenticated organization found."
 msgstr ""
 
-#: core/serializers.py:182
+#: core/serializers.py:396
 msgid "Invalid category slug."
 msgstr ""
 
-#: core/serializers.py:256 core/serializers.py:362 core/serializers.py:394
+#: core/serializers.py:470 core/serializers.py:542 core/serializers.py:574
+#: core/serializers.py:659 core/serializers.py:705 core/serializers.py:752
+#: core/serializers.py:782
 msgid "Invalid event slug."
 msgstr ""
 
-#: core/serializers.py:260
+#: core/serializers.py:474
 msgid "You do not have permission to post to this event."
 msgstr ""
 
-#: core/serializers.py:369
+#: core/serializers.py:549
 msgid "Date must be within the event dates."
 msgstr ""
 
-#: core/serializers.py:397
+#: core/serializers.py:577 core/serializers.py:708 core/serializers.py:785
 msgid "You do not have permission to modify this event."
 msgstr ""
 
-#: core/views.py:123
+#: core/serializers.py:663
+msgid "Event already has a map."
+msgstr ""
+
+#: core/serializers.py:672
+msgid "Location name is required."
+msgstr ""
+
+#: core/serializers.py:674
+msgid "Latitude and longitude are required."
+msgstr ""
+
+#: core/serializers.py:680
+msgid "Latitude must be between -90 and 90 degrees."
+msgstr ""
+
+#: core/serializers.py:682
+msgid "Longitude must be between -180 and 180 degrees."
+msgstr ""
+
+#: core/serializers.py:684
+msgid "Invalid latitude or longitude values."
+msgstr ""
+
+#: core/serializers.py:755
+msgid "Event does not have a map."
+msgstr ""
+
+#: core/serializers.py:758
+msgid "Event map is not active."
+msgstr ""
+
+#: core/serializers.py:852 core/views.py:1204
+msgid "User not found."
+msgstr ""
+
+#: core/serializers.py:858
+msgid "You cannot send a friend request to yourself."
+msgstr ""
+
+#: core/serializers.py:883
+msgid "You are already friends with this user."
+msgstr ""
+
+#: core/serializers.py:895 core/serializers.py:926
+msgid "You have already sent a friend request to this user."
+msgstr ""
+
+#: core/serializers.py:898
+msgid ""
+"This user has already sent you a friend request. Please accept it instead."
+msgstr ""
+
+#: core/views.py:126
 msgid "Successfully logged out"
 msgstr ""
 
-#: core/views.py:135 core/views.py:152
+#: core/views.py:140 core/views.py:160
 msgid "No organization authenticated"
 msgstr ""
 
-#: core/views.py:161
+#: core/views.py:170
 msgid "Access denied"
 msgstr ""
 
-#: core/views.py:167
+#: core/views.py:177
 msgid "No image file provided"
 msgstr ""
 
-#: core/views.py:176
+#: core/views.py:187
 msgid "Image size cannot exceed 5MB"
 msgstr ""
 
-#: core/views.py:356
+#: core/views.py:468
 msgid "Event not verified."
 msgstr ""
 
-#: core/views.py:391 core/views.py:424
+#: core/views.py:491
+msgid "Event is already verified."
+msgstr ""
+
+#: core/views.py:535 core/views.py:574
 msgid "Authentication required."
 msgstr ""
 
-#: core/views.py:394
+#: core/views.py:539
 msgid "You do not have permission to delete this post."
 msgstr ""
 
-#: core/views.py:428
+#: core/views.py:579
 msgid "You do not have permission to delete this schedule item."
 msgstr ""
 
-#: notifications/services.py:613
+#: core/views.py:701
+msgid "Search query must be at least 3 characters long."
+msgstr ""
+
+#: core/views.py:877 core/views.py:941
+msgid "Friend request not found or already processed."
+msgstr ""
+
+#: core/views.py:908
+msgid "Friend request accepted."
+msgstr ""
+
+#: core/views.py:953
+msgid "Friend request rejected."
+msgstr ""
+
+#: core/views.py:1217
+msgid "You are not friends with this user."
+msgstr ""
+
+#: core/views.py:1238
+msgid "Friend removed successfully."
+msgstr ""
+
+#: core/views.py:1316
+msgid "You do not have permission to modify this event map."
+msgstr ""
+
+#: core/views.py:1421
+msgid "You do not have permission to modify this event map location."
+msgstr ""
+
+#: core/views.py:1438
+msgid "You do not have permission to delete this event map location."
+msgstr ""
+
+#: feature_access/admin.py:22
+msgid "Status"
+msgstr ""
+
+#: feature_access/admin.py:63
+msgid "Access Control"
+msgstr ""
+
+#: feature_access/admin.py:65
+msgid "Enabling Information"
+msgstr ""
+
+#: feature_access/admin.py:79
+msgid "Event"
+msgstr ""
+
+#: feature_access/admin.py:97 feature_access/models.py:33
+msgid "Feature"
+msgstr ""
+
+#: feature_access/models.py:17
+msgid "Internal name for the feature (e.g., 'magic_parsing')"
+msgstr ""
+
+#: feature_access/models.py:21
+msgid "Human-readable name for the feature (e.g., 'Magic Parsing')"
+msgstr ""
+
+#: feature_access/models.py:24
+msgid "Description of what this feature does"
+msgstr ""
+
+#: feature_access/models.py:28
+msgid "Whether this feature is available for assignment to events"
+msgstr ""
+
+#: feature_access/models.py:34
+msgid "Features"
+msgstr ""
+
+#: feature_access/models.py:51
+msgid "Event that has access to this feature"
+msgstr ""
+
+#: feature_access/models.py:57
+msgid "Feature that is enabled for this event"
+msgstr ""
+
+#: feature_access/models.py:61
+msgid "Whether this feature is enabled for the event"
+msgstr ""
+
+#: feature_access/models.py:66
+msgid "When this feature was enabled for the event"
+msgstr ""
+
+#: feature_access/models.py:74
+msgid "Admin user who enabled this feature"
+msgstr ""
+
+#: feature_access/models.py:80 feature_access/models.py:81
+msgid "Event Feature Access"
+msgstr ""
+
+#: notifications/services.py:741
 msgid "New event available"
 msgstr "Nowe wydarzenie dostępne"
 
-#: notifications/services.py:631
+#: notifications/services.py:761
 msgid "New event created"
 msgstr "Utworzono nowe wydarzenie"
 
-#: notifications/services.py:635
+#: notifications/services.py:796
+msgid "Only 3 hours left! Are you ready?"
+msgstr "Zostały tylko 3 godziny! Jesteś gotowy?"
+
+#: notifications/services.py:797
+msgid "Tick tock... 3 hours to go! ⏰"
+msgstr "Tik tak... zostały 3 godziny! ⏰"
+
+#: notifications/services.py:798
+msgid "Almost there! The fun begins in 3h."
+msgstr "Już prawie! Zabawa zaczyna się za 3h."
+
+#: notifications/services.py:799
+msgid "Hey! Just a friendly nudge: 3h until the event."
+msgstr "Hej! Tylko przypominamy: 3h do wydarzenia."
+
+#: notifications/services.py:800
+msgid "3 hours! Get your shoes on!"
+msgstr "3 godziny! Zakładaj buty!"
+
+#: notifications/services.py:801
+msgid "Hype! Starts in 3 hours!"
+msgstr "Hype! Zaczynamy za 3 godziny!"
+
+#: notifications/services.py:802
+msgid "Soon... very soon. (3h)"
+msgstr "Wkrótce... bardzo wkrótce. (3h)"
+
+#: notifications/services.py:833
 msgid "tomorrow"
 msgstr "jutro"
 
-#: notifications/services.py:636
+#: notifications/services.py:834
 msgid "it's tomorrow!"
 msgstr "to już jutro!"
 
-#: notifications/services.py:637
+#: notifications/services.py:835
 msgid "24h to go"
 msgstr "24h do startu"
 
-#: notifications/services.py:638
+#: notifications/services.py:836
 msgid "see you tomorrow"
 msgstr "do zobaczenia jutro"
 
-#: notifications/services.py:639
+#: notifications/services.py:837
 msgid "tomorrow — ready?"
 msgstr "jutro — gotowy?"
 
-#: notifications/services.py:664
+#: notifications/services.py:862
 msgid "New post"
 msgstr "Nowy post"
 
-#: users/models.py:13
+#: notifications/services.py:914
+msgid "New friend request"
+msgstr ""
+
+#: notifications/services.py:915
+#, python-brace-format
+msgid "{username} sent you a friend request"
+msgstr ""
+
+#: notifications/services.py:1011
+msgid "Friend request accepted"
+msgstr ""
+
+#: notifications/services.py:1012
+#, python-brace-format
+msgid "{username} accepted your friend request"
+msgstr ""
+
+#: notifications/templates/admin/notifications/custom_text_notification_form.html:4
+msgid "Django site admin"
+msgstr ""
+
+#: notifications/templates/admin/notifications/custom_text_notification_form.html:8
+msgid "Home"
+msgstr ""
+
+#: notifications/templates/admin/notifications/custom_text_notification_form.html:9
+msgid "Notifications"
+msgstr ""
+
+#: notifications/templates/admin/notifications/custom_text_notification_form.html:10
+msgid "Devices"
+msgstr ""
+
+#: users/models.py:15
 msgid "email address"
 msgstr "adres e-mail"
+
+#: users/models.py:19
+msgid "username"
+msgstr ""
+
+#: users/models.py:23
+msgid "Username must be at least 3 characters long"
+msgstr ""
+
+#: users/models.py:26
+msgid "Username can only contain letters, numbers, and underscores"
+msgstr ""
+
+#: users/models.py:29
+msgid "Required. 3-16 characters. Letters, numbers, and underscores only."
+msgstr ""
+
+#: users/models.py:34
+msgid "username set by user"
+msgstr ""
+
+#: users/models.py:36
+msgid "Indicates if the user has manually set their username"
+msgstr ""
+
+#: utils/middleware.py:34
+msgid "Health check endpoint is only accessible from localhost"
+msgstr ""
 
 #~ msgid "Don’t forget — see you there! 🎉"
 #~ msgstr "Nie zapomnij — widzimy się! 🎉"
