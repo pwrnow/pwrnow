@@ -69,6 +69,15 @@ const nextConfig: NextConfig = {
         source: '/pobierz',
         destination: '/aplikacja',
       },
+      // Serve dark icon as logo.png and logo
+      {
+        source: '/logo.png',
+        destination: '/icon-dark.png',
+      },
+      {
+        source: '/logo',
+        destination: '/icon-dark.png',
+      },
     ];
   },
   // This is required to support PostHog trailing slash API requests
