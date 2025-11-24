@@ -75,8 +75,8 @@ importers:
         specifier: ^2.4.0
         version: 2.4.0(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       expo-insights:
-        specifier: ~0.9.3
-        version: 0.9.3(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))
+        specifier: ~0.10.7
+        version: 0.10.7(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))
       expo-linear-gradient:
         specifier: ~14.1.5
         version: 14.1.5(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -1835,6 +1835,9 @@ packages:
   expo-eas-client@0.14.4:
     resolution: {integrity: sha512-TSL1BbBFIuXchJmPgbPnB7cGpOOuSGJcQ/L7gij/+zPjExwvKm5ckA5dlSulwoFhH8zQt4vb7bfISPSAWQVWBw==}
 
+  expo-eas-client@1.0.7:
+    resolution: {integrity: sha512-Q/b1X0fM+3beqqvffok14pjxMF600NxopdSr9WJY61fF4xllcVnALS0kEudffp9ihMOfcb5xWYqzKj6jMqYDIw==}
+
   expo-file-system@18.1.11:
     resolution: {integrity: sha512-HJw/m0nVOKeqeRjPjGdvm+zBi5/NxcdPf8M8P3G2JFvH5Z8vBWqVDic2O58jnT1OFEy0XXzoH9UqFu7cHg9DTQ==}
     peerDependencies:
@@ -1863,8 +1866,8 @@ packages:
       react-native-web:
         optional: true
 
-  expo-insights@0.9.3:
-    resolution: {integrity: sha512-ictylDUdERHPXUM4suEYLJGGvlSOB7btDSA0FtlZeVWWOcyTWQlSF5t1Wj3lCCljzjMm/pIj8k9hp8CXCl0gsg==}
+  expo-insights@0.10.7:
+    resolution: {integrity: sha512-Ie6LnONNLx7ExnURlLQdJFgrV8Zry/ro1KWH4J47or8oMQkYQp7jcu6WdQoDFpfaCKxJvVJvwTLx1Ybl/lOCug==}
     peerDependencies:
       expo: '*'
 
@@ -6077,6 +6080,8 @@ snapshots:
 
   expo-eas-client@0.14.4: {}
 
+  expo-eas-client@1.0.7: {}
+
   expo-file-system@18.1.11(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)):
     dependencies:
       expo: 53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -6098,10 +6103,10 @@ snapshots:
       react: 19.0.0
       react-native: 0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)
 
-  expo-insights@0.9.3(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)):
+  expo-insights@0.10.7(expo@53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)):
     dependencies:
       expo: 53.0.22(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.28.4)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
-      expo-eas-client: 0.14.4
+      expo-eas-client: 1.0.7
 
   expo-json-utils@0.15.0: {}
 
