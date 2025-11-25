@@ -3,7 +3,7 @@ from celery import shared_task
 from django.utils import timezone
 from .models import Device, PushNotification
 from .services import push_service
-from core.models import Event
+from core.models import Event, Like
 
 logger = logging.getLogger(__name__)
 
@@ -59,52 +59,70 @@ def send_daily_publication_notifications():
 
 @shared_task
 def send_event_reminder_24h():
-    """Send reminders for events starting in ~24 hours.
-
-    Window: events with starts_at between (now + 24h) and (now + 25h) to be resilient to scheduler drift.
     """
-    try:
-        now = timezone.now()
-        start_window = now + timezone.timedelta(hours=24)
-        end_window = now + timezone.timedelta(hours=25)
+    Send reminders for events starting in approximately 24 hours.
 
-        events = (
-            Event.objects
-            .filter(
-                verified=True,
-                starts_at__gte=start_window,
-                starts_at__lt=end_window,
-                publication_date__lte=timezone.localdate()
-            )
-            .select_related('organization', 'category')
-        )
-
-        if not events.exists():
-            logger.info("No events starting ~24h from now for reminders")
-            return 0
-
-        result = push_service.send_event_reminders_for_events(events)
-        logger.info(
-            f"Event reminder 24h notifications: {result['sent']} sent, {result['failed']} failed out of {result['total']} total"
-        )
-        return result['sent']
-    except Exception as e:
-        logger.error(f"Error in send_event_reminder_24h: {str(e)}")
-        return 0
+    Bulletproof logic:
+    - Runs every minute
+    - Checks events starting in 23h50m to 24h10m window (20-minute window)
+    - Uses PushNotification table for duplicate detection per user per event
+    - Processes each user independently to avoid partial failures
+    """
+    return _send_event_reminders(
+        reminder_type='event_reminder_24h',
+        hours_before=24,
+        window_minutes=10,
+    )
 
 
 @shared_task
 def send_event_reminder_3h():
-    """Send reminders for events starting in ~3 hours.
+    """
+    Send reminders for events starting in approximately 3 hours.
 
-    Window: events with starts_at between (now + 3h) and (now + 4h).
+    Bulletproof logic:
+    - Runs every minute
+    - Checks events starting in 2h50m to 3h10m window (20-minute window)
+    - Uses PushNotification table for duplicate detection per user per event
+    - Processes each user independently to avoid partial failures
+    """
+    return _send_event_reminders(
+        reminder_type='event_reminder_3h',
+        hours_before=3,
+        window_minutes=10,
+    )
+
+
+def _send_event_reminders(reminder_type: str, hours_before: int, window_minutes: int = 10):
+    """
+    Core logic for sending event reminders with bulletproof duplicate prevention.
+
+    Uses existing PushNotification table to track sent reminders.
+    Checks for existing notifications with matching (user, event_id, reminder_type).
+
+    Args:
+        reminder_type: Type of reminder (event_reminder_24h or event_reminder_3h)
+        hours_before: Hours before event to send reminder
+        window_minutes: Buffer window in minutes (±) around target time
+
+    Returns:
+        Total number of notifications sent
     """
     try:
         now = timezone.now()
-        start_window = now + timezone.timedelta(hours=3)
-        end_window = now + timezone.timedelta(hours=4)
 
-        events = (
+        # Calculate time window centered around the target time
+        target_time = now + timezone.timedelta(hours=hours_before)
+        start_window = target_time - timezone.timedelta(minutes=window_minutes)
+        end_window = target_time + timezone.timedelta(minutes=window_minutes)
+
+        logger.info(
+            f"[{reminder_type}] Checking for events starting between "
+            f"{start_window.isoformat()} and {end_window.isoformat()}"
+        )
+
+        # Get all verified events in the window that are already published
+        events = list(
             Event.objects
             .filter(
                 verified=True,
@@ -115,17 +133,117 @@ def send_event_reminder_3h():
             .select_related('organization', 'category')
         )
 
-        if not events.exists():
-            logger.info("No events starting ~3h from now for reminders")
+        if not events:
+            logger.debug(f"[{reminder_type}] No events in window")
             return 0
 
-        result = push_service.send_event_reminders_for_events(events, reminder_type='event_reminder_3h')
+        logger.info(f"[{reminder_type}] Found {len(events)} events in window")
+
+        total_sent = 0
+        total_users_processed = 0
+        total_already_sent = 0
+
+        for event in events:
+            try:
+                # Get users who liked this event
+                liked_user_ids = list(
+                    Like.objects
+                    .filter(event=event)
+                    .values_list('user_id', flat=True)
+                )
+
+                if not liked_user_ids:
+                    logger.debug(f"[{reminder_type}] No likes for event {event.id}")
+                    continue
+
+                logger.info(
+                    f"[{reminder_type}] Event {event.id} ({event.title}) has "
+                    f"{len(liked_user_ids)} liked users"
+                )
+
+                # Get all devices for liked users
+                devices_by_user = {}
+                all_devices = Device.objects.filter(
+                    user_id__in=liked_user_ids,
+                    notifications_enabled=True
+                )
+                for device in all_devices:
+                    if device.user_id not in devices_by_user:
+                        devices_by_user[device.user_id] = []
+                    devices_by_user[device.user_id].append(device)
+
+                # Check which users already received this reminder for this event
+                # by looking at existing PushNotification records
+                existing_user_ids = set(
+                    PushNotification.objects
+                    .filter(
+                        device__user_id__in=liked_user_ids,
+                        data__type=reminder_type,
+                        data__event_id=str(event.id),
+                        status__in=['sent', 'delivered', 'pending']
+                    )
+                    .values_list('device__user_id', flat=True)
+                    .distinct()
+                )
+
+                # Process each user
+                for user_id in liked_user_ids:
+                    try:
+                        # Skip if already sent to this user
+                        if user_id in existing_user_ids:
+                            total_already_sent += 1
+                            logger.debug(
+                                f"[{reminder_type}] Already sent to user {user_id} "
+                                f"for event {event.id}"
+                            )
+                            continue
+
+                        # Get user's devices
+                        user_devices = devices_by_user.get(user_id, [])
+                        if not user_devices:
+                            logger.debug(
+                                f"[{reminder_type}] No active devices for user {user_id}"
+                            )
+                            continue
+
+                        # Send notification to this user's devices
+                        sent_count = push_service.send_event_reminder_to_user(
+                            event=event,
+                            user_id=user_id,
+                            devices=user_devices,
+                            reminder_type=reminder_type,
+                        )
+
+                        total_sent += sent_count
+                        total_users_processed += 1
+
+                        logger.info(
+                            f"[{reminder_type}] Sent {sent_count} notifications to user "
+                            f"{user_id} for event {event.id}"
+                        )
+
+                    except Exception as e:
+                        logger.error(
+                            f"[{reminder_type}] Error processing user {user_id} "
+                            f"for event {event.id}: {str(e)}"
+                        )
+                        continue
+
+            except Exception as e:
+                logger.error(
+                    f"[{reminder_type}] Error processing event {event.id}: {str(e)}"
+                )
+                continue
+
         logger.info(
-            f"Event reminder 3h notifications: {result['sent']} sent, {result['failed']} failed out of {result['total']} total"
+            f"[{reminder_type}] Completed: {total_sent} notifications sent to "
+            f"{total_users_processed} users, {total_already_sent} already sent"
         )
-        return result['sent']
+
+        return total_sent
+
     except Exception as e:
-        logger.error(f"Error in send_event_reminder_3h: {str(e)}")
+        logger.error(f"[{reminder_type}] Fatal error: {str(e)}")
         return 0
 
 
