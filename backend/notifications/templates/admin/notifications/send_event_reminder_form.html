@@ -1,0 +1,290 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='core' %}">{% trans 'Core' %}</a>
+&rsaquo; <a href="{% url 'admin:core_event_changelist' %}">{% trans 'Events' %}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module aligned">
+    <h2>{% trans 'Event Details' %}</h2>
+    <table>
+        <tr>
+            <th>{% trans 'Event' %}:</th>
+            <td><strong>{{ event.title }}</strong></td>
+        </tr>
+        <tr>
+            <th>{% trans 'Starts at' %}:</th>
+            <td>{{ event.starts_at|date:"l, d F Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>{% trans 'Time until event' %}:</th>
+            <td>
+                {% if hours_until > 0 %}
+                    <span style="color: green;">{{ hours_until|floatformat:1 }} {% trans 'hours' %}</span>
+                {% elif hours_until > -24 %}
+                    <span style="color: orange;">{% trans 'Event has started' %} ({{ hours_until|floatformat:1 }} {% trans 'hours ago' %})</span>
+                {% else %}
+                    <span style="color: red;">{% trans 'Event ended' %}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>{% trans 'Time bracket' %}:</th>
+            <td><span class="badge">{{ bracket_display }}</span></td>
+        </tr>
+        <tr>
+            <th>{% trans 'Target users' %}:</th>
+            <td>{{ liked_users_count }} {% trans 'users who liked this event' %}</td>
+        </tr>
+        <tr>
+            <th>{% trans 'Target devices' %}:</th>
+            <td>{{ devices_count }} {% trans 'active devices' %}</td>
+        </tr>
+    </table>
+</div>
+
+{% if step == 'select' %}
+<!-- STEP 1: Select Message -->
+<form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="step" value="confirm">
+
+    <div class="module aligned">
+        <h2>{% trans 'Select Reminder Message' %}</h2>
+        <p class="help">{% trans 'Choose a predefined message for this time bracket. Messages are automatically selected based on how much time is left until the event.' %}</p>
+
+        <div class="message-options">
+            {% for msg in messages %}
+            <div class="message-option">
+                <label>
+                    <input type="radio" name="message_id" value="{{ msg.id }}" {% if forloop.first %}checked{% endif %}>
+                    <div class="message-card">
+                        <div class="message-title">{{ msg.title }}</div>
+                        <div class="message-body">{{ msg.body }}</div>
+                    </div>
+                </label>
+            </div>
+            {% empty %}
+            <p class="warning">{% trans 'No messages available for this time bracket.' %}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="submit-row">
+        <input type="submit" value="{% trans 'Preview & Confirm' %}" class="default">
+        <a href="{% url 'admin:core_event_changelist' %}" class="button cancel-link">{% trans 'Cancel' %}</a>
+    </div>
+</form>
+
+{% elif step == 'confirm' %}
+<!-- STEP 2: Confirm Message -->
+<form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="step" value="send">
+    <input type="hidden" name="message_id" value="{{ selected_message.id }}">
+
+    <div class="module aligned">
+        <h2>{% trans 'Confirm Notification' %}</h2>
+
+        <div class="notification-preview">
+            <div class="preview-header">📱 {% trans 'Notification Preview' %}</div>
+            <div class="preview-content">
+                <div class="preview-title">{{ selected_message.title }}</div>
+                <div class="preview-body">{{ selected_message.body }}</div>
+            </div>
+        </div>
+
+        <div class="confirmation-warning">
+            <h3>⚠️ {% trans 'Please confirm' %}</h3>
+            <p>{% trans 'This will send the notification to' %} <strong>{{ devices_count }}</strong> {% trans 'devices belonging to' %} <strong>{{ liked_users_count }}</strong> {% trans 'users.' %}</p>
+            <p>{% trans 'This action cannot be undone.' %}</p>
+        </div>
+    </div>
+
+    <div class="submit-row">
+        <input type="submit" value="{% trans 'Send Notification Now' %}" class="default" style="background: #417690;">
+        <a href="?step=select" class="button">{% trans 'Back to Selection' %}</a>
+        <a href="{% url 'admin:core_event_changelist' %}" class="button cancel-link">{% trans 'Cancel' %}</a>
+    </div>
+</form>
+
+{% elif step == 'success' %}
+<!-- STEP 3: Success -->
+<div class="module aligned success-message">
+    <h2>✅ {% trans 'Notifications Sent Successfully' %}</h2>
+    <p>{% trans 'Sent' %} <strong>{{ sent_count }}</strong> {% trans 'notifications.' %}</p>
+    {% if failed_count > 0 %}
+    <p class="warning">{% trans 'Failed' %}: {{ failed_count }}</p>
+    {% endif %}
+</div>
+
+<div class="submit-row">
+    <a href="{% url 'admin:core_event_changelist' %}" class="button default">{% trans 'Back to Events' %}</a>
+</div>
+{% endif %}
+
+<style>
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #417690;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.message-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.message-option label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
+.message-option input[type="radio"] {
+    margin-top: 10px;
+    margin-right: 15px;
+}
+
+.message-card {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    transition: all 0.2s ease;
+}
+
+.message-option input[type="radio"]:checked + .message-card {
+    border-color: #417690;
+    background: #f0f7fa;
+    box-shadow: 0 2px 8px rgba(65, 118, 144, 0.2);
+}
+
+.message-card:hover {
+    border-color: #79aec8;
+}
+
+.message-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.message-body {
+    color: #666;
+    line-height: 1.4;
+}
+
+.notification-preview {
+    background: #2c3e50;
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 400px;
+    margin: 20px 0;
+}
+
+.preview-header {
+    background: #34495e;
+    color: white;
+    padding: 10px 15px;
+    font-size: 0.9em;
+}
+
+.preview-content {
+    padding: 15px;
+    color: white;
+}
+
+.preview-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+}
+
+.preview-body {
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.confirmation-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 20px 0;
+}
+
+.confirmation-warning h3 {
+    margin: 0 0 10px 0;
+    color: #856404;
+}
+
+.confirmation-warning p {
+    margin: 5px 0;
+    color: #856404;
+}
+
+.success-message {
+    background: #d4edda;
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.success-message h2 {
+    color: #155724;
+    margin: 0 0 10px 0;
+}
+
+.success-message p {
+    color: #155724;
+    margin: 5px 0;
+}
+
+.warning {
+    color: #856404;
+}
+
+table {
+    width: 100%;
+    margin: 10px 0;
+}
+
+table th {
+    text-align: left;
+    padding: 8px;
+    width: 150px;
+    color: #666;
+}
+
+table td {
+    padding: 8px;
+}
+
+.submit-row {
+    margin-top: 20px;
+}
+
+.button {
+    margin-left: 10px;
+}
+</style>
+{% endblock %}
+

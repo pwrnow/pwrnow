@@ -9,7 +9,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 from django.db import models
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
+from django.http import HttpResponseRedirect
 from modeltranslation.admin import TranslationAdmin, TranslationTabularInline, TranslationStackedInline
 from .models import Event, Category, Organization, Tag, OrganizationCode, Like, Post, PostImage, Schedule, ScheduleItem, QRCode, EventParticipation, EventMap, EventMapLocation, Friendship, FriendRequest
 from .forms import OrganizationAdminForm, EventAdminForm
@@ -513,7 +514,7 @@ class EventAdmin(TranslationAdmin):
             'category', 'organization', 'verified_by'
         ).prefetch_related('tags')
 
-    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h', 'translate_selected_events']
+    actions = ['mark_as_verified', 'mark_as_unverified', 'detect_aspect_ratios', 'send_event_publication_notifications', 'send_event_reminder_24h', 'send_manual_reminder', 'translate_selected_events']
 
     def mark_as_verified(self, request, queryset):
         updated = queryset.update(verified=True)
@@ -624,6 +625,150 @@ class EventAdmin(TranslationAdmin):
                 level=messages.ERROR
             )
     send_event_reminder_24h.short_description = "Send 24h reminder notifications (manual)"
+
+    def send_manual_reminder(self, request, queryset):
+        """Send manual reminder with message selection for a single event."""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                _('Please select exactly one event for manual reminder.'),
+                level=messages.WARNING
+            )
+            return
+
+        event = queryset.first()
+
+        if not event.verified:
+            self.message_user(
+                request,
+                _('Only verified events can have reminders sent.'),
+                level=messages.WARNING
+            )
+            return
+
+        # Redirect to the custom reminder view
+        return HttpResponseRedirect(
+            reverse('admin:core_event_send_reminder', args=[event.pk])
+        )
+    send_manual_reminder.short_description = _("Send manual reminder (with message selection)")
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<uuid:event_id>/send-reminder/',
+                self.admin_site.admin_view(self.send_reminder_view),
+                name='core_event_send_reminder'
+            ),
+        ]
+        return custom_urls + urls
+
+    def send_reminder_view(self, request, event_id):
+        """Custom view for sending manual reminders with message selection."""
+        from notifications.reminder_messages import get_message_choices_for_event, get_time_bracket
+        from notifications.services import push_service
+        from notifications.models import Device
+
+        event = get_object_or_404(Event, pk=event_id)
+
+        if not event.verified:
+            messages.error(request, _('Only verified events can have reminders sent.'))
+            return HttpResponseRedirect(reverse('admin:core_event_changelist'))
+
+        # Calculate time info
+        now = timezone.now()
+        if event.starts_at:
+            time_diff = event.starts_at - now
+            hours_until = time_diff.total_seconds() / 3600
+        else:
+            hours_until = 0
+
+        bracket_key, bracket_display = get_time_bracket(hours_until)
+        message_choices = get_message_choices_for_event(event, now)
+
+        # Get target users and devices
+        liked_user_ids = list(Like.objects.filter(event=event).values_list('user_id', flat=True))
+        devices = Device.objects.filter(
+            user_id__in=liked_user_ids,
+            notifications_enabled=True
+        )
+
+        context = {
+            'title': _('Send Manual Reminder'),
+            'event': event,
+            'hours_until': hours_until,
+            'bracket_display': str(bracket_display),
+            'messages': message_choices,
+            'liked_users_count': len(liked_user_ids),
+            'devices_count': devices.count(),
+            'opts': self.model._meta,
+            'site_header': admin.site.site_header,
+            'site_title': admin.site.site_title,
+        }
+
+        # Handle form submission
+        step = request.POST.get('step', request.GET.get('step', 'select'))
+
+        if step == 'confirm':
+            # User selected a message, show confirmation
+            message_id = int(request.POST.get('message_id', 0))
+            if 0 <= message_id < len(message_choices):
+                selected_message = message_choices[message_id]
+            else:
+                selected_message = message_choices[0] if message_choices else None
+
+            context['step'] = 'confirm'
+            context['selected_message'] = selected_message
+
+        elif step == 'send':
+            # User confirmed, send the notifications
+            message_id = int(request.POST.get('message_id', 0))
+            if 0 <= message_id < len(message_choices):
+                selected_message = message_choices[message_id]
+            else:
+                selected_message = message_choices[0] if message_choices else None
+
+            if selected_message and devices.exists():
+                # Prepare and send notifications
+                all_notifications_data = []
+
+                for device in devices:
+                    notification_data = {
+                        'to': device.expo_push_token,
+                        'title': selected_message['title'],
+                        'body': selected_message['body'],
+                        'data': {
+                            'type': 'manual_reminder',
+                            'event_id': str(event.id),
+                            'event_slug': event.slug,
+                            'organization_slug': event.organization.slug if event.organization else None,
+                            'category_slug': event.category.slug if event.category else None,
+                            'url': event.public_url,
+                        },
+                        'priority': 'high',
+                        'channelId': 'events',
+                        'sound': 'default'
+                    }
+                    all_notifications_data.append(notification_data)
+
+                result = push_service.send_multiple_notifications(all_notifications_data)
+
+                context['step'] = 'success'
+                context['sent_count'] = result['sent']
+                context['failed_count'] = result['failed']
+            else:
+                context['step'] = 'success'
+                context['sent_count'] = 0
+                context['failed_count'] = 0
+        else:
+            # Default: show message selection
+            context['step'] = 'select'
+
+        return render(
+            request,
+            'admin/notifications/send_event_reminder_form.html',
+            context
+        )
 
     def translate_selected_events(self, request, queryset):
         """Trigger AI translation for selected events with missing translations."""

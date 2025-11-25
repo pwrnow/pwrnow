@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-20 14:19+0100\n"
+"POT-Creation-Date: 2025-11-25 18:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -135,52 +135,68 @@ msgstr "Polski"
 msgid "English"
 msgstr "Angielski"
 
-#: core/admin.py:23
+#: core/admin.py:24
 msgid "has image"
 msgstr ""
 
-#: core/admin.py:28 core/admin.py:66
+#: core/admin.py:29 core/admin.py:67
 msgid "Yes"
 msgstr ""
 
-#: core/admin.py:29 core/admin.py:67
+#: core/admin.py:30 core/admin.py:68
 msgid "No"
 msgstr ""
 
-#: core/admin.py:40
+#: core/admin.py:41
 msgid "status"
 msgstr ""
 
-#: core/admin.py:45
+#: core/admin.py:46
 msgid "Past"
 msgstr ""
 
-#: core/admin.py:46
+#: core/admin.py:47
 msgid "Ongoing"
 msgstr ""
 
-#: core/admin.py:47
+#: core/admin.py:48
 msgid "Upcoming"
 msgstr ""
 
-#: core/admin.py:61
+#: core/admin.py:62
 msgid "aspect ratio"
 msgstr ""
 
-#: core/admin.py:148 core/models.py:139 feature_access/admin.py:89
+#: core/admin.py:149 core/models.py:139 feature_access/admin.py:89
 msgid "Organization"
 msgstr ""
 
-#: core/admin.py:151
+#: core/admin.py:152
 msgid "Code Details"
 msgstr ""
 
-#: core/admin.py:154
+#: core/admin.py:155
 msgid "Usage Information"
 msgstr ""
 
-#: core/admin.py:172
+#: core/admin.py:173
 msgid "URL Actions"
+msgstr ""
+
+#: core/admin.py:634
+msgid "Please select exactly one event for manual reminder."
+msgstr ""
+
+#: core/admin.py:644 core/admin.py:675
+msgid "Only verified events can have reminders sent."
+msgstr ""
+
+#: core/admin.py:653
+msgid "Send manual reminder (with message selection)"
+msgstr ""
+
+#: core/admin.py:697
+msgid "Send Manual Reminder"
 msgstr ""
 
 #: core/models.py:140
@@ -422,6 +438,7 @@ msgid "Enabling Information"
 msgstr ""
 
 #: feature_access/admin.py:79
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:22
 msgid "Event"
 msgstr ""
 
@@ -473,89 +490,445 @@ msgstr ""
 msgid "Event Feature Access"
 msgstr ""
 
-#: notifications/services.py:741
+#: notifications/reminder_messages.py:24
+msgid "More than 24 hours"
+msgstr ""
+
+#: notifications/reminder_messages.py:25
+msgid "12-24 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:26
+msgid "6-12 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:27
+msgid "3-6 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:28
+msgid "1-3 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:29
+msgid "Less than 1 hour"
+msgstr ""
+
+#: notifications/reminder_messages.py:30 notifications/reminder_messages.py:214
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:35
+msgid "Event has started"
+msgstr ""
+
+#: notifications/reminder_messages.py:40
+msgid "📅 Don't forget!"
+msgstr ""
+
+#: notifications/reminder_messages.py:41
+#, python-brace-format
+msgid "'{event_title}' is coming up. Mark your calendar!"
+msgstr ""
+
+#: notifications/reminder_messages.py:44
+msgid "🎯 Event reminder"
+msgstr ""
+
+#: notifications/reminder_messages.py:45
+#, python-brace-format
+msgid "'{event_title}' - make sure you're ready!"
+msgstr ""
+
+#: notifications/reminder_messages.py:48
+msgid "✨ Coming soon"
+msgstr ""
+
+#: notifications/reminder_messages.py:49
+#, python-brace-format
+msgid "'{event_title}' is approaching. Get excited!"
+msgstr ""
+
+#: notifications/reminder_messages.py:55
+msgid "⏰ Tomorrow's the day!"
+msgstr ""
+
+#: notifications/reminder_messages.py:56
+#, python-brace-format
+msgid "'{event_title}' is happening tomorrow. Get ready!"
+msgstr ""
+
+#: notifications/reminder_messages.py:59
+#, fuzzy
+#| msgid "see you tomorrow"
+msgid "🌟 See you tomorrow!"
+msgstr "do zobaczenia jutro"
+
+#: notifications/reminder_messages.py:60
+#, python-brace-format
+msgid "'{event_title}' starts tomorrow. Don't miss it!"
+msgstr ""
+
+#: notifications/reminder_messages.py:63
+msgid "📆 Heads up!"
+msgstr ""
+
+#: notifications/reminder_messages.py:64
+#, python-brace-format
+msgid "'{event_title}' is tomorrow. Plan your day!"
+msgstr ""
+
+#: notifications/reminder_messages.py:67
+msgid "🎉 Almost time!"
+msgstr ""
+
+#: notifications/reminder_messages.py:68
+#, python-brace-format
+msgid "'{event_title}' is just around the corner - tomorrow!"
+msgstr ""
+
+#: notifications/reminder_messages.py:71
+#, fuzzy
+#| msgid "24h to go"
+msgid "💫 24 hours to go"
+msgstr "24h do startu"
+
+#: notifications/reminder_messages.py:72
+#, python-brace-format
+msgid "'{event_title}' starts in about 24 hours!"
+msgstr ""
+
+#: notifications/reminder_messages.py:78
+msgid "🌅 Today's the day!"
+msgstr ""
+
+#: notifications/reminder_messages.py:79
+#, python-brace-format
+msgid "'{event_title}' is happening today. Get ready!"
+msgstr ""
+
+#: notifications/reminder_messages.py:82
+msgid "☀️ Event today!"
+msgstr ""
+
+#: notifications/reminder_messages.py:83
+#, python-brace-format
+msgid "'{event_title}' - see you there later today!"
+msgstr ""
+
+#: notifications/reminder_messages.py:86
+msgid "🎊 It's today!"
+msgstr ""
+
+#: notifications/reminder_messages.py:87
+#, python-brace-format
+msgid "'{event_title}' is today. Excitement loading..."
+msgstr ""
+
+#: notifications/reminder_messages.py:90
+msgid "📍 Mark the spot"
+msgstr ""
+
+#: notifications/reminder_messages.py:91
+#, python-brace-format
+msgid "'{event_title}' kicks off today. Know where to go!"
+msgstr ""
+
+#: notifications/reminder_messages.py:97
+msgid "🚀 Getting close!"
+msgstr ""
+
+#: notifications/reminder_messages.py:98
+#, python-brace-format
+msgid "'{event_title}' starts in a few hours. Almost there!"
+msgstr ""
+
+#: notifications/reminder_messages.py:101
+msgid "⏱️ Few hours left"
+msgstr ""
+
+#: notifications/reminder_messages.py:102
+#, python-brace-format
+msgid "'{event_title}' is coming up soon. Ready?"
+msgstr ""
+
+#: notifications/reminder_messages.py:105
+msgid "🎯 On your marks..."
+msgstr ""
+
+#: notifications/reminder_messages.py:106
+#, python-brace-format
+msgid "'{event_title}' starts soon. Time to prepare!"
+msgstr ""
+
+#: notifications/reminder_messages.py:109
+msgid "✨ The countdown"
+msgstr ""
+
+#: notifications/reminder_messages.py:110
+#, python-brace-format
+msgid "'{event_title}' in just a few hours!"
+msgstr ""
+
+#: notifications/reminder_messages.py:113
+msgid "🔔 Time check"
+msgstr ""
+
+#: notifications/reminder_messages.py:114
+#, python-brace-format
+msgid "'{event_title}' - only a few hours away!"
+msgstr ""
+
+#: notifications/reminder_messages.py:120
+#, fuzzy
+#| msgid "Only 3 hours left! Are you ready?"
+msgid "🚀 Only 3 hours left!"
+msgstr "Zostały tylko 3 godziny! Jesteś gotowy?"
+
+#: notifications/reminder_messages.py:121
+#, python-brace-format
+msgid "'{event_title}' - are you ready?"
+msgstr ""
+
+#: notifications/reminder_messages.py:124
+msgid "⏰ Tick tock..."
+msgstr ""
+
+#: notifications/reminder_messages.py:125
+#, python-brace-format
+msgid "'{event_title}' starts very soon!"
+msgstr ""
+
+#: notifications/reminder_messages.py:128
+msgid "🎉 Almost there!"
+msgstr ""
+
+#: notifications/reminder_messages.py:129
+#, python-brace-format
+msgid "'{event_title}' begins in just a moment!"
+msgstr ""
+
+#: notifications/reminder_messages.py:132
+#, fuzzy
+#| msgid "3 hours! Get your shoes on!"
+msgid "👟 Get your shoes on!"
+msgstr "3 godziny! Zakładaj buty!"
+
+#: notifications/reminder_messages.py:133
+#, python-brace-format
+msgid "'{event_title}' is starting soon. Time to go!"
+msgstr ""
+
+#: notifications/reminder_messages.py:136
+msgid "🔥 Hype time!"
+msgstr ""
+
+#: notifications/reminder_messages.py:137
+#, python-brace-format
+msgid "'{event_title}' starts very soon. Get hyped!"
+msgstr ""
+
+#: notifications/reminder_messages.py:140
+#, fuzzy
+#| msgid "Soon... very soon. (3h)"
+msgid "💨 Soon... very soon"
+msgstr "Wkrótce... bardzo wkrótce. (3h)"
+
+#: notifications/reminder_messages.py:141
+#, python-brace-format
+msgid "'{event_title}' - the wait is almost over!"
+msgstr ""
+
+#: notifications/reminder_messages.py:144
+msgid "🏃 Time to move!"
+msgstr ""
+
+#: notifications/reminder_messages.py:145
+#, python-brace-format
+msgid "'{event_title}' is about to begin!"
+msgstr ""
+
+#: notifications/reminder_messages.py:151
+msgid "🏃 GO GO GO!"
+msgstr ""
+
+#: notifications/reminder_messages.py:152
+#, python-brace-format
+msgid "'{event_title}' starts in less than an hour!"
+msgstr ""
+
+#: notifications/reminder_messages.py:155
+msgid "⚡ Final call!"
+msgstr ""
+
+#: notifications/reminder_messages.py:156
+#, python-brace-format
+msgid "'{event_title}' is about to start! Hurry!"
+msgstr ""
+
+#: notifications/reminder_messages.py:159
+msgid "🎬 Showtime!"
+msgstr ""
+
+#: notifications/reminder_messages.py:160
+#, python-brace-format
+msgid "'{event_title}' begins any moment now!"
+msgstr ""
+
+#: notifications/reminder_messages.py:163
+msgid "🚨 Last chance!"
+msgstr ""
+
+#: notifications/reminder_messages.py:164
+#, python-brace-format
+msgid "'{event_title}' - don't miss the start!"
+msgstr ""
+
+#: notifications/reminder_messages.py:167
+msgid "⏰ Minutes away!"
+msgstr ""
+
+#: notifications/reminder_messages.py:168
+#, python-brace-format
+msgid "'{event_title}' starts in minutes. Are you there?"
+msgstr ""
+
+#: notifications/reminder_messages.py:171
+msgid "🎯 It's happening!"
+msgstr ""
+
+#: notifications/reminder_messages.py:172
+#, python-brace-format
+msgid "'{event_title}' is starting NOW!"
+msgstr ""
+
+#: notifications/reminder_messages.py:178
+msgid "🎉 It's happening!"
+msgstr ""
+
+#: notifications/reminder_messages.py:179
+#, python-brace-format
+msgid "'{event_title}' has started. Join in!"
+msgstr ""
+
+#: notifications/reminder_messages.py:182
+msgid "🔴 LIVE NOW"
+msgstr ""
+
+#: notifications/reminder_messages.py:183
+#, python-brace-format
+msgid "'{event_title}' is happening right now!"
+msgstr ""
+
+#: notifications/reminder_messages.py:186
+msgid "⚡ In progress"
+msgstr ""
+
+#: notifications/reminder_messages.py:187
+#, python-brace-format
+msgid "'{event_title}' has begun. Don't miss it!"
+msgstr ""
+
+#: notifications/reminder_messages.py:190
+msgid "🎊 Event is live!"
+msgstr ""
+
+#: notifications/reminder_messages.py:191
+#, python-brace-format
+msgid "'{event_title}' - the fun has started!"
+msgstr ""
+
+#: notifications/reminder_messages.py:194
+msgid "🏃 Still time!"
+msgstr ""
+
+#: notifications/reminder_messages.py:195
+#, python-brace-format
+msgid "'{event_title}' started but you can still join!"
+msgstr ""
+
+#: notifications/services.py:840
 msgid "New event available"
 msgstr "Nowe wydarzenie dostępne"
 
-#: notifications/services.py:761
+#: notifications/services.py:860
 msgid "New event created"
 msgstr "Utworzono nowe wydarzenie"
 
-#: notifications/services.py:796
+#: notifications/services.py:895
 msgid "Only 3 hours left! Are you ready?"
 msgstr "Zostały tylko 3 godziny! Jesteś gotowy?"
 
-#: notifications/services.py:797
+#: notifications/services.py:896
 msgid "Tick tock... 3 hours to go! ⏰"
 msgstr "Tik tak... zostały 3 godziny! ⏰"
 
-#: notifications/services.py:798
+#: notifications/services.py:897
 msgid "Almost there! The fun begins in 3h."
 msgstr "Już prawie! Zabawa zaczyna się za 3h."
 
-#: notifications/services.py:799
+#: notifications/services.py:898
 msgid "Hey! Just a friendly nudge: 3h until the event."
 msgstr "Hej! Tylko przypominamy: 3h do wydarzenia."
 
-#: notifications/services.py:800
+#: notifications/services.py:899
 msgid "3 hours! Get your shoes on!"
 msgstr "3 godziny! Zakładaj buty!"
 
-#: notifications/services.py:801
+#: notifications/services.py:900
 msgid "Hype! Starts in 3 hours!"
 msgstr "Hype! Zaczynamy za 3 godziny!"
 
-#: notifications/services.py:802
+#: notifications/services.py:901
 msgid "Soon... very soon. (3h)"
 msgstr "Wkrótce... bardzo wkrótce. (3h)"
 
-#: notifications/services.py:833
+#: notifications/services.py:932
 msgid "tomorrow"
 msgstr "jutro"
 
-#: notifications/services.py:834
+#: notifications/services.py:933
 msgid "it's tomorrow!"
 msgstr "to już jutro!"
 
-#: notifications/services.py:835
+#: notifications/services.py:934
 msgid "24h to go"
 msgstr "24h do startu"
 
-#: notifications/services.py:836
+#: notifications/services.py:935
 msgid "see you tomorrow"
 msgstr "do zobaczenia jutro"
 
-#: notifications/services.py:837
+#: notifications/services.py:936
 msgid "tomorrow — ready?"
 msgstr "jutro — gotowy?"
 
-#: notifications/services.py:862
+#: notifications/services.py:961
 msgid "New post"
 msgstr "Nowy post"
 
-#: notifications/services.py:914
+#: notifications/services.py:1013
 msgid "New friend request"
 msgstr ""
 
-#: notifications/services.py:915
+#: notifications/services.py:1014
 #, python-brace-format
 msgid "{username} sent you a friend request"
 msgstr ""
 
-#: notifications/services.py:1011
+#: notifications/services.py:1110
 msgid "Friend request accepted"
 msgstr ""
 
-#: notifications/services.py:1012
+#: notifications/services.py:1111
 #, python-brace-format
 msgid "{username} accepted your friend request"
 msgstr ""
 
 #: notifications/templates/admin/notifications/custom_text_notification_form.html:4
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:4
 msgid "Django site admin"
 msgstr ""
 
 #: notifications/templates/admin/notifications/custom_text_notification_form.html:8
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:8
 msgid "Home"
 msgstr ""
 
@@ -565,6 +938,137 @@ msgstr ""
 
 #: notifications/templates/admin/notifications/custom_text_notification_form.html:10
 msgid "Devices"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:9
+msgid "Core"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:10
+msgid "Events"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:19
+msgid "Event Details"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:26
+msgid "Starts at"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:30
+msgid "Time until event"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:33
+msgid "hours"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:35
+msgid "hours ago"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:37
+msgid "Event ended"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:42
+msgid "Time bracket"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:46
+msgid "Target users"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:47
+msgid "users who liked this event"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:50
+msgid "Target devices"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:51
+msgid "active devices"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:63
+msgid "Select Reminder Message"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:64
+msgid ""
+"Choose a predefined message for this time bracket. Messages are "
+"automatically selected based on how much time is left until the event."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:78
+msgid "No messages available for this time bracket."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:84
+msgid "Preview & Confirm"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:85
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:117
+msgid "Cancel"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:97
+msgid "Confirm Notification"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:100
+msgid "Notification Preview"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:108
+msgid "Please confirm"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:109
+msgid "This will send the notification to"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:109
+msgid "devices belonging to"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:109
+msgid "users."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:110
+msgid "This action cannot be undone."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:115
+msgid "Send Notification Now"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:116
+msgid "Back to Selection"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:124
+msgid "Notifications Sent Successfully"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:125
+msgid "Sent"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:125
+msgid "notifications."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:127
+msgid "Failed"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:132
+msgid "Back to Events"
 msgstr ""
 
 #: users/models.py:15

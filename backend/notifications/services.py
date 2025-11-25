@@ -358,9 +358,108 @@ class ExpoPushNotificationService:
             logger.error(f"Error sending batch publication notifications: {str(e)}")
             return {'sent': 0, 'failed': 0, 'total': 0}
 
+    def send_event_reminder_to_user(self, event: Event, user_id, devices, reminder_type: str) -> int:
+        """
+        Send event reminder notifications to a specific user's devices.
+
+        Duplicate prevention is handled at the task level by checking the
+        PushNotification table for existing records with matching
+        (user, event_id, reminder_type).
+
+        Args:
+            event: Event object to send reminder for
+            user_id: ID of the user to notify
+            devices: QuerySet or list of Device objects belonging to the user
+            reminder_type: Type of reminder ('event_reminder_24h' or 'event_reminder_3h')
+
+        Returns:
+            Number of notifications successfully sent
+        """
+        try:
+            all_notifications_data = []
+            notification_records = []
+
+            for device in devices:
+                try:
+                    lang = getattr(device, 'preferred_language', 'pl') or 'pl'
+
+                    if reminder_type == 'event_reminder_3h':
+                        title, body, subtitle = self._build_event_reminder_3h_content(event, lang)
+                    else:
+                        title, body, subtitle = self._build_event_reminder_content(event, lang)
+
+                    notification_data = {
+                        'to': device.expo_push_token,
+                        'title': title,
+                        'body': body,
+                        'data': {
+                            'type': reminder_type,
+                            'event_id': str(event.id),
+                            'event_slug': event.slug,
+                            'organization_slug': event.organization.slug if event.organization else None,
+                            'category_slug': event.category.slug if event.category else None,
+                            'url': event.public_url,
+                        },
+                        'priority': 'high',
+                        'channelId': 'events',
+                        'sound': 'default'
+                    }
+
+                    if subtitle and device.platform == 'ios':
+                        notification_data['subtitle'] = subtitle
+
+                    all_notifications_data.append(notification_data)
+                    notification_records.append({
+                        'title': title,
+                        'body': body,
+                        'data': notification_data['data'],
+                        'device': device,
+                    })
+
+                except Exception as e:
+                    logger.error(
+                        f"Error preparing {reminder_type} notification for device "
+                        f"{device.id}: {str(e)}"
+                    )
+                    continue
+
+            if not all_notifications_data:
+                return 0
+
+            # Send notifications
+            result = self.send_multiple_notifications(all_notifications_data)
+
+            # Create notification records
+            if result['sent'] > 0:
+                for record_data in notification_records:
+                    try:
+                        PushNotification.objects.create(
+                            title=record_data['title'],
+                            body=record_data['body'],
+                            data=record_data['data'],
+                            device=record_data['device'],
+                            status='sent'
+                        )
+                    except Exception as e:
+                        logger.error(f"Error creating notification record: {str(e)}")
+
+            return result['sent']
+
+        except Exception as e:
+            logger.error(
+                f"Error sending {reminder_type} to user {user_id} for event "
+                f"{event.id}: {str(e)}"
+            )
+            return 0
+
     def send_event_reminders_for_events(self, events, reminder_type='event_reminder_24h'):
         """
         Send reminders to users who liked the events.
+
+        Note: For automated reminders, prefer using the task-level logic in
+        tasks.py which has bulletproof duplicate detection using PushNotification
+        table queries. This method is primarily kept for admin actions.
+
         Ensures only one notification per event per user is sent.
 
         Args:
