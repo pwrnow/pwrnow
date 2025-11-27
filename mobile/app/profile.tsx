@@ -9,6 +9,7 @@ import {
   Switch,
   ActionSheetIOS,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -19,18 +20,25 @@ import { useSettings } from '../contexts/SettingsContext';
 import { ThemeMode } from '../lib/settingsStorage';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsCard from '../components/SettingsCard';
 import Avatar from '../components/Avatar';
 import SocialMediaSection from '../components/SocialMediaSection';
 import UsernameSelectionModal from '../components/UsernameSelectionModal';
+import { userApi } from '../lib/api';
 
 export default function ProfileScreen() {
-  const { user, signOut, isAuthenticated, isLoading } = useAuth();
+  const { user, signOut, isAuthenticated, isLoading, updateUserLocally } = useAuth();
   const { settings, setNotificationsEnabled } = useSettings();
   const { theme, setTheme, isDark, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Get the image to display - pending image (if user has one) or approved image
+  const displayImageUrl = user?.pending_profile_image_url || user?.profile_image_url;
+  const hasPendingImage = !!user?.pending_profile_image_url;
 
   // Theme options for native selection
   const themeOptions = [
@@ -108,6 +116,93 @@ export default function ProfileScreen() {
     return option?.label || t('system');
   };
 
+  const handleProfileImagePress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const options = [
+      t('takePhoto'),
+      t('chooseFromLibrary'),
+      t('cancel'),
+    ];
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: 2,
+          title: t('changeProfileImage'),
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 0) {
+            pickImageFromCamera();
+          } else if (buttonIndex === 1) {
+            pickImageFromLibrary();
+          }
+        }
+      );
+    } else {
+      Alert.alert(t('changeProfileImage'), '', [
+        { text: t('takePhoto'), onPress: pickImageFromCamera },
+        { text: t('chooseFromLibrary'), onPress: pickImageFromLibrary },
+        { text: t('cancel'), style: 'cancel' },
+      ]);
+    }
+  };
+
+  const pickImageFromCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('error'), t('cameraPermissionRequired'));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      await uploadProfileImage(result.assets[0].uri);
+    }
+  };
+
+  const pickImageFromLibrary = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('error'), t('photoLibraryPermissionRequired'));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      await uploadProfileImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadProfileImage = async (imageUri: string) => {
+    setIsUploadingImage(true);
+    try {
+      const updatedUser = await userApi.uploadProfileImage(imageUri);
+      await updateUserLocally(updatedUser);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(t('success'), t('profileImageUploadedPending'));
+    } catch (error) {
+      console.error('Failed to upload profile image:', error);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(t('error'), t('profileImageUploadFailed'));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleUsernamePress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Open modal to set username
@@ -156,14 +251,63 @@ export default function ProfileScreen() {
         {/* Header */}
         {isAuthenticated && user ? (
           <View className='items-center mb-12 mt-8'>
-            <Avatar
-              size={100}
-              username={user.username}
-              firstName={user.first_name}
-              lastName={user.last_name}
-              email={user.email}
+            <TouchableOpacity
+              onPress={handleProfileImagePress}
+              disabled={isUploadingImage}
+              activeOpacity={0.8}
               style={{ marginBottom: 16 }}
-            />
+            >
+              <View style={{ position: 'relative' }}>
+                <Avatar
+                  size={100}
+                  username={user.username}
+                  firstName={user.first_name}
+                  lastName={user.last_name}
+                  email={user.email}
+                  imageUri={displayImageUrl || undefined}
+                />
+                {/* Camera icon overlay */}
+                <View
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: colors.primary,
+                    borderRadius: 15,
+                    width: 30,
+                    height: 30,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 2,
+                    borderColor: colors.background,
+                  }}
+                >
+                  {isUploadingImage ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Feather name="camera" size={14} color="#FFFFFF" />
+                  )}
+                </View>
+                {/* Pending badge */}
+                {hasPendingImage && !isUploadingImage && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -4,
+                      backgroundColor: '#F59E0B',
+                      borderRadius: 10,
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '600' }}>
+                      {t('pending')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
             <Text
               style={{ color: colors.foreground }}
               className='text-2xl font-bold text-center mb-1'

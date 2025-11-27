@@ -8,6 +8,8 @@ export interface User {
   is_staff: boolean;
   date_joined: string;
   last_login: string;
+  profile_image_url?: string | null;
+  pending_profile_image_url?: string | null;
 }
 
 export interface Organization {
@@ -78,7 +80,7 @@ export interface Event {
   event_map?: EventMap | null;
   friends_interested?: {
     count: number;
-    friends: { id: string; username: string }[];
+    friends: { id: string; username: string; profile_image_url?: string | null }[];
   };
 }
 
@@ -100,11 +102,13 @@ export interface Post {
 export interface FriendUser {
   id: string;
   username: string;
+  profile_image_url?: string | null;
 }
 
 export interface SearchedUser {
   id: string;
   username: string;
+  profile_image_url?: string | null;
   is_friend: boolean;
   has_pending_request: boolean;
   friendship_status: 'friend' | 'request_sent' | 'request_received' | 'none';
@@ -121,6 +125,7 @@ export interface FriendRequest {
 export interface Friend {
   id: string;
   username: string;
+  profile_image_url?: string | null;
   friendship_id: string;
   friendship_created_at: string;
 }
@@ -128,8 +133,22 @@ export interface Friend {
 export interface FriendSuggestion {
   id: string;
   username: string;
+  profile_image_url?: string | null;
   mutual_friends_count: number;
   source_friend: string | null;
+}
+
+export interface ProfileImageChangeRequest {
+  id: string;
+  user_id: string;
+  username: string;
+  user_email: string;
+  image_url: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejection_feedback?: string | null;
+  created_at: string;
+  reviewed_at?: string | null;
+  reviewed_by_username?: string | null;
 }
 
 export interface FriendsAttendingResponse {
