@@ -4,8 +4,10 @@ from unittest.mock import patch, MagicMock
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
+from django.test import RequestFactory
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
+from PIL import Image
 
 from users.models import User, ProfileImageChangeRequest
 from users.serializers import UserSerializer, ProfileImageUploadSerializer, ProfileImageRejectSerializer
@@ -53,20 +55,35 @@ def staff_client(api_client, staff_user):
     return api_client
 
 
+def _create_test_image(format='JPEG', size=(100, 100)):
+    """Helper to create a valid test image."""
+    img = Image.new('RGB', size, color='red')
+    img_bytes = io.BytesIO()
+    img.save(img_bytes, format=format)
+    img_bytes.seek(0)
+    return img_bytes.read()
+
+
 @pytest.fixture
 def sample_image():
     """Create a simple test image file."""
-    image = io.BytesIO(b'fake image content')
-    image.name = 'test.jpg'
-    return SimpleUploadedFile('test.jpg', image.read(), content_type='image/jpeg')
+    img_data = _create_test_image('JPEG')
+    return SimpleUploadedFile('test.jpg', img_data, content_type='image/jpeg')
 
 
 @pytest.fixture
 def large_image():
     """Create a large test image file (>5MB)."""
-    # Create a 6MB file
-    large_content = b'x' * (6 * 1024 * 1024)
-    return SimpleUploadedFile('large.jpg', large_content, content_type='image/jpeg')
+    # Create a large image that exceeds 5MB
+    img = Image.new('RGB', (3000, 3000), color='blue')
+    img_bytes = io.BytesIO()
+    img.save(img_bytes, format='JPEG', quality=100)
+    img_bytes.seek(0)
+    content = img_bytes.read()
+    # Pad to ensure it's over 5MB
+    if len(content) < 6 * 1024 * 1024:
+        content += b'x' * (6 * 1024 * 1024 - len(content))
+    return SimpleUploadedFile('large.jpg', content, content_type='image/jpeg')
 
 
 @pytest.fixture
@@ -78,25 +95,22 @@ def invalid_image():
 @pytest.fixture
 def png_image():
     """Create a PNG test image file."""
-    image = io.BytesIO(b'fake png image content')
-    image.name = 'test.png'
-    return SimpleUploadedFile('test.png', image.read(), content_type='image/png')
+    img_data = _create_test_image('PNG')
+    return SimpleUploadedFile('test.png', img_data, content_type='image/png')
 
 
 @pytest.fixture
 def gif_image():
     """Create a GIF test image file."""
-    image = io.BytesIO(b'fake gif image content')
-    image.name = 'test.gif'
-    return SimpleUploadedFile('test.gif', image.read(), content_type='image/gif')
+    img_data = _create_test_image('GIF')
+    return SimpleUploadedFile('test.gif', img_data, content_type='image/gif')
 
 
 @pytest.fixture
 def webp_image():
     """Create a WebP test image file."""
-    image = io.BytesIO(b'fake webp image content')
-    image.name = 'test.webp'
-    return SimpleUploadedFile('test.webp', image.read(), content_type='image/webp')
+    img_data = _create_test_image('WEBP')
+    return SimpleUploadedFile('test.webp', img_data, content_type='image/webp')
 
 
 # ============================================================================
@@ -633,12 +647,14 @@ def test_profile_image_change_request_ordering(regular_user, sample_image):
 # ============================================================================
 
 @pytest.mark.django_db
-def test_user_serializer_includes_profile_image_url(regular_user, sample_image, api_client):
+def test_user_serializer_includes_profile_image_url(regular_user, sample_image):
     """Test that UserSerializer includes profile_image_url."""
     regular_user.profile_image = sample_image
     regular_user.save()
 
-    request = api_client.request()
+    factory = RequestFactory()
+    request = factory.get('/')
+    request.user = regular_user
     serializer = UserSerializer(regular_user, context={'request': request})
     data = serializer.data
 
@@ -647,7 +663,7 @@ def test_user_serializer_includes_profile_image_url(regular_user, sample_image, 
 
 
 @pytest.mark.django_db
-def test_user_serializer_includes_pending_url_for_self(regular_user, sample_image, api_client):
+def test_user_serializer_includes_pending_url_for_self(regular_user, sample_image):
     """Test that UserSerializer includes pending_profile_image_url for self."""
     ProfileImageChangeRequest.objects.create(
         user=regular_user,
@@ -655,7 +671,9 @@ def test_user_serializer_includes_pending_url_for_self(regular_user, sample_imag
         status=ProfileImageChangeRequest.Status.PENDING
     )
 
-    request = api_client.request()
+    factory = RequestFactory()
+    request = factory.get('/')
+    request.user = regular_user
     serializer = UserSerializer(regular_user, context={'request': request})
     data = serializer.data
 
@@ -674,7 +692,7 @@ def other_user(db):
 
 
 @pytest.mark.django_db
-def test_user_serializer_excludes_pending_url_for_others(regular_user, other_user, sample_image, api_client):
+def test_user_serializer_excludes_pending_url_for_others(regular_user, other_user, sample_image):
     """Test that UserSerializer excludes pending_profile_image_url for other users."""
     ProfileImageChangeRequest.objects.create(
         user=regular_user,
@@ -682,7 +700,8 @@ def test_user_serializer_excludes_pending_url_for_others(regular_user, other_use
         status=ProfileImageChangeRequest.Status.PENDING
     )
 
-    request = api_client.request()
+    factory = RequestFactory()
+    request = factory.get('/')
     request.user = other_user  # Simulate viewing another user
     serializer = UserSerializer(regular_user, context={'request': request})
     data = serializer.data
@@ -1029,9 +1048,10 @@ def test_approve_profile_image_request_preserves_request_image(staff_client, reg
 # ============================================================================
 
 @pytest.mark.django_db
-def test_user_serializer_profile_image_url_none_when_no_image(regular_user, api_client):
+def test_user_serializer_profile_image_url_none_when_no_image(regular_user):
     """Test that profile_image_url is None when user has no image."""
-    request = api_client.request()
+    factory = RequestFactory()
+    request = factory.get('/')
     serializer = UserSerializer(regular_user, context={'request': request})
     data = serializer.data
 
@@ -1040,9 +1060,10 @@ def test_user_serializer_profile_image_url_none_when_no_image(regular_user, api_
 
 
 @pytest.mark.django_db
-def test_user_serializer_pending_url_none_when_no_pending(regular_user, api_client):
+def test_user_serializer_pending_url_none_when_no_pending(regular_user):
     """Test that pending_profile_image_url is None when no pending request."""
-    request = api_client.request()
+    factory = RequestFactory()
+    request = factory.get('/')
     request.user = regular_user
     serializer = UserSerializer(regular_user, context={'request': request})
     data = serializer.data
@@ -1052,7 +1073,7 @@ def test_user_serializer_pending_url_none_when_no_pending(regular_user, api_clie
 
 
 @pytest.mark.django_db
-def test_user_serializer_shows_approved_over_pending(regular_user, sample_image, api_client):
+def test_user_serializer_shows_approved_over_pending(regular_user, sample_image):
     """Test that approved image URL is shown even if pending exists."""
     # Set approved image
     regular_user.profile_image = sample_image
@@ -1065,7 +1086,8 @@ def test_user_serializer_shows_approved_over_pending(regular_user, sample_image,
         status=ProfileImageChangeRequest.Status.PENDING
     )
 
-    request = api_client.request()
+    factory = RequestFactory()
+    request = factory.get('/')
     request.user = regular_user
     serializer = UserSerializer(regular_user, context={'request': request})
     data = serializer.data
