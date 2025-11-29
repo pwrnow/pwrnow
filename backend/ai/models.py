@@ -74,7 +74,9 @@ class AIProcessingLog(models.Model):
     organization = models.ForeignKey(
         'core.Organization',
         on_delete=models.CASCADE,
-        related_name='ai_processing_logs'
+        related_name='ai_processing_logs',
+        null=True,
+        blank=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

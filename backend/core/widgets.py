@@ -288,8 +288,33 @@ class ClipboardImageWidget(forms.ClearableFileInput):
         
         return mark_safe(custom_html)
 
+        return mark_safe(custom_html)
+
     class Media:
         css = {
             'all': ()
         }
         js = ()
+
+
+class AIProcessingWidget(ClipboardImageWidget):
+    """
+    Widget that adds a 'Process with AI' button to the clipboard widget.
+    """
+    def render(self, name, value, attrs=None, renderer=None):
+        html = super().render(name, value, attrs, renderer)
+        
+        button_html = '''
+        <div style="margin-top: 10px;">
+            <button type="submit" name="_process_ai_image" value="1" 
+                    onclick="this.innerHTML='Processing...'; this.style.opacity='0.8'; this.style.cursor='wait';"
+                    style="background-color: #8e44ad; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Process Image with AI
+            </button>
+            <span style="color: #666; margin-left: 10px; font-size: 12px;">
+                Uploads image to AI to auto-fill event details.
+            </span>
+        </div>
+        '''
+        
+        return mark_safe(html + button_html)

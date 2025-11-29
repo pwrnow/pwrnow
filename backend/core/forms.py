@@ -1,6 +1,6 @@
 from django import forms
 from .models import Organization, Event
-from .widgets import ClipboardImageWidget
+from .widgets import ClipboardImageWidget, AIProcessingWidget
 
 
 class OrganizationAdminForm(forms.ModelForm):
@@ -36,6 +36,13 @@ class EventAdminForm(forms.ModelForm):
         widgets = {
             'image': ClipboardImageWidget(),
         }
+
+    ai_image = forms.ImageField(
+        required=False,
+        widget=AIProcessingWidget,
+        label="AI Auto-Fill from Image",
+        help_text="Upload an image to auto-fill event details."
+    )
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
