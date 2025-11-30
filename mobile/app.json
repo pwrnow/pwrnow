@@ -24,7 +24,8 @@
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": ["pl", "en"],
         "CFBundleDevelopmentRegion": "pl",
-        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń."
+        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń.",
+        "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do biblioteki zdjęć, aby wybrać zdjęcie profilowe."
       },
       "icon": {
         "light": "./assets/icon-light.png",
@@ -105,6 +106,12 @@
           }
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikacja potrzebuje dostępu do biblioteki zdjęć, aby wybrać zdjęcie profilowe."
+        }
+      ],
       "expo-secure-store",
       "expo-apple-authentication"
     ],
@@ -118,9 +125,6 @@
       }
     },
     "owner": "pwrnow",
-    "experiments": {
-      "buildCacheProvider": "eas"
-    },
     "runtimeVersion": {
       "policy": "appVersion"
     },

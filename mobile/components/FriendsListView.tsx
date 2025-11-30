@@ -9,7 +9,7 @@ import { Friend, FriendRequest, SearchedUser, FriendSuggestion } from '../types'
 import Avatar from './Avatar';
 import InviteButton from './InviteButton';
 
-// Updated interface to include friend suggestions  
+// Updated interface to include friend suggestions
 export interface FriendsListViewProps {
   friends: Friend[];
   friendRequests: FriendRequest[];
@@ -213,6 +213,7 @@ export default function FriendsListView({
                   <Avatar
                     size={40}
                     username={request.from_user.username}
+                    imageUri={request.from_user.profile_image_url || undefined}
                     style={{ marginRight: 12 }}
                   />
                   <Text
@@ -329,6 +330,7 @@ export default function FriendsListView({
                   <Avatar
                     size={40}
                     username={friend.username}
+                    imageUri={friend.profile_image_url || undefined}
                     style={{ marginRight: 12 }}
                   />
                   <Text
@@ -417,6 +419,7 @@ export default function FriendsListView({
                     <Avatar
                       size={64}
                       username={suggestion.username}
+                      imageUri={suggestion.profile_image_url || undefined}
                       style={{ marginBottom: 12 }}
                     />
                     <Text
@@ -568,6 +571,7 @@ export default function FriendsListView({
                     <Avatar
                       size={40}
                       username={user.username}
+                      imageUri={user.profile_image_url || undefined}
                       style={{ marginRight: 12 }}
                     />
                     <Text

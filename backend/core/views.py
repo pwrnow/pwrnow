@@ -358,16 +358,22 @@ class EventViewSet(ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.Mo
                 for event_id in event_ids:
                     friends_interested_map[event_id] = []
 
-                interested_rows = Like.objects.filter(
+                interested_likes = Like.objects.filter(
                     event_id__in=event_ids,
                     user_id__in=friend_ids
-                ).select_related('user').values('event_id', 'user__id', 'user__username')
+                ).select_related('user')
 
-                for row in interested_rows:
-                    ev_id = row['event_id']
+                for like in interested_likes:
+                    ev_id = like.event_id
+                    friend = like.user
+                    profile_image_url = None
+                    if friend.profile_image:
+                        profile_image_url = request.build_absolute_uri(friend.profile_image.url)
+
                     friends_interested_map[ev_id].append({
-                        'id': str(row['user__id']),
-                        'username': row['user__username'],
+                        'id': str(friend.id),
+                        'username': friend.username,
+                        'profile_image_url': profile_image_url,
                     })
 
         context = {
@@ -706,7 +712,7 @@ def search_users(request):
         username__icontains=query
     ).exclude(
         id=request.user.id
-    ).values('id', 'username')[:20]
+    )[:20]
 
     # Get current user's friendships
     friendships = Friendship.objects.filter(
@@ -736,15 +742,24 @@ def search_users(request):
     # Annotate users with detailed friendship status
     results = []
     for user in users:
-        user_id = user['id']
-        user['is_friend'] = user_id in friend_ids
-        user['has_pending_request'] = user_id in sent_request_ids or user_id in received_request_ids
-        user['friendship_status'] = 'friend' if user_id in friend_ids else (
-            'request_sent' if user_id in sent_request_ids else (
-                'request_received' if user_id in received_request_ids else 'none'
-            )
-        )
-        results.append(user)
+        user_id = user.id
+        profile_image_url = None
+        if user.profile_image:
+            profile_image_url = request.build_absolute_uri(user.profile_image.url)
+
+        user_data = {
+            'id': user_id,
+            'username': user.username,
+            'profile_image_url': profile_image_url,
+            'is_friend': user_id in friend_ids,
+            'has_pending_request': user_id in sent_request_ids or user_id in received_request_ids,
+            'friendship_status': 'friend' if user_id in friend_ids else (
+                'request_sent' if user_id in sent_request_ids else (
+                    'request_received' if user_id in received_request_ids else 'none'
+                )
+            ),
+        }
+        results.append(user_data)
 
     logger.info(f"User search completed: user_id={request.user.id} results_count={len(results)}")
     serializer = UserSearchSerializer(results, many=True)
@@ -1022,9 +1037,13 @@ def list_friends(request):
         friends_data = []
         for friendship in friendships:
             friend = friendship.user2 if friendship.user1 == request.user else friendship.user1
+            profile_image_url = None
+            if friend.profile_image:
+                profile_image_url = request.build_absolute_uri(friend.profile_image.url)
             friends_data.append({
                 'id': friend.id,
                 'username': friend.username,
+                'profile_image_url': profile_image_url,
                 'friendship_id': friendship.id,
                 'friendship_created_at': friendship.created_at,
             })
@@ -1135,7 +1154,7 @@ def suggest_friends(request):
 
         # Get user data for suggested friends
         suggested_user_ids = list(friends_of_friends_map.keys())
-        users = User.objects.filter(id__in=suggested_user_ids).values('id', 'username')
+        users = User.objects.filter(id__in=suggested_user_ids)
 
         # Batch fetch all source friend usernames in a single query
         all_source_friend_ids = set()
@@ -1149,7 +1168,7 @@ def suggest_friends(request):
         # Build suggestions with mutual friend count and source friend
         suggestions = []
         for user in users:
-            user_id = user['id']
+            user_id = user.id
             mutual_friends = friends_of_friends_map[user_id]
             mutual_count = len(mutual_friends)
 
@@ -1157,9 +1176,15 @@ def suggest_friends(request):
             source_friend_id = mutual_friends[0]
             source_friend_username = source_friends_map.get(source_friend_id)
 
+            # Get profile image URL
+            profile_image_url = None
+            if user.profile_image:
+                profile_image_url = request.build_absolute_uri(user.profile_image.url)
+
             suggestions.append({
                 'id': str(user_id),
-                'username': user['username'],
+                'username': user.username,
+                'profile_image_url': profile_image_url,
                 'mutual_friends_count': mutual_count,
                 'source_friend': source_friend_username,
             })

@@ -271,13 +271,23 @@ class EventSerializer(serializers.ModelSerializer):
         interested_friends = Like.objects.filter(
             event=obj,
             user_id__in=friend_ids
-        ).select_related('user').values('user__id', 'user__username')
+        ).select_related('user')
 
-        # Format the response
-        friends_list = [
-            {'id': str(friend['user__id']), 'username': friend['user__username']}
-            for friend in interested_friends
-        ]
+        # Format the response with profile image URLs
+        friends_list = []
+        for like in interested_friends:
+            friend = like.user
+            profile_image_url = None
+            if friend.profile_image:
+                if request:
+                    profile_image_url = request.build_absolute_uri(friend.profile_image.url)
+                else:
+                    profile_image_url = friend.profile_image.url
+            friends_list.append({
+                'id': str(friend.id),
+                'username': friend.username,
+                'profile_image_url': profile_image_url,
+            })
 
         return {
             'count': len(friends_list),
@@ -806,6 +816,7 @@ class UserSearchSerializer(serializers.Serializer):
     is_friend = serializers.BooleanField(read_only=True)
     has_pending_request = serializers.BooleanField(read_only=True)
     friendship_status = serializers.CharField(read_only=True)
+    profile_image_url = serializers.CharField(read_only=True, allow_null=True)
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):
@@ -818,16 +829,27 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         fields = ['id', 'from_user', 'to_user', 'status', 'created_at']
         read_only_fields = ['id', 'status', 'created_at']
 
+    def _get_profile_image_url(self, user):
+        """Get profile image URL for a user."""
+        if user.profile_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(user.profile_image.url)
+            return user.profile_image.url
+        return None
+
     def get_from_user(self, obj):
         return {
             'id': str(obj.from_user.id),
             'username': obj.from_user.username,
+            'profile_image_url': self._get_profile_image_url(obj.from_user),
         }
 
     def get_to_user(self, obj):
         return {
             'id': str(obj.to_user.id),
             'username': obj.to_user.username,
+            'profile_image_url': self._get_profile_image_url(obj.to_user),
         }
 
 
@@ -936,5 +958,6 @@ class FriendshipSerializer(serializers.Serializer):
     """Serializer for friendships (showing the friend's data)."""
     id = serializers.UUIDField(read_only=True)
     username = serializers.CharField(read_only=True)
+    profile_image_url = serializers.CharField(read_only=True, allow_null=True)
     friendship_id = serializers.UUIDField(read_only=True)
     friendship_created_at = serializers.DateTimeField(read_only=True)
