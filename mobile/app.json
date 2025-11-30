@@ -24,7 +24,7 @@
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": ["pl", "en"],
         "CFBundleDevelopmentRegion": "pl",
-        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń."
+        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń.",
       },
       "icon": {
         "light": "./assets/icon-light.png",
@@ -103,6 +103,12 @@
             "ios": ["en", "pl"],
             "android": ["en", "pl"]
           }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikacja potrzebuje dostępu do biblioteki zdjęć, aby wybrać zdjęcie profilowe."
         }
       ],
       "expo-secure-store",
