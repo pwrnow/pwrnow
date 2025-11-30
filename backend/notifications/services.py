@@ -1227,3 +1227,43 @@ class ExpoPushNotificationService:
 
 # Singleton instance
 push_service = ExpoPushNotificationService()
+
+
+def send_push_notification_to_user(user, title: str, body: str, data: dict = None) -> dict:
+    """
+    Send a push notification to all of a user's devices.
+
+    Args:
+        user: User instance to send notification to
+        title: Notification title
+        body: Notification body
+        data: Optional additional data
+
+    Returns:
+        Dict with counts: {'sent': int, 'failed': int, 'total': int}
+    """
+    devices = Device.objects.filter(
+        user=user,
+        notifications_enabled=True
+    )
+
+    if not devices.exists():
+        logger.info(f"No active devices found for user {user.id}")
+        return {'sent': 0, 'failed': 0, 'total': 0}
+
+    sent = 0
+    failed = 0
+
+    for device in devices:
+        success = push_service.send_notification_to_device(
+            device=device,
+            title=title,
+            body=body,
+            data=data
+        )
+        if success:
+            sent += 1
+        else:
+            failed += 1
+
+    return {'sent': sent, 'failed': failed, 'total': sent + failed}

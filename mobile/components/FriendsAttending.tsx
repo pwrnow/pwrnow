@@ -6,6 +6,7 @@ import { t } from '../lib/i18n';
 export interface FriendSummary {
   id: string;
   username: string;
+  profile_image_url?: string | null;
 }
 
 interface FriendsAttendingProps {
@@ -66,6 +67,7 @@ export default function FriendsAttending({
             <Avatar
               size={28}
               username={friend.username}
+              imageUri={friend.profile_image_url || undefined}
             />
           </View>
         ))}

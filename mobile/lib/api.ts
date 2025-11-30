@@ -1,4 +1,4 @@
-import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend, FriendSuggestion } from '../types';
+import { Event, Category, Organization, Post, User, SearchedUser, FriendRequest, Friend, FriendSuggestion, ProfileImageChangeRequest } from '../types';
 import { getApiUrl } from './config';
 import i18n from './i18n';
 import * as SecureStore from 'expo-secure-store';
@@ -281,7 +281,7 @@ async function fetchWithCredentials(
     const errorMessage =
       (errorData && (errorData.error || errorData.detail)) ||
       'An error occurred';
-    
+
     // Create error with status property for better error detection
     const error = new Error(`${response.status}: ${errorMessage}`);
     (error as any).status = response.status;
@@ -460,6 +460,84 @@ export const userApi = {
     const response = await fetchWithCredentials('/user/');
     return await response.json();
   },
+
+  // Upload profile image
+  async uploadProfileImage(imageUri: string): Promise<User> {
+    const formData = new FormData();
+
+    // Get file extension and mime type
+    const uriParts = imageUri.split('.');
+    const fileType = uriParts[uriParts.length - 1];
+    const mimeType = fileType === 'png' ? 'image/png' : 'image/jpeg';
+
+    formData.append('image', {
+      uri: imageUri,
+      name: `profile.${fileType}`,
+      type: mimeType,
+    } as any);
+
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+
+    const response = await fetch(`${getApiUrl()}/user/profile-image/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('Profile image upload failed:', response.status, text);
+      let errorMessage = 'Failed to upload profile image';
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData.error) errorMessage = errorData.error;
+        else if (errorData.detail) errorMessage = errorData.detail;
+      } catch (e) {
+        // If JSON parsing fails, use text or default message
+        if (text && text.length < 100) errorMessage = text;
+      }
+
+      throw new Error(`${errorMessage} (Status: ${response.status})`);
+    }
+
+    return await response.json();
+  },
+
+  // Delete profile image
+  async deleteProfileImage(): Promise<User> {
+    const response = await fetchWithCredentials('/user/profile-image/', {
+      method: 'DELETE',
+    });
+    return await response.json();
+  },
+};
+
+// Admin API (for staff users)
+export const adminApi = {
+  // Get pending profile image requests
+  async getPendingProfileImageRequests(): Promise<ProfileImageChangeRequest[]> {
+    const response = await fetchWithCredentials('/profile-image-requests/');
+    return await response.json();
+  },
+
+  // Approve profile image request
+  async approveProfileImageRequest(requestId: string): Promise<ProfileImageChangeRequest> {
+    const response = await fetchWithCredentials(`/profile-image-requests/${requestId}/approve/`, {
+      method: 'POST',
+    });
+    return await response.json();
+  },
+
+  // Reject profile image request
+  async rejectProfileImageRequest(requestId: string, feedback: string): Promise<ProfileImageChangeRequest> {
+    const response = await fetchWithCredentials(`/profile-image-requests/${requestId}/reject/`, {
+      method: 'POST',
+      body: JSON.stringify({ feedback }),
+    });
+    return await response.json();
+  },
 };
 
 // Friendship API
@@ -467,11 +545,11 @@ const friendsApi = {
   // Search users by username
   searchUsers: async (query: string): Promise<SearchedUser[]> => {
     const trimmedQuery = query.trim();
-    
+
     if (trimmedQuery.length < 3) {
       return [];
     }
-    
+
     const response = await fetchWithCredentials(`/users/search/?q=${encodeURIComponent(trimmedQuery)}`);
     return await response.json();
   },
@@ -536,5 +614,6 @@ export const api = {
   notifications: notificationsApi,
   user: userApi,
   friends: friendsApi,
+  admin: adminApi,
   baseUrl: getApiUrl(),
 };

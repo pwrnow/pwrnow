@@ -85,7 +85,7 @@ export default function FriendsInterestedModal({
                     borderBottomColor: colors.border,
                   }}
                 >
-                  <Avatar size={36} username={friend.username} />
+                  <Avatar size={36} username={friend.username} imageUri={friend.profile_image_url || undefined} />
                   <Text
                     style={{
                       marginLeft: 12,

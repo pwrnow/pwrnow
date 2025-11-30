@@ -3,6 +3,9 @@ from .views import (
     GoogleLogin, FacebookLogin, AppleLogin,
     UsernameUpdateView, UsernameCheckView,
     CustomTokenVerifyView, CustomTokenRefreshView,
+    ProfileImageView,
+    ProfileImageRequestListView, ProfileImageRequestApproveView,
+    ProfileImageRequestRejectView,
 )
 from dj_rest_auth.views import (
     LogoutView, UserDetailsView,
@@ -19,6 +22,14 @@ urlpatterns = [
     # Username management
     path('user/username/', UsernameUpdateView.as_view(), name='username_update'),
     path('user/username/check/', UsernameCheckView.as_view(), name='username_check'),
+
+    # Profile image management
+    path('user/profile-image/', ProfileImageView.as_view(), name='profile_image'),
+
+    # Profile image request management (staff only)
+    path('profile-image-requests/', ProfileImageRequestListView.as_view(), name='profile_image_requests_list'),
+    path('profile-image-requests/<uuid:request_id>/approve/', ProfileImageRequestApproveView.as_view(), name='profile_image_request_approve'),
+    path('profile-image-requests/<uuid:request_id>/reject/', ProfileImageRequestRejectView.as_view(), name='profile_image_request_reject'),
 
     re_path(r'auth/logout/?$', LogoutView.as_view(), name='rest_logout'),
     re_path(r'auth/token/verify/?$', CustomTokenVerifyView.as_view(), name='token_verify'),

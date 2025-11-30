@@ -1,0 +1,37 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block submit_buttons_bottom %}
+{% if show_approve_reject %}
+<div class="submit-row" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+    <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">{% trans "Review Actions" %}</h3>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <!-- Approve Button -->
+        <div>
+            <input type="submit" name="_approve" value="{% trans 'Approve' %}"
+                   class="default"
+                   style="background-color: #28a745; border-color: #28a745; padding: 10px 25px; font-size: 14px;">
+        </div>
+
+        <!-- Reject Section -->
+        <div style="flex: 1; min-width: 300px;">
+            <div style="margin-bottom: 10px;">
+                <label for="id_feedback" style="font-weight: bold; display: block; margin-bottom: 5px;">
+                    {% trans "Rejection Feedback" %}:
+                </label>
+                <textarea name="feedback" id="id_feedback" rows="3"
+                          style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"
+                          placeholder="{% trans 'Enter reason for rejection (will be sent to user)...' %}"></textarea>
+                <small style="color: #666;">{% trans "This message will be sent to the user as a notification." %}</small>
+            </div>
+            <input type="submit" name="_reject" value="{% trans 'Reject' %}"
+                   style="background-color: #dc3545; border-color: #dc3545; color: white; padding: 10px 25px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer;">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}
+
