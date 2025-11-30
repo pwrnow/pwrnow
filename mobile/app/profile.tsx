@@ -29,7 +29,7 @@ import UsernameSelectionModal from '../components/UsernameSelectionModal';
 import { userApi } from '../lib/api';
 
 export default function ProfileScreen() {
-  const { user, signOut, isAuthenticated, isLoading, updateUserLocally } = useAuth();
+  const { user, signOut, isAuthenticated, isLoading, updateUserLocally, isStaff } = useAuth();
   const { settings, setNotificationsEnabled } = useSettings();
   const { theme, setTheme, isDark, colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -150,8 +150,9 @@ export default function ProfileScreen() {
   };
 
   const pickImageFromCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permissionResult.granted) {
       Alert.alert(t('error'), t('cameraPermissionRequired'));
       return;
     }
@@ -169,8 +170,9 @@ export default function ProfileScreen() {
   };
 
   const pickImageFromLibrary = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
       Alert.alert(t('error'), t('photoLibraryPermissionRequired'));
       return;
     }
@@ -194,10 +196,10 @@ export default function ProfileScreen() {
       await updateUserLocally(updatedUser);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(t('success'), t('profileImageUploadedPending'));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to upload profile image:', error);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(t('error'), t('profileImageUploadFailed'));
+      Alert.alert(t('error'), error?.message || t('profileImageUploadFailed'));
     } finally {
       setIsUploadingImage(false);
     }
@@ -288,8 +290,8 @@ export default function ProfileScreen() {
                     <Feather name="camera" size={14} color="#FFFFFF" />
                   )}
                 </View>
-                {/* Pending badge */}
-                {hasPendingImage && !isUploadingImage && (
+                {/* Pending badge - only visible to staff users */}
+                {hasPendingImage && !isUploadingImage && isStaff && (
                   <View
                     style={{
                       position: 'absolute',

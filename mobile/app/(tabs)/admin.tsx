@@ -212,7 +212,7 @@ export default function AdminScreen() {
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : pendingRequests.length === 0 ? (
-          <View style={{ paddingVertical: 60, alignItems: 'center' }}>
+          <View style={{ paddingVertical: 24, alignItems: 'center' }}>
             <Ionicons
               name="checkmark-circle-outline"
               size={64}

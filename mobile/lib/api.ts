@@ -487,8 +487,19 @@ export const userApi = {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to upload profile image');
+      const text = await response.text();
+      console.error('Profile image upload failed:', response.status, text);
+      let errorMessage = 'Failed to upload profile image';
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData.error) errorMessage = errorData.error;
+        else if (errorData.detail) errorMessage = errorData.detail;
+      } catch (e) {
+        // If JSON parsing fails, use text or default message
+        if (text && text.length < 100) errorMessage = text;
+      }
+
+      throw new Error(`${errorMessage} (Status: ${response.status})`);
     }
 
     return await response.json();
