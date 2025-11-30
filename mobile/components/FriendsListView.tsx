@@ -131,8 +131,8 @@ export default function FriendsListView({
           >
             <Feather name="search" size={18} color={colors.mutedForeground} />
             <TextInput
-              className="flex-1 ml-3 text-base"
-              style={{ color: colors.foreground }}
+              className="flex-1 ml-3 text-base h-full"
+              style={{ color: colors.foreground, textAlignVertical: 'center' }}
               placeholder={t('searchByUsername')}
               placeholderTextColor={colors.mutedForeground}
               value={searchQuery}
