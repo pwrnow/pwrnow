@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -61,7 +61,7 @@ export default function AdminScreen() {
   // Reject mutation
   const rejectMutation = useMutation({
     mutationFn: ({ requestId, feedback }: { requestId: string; feedback: string }) =>
-      staffApi.rejectProfileImageRequest(requestId, feedback),
+      adminApi.rejectProfileImageRequest(requestId, feedback),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-profile-image-requests'] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -104,7 +104,6 @@ export default function AdminScreen() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString(undefined, {
-      year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -118,34 +117,16 @@ export default function AdminScreen() {
         style={{
           flex: 1,
           backgroundColor: colors.background,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: 24,
         }}
       >
-        <Ionicons
-          name="shield-outline"
-          size={64}
-          color={isDark ? '#374151' : '#E5E7EB'}
-          style={{ marginBottom: 16 }}
-        />
         <Text
-          style={{
-            fontSize: 18,
-            fontWeight: '600',
-            color: colors.foreground,
-            textAlign: 'center',
-          }}
-        >
-          {t('admin')}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: colors.mutedForeground,
-            textAlign: 'center',
-            marginTop: 8,
-          }}
+          style={{ color: colors.mutedForeground }}
+          className="text-sm text-center"
         >
           Staff access required
         </Text>
@@ -158,45 +139,14 @@ export default function AdminScreen() {
       style={{
         flex: 1,
         backgroundColor: colors.background,
-        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
       }}
     >
-      {/* Header */}
-      <View
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: isDark ? '#374151' : '#E5E7EB',
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            color: colors.foreground,
-          }}
-        >
-          {t('admin')}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: colors.mutedForeground,
-            marginTop: 4,
-          }}
-        >
-          {t('pendingRequests')}
-        </Text>
-      </View>
-
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: insets.bottom + 20,
-        }}
+        className="flex-1 px-6"
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -205,170 +155,155 @@ export default function AdminScreen() {
             colors={Platform.OS === 'android' ? [colors.primary] : undefined}
           />
         }
-        showsVerticalScrollIndicator={false}
       >
-        {isLoading ? (
-          <View style={{ paddingVertical: 60, alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        ) : pendingRequests.length === 0 ? (
-          <View style={{ paddingVertical: 24, alignItems: 'center' }}>
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={64}
-              color={isDark ? '#374151' : '#E5E7EB'}
-              style={{ marginBottom: 16 }}
-            />
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '600',
-                color: colors.foreground,
-                textAlign: 'center',
-              }}
-            >
-              {t('noPendingRequests')}
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: colors.mutedForeground,
-                textAlign: 'center',
-                marginTop: 8,
-              }}
-            >
-              {t('noPendingRequestsDescription')}
-            </Text>
-          </View>
-        ) : (
-          pendingRequests.map((request: ProfileImageChangeRequest) => (
+        {/* Pending Requests Section */}
+        <View className="mb-8 mt-4">
+          <Text
+            style={{ color: colors.foreground }}
+            className="text-xl font-semibold mb-4"
+          >
+            {t('pendingRequests')}
+          </Text>
+
+          {isLoading ? (
             <View
-              key={request.id}
               style={{
-                backgroundColor: isDark ? '#1F2937' : '#F9FAFB',
-                borderRadius: 16,
-                padding: 16,
-                marginBottom: 16,
+                backgroundColor: colors.card,
+                borderColor: colors.border,
               }}
+              className="border rounded-[14px] p-6 items-center"
             >
-              {/* User Info */}
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : pendingRequests.length === 0 ? (
+            <View
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
+              className="border rounded-[14px] p-6 items-center"
+            >
               <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 16,
-                }}
+                style={{ backgroundColor: colors.muted }}
+                className="w-14 h-14 rounded-full justify-center items-center mb-3"
               >
-                <Avatar
-                  size={48}
-                  username={request.username}
-                  imageUri={request.image_url}
-                />
-                <View style={{ marginLeft: 12, flex: 1 }}>
-                  <Text
+                <Feather name="check-circle" size={28} color={colors.mutedForeground} />
+              </View>
+              <Text
+                style={{ color: colors.foreground }}
+                className="text-base font-semibold text-center mb-1"
+              >
+                {t('noPendingRequests')}
+              </Text>
+              <Text
+                style={{ color: colors.mutedForeground }}
+                className="text-sm text-center"
+              >
+                {t('noPendingRequestsDescription')}
+              </Text>
+            </View>
+          ) : (
+            pendingRequests.map((request: ProfileImageChangeRequest) => (
+              <View
+                key={request.id}
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+                className="border rounded-[14px] p-4 mb-3"
+              >
+                {/* User Info Row */}
+                <View className="flex-row items-center mb-4">
+                  <Avatar
+                    size={44}
+                    username={request.username}
+                  />
+                  <View className="ml-3 flex-1">
+                    <Text
+                      style={{ color: colors.foreground }}
+                      className="text-base font-semibold"
+                    >
+                      {request.username}
+                    </Text>
+                    <Text
+                      style={{ color: colors.mutedForeground }}
+                      className="text-xs mt-0.5"
+                    >
+                      {request.user_email}
+                    </Text>
+                    <Text
+                      style={{ color: colors.mutedForeground }}
+                      className="text-xs mt-1"
+                    >
+                      {formatDate(request.created_at)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Large Image Preview */}
+                <View
+                  style={{ backgroundColor: colors.muted }}
+                  className="rounded-xl p-2 mb-4 items-center"
+                >
+                  <Avatar
+                    size={160}
+                    username={request.username}
+                    imageUri={request.image_url}
+                  />
+                </View>
+
+                {/* Action Buttons */}
+                <View className="flex-row" style={{ gap: 10 }}>
+                  <TouchableOpacity
+                    onPress={() => handleRejectPress(request.id)}
+                    disabled={rejectMutation.isPending || approveMutation.isPending}
                     style={{
-                      fontSize: 16,
-                      fontWeight: '600',
-                      color: colors.foreground,
+                      backgroundColor: isDark ? 'rgba(220, 38, 38, 0.15)' : 'rgba(220, 38, 38, 0.1)',
+                      borderColor: 'rgba(220, 38, 38, 0.3)',
                     }}
+                    className="flex-1 border rounded-[10px] py-3 items-center active:opacity-80"
                   >
-                    {request.username}
-                  </Text>
-                  <Text
+                    <View className="flex-row items-center">
+                      <Feather name="x" size={16} color="#DC2626" />
+                      <Text
+                        style={{ color: '#DC2626' }}
+                        className="text-sm font-semibold ml-1.5"
+                      >
+                        {t('reject')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleApprove(request.id)}
+                    disabled={approveMutation.isPending || rejectMutation.isPending}
                     style={{
-                      fontSize: 12,
-                      color: colors.mutedForeground,
-                      marginTop: 2,
+                      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+                      borderColor: 'rgba(16, 185, 129, 0.3)',
                     }}
+                    className="flex-1 border rounded-[10px] py-3 items-center active:opacity-80"
                   >
-                    {request.user_email}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: colors.mutedForeground,
-                      marginTop: 4,
-                    }}
-                  >
-                    {formatDate(request.created_at)}
-                  </Text>
+                    {approveMutation.isPending ? (
+                      <ActivityIndicator size="small" color="#10B981" />
+                    ) : (
+                      <View className="flex-row items-center">
+                        <Feather name="check" size={16} color="#10B981" />
+                        <Text
+                          style={{ color: '#10B981' }}
+                          className="text-sm font-semibold ml-1.5"
+                        >
+                          {t('approve')}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
+            ))
+          )}
+        </View>
 
-              {/* Uploaded Image Preview */}
-              <View
-                style={{
-                  backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                  borderRadius: 12,
-                  padding: 4,
-                  marginBottom: 16,
-                  alignItems: 'center',
-                }}
-              >
-                <Avatar
-                  size={150}
-                  username={request.username}
-                  imageUri={request.image_url}
-                />
-              </View>
-
-              {/* Action Buttons */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: 12,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => handleRejectPress(request.id)}
-                  disabled={rejectMutation.isPending || approveMutation.isPending}
-                  style={{
-                    flex: 1,
-                    backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                    paddingVertical: 12,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color: '#DC2626',
-                    }}
-                  >
-                    {t('rejectWithFeedback')}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleApprove(request.id)}
-                  disabled={approveMutation.isPending || rejectMutation.isPending}
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#10B981',
-                    paddingVertical: 12,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                  }}
-                >
-                  {approveMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: '600',
-                        color: '#FFFFFF',
-                      }}
-                    >
-                      {t('approve')}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
-        )}
+        {/* Bottom spacing */}
+        <View className="h-8" />
       </ScrollView>
 
       {/* Rejection Feedback Modal */}
@@ -390,19 +325,15 @@ export default function AdminScreen() {
           <View
             style={{
               backgroundColor: colors.background,
-              borderRadius: 16,
+              borderRadius: 14,
               padding: 20,
               width: '100%',
               maxWidth: 400,
             }}
           >
             <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '600',
-                color: colors.foreground,
-                marginBottom: 16,
-              }}
+              style={{ color: colors.foreground }}
+              className="text-lg font-semibold mb-4"
             >
               {t('rejectionFeedback')}
             </Text>
@@ -414,8 +345,8 @@ export default function AdminScreen() {
               multiline
               numberOfLines={4}
               style={{
-                backgroundColor: isDark ? '#374151' : '#F3F4F6',
-                borderRadius: 12,
+                backgroundColor: colors.muted,
+                borderRadius: 10,
                 padding: 12,
                 fontSize: 14,
                 color: colors.foreground,
@@ -423,29 +354,17 @@ export default function AdminScreen() {
                 textAlignVertical: 'top',
               }}
             />
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 12,
-                marginTop: 16,
-              }}
-            >
+            <View className="flex-row mt-4" style={{ gap: 10 }}>
               <TouchableOpacity
                 onPress={() => setRejectModalVisible(false)}
                 style={{
-                  flex: 1,
-                  backgroundColor: isDark ? '#374151' : '#E5E7EB',
-                  paddingVertical: 12,
-                  borderRadius: 10,
-                  alignItems: 'center',
+                  backgroundColor: colors.muted,
                 }}
+                className="flex-1 py-3 rounded-[10px] items-center active:opacity-80"
               >
                 <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: '600',
-                    color: colors.foreground,
-                  }}
+                  style={{ color: colors.foreground }}
+                  className="text-sm font-semibold"
                 >
                   {t('cancel')}
                 </Text>
@@ -454,23 +373,14 @@ export default function AdminScreen() {
                 onPress={handleConfirmReject}
                 disabled={rejectMutation.isPending}
                 style={{
-                  flex: 1,
                   backgroundColor: '#DC2626',
-                  paddingVertical: 12,
-                  borderRadius: 10,
-                  alignItems: 'center',
                 }}
+                className="flex-1 py-3 rounded-[10px] items-center active:opacity-80"
               >
                 {rejectMutation.isPending ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color: '#FFFFFF',
-                    }}
-                  >
+                  <Text className="text-sm font-semibold text-white">
                     {t('reject')}
                   </Text>
                 )}
@@ -482,4 +392,3 @@ export default function AdminScreen() {
     </View>
   );
 }
-

@@ -29,7 +29,7 @@ import UsernameSelectionModal from '../components/UsernameSelectionModal';
 import { userApi } from '../lib/api';
 
 export default function ProfileScreen() {
-  const { user, signOut, isAuthenticated, isLoading, updateUserLocally, isStaff } = useAuth();
+  const { user, signOut, isAuthenticated, isLoading, updateUserLocally } = useAuth();
   const { settings, setNotificationsEnabled } = useSettings();
   const { theme, setTheme, isDark, colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -38,7 +38,6 @@ export default function ProfileScreen() {
 
   // Get the image to display - pending image (if user has one) or approved image
   const displayImageUrl = user?.pending_profile_image_url || user?.profile_image_url;
-  const hasPendingImage = !!user?.pending_profile_image_url;
 
   // Theme options for native selection
   const themeOptions = [
@@ -290,24 +289,6 @@ export default function ProfileScreen() {
                     <Feather name="camera" size={14} color="#FFFFFF" />
                   )}
                 </View>
-                {/* Pending badge - only visible to staff users */}
-                {hasPendingImage && !isUploadingImage && isStaff && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -4,
-                      right: -4,
-                      backgroundColor: '#F59E0B',
-                      borderRadius: 10,
-                      paddingHorizontal: 6,
-                      paddingVertical: 2,
-                    }}
-                  >
-                    <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '600' }}>
-                      {t('pending')}
-                    </Text>
-                  </View>
-                )}
               </View>
             </TouchableOpacity>
             <Text

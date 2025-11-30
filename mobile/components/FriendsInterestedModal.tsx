@@ -17,7 +17,7 @@ export default function FriendsInterestedModal({
   friends,
   count,
 }: FriendsInterestedModalProps) {
-  const { colors, isDark } = useThemeColors();
+  const { colors } = useThemeColors();
 
   return (
     <Modal
@@ -31,7 +31,7 @@ export default function FriendsInterestedModal({
         onPress={onClose}
         style={{
           flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: 24,
@@ -41,19 +41,17 @@ export default function FriendsInterestedModal({
           onPress={(e) => e.stopPropagation()}
           style={{
             width: '100%',
-            borderRadius: 24,
+            borderRadius: 14,
             padding: 20,
-            backgroundColor: colors.card,
-            borderWidth: 1,
-            borderColor: colors.border,
+            backgroundColor: colors.background,
             maxHeight: 520,
           }}
         >
           <Text
             style={{
               color: colors.foreground,
-              fontSize: 20,
-              fontWeight: '700',
+              fontSize: 18,
+              fontWeight: '600',
             }}
           >
             {t('friendsInterestedModalTitle', { count })}
@@ -74,23 +72,23 @@ export default function FriendsInterestedModal({
                 {t('noFriendsYet')}
               </Text>
             ) : (
-              friends.map((friend) => (
+              friends.map((friend, index) => (
                 <View
                   key={friend.id}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    paddingVertical: 10,
-                    borderBottomWidth: 1,
+                    paddingVertical: 12,
+                    borderBottomWidth: index < friends.length - 1 ? 1 : 0,
                     borderBottomColor: colors.border,
                   }}
                 >
-                  <Avatar size={36} username={friend.username} imageUri={friend.profile_image_url || undefined} />
+                  <Avatar size={40} username={friend.username} imageUri={friend.profile_image_url || undefined} />
                   <Text
                     style={{
                       marginLeft: 12,
                       color: colors.foreground,
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: '500',
                     }}
                   >
@@ -105,18 +103,18 @@ export default function FriendsInterestedModal({
             style={{
               marginTop: 16,
               paddingVertical: 12,
-              borderRadius: 12,
-              backgroundColor: colors.primary,
+              borderRadius: 10,
+              backgroundColor: colors.muted,
             }}
             onPress={onClose}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
             <Text
               style={{
-                color: colors.primaryForeground,
+                color: colors.foreground,
                 fontWeight: '600',
                 textAlign: 'center',
-                fontSize: 16,
+                fontSize: 14,
               }}
             >
               {t('close')}
@@ -127,5 +125,3 @@ export default function FriendsInterestedModal({
     </Modal>
   );
 }
-
-

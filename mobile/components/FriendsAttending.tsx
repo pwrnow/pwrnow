@@ -20,7 +20,7 @@ export default function FriendsAttending({
   count,
   onPress,
 }: FriendsAttendingProps) {
-  const { isDark } = useThemeColors();
+  const { colors } = useThemeColors();
 
   if (count === 0) return null;
 
@@ -60,7 +60,7 @@ export default function FriendsAttending({
               marginLeft: index === 0 ? 0 : -10,
               borderWidth: 2,
               borderRadius: 14,
-              borderColor: isDark ? '#000000' : '#FFFFFF',
+              borderColor: colors.background,
               zIndex: displayedFriends.length - index,
             }}
           >
@@ -78,7 +78,7 @@ export default function FriendsAttending({
         <Text
           style={{
             fontSize: 13,
-            color: isDark ? '#D1D5DB' : '#6B7280',
+            color: colors.mutedForeground,
             marginRight: 4,
           }}
           numberOfLines={1}
@@ -89,7 +89,7 @@ export default function FriendsAttending({
           <Text
             style={{
               fontSize: 13,
-              color: isDark ? '#9CA3AF' : '#9CA3AF',
+              color: colors.mutedForeground,
               fontWeight: '500',
             }}
           >
@@ -100,4 +100,3 @@ export default function FriendsAttending({
     </Container>
   );
 }
-
