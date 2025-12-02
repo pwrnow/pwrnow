@@ -16,6 +16,7 @@ from modeltranslation.admin import (
     TranslationTabularInline,
     TranslationStackedInline,
 )
+from adminsortable2.admin import SortableAdminMixin
 from .models import (
     Event,
     Category,
@@ -100,7 +101,8 @@ class HasAspectRatioFilter(SimpleListFilter):
 
 
 @admin.register(Category)
-class CategoryAdmin(TranslationAdmin):
+class CategoryAdmin(SortableAdminMixin, TranslationAdmin):
+    """Category admin with drag-and-drop sorting support."""
     list_display = [
         "name",
         "slug",
@@ -112,7 +114,6 @@ class CategoryAdmin(TranslationAdmin):
     list_filter = ["created_at", "updated_at"]
     search_fields = ["name", "slug"]
     prepopulated_fields = {"slug": ("name",)}
-    list_editable = ["order_index"]
     ordering = ["order_index", "name"]
     readonly_fields = ["id", "created_at", "updated_at"]
     date_hierarchy = "created_at"
@@ -653,11 +654,11 @@ class EventAdmin(TranslationAdmin):
                     # Get organizations for AI selection
                     organizations = list(Organization.objects.all().values('id', 'name'))
                     organization_names = [o['name'] for o in organizations]
-                    
+
                     result = service.extract_event_info(
-                        image, 
-                        org, 
-                        request.user, 
+                        image,
+                        org,
+                        request.user,
                         categories=category_names,
                         organizations=organization_names
                     )
@@ -674,7 +675,7 @@ class EventAdmin(TranslationAdmin):
                                 if cat["name"].lower() == extracted_cat_name.lower():
                                     category_id = str(cat['id'])
                                     break
-                        
+
                         # Map extracted organization name to ID
                         organization_id = None
                         extracted_org_name = data.get('organization')
