@@ -21,12 +21,16 @@ import { ThemeMode } from '../lib/settingsStorage';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsCard from '../components/SettingsCard';
 import Avatar from '../components/Avatar';
 import SocialMediaSection from '../components/SocialMediaSection';
 import UsernameSelectionModal from '../components/UsernameSelectionModal';
 import { userApi } from '../lib/api';
+
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
 export default function ProfileScreen() {
   const { user, signOut, isAuthenticated, isLoading, updateUserLocally } = useAuth();
@@ -191,6 +195,18 @@ export default function ProfileScreen() {
   const uploadProfileImage = async (imageUri: string) => {
     setIsUploadingImage(true);
     try {
+      // Check file size before uploading
+      const fileInfo = await FileSystem.getInfoAsync(imageUri);
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > MAX_IMAGE_SIZE_BYTES) {
+        const fileSizeMB = (fileInfo.size / (1024 * 1024)).toFixed(1);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert(
+          t('error'),
+          t('imageTooLarge', { size: fileSizeMB, max: MAX_IMAGE_SIZE_MB })
+        );
+        return;
+      }
+
       const updatedUser = await userApi.uploadProfileImage(imageUri);
       await updateUserLocally(updatedUser);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
