@@ -110,9 +110,6 @@ export default function FriendsListView({
       style={{
         flex: 1,
         backgroundColor: colors.background,
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
       }}
     >
       <ScrollView

@@ -294,6 +294,7 @@ const translations: Record<string, TranslationMap> = {
     photoLibraryPermissionRequired: 'Photo library permission is required to select an image.',
     profileImageUploadedPending: 'Profile image uploaded. It will be visible to others after approval.',
     profileImageUploadFailed: 'Failed to upload profile image. Please try again.',
+    imageTooLarge: 'Image is too large ({{size}}MB). Maximum size is {{max}}MB.',
     // Admin panel translations
     admin: 'Admin',
     pendingRequests: 'Pending Requests',
@@ -605,6 +606,7 @@ const translations: Record<string, TranslationMap> = {
     photoLibraryPermissionRequired: 'Wymagane jest uprawnienie do biblioteki zdjęć, aby wybrać zdjęcie.',
     profileImageUploadedPending: 'Zdjęcie profilowe przesłane. Będzie widoczne dla innych po zatwierdzeniu.',
     profileImageUploadFailed: 'Nie udało się przesłać zdjęcia profilowego. Spróbuj ponownie.',
+    imageTooLarge: 'Obraz jest zbyt duży ({{size}}MB). Maksymalny rozmiar to {{max}}MB.',
     // Admin panel translations
     admin: 'Admin',
     pendingRequests: 'Oczekujące prośby',
