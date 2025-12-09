@@ -286,6 +286,7 @@ export default function EventDetailScreen() {
         onLikePress={handleHeartPress}
         isAuthenticated={isAuthenticated}
         iconPrimary={iconPrimary}
+        event={event}
       />
 
       <Animated.View

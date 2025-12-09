@@ -12,6 +12,7 @@ import type { Event } from '@/lib/types';
 import { CATEGORY_SLUGS } from '@/lib/constants';
 import { useAnalytics } from '@/lib/useAnalytics';
 import { useTranslations, useLocale } from 'next-intl';
+import ShareButton from '@/components/share-button';
 
 interface EventCardProps {
   event: Event;
@@ -102,17 +103,18 @@ export default function EventCard({ event }: EventCardProps) {
               <span className='font-medium text-sm sm:text-base leading-tight break-words max-w-[60%]'>
                 {organizationName}
               </span>
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
                 {event.category && event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
                   <Badge
                     variant='outline'
                     className={cn(
-                      'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm border-primary/50'
+                      'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm border-primary/50 hidden sm:inline-flex'
                     )}
                   >
                     {categoryName}
                   </Badge>
                 )}
+                <ShareButton event={event} variant='ghost' size='icon' className='h-8 w-8 flex-shrink-0' />
               </div>
             </div>
           </div>
