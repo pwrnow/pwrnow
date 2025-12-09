@@ -19,7 +19,7 @@ export const getApiUrl = (): string => {
 
 export const config = {
   shareBaseUrl:
-    process.env.EXPO_PUBLIC_SITE_URL || 'https://pwrnow.pl' + '/wydarzenia',
+    (process.env.EXPO_PUBLIC_SITE_URL || 'https://pwrnow.pl') + '/wydarzenia',
   posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
   posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST,
   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,

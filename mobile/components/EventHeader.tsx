@@ -4,7 +4,9 @@ import { Feather } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import LikeButton from './LikeButton';
+import ShareButton from './ShareButton';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { Event } from '../types';
 
 interface EventHeaderProps {
   title: string;
@@ -12,10 +14,11 @@ interface EventHeaderProps {
   onLikePress: () => void;
   isAuthenticated: boolean;
   iconPrimary: string;
+  event: Event;
 }
 
 export const EventHeader: React.FC<EventHeaderProps> = React.memo(
-  ({ title, isLiked, onLikePress, isAuthenticated, iconPrimary }) => {
+  ({ title, isLiked, onLikePress, isAuthenticated, iconPrimary, event }) => {
     const { colors } = useThemeColors();
     const router = useRouter();
 
@@ -41,7 +44,8 @@ export const EventHeader: React.FC<EventHeaderProps> = React.memo(
         >
           {title}
         </Text>
-        <View className='flex-row items-center'>
+        <View className='flex-row items-center gap-1'>
+          <ShareButton event={event} size={20} />
           <LikeButton
             isLiked={isLiked}
             onPress={onLikePress}
