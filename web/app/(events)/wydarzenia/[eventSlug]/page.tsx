@@ -14,6 +14,7 @@ import {
 import { getTranslations, getLocale } from 'next-intl/server';
 import { formatLocalizedDate } from '@/lib/utils';
 import { isUpcoming } from '@/lib/organization-utils';
+import { APP_CONFIG } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,6 +101,9 @@ export async function generateMetadata({
       },
       alternates: {
         canonical: `/wydarzenia/${event.slug}`,
+      },
+      other: {
+        'apple-itunes-app': `app-id=${APP_CONFIG.APP_STORE_ID}, app-argument=https://pwrnow.pl/wydarzenia/${event.slug}`,
       },
     };
   } catch {

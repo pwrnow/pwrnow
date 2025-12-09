@@ -22,6 +22,7 @@ import Animated, {
 
 import { Feather } from '@expo/vector-icons';
 import LikeButton from './LikeButton';
+import ShareButton from './ShareButton';
 import * as Haptics from 'expo-haptics';
 import { Event } from '../types';
 import { useAnalytics } from '../lib/analytics';
@@ -461,6 +462,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 {event.title}
               </Text>
             </View>
+            <ShareButton
+              event={event}
+              size={22}
+              className='mr-1'
+              stopPropagationOnPress
+            />
             <LikeButton
               isLiked={event.liked || false}
               onPress={handleHeartPress}

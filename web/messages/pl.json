@@ -478,6 +478,12 @@
     "importSuccess": "Harmonogram został pomyślnie zaimportowany!",
     "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później."
   },
+  "ShareButton": {
+    "shareEvent": "Udostępnij wydarzenie",
+    "linkCopied": "Link skopiowany!",
+    "linkCopiedDescription": "Link do wydarzenia został skopiowany do schowka",
+    "copyFailed": "Nie udało się skopiować linku"
+  },
   "AppPage": {
     "title": "PWr Now - Aplikacja Mobilna Już Dostępna! | Pobierz na iOS i Android",
     "description": "Aplikacja mobilna PWr Now jest już dostępna na iOS i Android! Odkrywaj wydarzenia na Politechnice Wrocławskiej z telefonu. Pobierz teraz z App Store lub Google Play.",

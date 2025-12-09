@@ -490,6 +490,12 @@
     "importSuccess": "Schedule imported successfully!",
     "rateLimited": "You've reached the limit of your AI parses per hour. Please try again later."
   },
+  "ShareButton": {
+    "shareEvent": "Share event",
+    "linkCopied": "Link copied!",
+    "linkCopiedDescription": "Event link has been copied to clipboard",
+    "copyFailed": "Failed to copy link"
+  },
   "AppPage": {
     "title": "PWr Now - Mobile App Available Now! | Download on iOS & Android",
     "description": "The PWr Now mobile app is now available on iOS and Android! Discover events at Wrocław University of Technology from your phone. Download now from the App Store or Google Play Store.",
