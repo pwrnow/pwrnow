@@ -106,6 +106,7 @@ const DetailsScene: React.FC<{
           <OrganizationHeader
             organization={event.organization}
             categoryName={event.category?.name || 'Uncategorized'}
+            allOrganizations={event.all_organizations}
           />
 
           {/* Event Details Section */}

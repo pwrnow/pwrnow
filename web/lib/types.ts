@@ -3,8 +3,10 @@
 export interface Organization {
   id: string;
   name: string;
+  short_name?: string | null;
   slug: string;
   image_url?: string;
+  display_name?: string;
 }
 
 export interface Event {
@@ -25,6 +27,9 @@ export interface Event {
   category: Category;
   posts?: Post[];
   schedule?: Schedule | null;
+  co_hosts?: Organization[];
+  all_organizations?: Organization[];
+  is_co_host?: boolean;
 }
 
 export interface Category {
@@ -67,6 +72,7 @@ export interface CreateEventData {
   url?: string;
   category_slug?: string;
   image?: File;
+  co_host_ids?: string[];
 }
 
 export interface PostImage {

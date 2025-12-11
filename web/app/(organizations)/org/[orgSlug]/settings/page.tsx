@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, ImageIcon, Loader2 } from 'lucide-react';
-import { getCurrentOrganization, uploadOrganizationImage } from '@/lib/api';
+import { ArrowLeft, ImageIcon, Loader2, Save } from 'lucide-react';
+import { getCurrentOrganization, uploadOrganizationImage, updateOrganization } from '@/lib/api';
 import { Organization } from '@/lib/types';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { useTranslations } from 'next-intl';
 
 export default function OrganizationSettingsPage() {
@@ -28,6 +29,12 @@ export default function OrganizationSettingsPage() {
   const [success, setSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Short name form state
+  const [shortName, setShortName] = useState('');
+  const [isUpdatingShortName, setIsUpdatingShortName] = useState(false);
+  const [shortNameError, setShortNameError] = useState<string | null>(null);
+  const [shortNameSuccess, setShortNameSuccess] = useState(false);
+
   useEffect(() => {
     async function loadOrganization() {
       try {
@@ -43,6 +50,7 @@ export default function OrganizationSettingsPage() {
         }
 
         setOrganization(currentOrg);
+        setShortName(currentOrg.short_name || '');
       } catch {
         router.push('/');
       } finally {
@@ -114,6 +122,29 @@ export default function OrganizationSettingsPage() {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleShortNameSubmit = async () => {
+    if (!organization) return;
+
+    try {
+      setIsUpdatingShortName(true);
+      setShortNameError(null);
+      setShortNameSuccess(false);
+
+      const updatedOrg = await updateOrganization(organization.slug, {
+        short_name: shortName.trim() || null,
+      });
+      setOrganization(updatedOrg);
+      setShortName(updatedOrg.short_name || '');
+      setShortNameSuccess(true);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : t('shortNameUpdateError');
+      setShortNameError(errorMessage);
+    } finally {
+      setIsUpdatingShortName(false);
     }
   };
 
@@ -253,6 +284,63 @@ export default function OrganizationSettingsPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </div>
+
+        {/* Short Name Section */}
+        <div className='bg-card rounded-lg border p-6'>
+          <h2 className='text-xl font-semibold mb-4'>
+            {t('shortName')}
+          </h2>
+          <p className='text-muted-foreground mb-6'>{t('shortNameDescription')}</p>
+
+          <div className='space-y-4'>
+            <div>
+              <label
+                htmlFor='short-name'
+                className='block text-sm font-medium mb-2'
+              >
+                {t('shortNameLabel')}
+              </label>
+              <Input
+                id='short-name'
+                type='text'
+                value={shortName}
+                onChange={(e) => setShortName(e.target.value)}
+                placeholder={t('shortNamePlaceholder')}
+                maxLength={50}
+                className='max-w-md'
+              />
+              <p className='text-xs text-muted-foreground mt-1'>
+                {t('shortNameHint')}
+              </p>
+            </div>
+
+            {shortNameError && (
+              <p className='text-sm text-destructive'>{shortNameError}</p>
+            )}
+
+            {shortNameSuccess && (
+              <p className='text-sm text-green-600'>{t('shortNameUpdateSuccess')}</p>
+            )}
+
+            <Button
+              onClick={handleShortNameSubmit}
+              disabled={isUpdatingShortName || shortName === (organization?.short_name || '')}
+              className='cursor-pointer flex items-center gap-2'
+            >
+              {isUpdatingShortName ? (
+                <>
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                  <span>{t('updating')}</span>
+                </>
+              ) : (
+                <>
+                  <Save className='h-4 w-4' />
+                  <span>{t('saveShortName')}</span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>

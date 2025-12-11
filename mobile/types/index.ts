@@ -15,7 +15,10 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
+  short_name?: string | null;
+  slug?: string;
   image_url: string | null;
+  display_name?: string;
 }
 
 export interface Category {
@@ -82,6 +85,9 @@ export interface Event {
     count: number;
     friends: { id: string; username: string; profile_image_url?: string | null }[];
   };
+  co_hosts?: Organization[];
+  all_organizations?: Organization[];
+  is_co_host?: boolean;
 }
 
 export interface PostImage {
