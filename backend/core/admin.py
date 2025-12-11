@@ -34,6 +34,7 @@ from .models import (
     EventMapLocation,
     Friendship,
     FriendRequest,
+    EventCoHost,
 )
 from .forms import OrganizationAdminForm, EventAdminForm
 from ai.services import EventExtractionService
@@ -103,6 +104,7 @@ class HasAspectRatioFilter(SimpleListFilter):
 @admin.register(Category)
 class CategoryAdmin(SortableAdminMixin, TranslationAdmin):
     """Category admin with drag-and-drop sorting support."""
+
     list_display = [
         "name",
         "slug",
@@ -251,15 +253,17 @@ class OrganizationAdmin(admin.ModelAdmin):
     form = OrganizationAdminForm
     list_display = [
         "name",
+        "short_name",
         "image_preview",
         "last_active",
         "auth_link",
         "auth_codes_count",
         "event_count",
+        "co_hosted_events_count",
         "has_image",
     ]
     list_filter = ["created_at", "updated_at", HasImageFilter]
-    search_fields = ["name", "slug"]
+    search_fields = ["name", "short_name", "slug"]
     prepopulated_fields = {"slug": ("name",)}
     ordering = ["name"]
     readonly_fields = ["id", "created_at", "updated_at"]
@@ -270,20 +274,38 @@ class OrganizationAdmin(admin.ModelAdmin):
         from django.db.models import Count
 
         qs = super().get_queryset(request)
-        return qs.prefetch_related("auth_codes").annotate(
-            auth_codes_total=Count("auth_codes"), events_total=Count("events")
+        return qs.prefetch_related("auth_codes", "co_hosted_events").annotate(
+            auth_codes_total=Count("auth_codes", distinct=True),
+            events_total=Count("events", distinct=True),
+            co_hosted_events_total=Count("co_hosted_events", distinct=True),
         )
 
     @admin.display(description="Has Image", boolean=True)
     def has_image(self, obj):
         return bool(obj.image)
 
+    @admin.display(description="Co-hosted Events")
+    def co_hosted_events_count(self, obj):
+        # Use annotated value to avoid N+1 queries
+        count = (
+            obj.co_hosted_events_total
+            if hasattr(obj, "co_hosted_events_total")
+            else obj.co_hosted_events.count()
+        )
+        if count == 0:
+            return format_html('<span style="color: #999;">0</span>')
+        url = (
+            reverse("admin:core_eventcohost_changelist")
+            + f"?organization__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{} events</a>', url, count)
+
     fieldsets = (
         (
             "Basic Information",
             {
-                "fields": ("name", "slug", "image"),
-                "description": "You can paste images directly from your clipboard in the image field below.",
+                "fields": ("name", "short_name", "slug", "image"),
+                "description": "You can paste images directly from your clipboard in the image field below. Short name is used for display in event headers when space is limited.",
             },
         ),
         (
@@ -652,15 +674,17 @@ class EventAdmin(TranslationAdmin):
                     category_names = [c["name"] for c in categories]
 
                     # Get organizations for AI selection
-                    organizations = list(Organization.objects.all().values('id', 'name'))
-                    organization_names = [o['name'] for o in organizations]
+                    organizations = list(
+                        Organization.objects.all().values("id", "name")
+                    )
+                    organization_names = [o["name"] for o in organizations]
 
                     result = service.extract_event_info(
                         image,
                         org,
                         request.user,
                         categories=category_names,
-                        organizations=organization_names
+                        organizations=organization_names,
                     )
 
                     if result["success"]:
@@ -673,17 +697,20 @@ class EventAdmin(TranslationAdmin):
                             # Case-insensitive match
                             for cat in categories:
                                 if cat["name"].lower() == extracted_cat_name.lower():
-                                    category_id = str(cat['id'])
+                                    category_id = str(cat["id"])
                                     break
 
                         # Map extracted organization name to ID
                         organization_id = None
-                        extracted_org_name = data.get('organization')
+                        extracted_org_name = data.get("organization")
                         if extracted_org_name:
                             # Case-insensitive match
                             for org_obj in organizations:
-                                if org_obj['name'].lower() == extracted_org_name.lower():
-                                    organization_id = str(org_obj['id'])
+                                if (
+                                    org_obj["name"].lower()
+                                    == extracted_org_name.lower()
+                                ):
+                                    organization_id = str(org_obj["id"])
                                     break
 
                         # Auto-generate slug from title
@@ -1528,6 +1555,16 @@ class ScheduleItemAdmin(admin.ModelAdmin):
         return obj.schedule.event
 
 
+class EventCoHostInline(admin.TabularInline):
+    model = EventCoHost
+    extra = 1
+    fields = ["organization", "created_at"]
+    readonly_fields = ["created_at"]
+    autocomplete_fields = ["organization"]
+    verbose_name = "Co-Host Organization"
+    verbose_name_plural = "Co-Host Organizations"
+
+
 class QRCodeInline(admin.TabularInline):
     model = QRCode
     extra = 0
@@ -1807,7 +1844,7 @@ class EventParticipationAdmin(admin.ModelAdmin):
 
 
 # Add inlines to EventAdmin after they're defined
-EventAdmin.inlines = [QRCodeInline]
+EventAdmin.inlines = [EventCoHostInline, QRCodeInline]
 
 
 class EventMapInline(admin.StackedInline):
@@ -2007,6 +2044,56 @@ class EventMapLocationAdmin(admin.ModelAdmin):
 
 # Add EventMapInline to EventAdmin after it's defined
 EventAdmin.inlines.append(EventMapInline)
+
+
+@admin.register(EventCoHost)
+class EventCoHostAdmin(admin.ModelAdmin):
+    list_display = [
+        "event",
+        "organization",
+        "event_admin_org",
+        "event_verified",
+        "created_at",
+    ]
+    list_filter = [
+        "created_at",
+        "event__verified",
+        "organization",
+        "event__organization",
+    ]
+    search_fields = [
+        "event__title",
+        "event__slug",
+        "organization__name",
+        "event__organization__name",
+    ]
+    autocomplete_fields = ["event", "organization"]
+    readonly_fields = ["id", "created_at", "updated_at"]
+    ordering = ["-created_at"]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        ("Co-Host Details", {"fields": ("event", "organization")}),
+        (
+            "Metadata",
+            {"fields": ("id", "created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    @admin.display(description="Admin Org", ordering="event__organization__name")
+    def event_admin_org(self, obj):
+        return obj.event.organization.name if obj.event.organization else "-"
+
+    @admin.display(description="Verified", boolean=True, ordering="event__verified")
+    def event_verified(self, obj):
+        return obj.event.verified
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("event", "event__organization", "organization")
+        )
 
 
 @admin.register(Friendship)

@@ -14,6 +14,7 @@ import {
   Share2,
   Check,
   Wand2,
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,12 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import { cn } from '@/lib/utils';
 
 import {
   getEventBySlug,
@@ -90,7 +97,12 @@ export default function OrgEventDetailsPage() {
 
         try {
           const eventData = await getEventBySlug(eventSlug);
-          if (eventData.organization.id !== currentOrg.id) {
+          // Check if org is admin or co-host
+          const isAdmin = eventData.organization.id === currentOrg.id;
+          const isCoHost = eventData.is_co_host === true || 
+            eventData.co_hosts?.some((coHost) => coHost.id === currentOrg.id);
+          
+          if (!isAdmin && !isCoHost) {
             setError(t('eventNotFound'));
             return;
           }
@@ -242,8 +254,13 @@ export default function OrgEventDetailsPage() {
     [currentItems]
   );
 
+  // Only admin org (not co-hosts) can manage the event
   const canManage =
     !!organization && !!event && organization.id === event.organization.id;
+  
+  // Check if current org is a co-host
+  const isCoHost = event?.is_co_host === true || 
+    (event?.co_hosts?.some((coHost) => coHost.id === organization?.id) ?? false);
 
   const handleCreateScheduleItem = async (payload: {
     event_slug: string;
@@ -540,7 +557,7 @@ export default function OrgEventDetailsPage() {
 
       {/* Event Header - Title and Verification Status */}
       <div className='mb-6'>
-        <div className='flex items-start justify-between gap-4 mb-2'>
+        <div className='flex items-start justify-between gap-4 mb-4'>
           <h1 className='text-3xl font-bold display-font break-words leading-tight flex-1'>
             {event.title}
           </h1>
@@ -571,9 +588,102 @@ export default function OrgEventDetailsPage() {
             )}
           </div>
         </div>
-        <p className='text-muted-foreground'>
-          {t('organizationBy')} {organization.name}
-        </p>
+        
+        {/* Organization Header - like client side */}
+        {(() => {
+          const allOrganizations = event.all_organizations || [event.organization];
+          const hasCoHosts = allOrganizations.length > 1;
+          const visibleOrgs = allOrganizations.slice(0, 2);
+          const extraOrgsCount = allOrganizations.length - 2;
+          const getDisplayName = (org: Organization) => org.short_name || org.display_name || org.name;
+          const organizationNamesDisplay = allOrganizations.map((org) => getDisplayName(org)).join(' & ');
+
+          return hasCoHosts ? (
+            <HoverCard openDelay={100} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <div className='flex items-center gap-4 px-4 py-3 rounded-lg border bg-card cursor-default transition-colors'>
+                  {/* Stacked Avatars */}
+                  <div className='flex items-center flex-shrink-0'>
+                    {visibleOrgs.map((org, index) => (
+                      <Avatar 
+                        key={org.id} 
+                        className={cn(
+                          'h-12 w-12 border-2 border-card',
+                          index > 0 && '-ml-3'
+                        )}
+                        style={{ zIndex: visibleOrgs.length - index }}
+                      >
+                        <AvatarImage src={org.image_url || undefined} alt={org.name} />
+                        <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium text-sm'>
+                          {getInitials(org.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {extraOrgsCount > 0 && (
+                      <div 
+                        className='h-12 w-12 -ml-3 rounded-full bg-muted border-2 border-card flex items-center justify-center text-sm font-medium'
+                        style={{ zIndex: 0 }}
+                      >
+                        +{extraOrgsCount}
+                      </div>
+                    )}
+                  </div>
+                  <div className='flex flex-col min-w-0'>
+                    <span className='font-semibold text-base truncate'>
+                      {organizationNamesDisplay}
+                    </span>
+                    <span className='text-sm text-muted-foreground'>
+                      {event.category.name}
+                    </span>
+                  </div>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className='w-64 p-3' align='start' sideOffset={8}>
+                <div className='space-y-2'>
+                  <p className='text-xs font-medium text-muted-foreground mb-2'>
+                    {t('organizedBy')}
+                  </p>
+                  {allOrganizations.map((org) => (
+                    <div key={org.id} className='flex items-center gap-2'>
+                      <Avatar className='h-6 w-6 border border-primary/20'>
+                        <AvatarImage src={org.image_url || undefined} alt={org.name} />
+                        <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white text-xs'>
+                          {getInitials(org.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className='text-sm font-medium flex-1'>{org.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          ) : (
+            <div className='flex items-center gap-4 px-4 py-3 rounded-lg border bg-card'>
+              <Avatar className='h-12 w-12 border border-primary/20 flex-shrink-0'>
+                <AvatarImage src={event.organization.image_url || undefined} alt={event.organization.name} />
+                <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
+                  {getInitials(event.organization.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className='flex flex-col min-w-0'>
+                <span className='font-semibold text-base truncate'>
+                  {getDisplayName(event.organization)}
+                </span>
+                <span className='text-sm text-muted-foreground'>
+                  {event.category.name}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+        
+        {/* Co-host View Notice */}
+        {isCoHost && (
+          <div className='mt-3 flex items-center gap-2 text-sm bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 px-4 py-2.5 rounded-lg'>
+            <Clock3 className='h-4 w-4 flex-shrink-0' />
+            <span>{t('coHostViewOnly')}</span>
+          </div>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
@@ -587,25 +697,6 @@ export default function OrgEventDetailsPage() {
 
         <TabsContent value='details' className='mt-6'>
           <Card className='p-6'>
-            {/* Organization and Event Image */}
-            <div className='flex items-center space-x-3 mb-3'>
-              <Avatar className='h-12 w-12 border border-primary/20'>
-                <AvatarImage
-                  src={organization.image_url || undefined}
-                  alt={organization.name}
-                />
-                <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
-                  {getInitials(organization.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className='font-semibold text-lg'>{organization.name}</p>
-                <p className='text-sm text-muted-foreground'>
-                  {event.category.name}
-                </p>
-              </div>
-            </div>
-
             {/* Event Image */}
             {event.image_url && (
               <div className='relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] mb-3 rounded-lg'>

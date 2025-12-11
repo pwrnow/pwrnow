@@ -24,7 +24,7 @@ import { Feather } from '@expo/vector-icons';
 import LikeButton from './LikeButton';
 import ShareButton from './ShareButton';
 import * as Haptics from 'expo-haptics';
-import { Event } from '../types';
+import { Event, Organization } from '../types';
 import { useAnalytics } from '../lib/analytics';
 import { useCalendar } from '../hooks/useCalendar';
 import { t, deviceLocaleTag } from '../lib/i18n';
@@ -37,6 +37,7 @@ import { useEventActions } from '../hooks/useEventActions';
 import FriendsAttending from './FriendsAttending';
 import FriendsInterestedModal from './FriendsInterestedModal';
 import StaffBadge from './StaffBadge';
+import OrganizationListModal from './OrganizationListModal';
 
 interface EventCardProps {
   event: Event;
@@ -60,6 +61,25 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   const { handleHeartPress, showFirstLikeModal, setShowFirstLikeModal } =
     useEventActions(event, setShowAuthModal);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
+  const [showOrgsModal, setShowOrgsModal] = useState(false);
+
+  // Get all organizations (admin + co-hosts)
+  const allOrganizations = event.all_organizations || [event.organization];
+  const hasCoHosts = allOrganizations.length > 1;
+  // Show max 2 avatars + "+N" indicator (max 3 things total)
+  const visibleOrgs = allOrganizations.slice(0, 2);
+  const extraOrgsCount = allOrganizations.length - 2;
+
+  // Get display name: prefer short_name, otherwise use full name
+  const getDisplayName = (org: Organization | undefined) => {
+    if (!org) return '';
+    return org.short_name || org.display_name || org.name;
+  };
+
+  // Build organization names string with "&" separator
+  const organizationNamesDisplay = allOrganizations
+    .map((org) => getDisplayName(org))
+    .join(' & ');
 
 
 
@@ -282,32 +302,71 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         {/* Header: org + category */}
         <View className='px-3 pt-4 pb-3'>
           <View className='flex-row items-center gap-3'>
-            <View
-              style={{ backgroundColor: colors.muted }}
-              className='w-10 h-10 rounded-full overflow-hidden justify-center items-center'
+            {/* Stacked Avatars */}
+            <Pressable 
+              onPress={() => hasCoHosts && setShowOrgsModal(true)}
+              className='flex-row items-center'
             >
-              {event.organization?.image_url ? (
-                <CachedImage
-                  source={{ uri: event.organization.image_url }}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit='cover'
-                />
-              ) : (
-                <Text
-                  style={{ color: colors.foreground }}
-                  className='font-semibold text-sm'
+              {visibleOrgs.map((org, index) => (
+                <View
+                  key={org.id}
+                  style={{ 
+                    backgroundColor: colors.muted,
+                    marginLeft: index > 0 ? -12 : 0,
+                    zIndex: visibleOrgs.length - index,
+                    borderWidth: 2,
+                    borderColor: colors.background,
+                  }}
+                  className='w-10 h-10 rounded-full overflow-hidden justify-center items-center'
                 >
-                  {getInitials(event.organization.name)}
-                </Text>
+                  {org.image_url ? (
+                    <CachedImage
+                      source={{ uri: org.image_url }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit='cover'
+                    />
+                  ) : (
+                    <Text
+                      style={{ color: colors.foreground }}
+                      className='font-semibold text-sm'
+                    >
+                      {getInitials(org.name)}
+                    </Text>
+                  )}
+                </View>
+              ))}
+              {extraOrgsCount > 0 && (
+                <View
+                  style={{ 
+                    backgroundColor: colors.muted,
+                    marginLeft: -12,
+                    zIndex: 0,
+                    borderWidth: 2,
+                    borderColor: colors.background,
+                  }}
+                  className='w-10 h-10 rounded-full justify-center items-center'
+                >
+                  <Text
+                    style={{ color: colors.foreground }}
+                    className='font-semibold text-xs'
+                  >
+                    +{extraOrgsCount}
+                  </Text>
+                </View>
               )}
-            </View>
-            <View className='flex-1'>
+            </Pressable>
+            <Pressable 
+              onPress={() => hasCoHosts && setShowOrgsModal(true)}
+              className='flex-1'
+            >
               <Text
-                style={{ color: colors.foreground }}
-                className='font-semibold text-base leading-5'
-                numberOfLines={1}
+                style={{ 
+                  color: hasCoHosts ? colors.foreground + 'CC' : colors.foreground 
+                }}
+                className={hasCoHosts ? 'font-medium text-sm leading-4' : 'font-semibold text-base leading-5'}
+                numberOfLines={2}
               >
-                {event.organization.name}
+                {organizationNamesDisplay}
               </Text>
               <Text
                 style={{ color: colors.mutedForeground }}
@@ -315,7 +374,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               >
                 {event.category.name}
               </Text>
-            </View>
+            </Pressable>
             <View className='flex-row gap-2'>
               {/* NOW/TODAY/NEW badges (priority: NOW > TODAY > NEW) */}
               {isNow ? (
@@ -583,6 +642,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             onClose={() => setShowFriendsModal(false)}
             friends={event.friends_interested?.friends ?? []}
             count={event.friends_interested?.count ?? 0}
+          />
+
+          <OrganizationListModal
+            visible={showOrgsModal}
+            onClose={() => setShowOrgsModal(false)}
+            organizations={allOrganizations}
           />
         </Pressable>
       </Pressable>

@@ -307,6 +307,10 @@ const translations: Record<string, TranslationMap> = {
     requestApproved: 'Request approved',
     requestRejected: 'Request rejected',
     feedbackRequired: 'Please provide feedback for rejection',
+    // Multi-organization support translations
+    organizedBy: 'Organized by',
+    adminBadge: 'Admin',
+    coHosting: 'Co-hosting',
   },
   pl: {
     all: 'Wszystkie',
@@ -619,6 +623,10 @@ const translations: Record<string, TranslationMap> = {
     requestApproved: 'Prośba zatwierdzona',
     requestRejected: 'Prośba odrzucona',
     feedbackRequired: 'Proszę podać powód odrzucenia',
+    // Multi-organization support translations
+    organizedBy: 'Organizowane przez',
+    adminBadge: 'Admin',
+    coHosting: 'Współorganizator',
   },
 };
 

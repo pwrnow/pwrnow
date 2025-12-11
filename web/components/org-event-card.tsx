@@ -23,6 +23,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import {
   Calendar,
   MapPin,
   ExternalLink,
@@ -32,8 +37,11 @@ import {
   Clock3,
   MoreHorizontal,
   Trash2,
+  Users,
 } from 'lucide-react';
-import { Event } from '@/lib/types';
+import { Event, Organization } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { CATEGORY_SLUGS } from '@/lib/constants';
 import { EventBadge } from '@/components/event-badge';
 import { useTranslations } from 'next-intl';
@@ -69,6 +77,28 @@ export default function OrgEventCard({
 
   const isEventToday =
     new Date(event.starts_at).toDateString() === new Date().toDateString();
+
+  // Check if this event is co-hosted (current org is not the admin)
+  const isCoHost = event.is_co_host === true;
+
+  // Get display name: prefer short_name, otherwise use full name
+  const getDisplayName = (org: Organization | undefined) => {
+    if (!org) return '';
+    return org.short_name || org.display_name || org.name;
+  };
+
+  // Get all organizations (admin + co-hosts)
+  const allOrganizations = event.all_organizations || [event.organization];
+  const hasCoHosts = allOrganizations.length > 1;
+  
+  // For stacked avatars: show max 2, with +N indicator (max 3 things total)
+  const visibleOrgs = allOrganizations.slice(0, 2);
+  const extraOrgsCount = allOrganizations.length - 2;
+
+  // Build organization names string with "&" separator
+  const organizationNamesDisplay = allOrganizations
+    .map((org) => getDisplayName(org))
+    .join(' & ');
 
   // Format date and time exactly like the old component
   const startsAt = new Date(event.starts_at);
@@ -109,53 +139,142 @@ export default function OrgEventCard({
 
   return (
     <div className='border rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-card flex flex-col h-full'>
-      {/* Verification Status Bar */}
-      <div
-        className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
-          event.verified
-            ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
-            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-        }`}
-      >
-        {event.verified ? (
-          <>
-            <ShieldCheck className='h-3 w-3' />
-            {t('approved')}
-          </>
-        ) : (
-          <>
-            <Clock3 className='h-3 w-3' />
-            {t('pendingVerification')}
-          </>
+      {/* Status Bars */}
+      <div className='flex flex-col'>
+        {/* Co-hosting Badge */}
+        {isCoHost && (
+          <div className='w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'>
+            <Users className='h-3 w-3' />
+            {t('coHosting')}
+          </div>
         )}
+        {/* Verification Status Bar */}
+        <div
+          className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
+            event.verified
+              ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+          }`}
+        >
+          {event.verified ? (
+            <>
+              <ShieldCheck className='h-3 w-3' />
+              {t('approved')}
+            </>
+          ) : (
+            <>
+              <Clock3 className='h-3 w-3' />
+              {t('pendingVerification')}
+            </>
+          )}
+        </div>
       </div>
 
       <div className='flex flex-col flex-1'>
         {/* Organization Header */}
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
-          <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
-            <AvatarImage
-              src={event.organization.image_url || undefined}
-              alt={event.organization.name}
-            />
-            <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
-              {getInitials(event.organization.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className='flex-1'>
-            <div className='flex items-center justify-between'>
-              <span className='font-medium text-sm sm:text-base leading-tight break-words max-w-[60%]'>
-                {event.organization.name}
-              </span>
-              <div className='flex items-center gap-2'>
-                {isEventToday ? (
-                  <EventBadge variant='today' />
-                ) : (
-                  event.is_new && <EventBadge variant='new' />
-                )}
+          {hasCoHosts ? (
+            <HoverCard openDelay={100} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <div className='flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 cursor-default'>
+                  {/* Stacked Avatars */}
+                  <div className='flex items-center flex-shrink-0'>
+                    <div className='flex items-center'>
+                      {visibleOrgs.map((org, index) => (
+                        <Avatar 
+                          key={org.id} 
+                          className={cn(
+                            'h-8 w-8 sm:h-10 sm:w-10 border-2 border-background ring-offset-background transition-all duration-300 group-hover:shadow-sm',
+                            index > 0 && '-ml-3'
+                          )}
+                          style={{ zIndex: visibleOrgs.length - index }}
+                        >
+                          <AvatarImage
+                            src={org.image_url || undefined}
+                            alt={org.name}
+                          />
+                          <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium text-xs'>
+                            {getInitials(org.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {extraOrgsCount > 0 && (
+                        <div 
+                          className='h-8 w-8 sm:h-10 sm:w-10 -ml-3 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium'
+                          style={{ zIndex: 0 }}
+                        >
+                          +{extraOrgsCount}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Organization names */}
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center gap-2'>
+                      <span className='leading-tight line-clamp-2 flex-1 min-w-0 text-xs sm:text-sm font-medium text-foreground/80'>
+                        {organizationNamesDisplay}
+                      </span>
+                      <div className='flex items-center gap-2 flex-shrink-0'>
+                        {isEventToday ? (
+                          <EventBadge variant='today' />
+                        ) : (
+                          event.is_new && <EventBadge variant='new' />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className='w-64 p-3' align='start' sideOffset={8}>
+                <div className='space-y-2'>
+                  <p className='text-xs font-medium text-muted-foreground mb-2'>
+                    {t('organizedBy')}
+                  </p>
+                  {allOrganizations.map((org) => (
+                    <div key={org.id} className='flex items-center gap-2'>
+                      <Avatar className='h-6 w-6 border border-primary/20'>
+                        <AvatarImage
+                          src={org.image_url || undefined}
+                          alt={org.name}
+                        />
+                        <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white text-xs'>
+                          {getInitials(org.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className='text-sm font-medium flex-1'>{org.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          ) : (
+            <div className='flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0'>
+              <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm flex-shrink-0'>
+                <AvatarImage
+                  src={event.organization.image_url || undefined}
+                  alt={event.organization.name}
+                />
+                <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
+                  {getInitials(event.organization.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className='flex-1 min-w-0'>
+                <div className='flex items-center gap-2'>
+                  <span className='font-medium text-sm sm:text-base leading-tight line-clamp-2 flex-1 min-w-0'>
+                    {getDisplayName(event.organization)}
+                  </span>
+                  <div className='flex items-center gap-2 flex-shrink-0'>
+                    {isEventToday ? (
+                      <EventBadge variant='today' />
+                    ) : (
+                      event.is_new && <EventBadge variant='new' />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Event Image */}
@@ -246,31 +365,34 @@ export default function OrgEventCard({
 
           {/* Action Buttons - Pushed to bottom */}
           <div className='mt-auto pt-4 space-y-2'>
-            <div className='flex gap-2'>
-              {event.verified && (
+            {/* Only show manage/delete buttons for admin (non co-host) events */}
+            {!isCoHost && (
+              <div className='flex gap-2'>
+                {event.verified && (
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      router.push(`/org/${orgSlug}/events/${event.slug}`)
+                    }
+                    className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
+                  >
+                    <Settings className='h-4 w-4' />
+                    {t('manageEvent')}
+                  </Button>
+                )}
+
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() =>
-                    router.push(`/org/${orgSlug}/events/${event.slug}`)
-                  }
-                  className='flex-1 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:bg-primary/5 hover:border-primary/20'
+                  onClick={handleDeleteClick}
+                  className={`${event.verified ? 'flex-1' : 'w-full'} text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30`}
+                  title={t('deleteEvent')}
                 >
-                  <Settings className='h-4 w-4' />
-                  {t('manageEvent')}
+                  <Trash2 className='h-4 w-4' />
                 </Button>
-              )}
-
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={handleDeleteClick}
-                className={`${event.verified ? 'flex-1' : 'w-full'} text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30`}
-                title={t('deleteEvent')}
-              >
-                <Trash2 className='h-4 w-4' />
-              </Button>
-            </div>
+              </div>
+            )}
 
             {event.url && (
               <a href={event.url} target='_blank' rel='noopener noreferrer'>

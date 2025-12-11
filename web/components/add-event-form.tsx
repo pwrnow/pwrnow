@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, X, Search, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   eventFormSchema,
   EventFormValues,
   formToApiData,
 } from '@/lib/schemas/event';
-import { createEvent } from '@/lib/api';
-import { Category } from '@/lib/types';
+import { createEvent, searchOrganizations } from '@/lib/api';
+import { Category, Organization } from '@/lib/types';
 import { CATEGORY_SLUGS } from '@/lib/constants';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -60,6 +62,86 @@ export default function AddEventForm({
   const [isFormLoaded, setIsFormLoaded] = useState(false);
   const t = useTranslations('AddEventForm');
 
+  // Co-host selection state
+  const [coHostSearch, setCoHostSearch] = useState('');
+  const [coHostSearchResults, setCoHostSearchResults] = useState<Organization[]>([]);
+  const [initialOrganizations, setInitialOrganizations] = useState<Organization[]>([]);
+  const [selectedCoHosts, setSelectedCoHosts] = useState<Organization[]>([]);
+  const [isSearchingCoHosts, setIsSearchingCoHosts] = useState(false);
+  const [coHostSearchFocused, setCoHostSearchFocused] = useState(false);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+
+  // Load initial organizations list on first focus
+  const loadInitialOrganizations = useCallback(async () => {
+    if (hasLoadedInitial) return;
+    setIsSearchingCoHosts(true);
+    try {
+      // Search with empty query to get initial list of organizations
+      const results = await searchOrganizations();
+      setInitialOrganizations(results);
+      setHasLoadedInitial(true);
+    } catch (error) {
+      console.error('Failed to load initial organizations:', error);
+    } finally {
+      setIsSearchingCoHosts(false);
+    }
+  }, [hasLoadedInitial]);
+
+  // Debounced co-host search
+  const searchCoHosts = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setCoHostSearchResults([]);
+      return;
+    }
+    setIsSearchingCoHosts(true);
+    try {
+      const results = await searchOrganizations(query);
+      // Filter out already selected co-hosts
+      const filteredResults = results.filter(
+        (org) => !selectedCoHosts.some((selected) => selected.id === org.id)
+      );
+      setCoHostSearchResults(filteredResults);
+    } catch (error) {
+      console.error('Failed to search organizations:', error);
+      setCoHostSearchResults([]);
+    } finally {
+      setIsSearchingCoHosts(false);
+    }
+  }, [selectedCoHosts]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchCoHosts(coHostSearch);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [coHostSearch, searchCoHosts]);
+
+  // Get the list to display: search results if searching, otherwise initial list filtered
+  const displayOrganizations = coHostSearch.length >= 2 
+    ? coHostSearchResults 
+    : initialOrganizations.filter(
+        (org) => !selectedCoHosts.some((selected) => selected.id === org.id)
+      );
+
+  const addCoHost = (org: Organization) => {
+    setSelectedCoHosts((prev) => [...prev, org]);
+    setCoHostSearch('');
+    setCoHostSearchResults([]);
+  };
+
+  const removeCoHost = (orgId: string) => {
+    setSelectedCoHosts((prev) => prev.filter((org) => org.id !== orgId));
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
+
   // Create a unique storage key for this organization
   const storageKey = `add-event-form-${organizationCode}`;
   const imageStorageKey = `add-event-image-${organizationCode}`;
@@ -81,6 +163,7 @@ export default function AddEventForm({
       description: '',
       url: '',
       publicationDate: getTomorrowDate(),
+      coHostIds: [],
     },
   });
 
@@ -224,8 +307,14 @@ export default function AddEventForm({
       setImageError(null);
       setFormError(null);
 
+      // Include selected co-host IDs in the form data
+      const formDataWithCoHosts = {
+        ...data,
+        coHostIds: selectedCoHosts.map((org) => org.id),
+      };
+
       // Transform form data to API format
-      const apiData = formToApiData(data, imageFile ?? undefined);
+      const apiData = formToApiData(formDataWithCoHosts, imageFile ?? undefined);
 
       // Call API
       const result = await createEvent(apiData);
@@ -322,6 +411,122 @@ export default function AddEventForm({
             </FormItem>
           )}
         />
+
+        {/* Co-host Organizations Selector */}
+        <FormItem>
+          <FormLabel className='flex items-center gap-2'>
+            <Users className='h-4 w-4' />
+            {t('coHosts')}
+          </FormLabel>
+          <p className='text-sm text-muted-foreground mb-2'>
+            {t('coHostsDescription')}
+          </p>
+          
+          {/* Selected co-hosts */}
+          {selectedCoHosts.length > 0 && (
+            <div className='flex flex-wrap gap-2 mb-3'>
+              {selectedCoHosts.map((org) => (
+                <div
+                  key={org.id}
+                  className='flex items-center gap-2 bg-secondary/50 rounded-full pl-1 pr-2 py-1'
+                >
+                  <Avatar className='h-6 w-6 border'>
+                    {org.image_url ? (
+                      <Image
+                        src={org.image_url}
+                        alt={org.name}
+                        fill
+                        className='object-cover rounded-full'
+                        sizes='24px'
+                      />
+                    ) : (
+                      <AvatarFallback className='text-xs'>
+                        {getInitials(org.name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span className='text-sm font-medium'>{org.short_name || org.name}</span>
+                  <button
+                    type='button'
+                    onClick={() => removeCoHost(org.id)}
+                    className='text-muted-foreground hover:text-destructive transition-colors'
+                  >
+                    <X className='h-4 w-4' />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search input */}
+          <div className='relative'>
+            <div className='relative'>
+              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='text'
+                placeholder={t('coHostsSearchPlaceholder')}
+                value={coHostSearch}
+                onChange={(e) => setCoHostSearch(e.target.value)}
+                onFocus={() => {
+                  setCoHostSearchFocused(true);
+                  loadInitialOrganizations();
+                }}
+                onBlur={() => setTimeout(() => setCoHostSearchFocused(false), 200)}
+                className='pl-9'
+              />
+            </div>
+
+            {/* Search results dropdown */}
+            {coHostSearchFocused && (
+              <div className='absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto'>
+                {isSearchingCoHosts ? (
+                  <div className='p-3 text-sm text-muted-foreground text-center'>
+                    {t('searching')}
+                  </div>
+                ) : displayOrganizations.length > 0 ? (
+                  displayOrganizations.map((org) => (
+                    <button
+                      key={org.id}
+                      type='button'
+                      onClick={() => addCoHost(org)}
+                      className='w-full flex items-center gap-3 p-3 hover:bg-secondary/50 transition-colors text-left'
+                    >
+                      <Avatar className='h-8 w-8 border'>
+                        {org.image_url ? (
+                          <Image
+                            src={org.image_url}
+                            alt={org.name}
+                            fill
+                            className='object-cover rounded-full'
+                            sizes='32px'
+                          />
+                        ) : (
+                          <AvatarFallback className='text-xs'>
+                            {getInitials(org.name)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className='flex-1 min-w-0'>
+                        <p className='font-medium text-sm truncate'>{org.name}</p>
+                        {org.short_name && (
+                          <p className='text-xs text-muted-foreground truncate'>{org.short_name}</p>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                ) : coHostSearch.length >= 2 ? (
+                  <div className='p-3 text-sm text-muted-foreground text-center'>
+                    {t('noOrganizationsFound')}
+                  </div>
+                ) : (
+                  <div className='p-3 text-sm text-muted-foreground text-center'>
+                    {t('searching')}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </FormItem>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
           <FormField

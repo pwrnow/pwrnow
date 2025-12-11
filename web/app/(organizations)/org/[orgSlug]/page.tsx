@@ -56,20 +56,24 @@ export default function OrganizationPage() {
           const eventsData = await getEvents();
 
           // Validate that all events belong to the current organization
+          // (either as admin or as co-host)
           if (currentOrg && eventsData.length > 0) {
-            const invalidEvents = eventsData.filter(
-              (event) => event.organization.id !== currentOrg.id
-            );
-
-            if (invalidEvents.length > 0) {
-              // Filter out invalid events
-              const validEvents = eventsData.filter(
-                (event) => event.organization.id === currentOrg.id
-              );
-              setEvents(validEvents);
-            } else {
-              setEvents(eventsData);
-            }
+            const validEvents = eventsData.filter((event) => {
+              // Event belongs to current org as admin
+              if (event.organization.id === currentOrg.id) {
+                return true;
+              }
+              // Event has current org as co-host (is_co_host flag)
+              if (event.is_co_host) {
+                return true;
+              }
+              // Check co_hosts array as fallback
+              if (event.co_hosts?.some((coHost) => coHost.id === currentOrg.id)) {
+                return true;
+              }
+              return false;
+            });
+            setEvents(validEvents);
           } else {
             setEvents(eventsData);
           }
