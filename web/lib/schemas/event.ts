@@ -38,6 +38,7 @@ export const eventFormSchema = z
       .string()
       .max(2000, 'Opis nie może być dłuższy niż 2000 znaków')
       .optional(),
+    coHostIds: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {
@@ -94,6 +95,7 @@ export function formToApiData(
   url?: string;
   category_slug?: string;
   image?: File;
+  co_host_ids?: string[];
 } {
   return {
     title: formData.title,
@@ -110,5 +112,6 @@ export function formToApiData(
     url: formData.url || undefined,
     category_slug: formData.categorySlug,
     image: imageFile || undefined,
+    co_host_ids: formData.coHostIds && formData.coHostIds.length > 0 ? formData.coHostIds : undefined,
   };
 }

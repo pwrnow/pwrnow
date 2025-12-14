@@ -8,11 +8,16 @@ import { Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { cn, formatEventDateRange, formatEventTimeRange } from '@/lib/utils';
-import type { Event } from '@/lib/types';
+import type { Event, Organization } from '@/lib/types';
 import { CATEGORY_SLUGS } from '@/lib/constants';
 import { useAnalytics } from '@/lib/useAnalytics';
 import { useTranslations, useLocale } from 'next-intl';
 import ShareButton from '@/components/share-button';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 interface EventCardProps {
   event: Event;
@@ -33,9 +38,27 @@ export default function EventCard({ event }: EventCardProps) {
   );
   const timeString = formatEventTimeRange(event.starts_at, event.ends_at);
 
-  const organizationName = event.organization?.name || t('defaultOrganization');
+  // Get display name: prefer short_name, otherwise use full name
+  const getDisplayName = (org: Organization | undefined) => {
+    if (!org) return t('defaultOrganization');
+    return org.short_name || org.display_name || org.name;
+  };
+
   const organizationImageUrl = event.organization?.image_url;
   const categoryName = event.category.name;
+
+  // Get all organizations (admin + co-hosts)
+  const allOrganizations = event.all_organizations || [event.organization];
+  const hasCoHosts = allOrganizations.length > 1;
+  
+  // For stacked avatars: show max 2, with +N indicator (max 3 things total)
+  const visibleOrgs = allOrganizations.slice(0, 2);
+  const extraOrgsCount = allOrganizations.length - 2;
+
+  // Build organization names string with "&" separator
+  const organizationNamesDisplay = allOrganizations
+    .map((org) => getDisplayName(org))
+    .join(' & ');
 
   const getInitials = (name: string) => {
     return name
@@ -45,7 +68,7 @@ export default function EventCard({ event }: EventCardProps) {
       .join('')
       .toUpperCase();
   };
-  const orgInitials = getInitials(organizationName);
+  const orgInitials = getInitials(event.organization?.name || t('defaultOrganization'));
   const handleMapLinkClick = () => {
     if (!event.location) return;
 
@@ -83,41 +106,141 @@ export default function EventCard({ event }: EventCardProps) {
       </Link>
       <div className='flex flex-col'>
         <div className='px-3 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3'>
-          <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border border-primary/20 ring-offset-background transition-all duration-300 group-hover:shadow-sm'>
-            {organizationImageUrl ? (
-              <Image
-                src={organizationImageUrl}
-                alt={organizationName}
-                fill
-                className='object-cover rounded-full'
-                sizes='(max-width: 640px) 32px, 40px'
-              />
-            ) : (
-              <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium'>
-                {orgInitials}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <div className='flex-1'>
-            <div className='flex items-center justify-between'>
-              <span className='font-medium text-sm sm:text-base leading-tight break-words max-w-[60%]'>
-                {organizationName}
-              </span>
-              <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
-                {event.category && event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
-                  <Badge
-                    variant='outline'
-                    className={cn(
-                      'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm border-primary/50 hidden sm:inline-flex'
-                    )}
-                  >
-                    {categoryName}
-                  </Badge>
+          {/* Header content - with hover popover only when multiple organizations */}
+          {hasCoHosts ? (
+            <HoverCard openDelay={100} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <div className='flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 cursor-default'>
+                  {/* Stacked Avatars */}
+                  <div className='flex items-center flex-shrink-0'>
+                    <div className='flex items-center'>
+                      {visibleOrgs.map((org, index) => (
+                        <Avatar 
+                          key={org.id} 
+                          className={cn(
+                            'h-8 w-8 sm:h-10 sm:w-10 border-2 border-background ring-offset-background transition-all duration-300 group-hover:shadow-sm',
+                            index > 0 && '-ml-3'
+                          )}
+                          style={{ zIndex: visibleOrgs.length - index }}
+                        >
+                          {org.image_url ? (
+                            <Image
+                              src={org.image_url}
+                              alt={org.name}
+                              fill
+                              className='object-cover rounded-full'
+                              sizes='(max-width: 640px) 32px, 40px'
+                            />
+                          ) : (
+                            <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium text-xs'>
+                              {getInitials(org.name)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      ))}
+                      {extraOrgsCount > 0 && (
+                        <div 
+                          className='h-8 w-8 sm:h-10 sm:w-10 -ml-3 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium'
+                          style={{ zIndex: 0 }}
+                        >
+                          +{extraOrgsCount}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Organization names and category badge */}
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center gap-2'>
+                      <span className='leading-tight line-clamp-2 flex-1 min-w-0 text-xs sm:text-sm font-medium text-foreground/80'>
+                        {organizationNamesDisplay}
+                      </span>
+                      
+                      {event.category && event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
+                        <Badge
+                          variant='outline'
+                          className={cn(
+                            'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm border-primary/50 hidden sm:inline-flex flex-shrink-0'
+                          )}
+                        >
+                          {categoryName}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className='w-64 p-3' align='start' sideOffset={8}>
+                <div className='space-y-2'>
+                  <p className='text-xs font-medium text-muted-foreground mb-2'>
+                    {t('organizedBy')}
+                  </p>
+                  {allOrganizations.map((org) => (
+                    <div key={org.id} className='flex items-center gap-2'>
+                      <Avatar className='h-6 w-6 border border-primary/20'>
+                        {org.image_url ? (
+                          <Image
+                            src={org.image_url}
+                            alt={org.name}
+                            fill
+                            className='object-cover rounded-full'
+                            sizes='24px'
+                          />
+                        ) : (
+                          <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white text-xs'>
+                            {getInitials(org.name)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <span className='text-sm font-medium flex-1'>{org.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          ) : (
+            <div className='flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0'>
+              {/* Single Avatar */}
+              <Avatar className='h-8 w-8 sm:h-10 sm:w-10 border-2 border-background ring-offset-background transition-all duration-300 group-hover:shadow-sm flex-shrink-0'>
+                {organizationImageUrl ? (
+                  <Image
+                    src={organizationImageUrl}
+                    alt={event.organization?.name || ''}
+                    fill
+                    className='object-cover rounded-full'
+                    sizes='(max-width: 640px) 32px, 40px'
+                  />
+                ) : (
+                  <AvatarFallback className='bg-gradient-to-br from-primary to-secondary text-white font-medium text-xs'>
+                    {orgInitials}
+                  </AvatarFallback>
                 )}
-                <ShareButton event={event} variant='ghost' size='icon' className='h-8 w-8 flex-shrink-0' />
+              </Avatar>
+              
+              {/* Organization name and category badge */}
+              <div className='flex-1 min-w-0'>
+                <div className='flex items-center gap-2'>
+                  <span className='leading-tight line-clamp-2 flex-1 min-w-0 font-medium text-sm sm:text-base'>
+                    {organizationNamesDisplay}
+                  </span>
+                  
+                  {event.category && event.category.slug !== CATEGORY_SLUGS.REKRUTACJA && (
+                    <Badge
+                      variant='outline'
+                      className={cn(
+                        'bg-gradient-to-r from-primary/20 to-secondary/20 text-xs sm:text-sm border-primary/50 hidden sm:inline-flex flex-shrink-0'
+                      )}
+                    >
+                      {categoryName}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
+          
+          {/* Share button outside hover area */}
+          <ShareButton event={event} variant='ghost' size='icon' className='h-8 w-8 flex-shrink-0' />
         </div>
         {event.image_url && (
         <div

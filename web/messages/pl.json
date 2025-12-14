@@ -31,7 +31,10 @@
     "showLess": "Pokaż mniej",
     "showMore": "Pokaż więcej",
     "visitEventPage": "Odwiedź stronę wydarzenia",
-    "openRecruitmentForm": "Otwórz formularz rekrutacyjny"
+    "openRecruitmentForm": "Otwórz formularz rekrutacyjny",
+    "organizedBy": "Organizowane przez",
+    "admin": "Admin",
+    "coHosting": "Współorganizator"
   },
   "EventFeed": {
     "noEventsAvailable": "Aktualnie brak dostępnych wydarzeń."
@@ -81,7 +84,12 @@
     "descriptionPlaceholder": "Opisz swoje wydarzenie (opcjonalnie)",
     "saving": "Zapisywanie...",
     "createEvent": "Utwórz wydarzenie",
-    "selectedFile": "Wybrano: {name} ({size} KB)"
+    "selectedFile": "Wybrano: {name} ({size} KB)",
+    "coHosts": "Współorganizatorzy",
+    "coHostsDescription": "Dodaj inne organizacje, które współorganizują to wydarzenie z tobą.",
+    "coHostsSearchPlaceholder": "Szukaj organizacji...",
+    "searching": "Szukanie...",
+    "noOrganizationsFound": "Nie znaleziono organizacji"
   },
   "OrganizationPage": {
     "accessDenied": "Nie masz dostępu do tej organizacji",
@@ -116,7 +124,9 @@
     "failedToDeleteEvent": "Nie udało się usunąć wydarzenia",
     "cancel": "Anuluj",
     "delete": "Usuń",
-    "deleting": "Usuwanie..."
+    "deleting": "Usuwanie...",
+    "coHosting": "Współorganizator",
+    "organizedBy": "Organizowane przez"
   },
   "Layout": {
     "title": "PWr Now",
@@ -168,7 +178,15 @@
     "selectedFile": "Wybrano: {name} ({size} KB)",
     "updateSuccess": "Zdjęcie zostało pomyślnie zaktualizowane",
     "updating": "Aktualizowanie...",
-    "updateImage": "Zaktualizuj zdjęcie"
+    "updateImage": "Zaktualizuj zdjęcie",
+    "shortName": "Krótka nazwa",
+    "shortNameDescription": "Ustaw krótką nazwę wyświetlaną dla organizacji. Będzie używana w nagłówkach wydarzeń, gdy przestrzeń jest ograniczona.",
+    "shortNameLabel": "Krótka nazwa",
+    "shortNamePlaceholder": "np. SKN, KN PWr",
+    "shortNameHint": "Maksymalnie 50 znaków. Pozostaw puste, aby używać pełnej nazwy organizacji.",
+    "shortNameUpdateSuccess": "Krótka nazwa została pomyślnie zaktualizowana",
+    "shortNameUpdateError": "Wystąpił błąd podczas aktualizacji krótkiej nazwy",
+    "saveShortName": "Zapisz krótką nazwę"
   },
   "Footer": {
     "forOrganizations": "Dla organizacji",
@@ -419,7 +437,9 @@
     "deleteError": "Nie udało się usunąć pozycji",
     "noSchedule": "Brak harmonogramu dla tego wydarzenia",
     "rateLimited": "Osiągnięto limit przetworzeń AI na godzinę. Spróbuj ponownie później.",
-    "featureNotAvailable": "Funkcja magicznego parsowania nie jest dostępna dla Twojej organizacji."
+    "featureNotAvailable": "Funkcja magicznego parsowania nie jest dostępna dla Twojej organizacji.",
+    "organizedBy": "Organizowane przez",
+    "coHostViewOnly": "Przeglądasz to wydarzenie jako współorganizator. Tylko główna organizacja może wprowadzać zmiany."
   },
   "PostsList": {
     "justNow": "Przed chwilą",

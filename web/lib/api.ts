@@ -306,6 +306,9 @@ export async function createEvent(eventData: CreateEventData): Promise<Event> {
   if (eventData.category_slug)
     formData.append('category_slug', eventData.category_slug);
   if (eventData.image) formData.append('image', eventData.image);
+  if (eventData.co_host_ids && eventData.co_host_ids.length > 0) {
+    eventData.co_host_ids.forEach(id => formData.append('co_host_ids', id));
+  }
 
   try {
     const response = await fetchWithCredentials('/events/', {
@@ -346,6 +349,35 @@ export async function uploadOrganizationImage(
     return organization;
   } catch (error) {
     console.error('❌ Failed to upload organization image:', error);
+    throw error;
+  }
+}
+
+// Organization details update (short_name)
+export interface UpdateOrganizationData {
+  short_name?: string | null;
+}
+
+export async function updateOrganization(
+  slug: string,
+  data: UpdateOrganizationData
+): Promise<Organization> {
+  console.log('🏢 Updating organization details for:', slug, data);
+
+  try {
+    const response = await fetchWithCredentials(
+      `/organizations/${slug}/update_details/`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+
+    const organization = await response.json();
+    console.log('✅ Organization details updated successfully');
+    return organization;
+  } catch (error) {
+    console.error('❌ Failed to update organization details:', error);
     throw error;
   }
 }
@@ -524,6 +556,21 @@ export async function deleteEvent(eventSlug: string): Promise<void> {
     console.log('✅ Event deleted successfully');
   } catch (error) {
     console.error('❌ Failed to delete event:', error);
+    throw error;
+  }
+}
+
+// Organization search for co-host selection
+export async function searchOrganizations(query?: string): Promise<Organization[]> {
+  try {
+    const url = query 
+      ? `/organizations/search/?q=${encodeURIComponent(query)}`
+      : `/organizations/search/`;
+    const response = await fetchWithCredentials(url);
+    const organizations = await response.json();
+    return organizations;
+  } catch (error) {
+    console.error('❌ Failed to search organizations:', error);
     throw error;
   }
 }
