@@ -417,11 +417,11 @@ class EventAdmin(TranslationAdmin):
         "compact_title",
         "compact_dates",
         "compact_status",
-        "verified",
+        "visible",
         "likes_count_display",
     ]
     list_filter = [
-        "verified",
+        "visible",
         EventStatusFilter,
         "category",
         "organization",
@@ -436,16 +436,16 @@ class EventAdmin(TranslationAdmin):
         "slug",
     ]
     prepopulated_fields = {"slug": ("title",)}
-    list_editable = ["verified"]
+    list_editable = ["visible"]
     date_hierarchy = None  # Removed date hierarchy for more compact view
-    ordering = ["verified", "-created_at"]  # Non-verified first
+    ordering = ["-visible", "-created_at"]  # Visible first, then by creation date
     readonly_fields = [
         "id",
         "created_at",
         "updated_at",
         "duration_display",
-        "verified_at",
-        "verified_by",
+        "visible_at",
+        "visible_by",
         "likes_count_display",
         "has_image",
         "has_url",
@@ -487,7 +487,7 @@ class EventAdmin(TranslationAdmin):
         ),
         ("Location & Links", {"fields": ("location", "url", "image", "aspect_ratio")}),
         ("Organization & Tags", {"fields": ("organization", "tags")}),
-        ("Status", {"fields": ("verified", "verified_at", "verified_by")}),
+        ("Visibility", {"fields": ("visible", "visible_at", "visible_by")}),
         (
             "Metadata",
             {"fields": ("id", "created_at", "updated_at"), "classes": ("collapse",)},
@@ -497,14 +497,14 @@ class EventAdmin(TranslationAdmin):
     @admin.display(description="Title")
     def compact_title(self, obj):
         title = Truncator(obj.title).chars(60)
-        verified_badge = ""
-        if not obj.verified:
-            verified_badge = format_html(
-                '<span style="background-color: #EF4444; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-right: 4px;">UNVERIFIED</span>'
+        visible_badge = ""
+        if not obj.visible:
+            visible_badge = format_html(
+                '<span style="background-color: #EF4444; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-right: 4px;">HIDDEN</span>'
             )
         change_url = reverse("admin:core_event_change", args=[obj.pk])
         title_link = format_html('<a href="{}">{}</a>', change_url, title)
-        return format_html("{} {}", verified_badge, title_link)
+        return format_html("{} {}", visible_badge, title_link)
 
     compact_title.admin_order_field = "title"
 
@@ -556,13 +556,13 @@ class EventAdmin(TranslationAdmin):
 
     @admin.display(description="Status")
     def compact_status(self, obj):
-        """Compact status display with verification and other info."""
-        verified_icon = "✓" if obj.verified else "✗"
-        verified_color = "#10B981" if obj.verified else "#EF4444"
-        verified_text = format_html(
+        """Compact status display with visibility and other info."""
+        visible_icon = "👁" if obj.visible else "🔒"
+        visible_color = "#10B981" if obj.visible else "#EF4444"
+        visible_text = format_html(
             '<span style="color: {}; font-weight: bold; margin-right: 8px;">{}</span>',
-            verified_color,
-            verified_icon,
+            visible_color,
+            visible_icon,
         )
 
         org = obj.organization.name if obj.organization else "-"
@@ -570,7 +570,7 @@ class EventAdmin(TranslationAdmin):
         info = format_html(
             '<span style="font-size: 11px; color: #666;">{} / {}</span>', cat, org
         )
-        return format_html("{} {}", verified_text, info)
+        return format_html("{} {}", visible_text, info)
 
     @admin.display(description="Aspect Ratio")
     def aspect_ratio_display(self, obj):
@@ -623,15 +623,15 @@ class EventAdmin(TranslationAdmin):
 
     likes_count_display.short_description = "Likes"
 
-    @admin.display(description="Verified By")
-    def verified_by_display(self, obj):
-        if obj.verified_by:
+    @admin.display(description="Visibility Changed By")
+    def visible_by_display(self, obj):
+        if obj.visible_by:
             return format_html(
-                '<span style="color: #10B981;">{}</span>', obj.get_verified_by_display()
+                '<span style="color: #10B981;">{}</span>', obj.get_visible_by_display()
             )
-        return format_html('<span style="color: #EF4444;">Not verified</span>')
+        return format_html('<span style="color: #999;">Not set</span>')
 
-    verified_by_display.short_description = "Verified By"
+    visible_by_display.short_description = "Visibility Changed By"
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
@@ -777,13 +777,13 @@ class EventAdmin(TranslationAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("category", "organization", "verified_by")
+            .select_related("category", "organization", "visible_by")
             .prefetch_related("tags")
         )
 
     actions = [
-        "mark_as_verified",
-        "mark_as_unverified",
+        "mark_as_visible",
+        "mark_as_hidden",
         "detect_aspect_ratios",
         "send_event_publication_notifications",
         "send_event_reminder_24h",
@@ -791,17 +791,17 @@ class EventAdmin(TranslationAdmin):
         "translate_selected_events",
     ]
 
-    def mark_as_verified(self, request, queryset):
-        updated = queryset.update(verified=True)
-        self.message_user(request, f"{updated} events marked as verified.")
+    def mark_as_visible(self, request, queryset):
+        updated = queryset.update(visible=True)
+        self.message_user(request, f"{updated} events marked as visible.")
 
-    mark_as_verified.short_description = "Mark selected events as verified"
+    mark_as_visible.short_description = "Mark selected events as visible"
 
-    def mark_as_unverified(self, request, queryset):
-        updated = queryset.update(verified=False)
-        self.message_user(request, f"{updated} events marked as unverified.")
+    def mark_as_hidden(self, request, queryset):
+        updated = queryset.update(visible=False)
+        self.message_user(request, f"{updated} events marked as hidden.")
 
-    mark_as_unverified.short_description = "Mark selected events as unverified"
+    mark_as_hidden.short_description = "Mark selected events as hidden"
 
     def detect_aspect_ratios(self, request, queryset):
         """Trigger aspect ratio detection for selected events."""
@@ -845,12 +845,12 @@ class EventAdmin(TranslationAdmin):
 
     def send_event_publication_notifications(self, request, queryset):
         """Send publication notifications for selected events regardless of publication date."""
-        # Filter only verified events
-        verified_events = queryset.filter(verified=True)
-        if not verified_events.exists():
+        # Filter only visible events
+        visible_events = queryset.filter(visible=True)
+        if not visible_events.exists():
             self.message_user(
                 request,
-                "No verified events selected. Please select verified events only.",
+                "No visible events selected. Please select visible events only.",
                 level=messages.WARNING,
             )
             return
@@ -859,13 +859,13 @@ class EventAdmin(TranslationAdmin):
             from notifications.services import push_service
 
             result = push_service.send_publication_notifications_for_events(
-                verified_events
+                visible_events
             )
 
             if result["sent"] > 0:
                 self.message_user(
                     request,
-                    f'Successfully sent publication notifications for {len(verified_events)} events: {result["sent"]} sent, {result["failed"]} failed.',
+                    f'Successfully sent publication notifications for {len(visible_events)} events: {result["sent"]} sent, {result["failed"]} failed.',
                 )
             else:
                 self.message_user(
@@ -885,12 +885,12 @@ class EventAdmin(TranslationAdmin):
     )
 
     def send_event_reminder_24h(self, request, queryset):
-        """Manually trigger 24h reminder notifications for selected verified events (ignores time window)."""
-        verified_events = queryset.filter(verified=True)
-        if not verified_events.exists():
+        """Manually trigger 24h reminder notifications for selected visible events (ignores time window)."""
+        visible_events = queryset.filter(visible=True)
+        if not visible_events.exists():
             self.message_user(
                 request,
-                "No verified events selected. Please select verified events only.",
+                "No visible events selected. Please select visible events only.",
                 level=messages.WARNING,
             )
             return
@@ -898,7 +898,7 @@ class EventAdmin(TranslationAdmin):
         try:
             from notifications.services import push_service
 
-            result = push_service.send_event_reminders_for_events(verified_events)
+            result = push_service.send_event_reminders_for_events(visible_events)
 
             if result["sent"] > 0:
                 self.message_user(
@@ -932,10 +932,10 @@ class EventAdmin(TranslationAdmin):
 
         event = queryset.first()
 
-        if not event.verified:
+        if not event.visible:
             self.message_user(
                 request,
-                _("Only verified events can have reminders sent."),
+                _("Only visible events can have reminders sent."),
                 level=messages.WARNING,
             )
             return
@@ -971,8 +971,8 @@ class EventAdmin(TranslationAdmin):
 
         event = get_object_or_404(Event, pk=event_id)
 
-        if not event.verified:
-            messages.error(request, _("Only verified events can have reminders sent."))
+        if not event.visible:
+            messages.error(request, _("Only visible events can have reminders sent."))
             return HttpResponseRedirect(reverse("admin:core_event_changelist"))
 
         # Calculate time info
@@ -1338,22 +1338,22 @@ class PostAdmin(admin.ModelAdmin):
         "organization",
         "text_preview",
         "images_count",
-        "verified",
-        "verified_at",
+        "visible",
+        "visible_at",
         "created_at",
         "updated_at",
     ]
     list_filter = [
-        "verified",
+        "visible",
         "event",
         "organization",
         "created_at",
         "updated_at",
-        "verified_at",
+        "visible_at",
     ]
     search_fields = ["event__title", "event__slug", "organization__name", "text"]
-    readonly_fields = ["id", "created_at", "updated_at", "verified_at"]
-    list_editable = ["verified"]
+    readonly_fields = ["id", "created_at", "updated_at", "visible_at"]
+    list_editable = ["visible"]
     inlines = [PostImageInline]
     autocomplete_fields = ["event", "organization"]
     date_hierarchy = "created_at"
@@ -1361,7 +1361,7 @@ class PostAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Content", {"fields": ("event", "organization", "text")}),
-        ("Verification", {"fields": ("verified", "verified_at")}),
+        ("Visibility", {"fields": ("visible", "visible_at")}),
         (
             "Metadata",
             {"fields": ("id", "created_at", "updated_at"), "classes": ("collapse",)},
@@ -1390,7 +1390,7 @@ class PostAdmin(admin.ModelAdmin):
         skipped_count = 0
 
         for post in queryset:
-            if not post.verified:
+            if not post.visible:
                 skipped_count += 1
                 continue
 
@@ -1403,14 +1403,14 @@ class PostAdmin(admin.ModelAdmin):
 
         if queued_count:
             self.message_user(
-                request, f"Post notifications queued for {queued_count} verified posts."
+                request, f"Post notifications queued for {queued_count} visible posts."
             )
         if skipped_count:
             level = (
                 messages.WARNING if skipped_count == queryset.count() else messages.INFO
             )
             self.message_user(
-                request, f"Skipped {skipped_count} posts (not verified).", level=level
+                request, f"Skipped {skipped_count} posts (not visible).", level=level
             )
 
     send_post_notifications.short_description = (
@@ -2052,12 +2052,12 @@ class EventCoHostAdmin(admin.ModelAdmin):
         "event",
         "organization",
         "event_admin_org",
-        "event_verified",
+        "event_visible",
         "created_at",
     ]
     list_filter = [
         "created_at",
-        "event__verified",
+        "event__visible",
         "organization",
         "event__organization",
     ]
@@ -2084,9 +2084,9 @@ class EventCoHostAdmin(admin.ModelAdmin):
     def event_admin_org(self, obj):
         return obj.event.organization.name if obj.event.organization else "-"
 
-    @admin.display(description="Verified", boolean=True, ordering="event__verified")
-    def event_verified(self, obj):
-        return obj.event.verified
+    @admin.display(description="Visible", boolean=True, ordering="event__visible")
+    def event_visible(self, obj):
+        return obj.event.visible
 
     def get_queryset(self, request):
         return (
