@@ -6,7 +6,7 @@ import { Filter } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { useTranslations } from 'next-intl';
 
-type FilterType = 'all' | 'verified' | 'unverified';
+type FilterType = 'all' | 'visible' | 'hidden';
 
 interface EventFilterProps {
   events: Event[];

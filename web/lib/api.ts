@@ -137,7 +137,7 @@ export async function logoutOrganization(): Promise<{ message: string }> {
 // Event endpoints
 export async function getEvents(params?: {
   upcoming?: boolean;
-  verified?: boolean;
+  visible?: boolean;
   search?: string;
 }): Promise<Event[]> {
   const searchParams = new URLSearchParams();

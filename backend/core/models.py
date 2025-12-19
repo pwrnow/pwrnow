@@ -298,15 +298,11 @@ class Event(models.Model):
         if not is_new_instance:
             try:
                 original = Event.objects.get(pk=self.pk)
+                # Update visible_at timestamp whenever visibility changes
                 if self.visible != original.visible:
                     self.visible_at = timezone.now()
             except Event.DoesNotExist:
-                if not self.visible:
-                    self.visible_at = timezone.now()
-        else:
-            # For new instances, only set visible_at if not visible
-            if not self.visible:
-                self.visible_at = timezone.now()
+                pass
 
         if not self.slug:
             base_slug = slugify(self.title)
@@ -508,15 +504,11 @@ class Post(models.Model):
         if not is_new_instance:
             try:
                 original = Post.objects.get(pk=self.pk)
+                # Update visible_at timestamp whenever visibility changes
                 if self.visible != original.visible:
                     self.visible_at = timezone.now()
             except Post.DoesNotExist:
-                if not self.visible:
-                    self.visible_at = timezone.now()
-        else:
-            # For new instances, only set visible_at if not visible
-            if not self.visible:
-                self.visible_at = timezone.now()
+                pass
         super().save(*args, **kwargs)
 
 

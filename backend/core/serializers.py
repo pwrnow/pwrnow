@@ -251,7 +251,7 @@ class EventSerializer(serializers.ModelSerializer):
         # Restrict to visible for public (non-owner) in memory to keep prefetch benefits
         is_owner = current_org and str(current_org.id) == str(obj.organization_id)
         if not is_owner:
-            posts = [p for p in posts if getattr(p, "visible", True)]
+            posts = [p for p in posts if getattr(p, "visible", False)]
 
         # Order in memory by created_at desc
         posts = sorted(posts, key=lambda p: p.created_at, reverse=True)
@@ -639,7 +639,6 @@ class EventCreateSerializer(serializers.ModelSerializer):
         event = Event.objects.create(
             organization=organization,
             category=category,
-            visible=True,  # Events are visible by default
             **validated_data,
         )
 
@@ -725,7 +724,6 @@ class PostCreateSerializer(serializers.Serializer):
             event=event,
             organization=organization,
             text=text,
-            visible=True,  # Posts are visible by default
         )
 
         images = validated_data.get("images") or []
