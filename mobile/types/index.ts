@@ -58,7 +58,7 @@ export interface Event {
   location: string | null;
   image_url: string | null;
   url: string | null;
-  verified?: boolean;
+  visible?: boolean;
   is_new?: boolean;
   aspect_ratio?: string | null;
   liked?: boolean;

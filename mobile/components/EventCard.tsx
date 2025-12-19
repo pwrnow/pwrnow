@@ -436,26 +436,26 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 </View>
               ) : null}
 
-              {/* Unverified badge for staff users */}
-              {isStaff && event.verified === false && (
+              {/* Hidden badge for staff users */}
+              {isStaff && event.visible === false && (
                 <View
                   style={{
-                    backgroundColor: '#F59E0B' + '15',
-                    borderColor: '#F59E0B' + '30',
+                    backgroundColor: '#EF4444' + '15',
+                    borderColor: '#EF4444' + '30',
                   }}
                   className='px-2.5 py-1.5 rounded-xl border'
                 >
                   <Text
-                    style={{ color: '#F59E0B' }}
+                    style={{ color: '#EF4444' }}
                     className='text-xs font-semibold tracking-[0.5px]'
                   >
-                    {t('unverifiedTag')}
+                    {t('hiddenTag')}
                   </Text>
                 </View>
               )}
 
-              {/* Verified but unpublished badge for staff users */}
-              {isStaff && event.verified === true && event.is_published === false && (
+              {/* Visible but unpublished badge for staff users */}
+              {isStaff && event.visible === true && event.is_published === false && (
                 <View
                   style={{
                     backgroundColor: '#8B5CF6' + '15',

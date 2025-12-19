@@ -699,6 +699,35 @@ class EventViewSet(
         serializer = self.get_serializer(event)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="recently-added",
+        permission_classes=[IsStaff],
+    )
+    def recently_added(self, request):
+        """
+        Get events added in the last 3 days (staff only).
+        GET /events/recently-added/
+        """
+        logger.debug("Fetching recently added events")
+        from datetime import timedelta
+
+        # Get events created in the last 3 days
+        three_days_ago = timezone.now() - timedelta(days=3)
+        queryset = (
+            Event.objects.filter(created_at__gte=three_days_ago)
+            .select_related("category", "organization", "visible_by")
+            .prefetch_related("tags")
+            .order_by("-created_at")
+        )
+
+        serializer = EventSerializer(
+            queryset, many=True, context={"request": request}
+        )
+        logger.info(f"Listed {len(serializer.data)} recently added events")
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class PostViewSet(
     ApiLoggingMixin, OrganizationAuthenticationMixin, viewsets.GenericViewSet

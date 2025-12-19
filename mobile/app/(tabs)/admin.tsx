@@ -18,8 +18,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { t } from '../../lib/i18n';
 import { adminApi } from '../../lib/api';
-import { ProfileImageChangeRequest } from '../../types';
+import { ProfileImageChangeRequest, Event } from '../../types';
 import Avatar from '../../components/Avatar';
+import EventCard from '../../components/EventCard';
 import * as Haptics from 'expo-haptics';
 
 export default function AdminScreen() {
@@ -41,6 +42,17 @@ export default function AdminScreen() {
   } = useQuery({
     queryKey: ['pending-profile-image-requests'],
     queryFn: () => adminApi.getPendingProfileImageRequests(),
+    enabled: isStaff && isAuthenticated,
+  });
+
+  // Fetch recently added events
+  const {
+    data: recentEvents = [],
+    isLoading: isLoadingEvents,
+    refetch: refetchEvents,
+  } = useQuery({
+    queryKey: ['recently-added-events'],
+    queryFn: () => adminApi.getRecentlyAddedEvents(),
     enabled: isStaff && isAuthenticated,
   });
 
@@ -150,7 +162,10 @@ export default function AdminScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={() => {
+              refetch();
+              refetchEvents();
+            }}
             tintColor={Platform.OS === 'ios' ? colors.mutedForeground : undefined}
             colors={Platform.OS === 'android' ? [colors.primary] : undefined}
           />
@@ -297,6 +312,61 @@ export default function AdminScreen() {
                     )}
                   </TouchableOpacity>
                 </View>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Recently Added Events Section */}
+        <View className="mb-8">
+          <Text
+            style={{ color: colors.foreground }}
+            className="text-xl font-semibold mb-4"
+          >
+            Recently Added (Last 3 Days)
+          </Text>
+
+          {isLoadingEvents ? (
+            <View
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
+              className="border rounded-[14px] p-6 items-center"
+            >
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : recentEvents.length === 0 ? (
+            <View
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
+              className="border rounded-[14px] p-6 items-center"
+            >
+              <View
+                style={{ backgroundColor: colors.muted }}
+                className="w-14 h-14 rounded-full justify-center items-center mb-3"
+              >
+                <Feather name="calendar" size={28} color={colors.mutedForeground} />
+              </View>
+              <Text
+                style={{ color: colors.foreground }}
+                className="text-base font-semibold text-center mb-1"
+              >
+                No Recent Events
+              </Text>
+              <Text
+                style={{ color: colors.mutedForeground }}
+                className="text-sm text-center"
+              >
+                No events have been added in the last 3 days
+              </Text>
+            </View>
+          ) : (
+            recentEvents.map((event: Event) => (
+              <View key={event.id} className="mb-3">
+                <EventCard event={event} />
               </View>
             ))
           )}
