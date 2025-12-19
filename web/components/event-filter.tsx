@@ -24,14 +24,14 @@ export default function EventFilter({
   const filterOptions = [
     { key: 'all', label: t('all'), count: events.length },
     {
-      key: 'verified',
-      label: t('verified'),
-      count: events.filter((e) => e.verified).length,
+      key: 'visible',
+      label: t('visible'),
+      count: events.filter((e) => e.visible).length,
     },
     {
-      key: 'unverified',
-      label: t('unverified'),
-      count: events.filter((e) => !e.verified).length,
+      key: 'hidden',
+      label: t('hidden'),
+      count: events.filter((e) => !e.visible).length,
     },
   ];
 

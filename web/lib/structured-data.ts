@@ -194,7 +194,7 @@ export function generateEventStructuredData(
         `Kategoria: ${event.category.name}. Dołącz do nas na tym wyjątkowym wydarzeniu studenckim na Politechnice Wrocławskiej.`,
     startDate: formatDateForStructuredData(event.starts_at),
     endDate: formatDateForStructuredData(event.ends_at),
-    eventStatus: event.verified
+    eventStatus: event.visible
       ? 'https://schema.org/EventScheduled'
       : 'https://schema.org/EventPostponed',
     eventAttendanceMode: attendanceMode,

@@ -145,8 +145,8 @@ export async function getEvents(params?: {
   if (params?.upcoming) {
     searchParams.append('upcoming', 'true');
   }
-  if (params?.verified) {
-    searchParams.append('verified', 'true');
+  if (params?.visible !== undefined) {
+    searchParams.append('visible', params.visible.toString());
   }
   if (params?.search) {
     searchParams.append('search', params.search);
