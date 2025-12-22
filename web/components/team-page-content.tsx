@@ -26,17 +26,17 @@ type TeamMember = {
 
 // Team member data - showcasing professional expertise and individual achievements
 const teamMembers: TeamMember[] = [
-    {
-        id: "michal-mendzelewski",
-        name: "Michał Mendzelewski",
-        description: "working on the idea and handling the tech side :)",
-        image: "team/michal.png",
-        social: {
-            github: "https://github.com/michallm",
-            linkedin: "https://www.linkedin.com/in/michalmendzelewskim/",
-            website: "https://michallm.com",
-        },
-    },
+    // {
+    //     id: "michal-mendzelewski",
+    //     name: "Michał Mendzelewski",
+    //     description: "working on the idea and handling the tech side :)",
+    //     image: "team/michal.png",
+    //     social: {
+    //         github: "https://github.com/michallm",
+    //         linkedin: "https://www.linkedin.com/in/michalmendzelewskim/",
+    //         website: "https://michallm.com",
+    //     },
+    // },
     {
         id: "igor-lis",
         name: "Igor Lis",
@@ -48,6 +48,14 @@ const teamMembers: TeamMember[] = [
             website: "https://igor.lis.rocks/about",
             email: "iglis.com20@gmail.com",
         },
+    },
+    {
+        id: "kuba-krolak",
+        name: "Kuba Królak",
+        image: "team/kuba.jpeg",
+        description:
+            "Taking care of marketing, communication and all the behind-the-scenes stuff",
+        social: {},
     },
     {
         id: "adrian-szefer",
@@ -76,14 +84,6 @@ const teamMembers: TeamMember[] = [
         description:
             "An optimist who loves trying new things, turning inspiration from people and nature into posts",
         image: "team/zosia.JPG",
-        social: {},
-    },
-    {
-        id: "kuba-krolak",
-        name: "Kuba Królak",
-        image: "team/kuba.jpeg",
-        description:
-            "Taking care of marketing, communication and all the behind-the-scenes stuff",
         social: {},
     },
 ];
