@@ -139,8 +139,8 @@ function ThemedApp() {
       <StatusBar
         style={isDark ? 'light' : 'dark'}
         animated
-        translucent={false}
-        backgroundColor={colors.background}
+        translucent={true}
+        backgroundColor="transparent"
       />
       <RootNavigator />
       <ProfilePictureFeatureModal
