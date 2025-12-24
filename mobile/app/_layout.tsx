@@ -22,6 +22,11 @@ import { SettingsProvider } from '../contexts/SettingsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { focusManager, useQueryClient } from '@tanstack/react-query';
+import ProfilePictureFeatureModal from '../components/ProfilePictureFeatureModal';
+import {
+  hasSeenProfilePictureFeatureModal,
+  markProfilePictureFeatureModalAsSeen,
+} from '../lib/profilePictureFeatureStorage';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -89,7 +94,9 @@ export default function StackLayout() {
 // Component that handles theming based on settings
 function ThemedApp() {
   const { isDark, colors } = useTheme();
+  const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
 
   async function onAppStateChange(status: AppStateStatus) {
     if (Platform.OS !== 'web') {
@@ -102,6 +109,31 @@ function ThemedApp() {
     return () => subscription.remove();
   }, [queryClient]);
 
+  // Check if we should show the profile picture feature modal
+  useEffect(() => {
+    const checkProfilePictureModal = async () => {
+      if (isAuthenticated) {
+        const hasSeen = await hasSeenProfilePictureFeatureModal();
+        if (!hasSeen) {
+          // Small delay to let the app settle after authentication
+          setTimeout(() => {
+            setShowProfilePictureModal(true);
+          }, 1000);
+        }
+      }
+    };
+    checkProfilePictureModal();
+  }, [isAuthenticated]);
+
+  const handleProfilePictureModalClose = async () => {
+    await markProfilePictureFeatureModalAsSeen();
+    setShowProfilePictureModal(false);
+  };
+
+  const handleNavigateToProfile = () => {
+    router.push('/profile');
+  };
+
   return (
     <>
       <StatusBar
@@ -111,6 +143,11 @@ function ThemedApp() {
         backgroundColor={colors.background}
       />
       <RootNavigator />
+      <ProfilePictureFeatureModal
+        visible={showProfilePictureModal}
+        onClose={handleProfilePictureModalClose}
+        onNavigateToProfile={handleNavigateToProfile}
+      />
     </>
   );
 }
