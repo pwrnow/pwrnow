@@ -494,7 +494,7 @@ export default function ProfilePictureFeatureModal({
             {/* Take me there button */}
             <TouchableOpacity
               onPress={handleTakeMeThere}
-              style={{ backgroundColor: '#EC2E81' }}
+              style={{ backgroundColor: colors.accent }}
               className='w-full py-3 px-6 rounded-xl items-center mb-3'
               activeOpacity={0.85}
             >
