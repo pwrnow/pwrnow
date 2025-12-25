@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-20 14:19+0100\n"
+"POT-Creation-Date: 2025-12-16 20:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -113,7 +113,7 @@ msgstr ""
 msgid "Event slug is required."
 msgstr ""
 
-#: ai/views.py:59 ai/views.py:189 ai/views.py:241 core/views.py:774
+#: ai/views.py:59 ai/views.py:189 ai/views.py:241 core/views.py:1052
 msgid "Event not found."
 msgstr ""
 
@@ -125,289 +125,340 @@ msgstr ""
 msgid "Failed to parse schedule. Please try again or contact support."
 msgstr ""
 
-#: config/settings.py:191
+#: config/settings.py:192
 msgid "Polish"
 msgstr "Polish"
 
-#: config/settings.py:192
+#: config/settings.py:193
 msgid "English"
 msgstr "English"
 
-#: core/admin.py:23
+#: core/admin.py:48
 msgid "has image"
 msgstr ""
 
-#: core/admin.py:28 core/admin.py:66
+#: core/admin.py:53 core/admin.py:91
 msgid "Yes"
 msgstr ""
 
-#: core/admin.py:29 core/admin.py:67
+#: core/admin.py:54 core/admin.py:92
 msgid "No"
 msgstr ""
 
-#: core/admin.py:40
+#: core/admin.py:65
 msgid "status"
 msgstr ""
 
-#: core/admin.py:45
+#: core/admin.py:70
 msgid "Past"
 msgstr ""
 
-#: core/admin.py:46
+#: core/admin.py:71
 msgid "Ongoing"
 msgstr ""
 
-#: core/admin.py:47
+#: core/admin.py:72
 msgid "Upcoming"
 msgstr ""
 
-#: core/admin.py:61
+#: core/admin.py:86
 msgid "aspect ratio"
 msgstr ""
 
-#: core/admin.py:148 core/models.py:139 feature_access/admin.py:89
+#: core/admin.py:192 core/models.py:154 feature_access/admin.py:89
 msgid "Organization"
 msgstr ""
 
-#: core/admin.py:151
+#: core/admin.py:193
 msgid "Code Details"
 msgstr ""
 
-#: core/admin.py:154
+#: core/admin.py:194
 msgid "Usage Information"
 msgstr ""
 
-#: core/admin.py:172
+#: core/admin.py:210
 msgid "URL Actions"
 msgstr ""
 
-#: core/models.py:140
+#: core/admin.py:928
+msgid "Please select exactly one event for manual reminder."
+msgstr ""
+
+#: core/admin.py:938 core/admin.py:975
+msgid "Only verified events can have reminders sent."
+msgstr ""
+
+#: core/admin.py:949
+msgid "Send manual reminder (with message selection)"
+msgstr ""
+
+#: core/admin.py:998
+msgid "Send Manual Reminder"
+msgstr ""
+
+#: core/models.py:120
+msgid "Short display name (used in event headers when space is limited)"
+msgstr ""
+
+#: core/models.py:155
 msgid "Admin"
 msgstr ""
 
+#: core/models.py:400
+msgid "The event being co-hosted"
+msgstr ""
+
 #: core/models.py:406
+msgid "The co-hosting organization"
+msgstr ""
+
+#: core/models.py:412
+msgid "Event Co-Host"
+msgstr ""
+
+#: core/models.py:413
+msgid "Event Co-Hosts"
+msgstr ""
+
+#: core/models.py:428
+msgid "Co-host organization cannot be the same as the primary organization."
+msgstr ""
+
+#: core/models.py:471
 msgid "Optional text content"
 msgstr ""
 
-#: core/models.py:414
+#: core/models.py:479
 msgid "Timestamp of when the post was verified"
 msgstr ""
 
-#: core/models.py:435 core/serializers.py:453
+#: core/models.py:500 core/serializers.py:693
 msgid "Post must include text or at least one image."
 msgstr ""
 
-#: core/models.py:469
+#: core/models.py:531
 msgid "Image file"
 msgstr ""
 
-#: core/models.py:474
+#: core/models.py:536
 msgid "Detected aspect ratio of the post image (e.g., '16:9', '1:1')"
 msgstr ""
 
-#: core/models.py:606
+#: core/models.py:667
 msgid "QR Code Scan"
 msgstr ""
 
-#: core/models.py:858
+#: core/models.py:930 users/models.py:113
 msgid "Pending"
 msgstr ""
 
-#: core/models.py:859
+#: core/models.py:931
 msgid "Accepted"
 msgstr ""
 
-#: core/models.py:860
+#: core/models.py:932 users/models.py:115
 msgid "Rejected"
 msgstr ""
 
-#: core/serializers.py:56
+#: core/serializers.py:81
 msgid "Invalid authentication code"
 msgstr ""
 
-#: core/serializers.py:335 core/serializers.py:534
+#: core/serializers.py:529 core/serializers.py:788
 msgid "End time must be after start time."
 msgstr ""
 
-#: core/serializers.py:344
+#: core/serializers.py:541
 msgid "Publication date must be in the future (not today or earlier)."
 msgstr ""
 
-#: core/serializers.py:353
+#: core/serializers.py:554
 msgid "Publication date cannot be later than the event start date."
 msgstr ""
 
-#: core/serializers.py:366
+#: core/serializers.py:570
 msgid "Image is required for this category."
 msgstr ""
 
-#: core/serializers.py:373
+#: core/serializers.py:578
 msgid "Image size cannot exceed 5MB."
 msgstr ""
 
-#: core/serializers.py:380 core/serializers.py:459 core/serializers.py:560
-#: core/serializers.py:691 core/serializers.py:768
+#: core/serializers.py:601
+#, python-format
+msgid "Organization with ID %(id)s not found."
+msgstr ""
+
+#: core/serializers.py:609 core/serializers.py:700 core/serializers.py:817
+#: core/serializers.py:995 core/serializers.py:1088
 msgid "No request context found."
 msgstr ""
 
-#: core/serializers.py:387 core/serializers.py:464 core/serializers.py:565
-#: core/serializers.py:696 core/serializers.py:773 core/views.py:1297
-#: core/views.py:1403 core/views.py:1416 core/views.py:1433
+#: core/serializers.py:617 core/serializers.py:706 core/serializers.py:823
+#: core/serializers.py:1001 core/serializers.py:1094 core/views.py:1710
+#: core/views.py:1839 core/views.py:1857 core/views.py:1885
 msgid "No authenticated organization found."
 msgstr ""
 
-#: core/serializers.py:396
+#: core/serializers.py:627
 msgid "Invalid category slug."
 msgstr ""
 
-#: core/serializers.py:470 core/serializers.py:542 core/serializers.py:574
-#: core/serializers.py:659 core/serializers.py:705 core/serializers.py:752
-#: core/serializers.py:782
+#: core/serializers.py:712 core/serializers.py:798 core/serializers.py:833
+#: core/serializers.py:934 core/serializers.py:1011 core/serializers.py:1067
+#: core/serializers.py:1104
 msgid "Invalid event slug."
 msgstr ""
 
-#: core/serializers.py:474
+#: core/serializers.py:717
 msgid "You do not have permission to post to this event."
 msgstr ""
 
-#: core/serializers.py:549
+#: core/serializers.py:806
 msgid "Date must be within the event dates."
 msgstr ""
 
-#: core/serializers.py:577 core/serializers.py:708 core/serializers.py:785
+#: core/serializers.py:838 core/serializers.py:1016 core/serializers.py:1109
 msgid "You do not have permission to modify this event."
 msgstr ""
 
-#: core/serializers.py:663
+#: core/serializers.py:940
 msgid "Event already has a map."
 msgstr ""
 
-#: core/serializers.py:672
+#: core/serializers.py:951
 msgid "Location name is required."
 msgstr ""
 
-#: core/serializers.py:674
+#: core/serializers.py:957
 msgid "Latitude and longitude are required."
 msgstr ""
 
-#: core/serializers.py:680
+#: core/serializers.py:969
 msgid "Latitude must be between -90 and 90 degrees."
 msgstr ""
 
-#: core/serializers.py:682
+#: core/serializers.py:977
 msgid "Longitude must be between -180 and 180 degrees."
 msgstr ""
 
-#: core/serializers.py:684
+#: core/serializers.py:985
 msgid "Invalid latitude or longitude values."
 msgstr ""
 
-#: core/serializers.py:755
+#: core/serializers.py:1072
 msgid "Event does not have a map."
 msgstr ""
 
-#: core/serializers.py:758
+#: core/serializers.py:1077
 msgid "Event map is not active."
 msgstr ""
 
-#: core/serializers.py:852 core/views.py:1204
+#: core/serializers.py:1197 core/views.py:1599
 msgid "User not found."
 msgstr ""
 
-#: core/serializers.py:858
+#: core/serializers.py:1206
 msgid "You cannot send a friend request to yourself."
 msgstr ""
 
-#: core/serializers.py:883
+#: core/serializers.py:1238
 msgid "You are already friends with this user."
 msgstr ""
 
-#: core/serializers.py:895 core/serializers.py:926
+#: core/serializers.py:1256 core/serializers.py:1304
 msgid "You have already sent a friend request to this user."
 msgstr ""
 
-#: core/serializers.py:898
+#: core/serializers.py:1264
 msgid ""
 "This user has already sent you a friend request. Please accept it instead."
 msgstr ""
 
-#: core/views.py:126
+#: core/views.py:161
 msgid "Successfully logged out"
 msgstr ""
 
-#: core/views.py:140 core/views.py:160
+#: core/views.py:175 core/views.py:197 core/views.py:258
 msgid "No organization authenticated"
 msgstr ""
 
-#: core/views.py:170
+#: core/views.py:209 core/views.py:270
 msgid "Access denied"
 msgstr ""
 
-#: core/views.py:177
+#: core/views.py:217
 msgid "No image file provided"
 msgstr ""
 
-#: core/views.py:187
+#: core/views.py:229
 msgid "Image size cannot exceed 5MB"
 msgstr ""
 
-#: core/views.py:468
+#: core/views.py:591
+msgid ""
+"Only the admin organization can delete this event. Co-hosts cannot delete "
+"events."
+msgstr ""
+
+#: core/views.py:654
 msgid "Event not verified."
 msgstr ""
 
-#: core/views.py:491
+#: core/views.py:686
 msgid "Event is already verified."
 msgstr ""
 
-#: core/views.py:535 core/views.py:574
+#: core/views.py:744 core/views.py:802
 msgid "Authentication required."
 msgstr ""
 
-#: core/views.py:539
+#: core/views.py:753
 msgid "You do not have permission to delete this post."
 msgstr ""
 
-#: core/views.py:579
+#: core/views.py:814
 msgid "You do not have permission to delete this schedule item."
 msgstr ""
 
-#: core/views.py:701
+#: core/views.py:961
 msgid "Search query must be at least 3 characters long."
 msgstr ""
 
-#: core/views.py:877 core/views.py:941
+#: core/views.py:1185 core/views.py:1267
 msgid "Friend request not found or already processed."
 msgstr ""
 
-#: core/views.py:908
+#: core/views.py:1225
 msgid "Friend request accepted."
 msgstr ""
 
-#: core/views.py:953
+#: core/views.py:1283
 msgid "Friend request rejected."
 msgstr ""
 
-#: core/views.py:1217
+#: core/views.py:1614
 msgid "You are not friends with this user."
 msgstr ""
 
-#: core/views.py:1238
+#: core/views.py:1639
 msgid "Friend removed successfully."
 msgstr ""
 
-#: core/views.py:1316
+#: core/views.py:1736
 msgid "You do not have permission to modify this event map."
 msgstr ""
 
-#: core/views.py:1421
+#: core/views.py:1867
 msgid "You do not have permission to modify this event map location."
 msgstr ""
 
-#: core/views.py:1438
+#: core/views.py:1893
 msgid "You do not have permission to delete this event map location."
 msgstr ""
 
-#: feature_access/admin.py:22
+#: feature_access/admin.py:22 users/admin.py:259
 msgid "Status"
 msgstr ""
 
@@ -420,6 +471,7 @@ msgid "Enabling Information"
 msgstr ""
 
 #: feature_access/admin.py:79
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:22
 msgid "Event"
 msgstr ""
 
@@ -471,89 +523,435 @@ msgstr ""
 msgid "Event Feature Access"
 msgstr ""
 
-#: notifications/services.py:741
+#: notifications/reminder_messages.py:24
+msgid "More than 24 hours"
+msgstr ""
+
+#: notifications/reminder_messages.py:25
+msgid "12-24 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:26
+msgid "6-12 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:27
+msgid "3-6 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:28
+msgid "1-3 hours before"
+msgstr ""
+
+#: notifications/reminder_messages.py:29
+msgid "Less than 1 hour"
+msgstr ""
+
+#: notifications/reminder_messages.py:30 notifications/reminder_messages.py:214
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:35
+msgid "Event has started"
+msgstr ""
+
+#: notifications/reminder_messages.py:40
+msgid "📅 Don't forget!"
+msgstr ""
+
+#: notifications/reminder_messages.py:41
+#, python-brace-format
+msgid "'{event_title}' is coming up. Mark your calendar!"
+msgstr ""
+
+#: notifications/reminder_messages.py:44
+msgid "🎯 Event reminder"
+msgstr ""
+
+#: notifications/reminder_messages.py:45
+#, python-brace-format
+msgid "'{event_title}' - make sure you're ready!"
+msgstr ""
+
+#: notifications/reminder_messages.py:48
+msgid "✨ Coming soon"
+msgstr ""
+
+#: notifications/reminder_messages.py:49
+#, python-brace-format
+msgid "'{event_title}' is approaching. Get excited!"
+msgstr ""
+
+#: notifications/reminder_messages.py:55
+msgid "⏰ Tomorrow's the day!"
+msgstr ""
+
+#: notifications/reminder_messages.py:56
+#, python-brace-format
+msgid "'{event_title}' is happening tomorrow. Get ready!"
+msgstr ""
+
+#: notifications/reminder_messages.py:59
+msgid "🌟 See you tomorrow!"
+msgstr ""
+
+#: notifications/reminder_messages.py:60
+#, python-brace-format
+msgid "'{event_title}' starts tomorrow. Don't miss it!"
+msgstr ""
+
+#: notifications/reminder_messages.py:63
+msgid "📆 Heads up!"
+msgstr ""
+
+#: notifications/reminder_messages.py:64
+#, python-brace-format
+msgid "'{event_title}' is tomorrow. Plan your day!"
+msgstr ""
+
+#: notifications/reminder_messages.py:67
+msgid "🎉 Almost time!"
+msgstr ""
+
+#: notifications/reminder_messages.py:68
+#, python-brace-format
+msgid "'{event_title}' is just around the corner - tomorrow!"
+msgstr ""
+
+#: notifications/reminder_messages.py:71
+msgid "💫 24 hours to go"
+msgstr ""
+
+#: notifications/reminder_messages.py:72
+#, python-brace-format
+msgid "'{event_title}' starts in about 24 hours!"
+msgstr ""
+
+#: notifications/reminder_messages.py:78
+msgid "🌅 Today's the day!"
+msgstr ""
+
+#: notifications/reminder_messages.py:79
+#, python-brace-format
+msgid "'{event_title}' is happening today. Get ready!"
+msgstr ""
+
+#: notifications/reminder_messages.py:82
+msgid "☀️ Event today!"
+msgstr ""
+
+#: notifications/reminder_messages.py:83
+#, python-brace-format
+msgid "'{event_title}' - see you there later today!"
+msgstr ""
+
+#: notifications/reminder_messages.py:86
+msgid "🎊 It's today!"
+msgstr ""
+
+#: notifications/reminder_messages.py:87
+#, python-brace-format
+msgid "'{event_title}' is today. Excitement loading..."
+msgstr ""
+
+#: notifications/reminder_messages.py:90
+msgid "📍 Mark the spot"
+msgstr ""
+
+#: notifications/reminder_messages.py:91
+#, python-brace-format
+msgid "'{event_title}' kicks off today. Know where to go!"
+msgstr ""
+
+#: notifications/reminder_messages.py:97
+msgid "🚀 Getting close!"
+msgstr ""
+
+#: notifications/reminder_messages.py:98
+#, python-brace-format
+msgid "'{event_title}' starts in a few hours. Almost there!"
+msgstr ""
+
+#: notifications/reminder_messages.py:101
+msgid "⏱️ Few hours left"
+msgstr ""
+
+#: notifications/reminder_messages.py:102
+#, python-brace-format
+msgid "'{event_title}' is coming up soon. Ready?"
+msgstr ""
+
+#: notifications/reminder_messages.py:105
+msgid "🎯 On your marks..."
+msgstr ""
+
+#: notifications/reminder_messages.py:106
+#, python-brace-format
+msgid "'{event_title}' starts soon. Time to prepare!"
+msgstr ""
+
+#: notifications/reminder_messages.py:109
+msgid "✨ The countdown"
+msgstr ""
+
+#: notifications/reminder_messages.py:110
+#, python-brace-format
+msgid "'{event_title}' in just a few hours!"
+msgstr ""
+
+#: notifications/reminder_messages.py:113
+msgid "🔔 Time check"
+msgstr ""
+
+#: notifications/reminder_messages.py:114
+#, python-brace-format
+msgid "'{event_title}' - only a few hours away!"
+msgstr ""
+
+#: notifications/reminder_messages.py:120
+msgid "🚀 Only 3 hours left!"
+msgstr ""
+
+#: notifications/reminder_messages.py:121
+#, python-brace-format
+msgid "'{event_title}' - are you ready?"
+msgstr ""
+
+#: notifications/reminder_messages.py:124
+msgid "⏰ Tick tock..."
+msgstr ""
+
+#: notifications/reminder_messages.py:125
+#, python-brace-format
+msgid "'{event_title}' starts very soon!"
+msgstr ""
+
+#: notifications/reminder_messages.py:128
+msgid "🎉 Almost there!"
+msgstr ""
+
+#: notifications/reminder_messages.py:129
+#, python-brace-format
+msgid "'{event_title}' begins in just a moment!"
+msgstr ""
+
+#: notifications/reminder_messages.py:132
+msgid "👟 Get your shoes on!"
+msgstr ""
+
+#: notifications/reminder_messages.py:133
+#, python-brace-format
+msgid "'{event_title}' is starting soon. Time to go!"
+msgstr ""
+
+#: notifications/reminder_messages.py:136
+msgid "🔥 Hype time!"
+msgstr ""
+
+#: notifications/reminder_messages.py:137
+#, python-brace-format
+msgid "'{event_title}' starts very soon. Get hyped!"
+msgstr ""
+
+#: notifications/reminder_messages.py:140
+msgid "💨 Soon... very soon"
+msgstr ""
+
+#: notifications/reminder_messages.py:141
+#, python-brace-format
+msgid "'{event_title}' - the wait is almost over!"
+msgstr ""
+
+#: notifications/reminder_messages.py:144
+msgid "🏃 Time to move!"
+msgstr ""
+
+#: notifications/reminder_messages.py:145
+#, python-brace-format
+msgid "'{event_title}' is about to begin!"
+msgstr ""
+
+#: notifications/reminder_messages.py:151
+msgid "🏃 GO GO GO!"
+msgstr ""
+
+#: notifications/reminder_messages.py:152
+#, python-brace-format
+msgid "'{event_title}' starts in less than an hour!"
+msgstr ""
+
+#: notifications/reminder_messages.py:155
+msgid "⚡ Final call!"
+msgstr ""
+
+#: notifications/reminder_messages.py:156
+#, python-brace-format
+msgid "'{event_title}' is about to start! Hurry!"
+msgstr ""
+
+#: notifications/reminder_messages.py:159
+msgid "🎬 Showtime!"
+msgstr ""
+
+#: notifications/reminder_messages.py:160
+#, python-brace-format
+msgid "'{event_title}' begins any moment now!"
+msgstr ""
+
+#: notifications/reminder_messages.py:163
+msgid "🚨 Last chance!"
+msgstr ""
+
+#: notifications/reminder_messages.py:164
+#, python-brace-format
+msgid "'{event_title}' - don't miss the start!"
+msgstr ""
+
+#: notifications/reminder_messages.py:167
+msgid "⏰ Minutes away!"
+msgstr ""
+
+#: notifications/reminder_messages.py:168
+#, python-brace-format
+msgid "'{event_title}' starts in minutes. Are you there?"
+msgstr ""
+
+#: notifications/reminder_messages.py:171
+msgid "🎯 It's happening!"
+msgstr ""
+
+#: notifications/reminder_messages.py:172
+#, python-brace-format
+msgid "'{event_title}' is starting NOW!"
+msgstr ""
+
+#: notifications/reminder_messages.py:178
+msgid "🎉 It's happening!"
+msgstr ""
+
+#: notifications/reminder_messages.py:179
+#, python-brace-format
+msgid "'{event_title}' has started. Join in!"
+msgstr ""
+
+#: notifications/reminder_messages.py:182
+msgid "🔴 LIVE NOW"
+msgstr ""
+
+#: notifications/reminder_messages.py:183
+#, python-brace-format
+msgid "'{event_title}' is happening right now!"
+msgstr ""
+
+#: notifications/reminder_messages.py:186
+msgid "⚡ In progress"
+msgstr ""
+
+#: notifications/reminder_messages.py:187
+#, python-brace-format
+msgid "'{event_title}' has begun. Don't miss it!"
+msgstr ""
+
+#: notifications/reminder_messages.py:190
+msgid "🎊 Event is live!"
+msgstr ""
+
+#: notifications/reminder_messages.py:191
+#, python-brace-format
+msgid "'{event_title}' - the fun has started!"
+msgstr ""
+
+#: notifications/reminder_messages.py:194
+msgid "🏃 Still time!"
+msgstr ""
+
+#: notifications/reminder_messages.py:195
+#, python-brace-format
+msgid "'{event_title}' started but you can still join!"
+msgstr ""
+
+#: notifications/services.py:840
 msgid "New event available"
 msgstr "New event available"
 
-#: notifications/services.py:761
+#: notifications/services.py:860
 msgid "New event created"
 msgstr "New event created"
 
-#: notifications/services.py:796
+#: notifications/services.py:895
 msgid "Only 3 hours left! Are you ready?"
 msgstr ""
 
-#: notifications/services.py:797
+#: notifications/services.py:896
 msgid "Tick tock... 3 hours to go! ⏰"
 msgstr ""
 
-#: notifications/services.py:798
+#: notifications/services.py:897
 msgid "Almost there! The fun begins in 3h."
 msgstr ""
 
-#: notifications/services.py:799
+#: notifications/services.py:898
 msgid "Hey! Just a friendly nudge: 3h until the event."
 msgstr ""
 
-#: notifications/services.py:800
+#: notifications/services.py:899
 msgid "3 hours! Get your shoes on!"
 msgstr ""
 
-#: notifications/services.py:801
+#: notifications/services.py:900
 msgid "Hype! Starts in 3 hours!"
 msgstr ""
 
-#: notifications/services.py:802
+#: notifications/services.py:901
 msgid "Soon... very soon. (3h)"
 msgstr ""
 
-#: notifications/services.py:833
+#: notifications/services.py:932
 msgid "tomorrow"
 msgstr ""
 
-#: notifications/services.py:834
+#: notifications/services.py:933
 msgid "it's tomorrow!"
 msgstr ""
 
-#: notifications/services.py:835
+#: notifications/services.py:934
 msgid "24h to go"
 msgstr ""
 
-#: notifications/services.py:836
+#: notifications/services.py:935
 msgid "see you tomorrow"
 msgstr ""
 
-#: notifications/services.py:837
+#: notifications/services.py:936
 msgid "tomorrow — ready?"
 msgstr ""
 
-#: notifications/services.py:862
+#: notifications/services.py:961
 msgid "New post"
 msgstr "New post"
 
-#: notifications/services.py:914
+#: notifications/services.py:1013
 msgid "New friend request"
 msgstr ""
 
-#: notifications/services.py:915
+#: notifications/services.py:1014
 #, python-brace-format
 msgid "{username} sent you a friend request"
 msgstr ""
 
-#: notifications/services.py:1011
+#: notifications/services.py:1110
 msgid "Friend request accepted"
 msgstr ""
 
-#: notifications/services.py:1012
+#: notifications/services.py:1111
 #, python-brace-format
 msgid "{username} accepted your friend request"
 msgstr ""
 
 #: notifications/templates/admin/notifications/custom_text_notification_form.html:4
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:4
 msgid "Django site admin"
 msgstr ""
 
 #: notifications/templates/admin/notifications/custom_text_notification_form.html:8
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:8
 msgid "Home"
 msgstr ""
 
@@ -565,32 +963,261 @@ msgstr ""
 msgid "Devices"
 msgstr ""
 
-#: users/models.py:15
-msgid "email address"
-msgstr "email address"
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:9
+msgid "Core"
+msgstr ""
 
-#: users/models.py:19
-msgid "username"
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:10
+msgid "Events"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:19
+msgid "Event Details"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:26
+msgid "Starts at"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:30
+msgid "Time until event"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:33
+msgid "hours"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:35
+msgid "hours ago"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:37
+msgid "Event ended"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:42
+msgid "Time bracket"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:46
+msgid "Target users"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:47
+msgid "users who liked this event"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:50
+msgid "Target devices"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:51
+msgid "active devices"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:63
+msgid "Select Reminder Message"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:64
+msgid ""
+"Choose a predefined message for this time bracket. Messages are "
+"automatically selected based on how much time is left until the event."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:78
+msgid "No messages available for this time bracket."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:84
+msgid "Preview & Confirm"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:85
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:117
+msgid "Cancel"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:97
+msgid "Confirm Notification"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:100
+msgid "Notification Preview"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:108
+msgid "Please confirm"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:109
+msgid "This will send the notification to"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:109
+msgid "devices belonging to"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:109
+msgid "users."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:110
+msgid "This action cannot be undone."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:115
+msgid "Send Notification Now"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:116
+msgid "Back to Selection"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:124
+msgid "Notifications Sent Successfully"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:125
+msgid "Sent"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:125
+msgid "notifications."
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:127
+msgid "Failed"
+msgstr ""
+
+#: notifications/templates/admin/notifications/send_event_reminder_form.html:132
+msgid "Back to Events"
+msgstr ""
+
+#: users/admin.py:175
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:21
+msgid "Rejection Feedback"
+msgstr ""
+
+#: users/admin.py:176
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:26
+msgid "This message will be sent to the user as a notification."
+msgstr ""
+
+#: users/admin.py:209
+msgid "Request Details"
+msgstr ""
+
+#: users/admin.py:212 users/admin.py:230
+msgid "Image"
+msgstr ""
+
+#: users/admin.py:215
+msgid "Review"
+msgstr ""
+
+#: users/admin.py:218
+msgid "System"
+msgstr ""
+
+#: users/admin.py:240
+msgid "Image Preview"
+msgstr ""
+
+#: users/admin.py:250
+msgid "Username"
+msgstr ""
+
+#: users/admin.py:274
+msgid "Reviewed By"
+msgstr ""
+
+#: users/admin.py:305
+msgid "Approve selected requests"
+msgstr ""
+
+#: users/admin.py:345
+msgid "Profile image approved successfully."
+msgstr ""
+
+#: users/admin.py:365 users/views.py:344
+msgid "Profile Image Rejected"
+msgstr ""
+
+#: users/admin.py:375
+msgid "Profile image rejected and user notified."
 msgstr ""
 
 #: users/models.py:23
+msgid "email address"
+msgstr "email address"
+
+#: users/models.py:27
+msgid "username"
+msgstr ""
+
+#: users/models.py:31
 msgid "Username must be at least 3 characters long"
 msgstr ""
 
-#: users/models.py:26
+#: users/models.py:34
 msgid "Username can only contain letters, numbers, and underscores"
 msgstr ""
 
-#: users/models.py:29
+#: users/models.py:37
 msgid "Required. 3-16 characters. Letters, numbers, and underscores only."
 msgstr ""
 
-#: users/models.py:34
+#: users/models.py:42
 msgid "username set by user"
 msgstr ""
 
-#: users/models.py:36
+#: users/models.py:44
 msgid "Indicates if the user has manually set their username"
+msgstr ""
+
+#: users/models.py:52
+msgid "User profile image (approved)"
+msgstr ""
+
+#: users/models.py:114
+msgid "Approved"
+msgstr ""
+
+#: users/models.py:128
+msgid "Pending profile image awaiting approval"
+msgstr ""
+
+#: users/models.py:139
+msgid "Feedback provided when rejecting the image"
+msgstr ""
+
+#: users/models.py:152
+msgid "Staff member who reviewed this request"
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:7
+msgid "Review Actions"
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:12
+msgid "Approve"
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:25
+msgid "Enter reason for rejection (will be sent to user)..."
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:28
+msgid "Reject"
+msgstr ""
+
+#: users/views.py:245
+msgid "No profile image to delete"
+msgstr ""
+
+#: users/views.py:281 users/views.py:326
+msgid "Request not found or already processed"
 msgstr ""
 
 #: utils/middleware.py:34
