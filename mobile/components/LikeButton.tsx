@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -268,8 +268,8 @@ export default function LikeButton({
         )}
 
         {/* Main heart icon */}
-        <AntDesign
-          name={isLiked ? 'heart' : 'hearto'}
+        <Ionicons
+          name={isLiked ? 'heart' : 'heart-outline'}
           size={size}
           color={colors.accent}
         />
@@ -285,7 +285,7 @@ export default function LikeButton({
             },
           ]}
         >
-          <AntDesign name='heart' size={size / 3} color={colors.accent} />
+          <Ionicons name='heart' size={size / 3} color={colors.accent} />
         </Animated.View>
 
         <Animated.View
@@ -298,7 +298,7 @@ export default function LikeButton({
             },
           ]}
         >
-          <AntDesign name='heart' size={size / 4} color={colors.accent} />
+          <Ionicons name='heart' size={size / 4} color={colors.accent} />
         </Animated.View>
 
         <Animated.View
@@ -311,7 +311,7 @@ export default function LikeButton({
             },
           ]}
         >
-          <AntDesign name='heart' size={size / 5} color={colors.accent} />
+          <Ionicons name='heart' size={size / 5} color={colors.accent} />
         </Animated.View>
       </AnimatedTouchableOpacity>
     </View>

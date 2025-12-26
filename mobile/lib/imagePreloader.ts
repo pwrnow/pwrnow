@@ -1,5 +1,4 @@
 import { imageCacheManager } from './imageCache';
-import { offlineManager } from './offlineManager';
 import type { Event } from '../types';
 
 export class ImagePreloader {
@@ -173,9 +172,8 @@ export class ImagePreloader {
   /**
    * Preload images for upcoming events (background task)
    */
-  async preloadUpcomingEvents(): Promise<void> {
+  async preloadUpcomingEvents(events: Event[]): Promise<void> {
     try {
-      const events = await offlineManager.getCachedEvents();
       if (events.length > 0) {
         // Preload all events with low priority
         await this.preloadEventImages(events, 'low');

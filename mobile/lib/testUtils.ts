@@ -38,5 +38,5 @@ export const testUtils = {
 
 // Make it available globally in development
 if (__DEV__) {
-  (global as any).testUtils = testUtils;
+  (globalThis as any).testUtils = testUtils;
 }
