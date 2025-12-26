@@ -41,6 +41,8 @@ if (config.sentryDsn) {
     // Enable native crash tracking
     enableNative: true,
     enableNativeFramesTracking: !__DEV__, // Only in production
+    // Performance monitoring
+    tracesSampleRate: __DEV__ ? 1.0 : 0.2, // 100% in dev, 20% in production
   });
 }
 
