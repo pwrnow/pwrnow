@@ -113,7 +113,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "sentry-expo"
     ],
     "scheme": "pl.pwrnow.app",
     "extra": {
