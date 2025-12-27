@@ -39,7 +39,7 @@ export class ImageCacheManager {
 
       // Load cache info from AsyncStorage
       await this.loadCacheInfo();
-      
+
       // Clean up old cache entries
       await this.cleanupCache();
     } catch (error) {
@@ -51,11 +51,11 @@ export class ImageCacheManager {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const imageCacheKeys = keys.filter(key => key.startsWith(IMAGE_CACHE_PREFIX));
-      
+
       if (imageCacheKeys.length === 0) return;
 
       const cacheData = await AsyncStorage.multiGet(imageCacheKeys);
-      
+
       for (const [key, value] of cacheData) {
         if (value) {
           try {
@@ -171,8 +171,31 @@ export class ImageCacheManager {
       const targetFile = new File(cacheDir, filename);
 
       try {
+        // Check if file exists on disk but not in cache info (stale state)
+        // Return the existing file path if it's valid
+        if (targetFile.exists) {
+          try {
+            // File exists, add it to cache info and return
+            const info: CachedImageInfo = {
+              url,
+              localPath: targetFile.uri,
+              timestamp: Date.now(),
+              size: targetFile.size || 0,
+            };
+            await this.saveCacheInfo(url, info);
+            return targetFile.uri;
+          } catch (existingError) {
+            // If we can't use the existing file, try to delete and re-download
+            try {
+              targetFile.delete();
+            } catch (deleteError) {
+              // Ignore delete errors
+            }
+          }
+        }
+
         const downloadedFile = await File.downloadFileAsync(url, targetFile);
-        
+
         const info: CachedImageInfo = {
           url,
           localPath: downloadedFile.uri,
@@ -182,9 +205,21 @@ export class ImageCacheManager {
 
         await this.saveCacheInfo(url, info);
         return downloadedFile.uri;
-      } catch (e) {
-        // Download failed or file exists logic
-        console.warn('Download failed or handled:', e);
+      } catch (e: any) {
+        // Check if error is "Destination already exists" - file was created by concurrent call
+        if (e?.message?.includes('Destination already exists') && targetFile.exists) {
+          // File exists now, use it
+          const info: CachedImageInfo = {
+            url,
+            localPath: targetFile.uri,
+            timestamp: Date.now(),
+            size: targetFile.size || 0,
+          };
+          await this.saveCacheInfo(url, info);
+          return targetFile.uri;
+        }
+        // Download failed for other reasons
+        console.warn('Download failed:', e);
         return null;
       }
     } catch (error) {
@@ -205,7 +240,7 @@ export class ImageCacheManager {
 
         // Remove from cache info
         this.cacheInfo.delete(url);
-        
+
         // Remove from AsyncStorage
         const key = `${IMAGE_CACHE_PREFIX}${this.hashUrl(url)}`;
         await AsyncStorage.removeItem(key);
@@ -238,7 +273,7 @@ export class ImageCacheManager {
   getCacheStats(): { count: number; totalSize: number; urls: string[] } {
     const totalSize = Array.from(this.cacheInfo.values())
       .reduce((sum, info) => sum + info.size, 0);
-    
+
     return {
       count: this.cacheInfo.size,
       totalSize,

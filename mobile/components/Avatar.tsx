@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -69,7 +70,10 @@ export default function Avatar({
             styles.image,
             { width: size, height: size, borderRadius: size / 2 },
           ]}
-          resizeMode='cover'
+          contentFit='cover'
+          cachePolicy='disk'
+          priority='high'
+          transition={100}
         />
       ) : (
         <LinearGradient
