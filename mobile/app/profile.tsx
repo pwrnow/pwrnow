@@ -21,7 +21,7 @@ import { ThemeMode } from '../lib/settingsStorage';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { getInfoAsync } from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsCard from '../components/SettingsCard';
 import Avatar from '../components/Avatar';
@@ -196,7 +196,7 @@ export default function ProfileScreen() {
     setIsUploadingImage(true);
     try {
       // Check file size before uploading
-      const fileInfo = await FileSystem.getInfoAsync(imageUri);
+      const fileInfo = await getInfoAsync(imageUri);
       if (fileInfo.exists && fileInfo.size && fileInfo.size > MAX_IMAGE_SIZE_BYTES) {
         const fileSizeMB = (fileInfo.size / (1024 * 1024)).toFixed(1);
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -414,8 +414,8 @@ export default function ProfileScreen() {
                 onValueChange={setNotificationsEnabled}
                 trackColor={{ false: '#E5E7EB', true: '#2066DF' }}
                 thumbColor='#FFFFFF'
-                ios_backgroundColor='#E5E7EB'
-                style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                ios_backgroundColor={isDark ? colors.muted : colors.border}
+                style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
               />
             }
             showChevron={false}

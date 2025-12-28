@@ -1,8 +1,9 @@
-import * as FileSystem from 'expo-file-system';
+import { Paths, File, Directory } from 'expo-file-system';
 import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const IMAGE_CACHE_DIR = `${FileSystem.cacheDirectory}images/`;
+// Initialize cache directory
+const cacheDir = new Directory(Paths.cache, 'images');
 const IMAGE_CACHE_PREFIX = 'pwrnow_image_cache_';
 const MAX_CACHE_SIZE = 100 * 1024 * 1024; // 100MB
 const MAX_CACHE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -32,14 +33,13 @@ export class ImageCacheManager {
   private async initializeCache(): Promise<void> {
     try {
       // Ensure cache directory exists
-      const dirInfo = await FileSystem.getInfoAsync(IMAGE_CACHE_DIR);
-      if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(IMAGE_CACHE_DIR, { intermediates: true });
+      if (!cacheDir.exists) {
+        cacheDir.create();
       }
 
       // Load cache info from AsyncStorage
       await this.loadCacheInfo();
-      
+
       // Clean up old cache entries
       await this.cleanupCache();
     } catch (error) {
@@ -51,18 +51,18 @@ export class ImageCacheManager {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const imageCacheKeys = keys.filter(key => key.startsWith(IMAGE_CACHE_PREFIX));
-      
+
       if (imageCacheKeys.length === 0) return;
 
       const cacheData = await AsyncStorage.multiGet(imageCacheKeys);
-      
+
       for (const [key, value] of cacheData) {
         if (value) {
           try {
             const info = JSON.parse(value) as CachedImageInfo;
             // Check if file still exists
-            const fileInfo = await FileSystem.getInfoAsync(info.localPath);
-            if (fileInfo.exists) {
+            const file = new File(info.localPath);
+            if (file.exists) {
               this.cacheInfo.set(info.url, info);
             }
           } catch (error) {
@@ -140,8 +140,8 @@ export class ImageCacheManager {
       if (!info) return null;
 
       // Check if file still exists
-      const fileInfo = await FileSystem.getInfoAsync(info.localPath);
-      if (!fileInfo.exists) {
+      const file = new File(info.localPath);
+      if (!file.exists) {
         this.cacheInfo.delete(url);
         return null;
       }
@@ -168,24 +168,60 @@ export class ImageCacheManager {
 
       // Download and cache the image
       const filename = `${this.hashUrl(url)}.jpg`;
-      const localPath = `${IMAGE_CACHE_DIR}${filename}`;
+      const targetFile = new File(cacheDir, filename);
 
-      const downloadResult = await FileSystem.downloadAsync(url, localPath);
-      
-      if (downloadResult.status === 200) {
-        const fileInfo = await FileSystem.getInfoAsync(localPath);
+      try {
+        // Check if file exists on disk but not in cache info (stale state)
+        // Return the existing file path if it's valid
+        if (targetFile.exists) {
+          try {
+            // File exists, add it to cache info and return
+            const info: CachedImageInfo = {
+              url,
+              localPath: targetFile.uri,
+              timestamp: Date.now(),
+              size: targetFile.size || 0,
+            };
+            await this.saveCacheInfo(url, info);
+            return targetFile.uri;
+          } catch (existingError) {
+            // If we can't use the existing file, try to delete and re-download
+            try {
+              targetFile.delete();
+            } catch (deleteError) {
+              // Ignore delete errors
+            }
+          }
+        }
+
+        const downloadedFile = await File.downloadFileAsync(url, targetFile);
+
         const info: CachedImageInfo = {
           url,
-          localPath,
+          localPath: downloadedFile.uri,
           timestamp: Date.now(),
-          size: fileInfo.size || 0,
+          size: downloadedFile.size,
         };
 
         await this.saveCacheInfo(url, info);
-        return localPath;
+        return downloadedFile.uri;
+      } catch (e: any) {
+        // Check if error is "Destination already exists" - file was created by concurrent call
+        if (e?.message?.includes('Destination already exists') && targetFile.exists) {
+          // File exists now, use it
+          const info: CachedImageInfo = {
+            url,
+            localPath: targetFile.uri,
+            timestamp: Date.now(),
+            size: targetFile.size || 0,
+          };
+          await this.saveCacheInfo(url, info);
+          return targetFile.uri;
+        }
+        // Download failed for other reasons
+        console.warn('Download failed:', e);
+        return null;
       }
-
-      return null;
     } catch (error) {
       console.warn('Failed to cache image:', error);
       return null;
@@ -197,14 +233,14 @@ export class ImageCacheManager {
       const info = this.cacheInfo.get(url);
       if (info) {
         // Remove file
-        const fileInfo = await FileSystem.getInfoAsync(info.localPath);
-        if (fileInfo.exists) {
-          await FileSystem.deleteAsync(info.localPath);
+        const file = new File(info.localPath);
+        if (file.exists) {
+          file.delete();
         }
 
         // Remove from cache info
         this.cacheInfo.delete(url);
-        
+
         // Remove from AsyncStorage
         const key = `${IMAGE_CACHE_PREFIX}${this.hashUrl(url)}`;
         await AsyncStorage.removeItem(key);
@@ -217,10 +253,9 @@ export class ImageCacheManager {
   async clearCache(): Promise<void> {
     try {
       // Remove all cached files
-      const dirInfo = await FileSystem.getInfoAsync(IMAGE_CACHE_DIR);
-      if (dirInfo.exists) {
-        await FileSystem.deleteAsync(IMAGE_CACHE_DIR);
-        await FileSystem.makeDirectoryAsync(IMAGE_CACHE_DIR, { intermediates: true });
+      if (cacheDir.exists) {
+        cacheDir.delete();
+        cacheDir.create();
       }
 
       // Clear cache info
@@ -238,7 +273,7 @@ export class ImageCacheManager {
   getCacheStats(): { count: number; totalSize: number; urls: string[] } {
     const totalSize = Array.from(this.cacheInfo.values())
       .reduce((sum, info) => sum + info.size, 0);
-    
+
     return {
       count: this.cacheInfo.size,
       totalSize,
