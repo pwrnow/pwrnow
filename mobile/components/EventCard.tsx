@@ -294,7 +294,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         .springify()
         .damping(18)
         .stiffness(160)}
-      layout={LinearTransition.springify().damping(20).stiffness(180)}
+      layout={LinearTransition.springify().damping(20).stiffness(150).mass(1.5)}
       style={{ backgroundColor: colors.background }}
       className='mb-0'
     >

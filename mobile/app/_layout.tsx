@@ -1,4 +1,5 @@
 import '../global.css';
+import * as Sentry from '@sentry/react-native';
 import { Stack, router, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -27,13 +28,30 @@ import {
   hasSeenProfilePictureFeatureModal,
   markProfilePictureFeatureModalAsSeen,
 } from '../lib/profilePictureFeatureStorage';
+import { config } from '../lib/config';
+
+// Initialize Sentry
+if (config.sentryDsn) {
+  Sentry.init({
+    dsn: config.sentryDsn,
+    debug: __DEV__, // Enable debug mode in development
+    environment: __DEV__ ? 'development' : 'production',
+    enableAutoSessionTracking: true,
+    sessionTrackingIntervalMillis: 10000,
+    // Enable native crash tracking
+    enableNative: true,
+    enableNativeFramesTracking: !__DEV__, // Only in production
+    // Performance monitoring
+    tracesSampleRate: __DEV__ ? 1.0 : 0.2, // 100% in dev, 20% in production
+  });
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
 
 let hasShownStartupOnce = false;
 
-export default function StackLayout() {
+function StackLayout() {
   const [showStartup, setShowStartup] = useState(() => !hasShownStartupOnce);
   const [loaded, error] = useFonts({
     'Righteous-Regular': require('../assets/fonts/Righteous-Regular.ttf'),
@@ -274,3 +292,6 @@ function ProfileHeaderButton() {
     </View>
   );
 }
+
+// Wrap the root component with Sentry for error tracking
+export default Sentry.wrap(StackLayout);

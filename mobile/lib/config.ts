@@ -24,4 +24,5 @@ export const config = {
   posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST,
   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
 };

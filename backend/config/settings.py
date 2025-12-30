@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.apple',  # apple provider
+    'allauth.headless',  # Enable headless (API-only) mode
 
     'rest_framework_simplejwt.token_blacklist',
 
@@ -542,6 +543,9 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 # SOCIALACCOUNT_ONLY = True
+
+# Enable headless mode for API-only usage (no web-based signup forms)
+HEADLESS_ONLY = True
 
 # Helper function to read Apple private key from file
 def get_apple_private_key():
