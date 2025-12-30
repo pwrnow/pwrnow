@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Image, ImageSource } from 'expo-image';
+import { Image } from 'expo-image';
+import { imageCacheManager } from '../lib/imageCache';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface CachedImageProps {
@@ -11,14 +12,8 @@ interface CachedImageProps {
   fallback?: React.ReactNode;
   onLoad?: () => void;
   onError?: () => void;
-  priority?: 'low' | 'normal' | 'high';
 }
 
-/**
- * CachedImage component that leverages expo-image's built-in caching.
- * expo-image automatically caches images on disk and in memory for optimal performance.
- * No need for custom caching logic - expo-image handles it efficiently.
- */
 export const CachedImage: React.FC<CachedImageProps> = ({
   source,
   style,
@@ -27,35 +22,83 @@ export const CachedImage: React.FC<CachedImageProps> = ({
   fallback,
   onLoad,
   onError,
-  priority = 'normal',
 }) => {
   const { colors } = useTheme();
-  const [hasError, setHasError] = React.useState(false);
+  const [imageSource, setImageSource] = useState<{ uri: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  // Reset error state when source changes
-  React.useEffect(() => {
-    setHasError(false);
+  useEffect(() => {
+    loadImage();
   }, [source.uri]);
 
-  if (!source.uri) {
-    return (
-      <View style={[style, { backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' }]}>
-        {fallback}
-      </View>
-    );
-  }
+  const loadImage = async () => {
+    if (!source.uri) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setHasError(false);
+
+    try {
+      // First try to get cached image
+      const cachedPath = await imageCacheManager.getCachedImage(source.uri);
+      
+      if (cachedPath) {
+        setImageSource({ uri: cachedPath });
+        setIsLoading(false);
+        onLoad?.();
+        return;
+      }
+
+      // If not cached, try to cache it
+      const newCachedPath = await imageCacheManager.cacheImage(source.uri);
+      
+      if (newCachedPath) {
+        setImageSource({ uri: newCachedPath });
+        setIsLoading(false);
+        onLoad?.();
+      } else {
+        // Fallback to original URL if caching fails
+        setImageSource(source);
+        setIsLoading(false);
+        onLoad?.();
+      }
+    } catch (error) {
+      console.warn('Failed to load cached image:', error);
+      setHasError(true);
+      setIsLoading(false);
+      onError?.();
+    }
+  };
 
   if (hasError) {
     return (
       <View style={[style, { backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' }]}>
-        {fallback || null}
+        {fallback || (
+          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="small" color={colors.foreground} />
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  if (isLoading && !imageSource) {
+    return (
+      <View style={[style, { backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' }]}>
+        {placeholder || (
+          <ActivityIndicator size="small" color={colors.foreground} />
+        )}
       </View>
     );
   }
 
   return (
     <Image
-      source={source}
+      source={imageSource || source}
       style={style}
       contentFit={contentFit}
       onLoad={onLoad}
@@ -63,14 +106,7 @@ export const CachedImage: React.FC<CachedImageProps> = ({
         setHasError(true);
         onError?.();
       }}
-      transition={150}
-      // expo-image caching options - use disk cache for persistence
-      cachePolicy="disk"
-      // Priority for loading
-      priority={priority}
-      // Use blurhash placeholder for smooth loading if available
-      placeholder={placeholder ? undefined : { blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-      placeholderContentFit="cover"
+      transition={200}
     />
   );
 };

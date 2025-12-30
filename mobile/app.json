@@ -18,16 +18,11 @@
       "backgroundColor": "#000000",
       "supportsTablet": false,
       "bundleIdentifier": "pl.pwrnow.app",
-      "associatedDomains": [
-        "applinks:pwrnow.pl"
-      ],
+      "associatedDomains": ["applinks:pwrnow.pl"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true,
-        "CFBundleLocalizations": [
-          "pl",
-          "en"
-        ],
+        "CFBundleLocalizations": ["pl", "en"],
         "CFBundleDevelopmentRegion": "pl",
         "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń.",
         "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do biblioteki zdjęć, aby wybrać zdjęcie profilowe."
@@ -69,10 +64,7 @@
               "pathPrefix": "/wydarzenia"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
@@ -109,14 +101,8 @@
         "expo-localization",
         {
           "supportedLocales": {
-            "ios": [
-              "en",
-              "pl"
-            ],
-            "android": [
-              "en",
-              "pl"
-            ]
+            "ios": ["en", "pl"],
+            "android": ["en", "pl"]
           }
         }
       ],
@@ -127,9 +113,7 @@
         }
       ],
       "expo-secure-store",
-      "expo-apple-authentication",
-      "sentry-expo",
-      "expo-web-browser",
+      "expo-apple-authentication"
     ],
     "scheme": "pl.pwrnow.app",
     "extra": {

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Text, Image, Pressable } from 'react-native';
 import { Organization } from '../types';
 import { getInitials } from '../lib/format';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -21,8 +20,8 @@ export const OrganizationHeader: React.FC<Props> = ({
   const [showOrgsModal, setShowOrgsModal] = useState(false);
 
   // Use all organizations if provided, otherwise fallback to just the main organization
-  const organizations = allOrganizations && allOrganizations.length > 0
-    ? allOrganizations
+  const organizations = allOrganizations && allOrganizations.length > 0 
+    ? allOrganizations 
     : [organization];
   const hasMultipleOrgs = organizations.length > 1;
 
@@ -52,7 +51,7 @@ export const OrganizationHeader: React.FC<Props> = ({
           {visibleOrgs.map((org, index) => (
             <View
               key={org.id}
-              style={{
+              style={{ 
                 backgroundColor: colors.muted,
                 marginLeft: index > 0 ? -16 : 0,
                 zIndex: visibleOrgs.length - index,
@@ -64,11 +63,8 @@ export const OrganizationHeader: React.FC<Props> = ({
               {org.image_url ? (
                 <Image
                   source={{ uri: org.image_url }}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit='cover'
-                  cachePolicy='disk'
-                  priority='high'
-                  transition={100}
+                  className='w-full h-full'
+                  resizeMode='cover'
                 />
               ) : (
                 <Text
@@ -82,7 +78,7 @@ export const OrganizationHeader: React.FC<Props> = ({
           ))}
           {extraOrgsCount > 0 && (
             <View
-              style={{
+              style={{ 
                 backgroundColor: colors.muted,
                 marginLeft: -16,
                 zIndex: 0,
@@ -102,8 +98,8 @@ export const OrganizationHeader: React.FC<Props> = ({
         </View>
         <View className='flex-1'>
           <Text
-            style={{
-              color: hasMultipleOrgs ? colors.foreground + 'CC' : colors.foreground
+            style={{ 
+              color: hasMultipleOrgs ? colors.foreground + 'CC' : colors.foreground 
             }}
             className={hasMultipleOrgs ? 'font-medium text-sm leading-4' : 'font-groteskSemibold text-base leading-5'}
             numberOfLines={2}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
@@ -24,21 +24,9 @@ export default function SettingsCard({
   disabled = false,
 }: SettingsCardProps) {
   const { colors } = useTheme();
-  const [isPressed, setIsPressed] = React.useState(false);
-
-  const handlePressIn = () => {
-    setIsPressed(true);
-  };
-
-  const handlePressOut = () => {
-    setIsPressed(false);
-  };
 
   const handlePress = async () => {
     if (onPress) {
-      // Reset pressed state immediately before calling onPress
-      // This ensures the card doesn't stay pressed when a popup opens
-      setIsPressed(false);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onPress();
     }
@@ -82,22 +70,16 @@ export default function SettingsCard({
 
   if (onPress && !disabled) {
     return (
-      <Pressable
+      <TouchableOpacity
         onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         style={{
           backgroundColor: colors.card,
-          borderColor: isPressed ? colors.muted : colors.border,
-          borderWidth: 1,
-          borderRadius: 14,
-          padding: 16,
-          marginBottom: 12,
-          opacity: isPressed ? 0.8 : 1,
+          borderColor: colors.border,
         }}
+        className='border rounded-[14px] p-4 mb-3 active:opacity-80'
       >
         {cardContent}
-      </Pressable>
+      </TouchableOpacity>
     );
   }
 
