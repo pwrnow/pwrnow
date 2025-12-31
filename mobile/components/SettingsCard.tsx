@@ -88,7 +88,7 @@ export default function SettingsCard({
       style={{
         backgroundColor: colors.card,
         borderColor: colors.border,
-      }}w
+      }}
       className='border rounded-[14px] p-4 mb-3'
     >
       {cardContent}
