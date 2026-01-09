@@ -290,11 +290,11 @@ export default function EventCard({ event }: EventCardProps) {
                 </div>
                 <button
                   onClick={handleMapLinkClick}
-                  className='font-medium hover:underline flex items-center gap-1 cursor-pointer'
+                  className='font-medium hover:underline flex items-center gap-1 cursor-pointer min-w-0'
                   title={t('openInMaps')}
                 >
-                  {event.location}
-                  <ExternalLink className='h-3 w-3' />
+                  <span className='truncate'>{event.location}</span>
+                  <ExternalLink className='h-3 w-3 flex-shrink-0' />
                 </button>
               </div>
             )}
