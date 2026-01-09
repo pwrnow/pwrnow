@@ -585,12 +585,15 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                 className='self-start flex-row items-center py-1.5 px-2.5 rounded-full border max-w-full'
               >
                 <Feather name='map-pin' size={12} color={iconPrimary} />
-                <Text
-                  style={{ color: colors.foreground }}
-                  className='text-xs font-medium ml-1.5'
-                >
-                  {event.location}
-                </Text>
+                <View className='flex-1 flex-shrink'>
+                  <Text
+                    style={{ color: colors.foreground }}
+                    className='text-xs font-medium ml-1.5'
+                    numberOfLines={2}
+                  >
+                    {event.location}
+                  </Text>
+                </View>
               </View>
             ) : null}
           </View>
