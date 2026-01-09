@@ -589,7 +589,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
                   <Text
                     style={{ color: colors.foreground }}
                     className='text-xs font-medium ml-1.5'
-                    numberOfLines={1}
+                    numberOfLines={2}
                   >
                     {event.location}
                   </Text>

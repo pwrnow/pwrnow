@@ -318,11 +318,11 @@ export default function OrgEventCard({
                 </div>
                 <button
                   onClick={() => handleMapLinkClick(event.location!)}
-                  className='font-medium hover:underline flex items-center gap-1 cursor-pointer min-w-0'
+                  className='font-medium hover:underline flex items-start gap-1 cursor-pointer min-w-0'
                   title={t('openInMaps')}
                 >
-                  <span className='truncate'>{event.location}</span>
-                  <ExternalLink className='h-3 w-3 flex-shrink-0' />
+                  <span className='line-clamp-2'>{event.location}</span>
+                  <ExternalLink className='h-3 w-3 flex-shrink-0 mt-0.5' />
                 </button>
               </div>
             )}
