@@ -66,9 +66,13 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
   // Get all organizations (admin + co-hosts)
   const allOrganizations = event.all_organizations || [event.organization];
   const hasCoHosts = allOrganizations.length > 1;
-  // Show max 2 avatars + "+N" indicator (max 3 things total)
-  const visibleOrgs = allOrganizations.slice(0, 2);
-  const extraOrgsCount = allOrganizations.length - 2;
+  // Show all 3 avatars when <=3 orgs, show 2 + +N when >3 orgs
+  const visibleOrgs = allOrganizations.length <= 3 
+    ? allOrganizations 
+    : allOrganizations.slice(0, 2);
+  const extraOrgsCount = allOrganizations.length > 3 
+    ? allOrganizations.length - 2 
+    : 0;
 
   // Get display name: prefer short_name, otherwise use full name
   const getDisplayName = (org: Organization | undefined) => {

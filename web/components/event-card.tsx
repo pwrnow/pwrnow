@@ -51,9 +51,13 @@ export default function EventCard({ event }: EventCardProps) {
   const allOrganizations = event.all_organizations || [event.organization];
   const hasCoHosts = allOrganizations.length > 1;
   
-  // For stacked avatars: show max 2, with +N indicator (max 3 things total)
-  const visibleOrgs = allOrganizations.slice(0, 2);
-  const extraOrgsCount = allOrganizations.length - 2;
+  // For stacked avatars: show all 3 when <=3 orgs, show 2 + +N when >3 orgs
+  const visibleOrgs = allOrganizations.length <= 3 
+    ? allOrganizations 
+    : allOrganizations.slice(0, 2);
+  const extraOrgsCount = allOrganizations.length > 3 
+    ? allOrganizations.length - 2 
+    : 0;
 
   // Build organization names string with "&" separator
   const organizationNamesDisplay = allOrganizations

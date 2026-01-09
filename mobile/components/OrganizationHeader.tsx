@@ -35,9 +35,13 @@ export const OrganizationHeader: React.FC<Props> = ({
     .map((org) => getDisplayName(org))
     .join(' & ');
 
-  // Show max 2 avatars + "+N" indicator
-  const visibleOrgs = organizations.slice(0, 2);
-  const extraOrgsCount = organizations.length - 2;
+  // Show all 3 avatars when <=3 orgs, show 2 + +N when >3 orgs
+  const visibleOrgs = organizations.length <= 3 
+    ? organizations 
+    : organizations.slice(0, 2);
+  const extraOrgsCount = organizations.length > 3 
+    ? organizations.length - 2 
+    : 0;
 
   return (
     <View className='mx-4 mt-3'>

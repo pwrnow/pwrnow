@@ -593,8 +593,12 @@ export default function OrgEventDetailsPage() {
         {(() => {
           const allOrganizations = event.all_organizations || [event.organization];
           const hasCoHosts = allOrganizations.length > 1;
-          const visibleOrgs = allOrganizations.slice(0, 2);
-          const extraOrgsCount = allOrganizations.length - 2;
+          const visibleOrgs = allOrganizations.length <= 3 
+            ? allOrganizations 
+            : allOrganizations.slice(0, 2);
+          const extraOrgsCount = allOrganizations.length > 3 
+            ? allOrganizations.length - 2 
+            : 0;
           const getDisplayName = (org: Organization) => org.short_name || org.display_name || org.name;
           const organizationNamesDisplay = allOrganizations.map((org) => getDisplayName(org)).join(' & ');
 
