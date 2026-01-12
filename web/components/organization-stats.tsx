@@ -20,7 +20,7 @@ export default function OrganizationStats({
   const completedCount = events.filter(
     (event) => !isUpcoming(event.starts_at)
   ).length;
-  const verifiedCount = events.filter((event) => event.verified).length;
+  const visibleCount = events.filter((event) => event.visible).length;
 
   return (
     <div className='grid grid-cols-2 sm:grid-cols-4 gap-2 p-4 bg-background/50'>
@@ -41,8 +41,8 @@ export default function OrganizationStats({
         <span className='text-xs text-muted-foreground'>{t('completed')}</span>
       </div>
       <div className='flex flex-col items-center p-2 text-center'>
-        <span className='text-2xl font-bold text-primary'>{verifiedCount}</span>
-        <span className='text-xs text-muted-foreground'>{t('verified')}</span>
+        <span className='text-2xl font-bold text-primary'>{visibleCount}</span>
+        <span className='text-xs text-muted-foreground'>{t('visible')}</span>
       </div>
     </div>
   );

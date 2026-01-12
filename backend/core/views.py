@@ -408,11 +408,11 @@ class EventViewSet(
             # Check if user is staff using the permission class logic
             is_staff_user = self._is_staff_user()
 
-            # Staff users see all events (verified and unverified)
-            # Regular users only see verified events
+            # Staff users see all events (visible and hidden)
+            # Regular users only see visible events
             if not is_staff_user:
                 queryset = queryset.filter(
-                    verified=True, ends_at__gte=now, publication_date__lte=today
+                    visible=True, ends_at__gte=now, publication_date__lte=today
                 )
             else:
                 # Staff users see all events, but still filter by end date
@@ -605,8 +605,8 @@ class EventViewSet(
     def list_posts(self, request, slug=None):
         """
         List posts for a given event by slug.
-        Public: returns only verified posts.
-        If an organization is authenticated and owns the event, include unverified as well.
+        Public: returns only visible posts.
+        If an organization is authenticated and owns the event, include hidden as well.
         """
         logger.debug(f"Fetching posts for event: slug={slug}")
         event = self.get_object()
@@ -618,7 +618,7 @@ class EventViewSet(
             .order_by("-created_at")
         )
         if not (current_org and str(current_org.id) == str(event.organization_id)):
-            queryset = queryset.filter(verified=True)
+            queryset = queryset.filter(visible=True)
 
         page = self.paginate_queryset(queryset)
         posts_count = len(page) if page else queryset.count()
@@ -636,8 +636,8 @@ class EventViewSet(
     def get_schedule(self, request, slug=None):
         """
         Return the schedule for this event.
-        - Public: only if event is verified
-        - Owner org: return schedule regardless of verification
+        - Public: only if event is visible
+        - Owner org: return schedule regardless of visibility
         """
         logger.debug(f"Fetching schedule for event: slug={slug}")
         event = self.get_object()
@@ -645,13 +645,13 @@ class EventViewSet(
 
         if (
             not (current_org and str(current_org.id) == str(event.organization_id))
-            and not event.verified
+            and not event.visible
         ):
             logger.warning(
-                f"Schedule access denied for unverified event: event_id={event.id}"
+                f"Schedule access denied for hidden event: event_id={event.id}"
             )
             return Response(
-                {"detail": _("Event not verified.")}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("Event not visible.")}, status=status.HTTP_404_NOT_FOUND
             )
 
         schedule = getattr(event, "schedule", None)
@@ -674,29 +674,58 @@ class EventViewSet(
         POST /events/{slug}/verify/
         """
         logger.debug(
-            f"Event verification attempt: slug={slug} by user_id={request.user.id}"
+            f"Event visibility change attempt: slug={slug} by user_id={request.user.id}"
         )
         event = self.get_object()
 
-        if event.verified:
+        if event.visible:
             logger.warning(
-                f"Event verification failed: Event already verified event_id={event.id}"
+                f"Event visibility change failed: Event already visible event_id={event.id}"
             )
             return Response(
-                {"detail": _("Event is already verified.")},
+                {"detail": _("Event is already visible.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        event.verified = True
-        event.verified_at = timezone.now()
-        event.verified_by = request.user
+        event.visible = True
+        event.visible_at = timezone.now()
+        event.visible_by = request.user
         event.save()
 
         logger.info(
-            f"Event verified successfully: event_id={event.id} title={event.title} by user_id={request.user.id}"
+            f"Event made visible successfully: event_id={event.id} title={event.title} by user_id={request.user.id}"
         )
         # Return updated event data
         serializer = self.get_serializer(event)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="recently-added",
+        permission_classes=[IsStaff],
+    )
+    def recently_added(self, request):
+        """
+        Get events added in the last 3 days (staff only).
+        GET /events/recently-added/
+        """
+        logger.debug("Fetching recently added events")
+        from datetime import timedelta
+
+        # Get events created in the last 3 days
+        three_days_ago = timezone.now() - timedelta(days=3)
+        queryset = (
+            Event.objects.filter(created_at__gte=three_days_ago)
+            .select_related("category", "organization", "visible_by")
+            .prefetch_related("tags")
+            .order_by("-created_at")
+        )
+
+        serializer = EventSerializer(
+            queryset, many=True, context={"request": request}
+        )
+        logger.info(f"Listed {len(serializer.data)} recently added events")
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -1676,9 +1705,9 @@ class EventMapViewSet(ApiLoggingMixin, viewsets.ModelViewSet):
             )
         )
 
-        # For public access, only show active maps for verified events
+        # For public access, only show active maps for visible events
         if not self.request.user.is_authenticated:
-            return queryset.filter(is_active=True, event__verified=True)
+            return queryset.filter(is_active=True, event__visible=True)
 
         # For authenticated users, show all maps they have access to
         try:
@@ -1692,7 +1721,7 @@ class EventMapViewSet(ApiLoggingMixin, viewsets.ModelViewSet):
             pass
 
         # Fallback to public access
-        return queryset.filter(is_active=True, event__verified=True)
+        return queryset.filter(is_active=True, event__visible=True)
 
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
@@ -1797,12 +1826,12 @@ class EventMapLocationViewSet(ApiLoggingMixin, viewsets.ModelViewSet):
         """Filter locations based on authentication and permissions."""
         queryset = EventMapLocation.objects.select_related("event_map__event")
 
-        # For public access, only show active locations for verified events
+        # For public access, only show active locations for visible events
         if not self.request.user.is_authenticated:
             return queryset.filter(
                 is_active=True,
                 event_map__is_active=True,
-                event_map__event__verified=True,
+                event_map__event__visible=True,
             )
 
         # For authenticated users, show locations they have access to
@@ -1818,7 +1847,7 @@ class EventMapLocationViewSet(ApiLoggingMixin, viewsets.ModelViewSet):
 
         # Fallback to public access
         return queryset.filter(
-            is_active=True, event_map__is_active=True, event_map__event__verified=True
+            is_active=True, event_map__is_active=True, event_map__event__visible=True
         )
 
     def get_serializer_class(self):

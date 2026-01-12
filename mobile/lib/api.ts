@@ -538,6 +538,12 @@ export const adminApi = {
     });
     return await response.json();
   },
+
+  // Get recently added events (last 3 days)
+  async getRecentlyAddedEvents(): Promise<Event[]> {
+    const response = await fetchWithCredentials('/events/recently-added/');
+    return await response.json();
+  },
 };
 
 // Friendship API

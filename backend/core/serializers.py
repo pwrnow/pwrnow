@@ -154,8 +154,8 @@ class EventSerializer(serializers.ModelSerializer):
             "location",
             "image_url",
             "url",
-            "verified",
-            "verified_by",
+            "visible",
+            "visible_by",
             "aspect_ratio",
             "organization",
             "category",
@@ -248,10 +248,10 @@ class EventSerializer(serializers.ModelSerializer):
         else:
             posts = list(obj.posts.all())
 
-        # Restrict to verified for public (non-owner) in memory to keep prefetch benefits
+        # Restrict to visible for public (non-owner) in memory to keep prefetch benefits
         is_owner = current_org and str(current_org.id) == str(obj.organization_id)
         if not is_owner:
-            posts = [p for p in posts if getattr(p, "verified", False)]
+            posts = [p for p in posts if getattr(p, "visible", False)]
 
         # Order in memory by created_at desc
         posts = sorted(posts, key=lambda p: p.created_at, reverse=True)
@@ -276,11 +276,11 @@ class EventSerializer(serializers.ModelSerializer):
         except Schedule.DoesNotExist:
             return None
 
-        # Public can see schedule only if event is verified
-        # For public users, events are already filtered to be verified in the queryset
+        # Public can see schedule only if event is visible
+        # For public users, events are already filtered to be visible in the queryset
         if (
             not (current_org and str(current_org.id) == str(obj.organization_id))
-            and not obj.verified
+            and not obj.visible
         ):
             return None
 
@@ -306,11 +306,11 @@ class EventSerializer(serializers.ModelSerializer):
         except EventMap.DoesNotExist:
             return None
 
-        # Public can see event map only if event is verified
-        # For public users, events are already filtered to be verified in the queryset
+        # Public can see event map only if event is visible
+        # For public users, events are already filtered to be visible in the queryset
         if (
             not (current_org and str(current_org.id) == str(obj.organization_id))
-            and not obj.verified
+            and not obj.visible
         ):
             return None
 
@@ -639,7 +639,6 @@ class EventCreateSerializer(serializers.ModelSerializer):
         event = Event.objects.create(
             organization=organization,
             category=category,
-            verified=False,  # Events start as unverified
             **validated_data,
         )
 
@@ -670,7 +669,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "created_at", "text", "organization", "images", "verified"]
+        fields = ["id", "created_at", "text", "organization", "images", "visible"]
 
 
 class PostCreateSerializer(serializers.Serializer):
@@ -725,7 +724,6 @@ class PostCreateSerializer(serializers.Serializer):
             event=event,
             organization=organization,
             text=text,
-            verified=False,
         )
 
         images = validated_data.get("images") or []

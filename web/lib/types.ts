@@ -20,7 +20,7 @@ export interface Event {
   location?: string;
   image_url?: string;
   url?: string;
-  verified: boolean;
+  visible: boolean;
   is_new?: boolean;
   aspect_ratio?: string;
   organization: Organization;
@@ -88,7 +88,7 @@ export interface Post {
   text: string | null;
   organization: Organization;
   images: PostImage[];
-  verified: boolean;
+  visible: boolean;
 }
 
 export interface CreatePostData {

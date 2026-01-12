@@ -244,43 +244,43 @@ class Event(models.Model):
     )
 
     # Status flags
-    verified = models.BooleanField(default=False)
-    verified_at = models.DateTimeField(
+    visible = models.BooleanField(default=True)
+    visible_at = models.DateTimeField(
         null=True,
         blank=True,
         db_index=True,
-        help_text="Timestamp of when the event was verified",
+        help_text="Timestamp of when the event visibility was changed",
     )
-    verified_by = models.ForeignKey(
+    visible_by = models.ForeignKey(
         "users.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         db_index=True,
-        related_name="verified_events",
-        help_text="User who verified this event",
+        related_name="visible_events",
+        help_text="User who changed this event's visibility",
     )
 
     class Meta:
         ordering = ["starts_at"]
         indexes = [
             models.Index(fields=["starts_at", "ends_at"]),
-            models.Index(fields=["verified"]),
-            models.Index(fields=["verified_at"]),
+            models.Index(fields=["visible"]),
+            models.Index(fields=["visible_at"]),
             models.Index(fields=["category", "starts_at"]),
             models.Index(fields=["organization", "starts_at"]),
             models.Index(
-                fields=["verified", "ends_at", "starts_at"],
-                name="event_verified_ends_start_idx",
+                fields=["visible", "ends_at", "starts_at"],
+                name="event_visible_ends_start_idx",
             ),
             models.Index(
                 fields=["ends_at", "starts_at"],
                 name="event_public_time_idx",
-                condition=Q(verified=True),
+                condition=Q(visible=True),
             ),
             # Optimized index for the most common list query pattern
             models.Index(
-                fields=["verified", "publication_date", "ends_at", "starts_at"],
+                fields=["visible", "publication_date", "ends_at", "starts_at"],
                 name="event_list_query_idx",
             ),
         ]
@@ -298,16 +298,11 @@ class Event(models.Model):
         if not is_new_instance:
             try:
                 original = Event.objects.get(pk=self.pk)
-                if self.verified and not original.verified:
-                    self.verified_at = timezone.now()
-                elif not self.verified:
-                    self.verified_at = None
+                # Update visible_at timestamp whenever visibility changes
+                if self.visible != original.visible:
+                    self.visible_at = timezone.now()
             except Event.DoesNotExist:
-                if self.verified:
-                    self.verified_at = timezone.now()
-        else:
-            if self.verified:
-                self.verified_at = timezone.now()
+                pass
 
         if not self.slug:
             base_slug = slugify(self.title)
@@ -357,11 +352,11 @@ class Event(models.Model):
         """Get event duration as timedelta."""
         return self.ends_at - self.starts_at
 
-    def get_verified_by_display(self):
-        """Get a display-friendly string for who verified this event."""
-        if self.verified_by:
-            return f"{self.verified_by.get_full_name()} ({self.verified_by.username})"
-        return "Not verified"
+    def get_visible_by_display(self):
+        """Get a display-friendly string for who changed this event's visibility."""
+        if self.visible_by:
+            return f"{self.visible_by.get_full_name()} ({self.visible_by.username})"
+        return "Not set"
 
     @property
     def is_published(self):
@@ -470,13 +465,13 @@ class Post(models.Model):
 
     text = models.TextField(blank=True, null=True, help_text=_("Optional text content"))
 
-    # Verification flags mirroring Event
-    verified = models.BooleanField(default=False)
-    verified_at = models.DateTimeField(
+    # Visibility flags mirroring Event
+    visible = models.BooleanField(default=True)
+    visible_at = models.DateTimeField(
         null=True,
         blank=True,
         db_index=True,
-        help_text=_("Timestamp of when the post was verified"),
+        help_text=_("Timestamp of when the post visibility was changed"),
     )
 
     class Meta:
@@ -484,7 +479,7 @@ class Post(models.Model):
         indexes = [
             models.Index(fields=["event", "-created_at"]),
             models.Index(fields=["organization", "-created_at"]),
-            models.Index(fields=["verified", "-created_at"]),
+            models.Index(fields=["visible", "-created_at"]),
         ]
 
     def __str__(self):
@@ -509,16 +504,11 @@ class Post(models.Model):
         if not is_new_instance:
             try:
                 original = Post.objects.get(pk=self.pk)
-                if self.verified and not original.verified:
-                    self.verified_at = timezone.now()
-                elif not self.verified:
-                    self.verified_at = None
+                # Update visible_at timestamp whenever visibility changes
+                if self.visible != original.visible:
+                    self.visible_at = timezone.now()
             except Post.DoesNotExist:
-                if self.verified:
-                    self.verified_at = timezone.now()
-        else:
-            if self.verified:
-                self.verified_at = timezone.now()
+                pass
         super().save(*args, **kwargs)
 
 

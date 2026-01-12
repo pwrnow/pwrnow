@@ -123,8 +123,8 @@ const DetailsScene: React.FC<{
           {/* Event Description */}
           <EventDescription description={event.description} />
 
-          {/* Verify Button for Staff Users */}
-          {isStaff && event.verified === false && onVerify && (
+          {/* Make Visible Button for Staff Users */}
+          {isStaff && event.visible === false && onVerify && (
             <View className='mx-4 mb-4'>
               <TouchableOpacity onPress={onVerify} activeOpacity={0.8}>
                 <LinearGradient

@@ -148,23 +148,23 @@ export default function OrgEventCard({
             {t('coHosting')}
           </div>
         )}
-        {/* Verification Status Bar */}
+        {/* Visibility Status Bar */}
         <div
           className={`w-full py-1 px-3 text-xs font-medium flex items-center justify-center gap-1 ${
-            event.verified
+            event.visible
               ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
               : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
           }`}
         >
-          {event.verified ? (
+          {event.visible ? (
             <>
               <ShieldCheck className='h-3 w-3' />
-              {t('approved')}
+              {t('visible')}
             </>
           ) : (
             <>
               <Clock3 className='h-3 w-3' />
-              {t('pendingVerification')}
+              {t('hidden')}
             </>
           )}
         </div>
@@ -368,7 +368,7 @@ export default function OrgEventCard({
             {/* Only show manage/delete buttons for admin (non co-host) events */}
             {!isCoHost && (
               <div className='flex gap-2'>
-                {event.verified && (
+                {event.visible && (
                   <Button
                     variant='outline'
                     size='sm'
@@ -386,7 +386,7 @@ export default function OrgEventCard({
                   variant='outline'
                   size='sm'
                   onClick={handleDeleteClick}
-                  className={`${event.verified ? 'flex-1' : 'w-full'} text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30`}
+                  className={`${event.visible ? 'flex-1' : 'w-full'} text-destructive hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 flex items-center gap-2 transition-all duration-300 cursor-pointer hover:border-destructive/30`}
                   title={t('deleteEvent')}
                 >
                   <Trash2 className='h-4 w-4' />

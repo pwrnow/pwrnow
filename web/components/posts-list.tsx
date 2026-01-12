@@ -266,16 +266,16 @@ export default function PostsList({
                   </div>
 
                   <div className='flex items-center gap-2'>
-                    {/* Verification Badge */}
-                    {post.verified ? (
+                    {/* Visibility Badge */}
+                    {post.visible ? (
                       <div className='flex items-center gap-1 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400 px-2 py-1 rounded-full text-xs font-medium border dark:border-green-800'>
                         <ShieldCheck className='h-3 w-3' />
-                        {t('verified')}
+                        {t('visible')}
                       </div>
                     ) : (
                       <div className='flex items-center gap-1 bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400 px-2 py-1 rounded-full text-xs font-medium border dark:border-amber-800'>
                         <Clock3 className='h-3 w-3' />
-                        {t('pending')}
+                        {t('hidden')}
                       </div>
                     )}
                     {/* Delete Button */}
