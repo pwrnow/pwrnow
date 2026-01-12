@@ -40,13 +40,12 @@ const teamMembers: TeamMember[] = [
     {
         id: "igor-lis",
         name: "Igor Lis",
-        description: "Focusing on both the concept and the code",
+        description: "I'm making it",
         image: "/team/igor.jpeg",
         social: {
             linkedin: "https://www.linkedin.com/in/igor-lis/",
             github: "https://github.com/foxjustfox",
             website: "https://igor.lis.rocks/about",
-            email: "iglis.com20@gmail.com",
         },
     },
     {
