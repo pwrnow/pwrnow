@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, Dimensions, StyleSheet, Pressable } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -17,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -226,39 +227,114 @@ export default function FirstLikeModal({
     opacity: particle3Opacity.value,
   }));
 
+  // Glass colors
+  const glassBg = isDark
+    ? 'rgba(20, 20, 20, 0.85)'
+    : 'rgba(255, 255, 255, 0.9)';
+  
+  const glassBorder = isDark
+    ? 'rgba(255, 255, 255, 0.12)'
+    : 'rgba(0, 0, 0, 0.08)';
+
+  const iconBg = isDark
+    ? 'rgba(236, 46, 129, 0.2)'
+    : 'rgba(236, 46, 129, 0.15)';
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType='none'
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View className='flex-1 bg-black/60 justify-center items-center px-6'>
+      {/* Backdrop with blur */}
+      <Pressable 
+        style={firstLikeStyles.backdrop} 
+        onPress={onClose}
+      >
+        <BlurView
+          intensity={isDark ? 20 : 30}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.3)' },
+          ]}
+        />
+      </Pressable>
+
+      <View style={firstLikeStyles.centeredContainer}>
         <Animated.View
           style={[
             modalAnimatedStyle,
+            firstLikeStyles.glassModal,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              shadowColor: isDark ? '#000' : '#000',
-              shadowOpacity: isDark ? 0.3 : 0.1,
-              shadowRadius: 20,
-              shadowOffset: { width: 0, height: 10 },
-              elevation: 20,
+              shadowColor: '#000000',
+              shadowOpacity: isDark ? 0.5 : 0.2,
+              shadowRadius: 32,
+              shadowOffset: { width: 0, height: 12 },
+              elevation: 24,
             },
           ]}
-          className='w-full rounded-3xl border p-8 relative overflow-hidden'
         >
+          {/* Glass blur background */}
+          <BlurView
+            intensity={isDark ? 60 : 80}
+            tint={isDark ? 'dark' : 'light'}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28, overflow: 'hidden' }]}
+          />
+
+          {/* Glass tint */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: glassBg, borderRadius: 28 },
+            ]}
+          />
+
+          {/* Gradient highlight */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.02)', 'rgba(255, 255, 255, 0.04)']
+                : ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.7)']
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
+          />
+
+          {/* Top specular highlight */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ['rgba(255, 255, 255, 0.12)', 'transparent']
+                : ['rgba(255, 255, 255, 0.8)', 'transparent']
+            }
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 0.25 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
+          />
+
+          {/* Border */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius: 28,
+                borderWidth: isDark ? 0.5 : 1,
+                borderColor: glassBorder,
+              },
+            ]}
+          />
+
           {/* Background gradient overlay */}
           <LinearGradient
-            colors={[`${colors.accent}05`, 'transparent', `${colors.accent}05`]}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
+            colors={[`${colors.accent}08`, 'transparent', `${colors.accent}05`]}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
           />
 
           {/* Confetti background */}
@@ -473,17 +549,26 @@ export default function FirstLikeModal({
               </View>
             </View>
 
-            {/* Classic pink button */}
+            {/* Glass-style pink button */}
             <TouchableOpacity
               onPress={onClose}
-              style={{ backgroundColor: '#EC2E81' }}
-              className='w-full py-3 px-6 rounded-xl items-center'
+              style={firstLikeStyles.continueButton}
               activeOpacity={0.85}
             >
-              <Text
-                style={{ color: '#FFFFFF' }}
-                className='font-semibold text-base'
-              >
+              <LinearGradient
+                colors={['#EC2E81', '#d92872']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[StyleSheet.absoluteFill, { borderRadius: 18 }]}
+              />
+              {/* Top highlight */}
+              <LinearGradient
+                colors={['rgba(255, 255, 255, 0.25)', 'transparent']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 0.5 }}
+                style={[StyleSheet.absoluteFill, { borderRadius: 18 }]}
+              />
+              <Text style={firstLikeStyles.continueButtonText}>
                 {t('firstLikeContinue')}
               </Text>
             </TouchableOpacity>
@@ -493,3 +578,41 @@ export default function FirstLikeModal({
     </Modal>
   );
 }
+
+const firstLikeStyles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  glassModal: {
+    width: '100%',
+    borderRadius: 28,
+    padding: 32,
+    overflow: 'hidden',
+  },
+  continueButton: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 18,
+    alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#EC2E81',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    position: 'relative',
+    zIndex: 1,
+  },
+});

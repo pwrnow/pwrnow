@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { t } from '../../lib/i18n';
+import GlassTabBar from '../../components/GlassTabBar';
 
 export default function TabsLayout() {
   const { colors, isDark } = useTheme();
@@ -10,13 +11,16 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: isDark ? '#FFFFFF' : '#000000',
         tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF',
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: isDark ? '#374151' : '#E5E7EB',
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
         },
       }}
     >

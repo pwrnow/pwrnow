@@ -4,6 +4,7 @@ import {
   Text,
   Pressable,
   Linking,
+  StyleSheet,
 } from 'react-native';
 import CachedImage from './CachedImage';
 import { useRouter } from 'expo-router';
@@ -19,6 +20,8 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Feather } from '@expo/vector-icons';
 import LikeButton from './LikeButton';
@@ -44,8 +47,119 @@ interface EventCardProps {
   index?: number;
 }
 
+// Glass chip component for event metadata
+function GlassMetaChip({ icon, label, isDark, colors }: { 
+  icon: keyof typeof Feather.glyphMap; 
+  label: string;
+  isDark: boolean;
+  colors: any;
+}) {
+  const chipBg = isDark
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.04)';
+  const chipBorder = isDark
+    ? 'rgba(255, 255, 255, 0.12)'
+    : 'rgba(0, 0, 0, 0.08)';
+
+  return (
+    <View style={[glassStyles.chipContainer, { borderRadius: 16 }]}>
+      <BlurView
+        intensity={isDark ? 15 : 25}
+        tint={isDark ? 'dark' : 'light'}
+        style={[StyleSheet.absoluteFill, { borderRadius: 16, overflow: 'hidden' }]}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: chipBg, borderRadius: 16 },
+        ]}
+      />
+      <LinearGradient
+        colors={
+          isDark
+            ? ['rgba(255, 255, 255, 0.06)', 'transparent']
+            : ['rgba(255, 255, 255, 0.5)', 'transparent']
+        }
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { borderRadius: 16, borderWidth: isDark ? 0.5 : 1, borderColor: chipBorder },
+        ]}
+      />
+      <View style={glassStyles.chipContent}>
+        <Feather name={icon} size={12} color={colors.foreground} />
+        <Text style={[glassStyles.chipText, { color: colors.foreground }]}>
+          {label}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// Glass badge component for status indicators
+function GlassBadge({ label, variant = 'accent', isDark, colors }: {
+  label: string;
+  variant?: 'accent' | 'success' | 'warning' | 'info';
+  isDark: boolean;
+  colors: any;
+}) {
+  const variantColors = {
+    accent: {
+      bg: isDark ? 'rgba(236, 46, 129, 0.2)' : 'rgba(236, 46, 129, 0.12)',
+      border: isDark ? 'rgba(236, 46, 129, 0.35)' : 'rgba(236, 46, 129, 0.3)',
+      text: colors.accent,
+    },
+    success: {
+      bg: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.12)',
+      border: isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.3)',
+      text: '#10B981',
+    },
+    warning: {
+      bg: isDark ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.12)',
+      border: isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.3)',
+      text: '#F59E0B',
+    },
+    info: {
+      bg: isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.12)',
+      border: isDark ? 'rgba(139, 92, 246, 0.35)' : 'rgba(139, 92, 246, 0.3)',
+      text: '#8B5CF6',
+    },
+  };
+
+  const currentColors = variantColors[variant];
+
+  return (
+    <View style={[glassStyles.badgeContainer, { borderRadius: 14 }]}>
+      <BlurView
+        intensity={isDark ? 15 : 25}
+        tint={isDark ? 'dark' : 'light'}
+        style={[StyleSheet.absoluteFill, { borderRadius: 14, overflow: 'hidden' }]}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: currentColors.bg, borderRadius: 14 },
+        ]}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { borderRadius: 14, borderWidth: isDark ? 0.5 : 1, borderColor: currentColors.border },
+        ]}
+      />
+      <Text style={[glassStyles.badgeText, { color: currentColors.text }]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 export default function EventCard({ event, index = 0 }: EventCardProps) {
-  const { colors } = useThemeColors();
+  const { colors, isDark } = useThemeColors();
   const iconPrimary = colors.foreground;
   const [isDescriptionExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -376,100 +490,53 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               </Text>
             </Pressable>
             <View className='flex-row gap-2'>
-              {/* NOW/TODAY/NEW badges (priority: NOW > TODAY > NEW) */}
+              {/* NOW/TODAY/NEW badges (priority: NOW > TODAY > NEW) - Glass style */}
               {isNow ? (
-                <View
-                  style={{
-                    backgroundColor: colors.accent + '15',
-                    borderColor: colors.accent + '30',
-                  }}
-                  className='px-2.5 py-1.5 rounded-xl border'
-                >
-                  <Text
-                    style={{ color: colors.accent }}
-                    className='text-xs font-semibold tracking-[0.5px]'
-                  >
-                    {t('nowTag')}
-                  </Text>
-                </View>
+                <GlassBadge label={t('nowTag')} variant="accent" isDark={isDark} colors={colors} />
               ) : isTodayOnly ? (
-                <View
-                  style={{
-                    backgroundColor: colors.accent + '15',
-                    borderColor: colors.accent + '30',
-                  }}
-                  className='px-2.5 py-1.5 rounded-xl border'
-                >
-                  <Text
-                    style={{ color: colors.accent }}
-                    className='text-xs font-semibold tracking-[0.5px]'
-                  >
-                    {t('todayTag')}
-                  </Text>
-                </View>
+                <GlassBadge label={t('todayTag')} variant="accent" isDark={isDark} colors={colors} />
               ) : event.is_new ? (
-                <View
-                  style={{
-                    backgroundColor: colors.accent + '15',
-                    borderColor: colors.accent + '30',
-                  }}
-                  className='px-2.5 py-1.5 rounded-xl border'
-                >
-                  <Text
-                    style={{ color: colors.accent }}
-                    className='text-xs font-semibold tracking-[0.5px]'
-                  >
-                    {t('newTag')}
-                  </Text>
-                </View>
+                <GlassBadge label={t('newTag')} variant="accent" isDark={isDark} colors={colors} />
               ) : null}
 
               {event.participation_status ? (
-                <View
-                  style={{
-                    backgroundColor: '#10B981' + '15',
-                    borderColor: '#10B981' + '30',
-                  }}
-                  className='w-8 h-8 rounded-full border items-center justify-center'
-                >
-                  <Feather name='check-circle' size={16} color='#10B981' />
+                <View style={[glassStyles.participationBadge, { borderRadius: 16 }]}>
+                  <BlurView
+                    intensity={isDark ? 15 : 25}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={[StyleSheet.absoluteFill, { borderRadius: 16, overflow: 'hidden' }]}
+                  />
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { 
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.12)', 
+                        borderRadius: 16 
+                      },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { 
+                        borderRadius: 16, 
+                        borderWidth: isDark ? 0.5 : 1, 
+                        borderColor: isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.3)' 
+                      },
+                    ]}
+                  />
+                  <Feather name='check-circle' size={16} color='#10B981' style={{ zIndex: 1 }} />
                 </View>
               ) : null}
 
-              {/* Unverified badge for staff users */}
+              {/* Unverified badge for staff users - Glass style */}
               {isStaff && event.verified === false && (
-                <View
-                  style={{
-                    backgroundColor: '#F59E0B' + '15',
-                    borderColor: '#F59E0B' + '30',
-                  }}
-                  className='px-2.5 py-1.5 rounded-xl border'
-                >
-                  <Text
-                    style={{ color: '#F59E0B' }}
-                    className='text-xs font-semibold tracking-[0.5px]'
-                  >
-                    {t('unverifiedTag')}
-                  </Text>
-                </View>
+                <GlassBadge label={t('unverifiedTag')} variant="warning" isDark={isDark} colors={colors} />
               )}
 
-              {/* Verified but unpublished badge for staff users */}
+              {/* Verified but unpublished badge for staff users - Glass style */}
               {isStaff && event.verified === true && event.is_published === false && (
-                <View
-                  style={{
-                    backgroundColor: '#8B5CF6' + '15',
-                    borderColor: '#8B5CF6' + '30',
-                  }}
-                  className='px-2.5 py-1.5 rounded-xl border'
-                >
-                  <Text
-                    style={{ color: '#8B5CF6' }}
-                    className='text-xs font-semibold tracking-[0.5px]'
-                  >
-                    {t('unpublishedTag')}
-                  </Text>
-                </View>
+                <GlassBadge label={t('unpublishedTag')} variant="info" isDark={isDark} colors={colors} />
               )}
             </View>
           </View>
@@ -537,60 +604,35 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
             />
           </View>
 
-          {/* Meta chips under title */}
+          {/* Meta chips under title - Glass style */}
           <View className='gap-2 mb-1.5'>
-            <View className='flex-row gap-2'>
+            <View className='flex-row gap-2 flex-wrap'>
               {/* Date range chip */}
-              <View
-                style={{
-                  backgroundColor: colors.muted,
-                  borderColor: colors.border,
-                }}
-                className='flex-row items-center py-1.5 px-2.5 rounded-full border'
-              >
-                <Feather name='calendar' size={12} color={iconPrimary} />
-                <Text
-                  style={{ color: colors.foreground }}
-                  className='text-xs font-medium ml-1.5'
-                >
-                  {formatDateRangeShort(event.starts_at, event.ends_at)}
-                </Text>
-              </View>
+              <GlassMetaChip
+                icon="calendar"
+                label={formatDateRangeShort(event.starts_at, event.ends_at)}
+                isDark={isDark}
+                colors={colors}
+              />
 
               {/* Time chip */}
-              <View
-                style={{
-                  backgroundColor: colors.muted,
-                  borderColor: colors.border,
-                }}
-                className='flex-row items-center py-1.5 px-2.5 rounded-full border'
-              >
-                <Feather name='clock' size={12} color={iconPrimary} />
-                <Text
-                  style={{ color: colors.foreground }}
-                  className='text-xs font-medium ml-1.5'
-                >
-                  {formatTimeRangeShort(event.starts_at, event.ends_at)}
-                </Text>
-              </View>
+              <GlassMetaChip
+                icon="clock"
+                label={formatTimeRangeShort(event.starts_at, event.ends_at)}
+                isDark={isDark}
+                colors={colors}
+              />
             </View>
 
             {/* Location chip on its own row */}
             {event.location ? (
-              <View
-                style={{
-                  backgroundColor: colors.muted,
-                  borderColor: colors.border,
-                }}
-                className='self-start flex-row items-center py-1.5 px-2.5 rounded-full border max-w-full'
-              >
-                <Feather name='map-pin' size={12} color={iconPrimary} />
-                <Text
-                  style={{ color: colors.foreground }}
-                  className='text-xs font-medium ml-1.5'
-                >
-                  {event.location}
-                </Text>
+              <View className='self-start'>
+                <GlassMetaChip
+                  icon="map-pin"
+                  label={event.location}
+                  isDark={isDark}
+                  colors={colors}
+                />
               </View>
             ) : null}
           </View>
@@ -654,3 +696,42 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     </Animated.View>
   );
 }
+
+// Glass styles for chips and badges
+const glassStyles = StyleSheet.create({
+  chipContainer: {
+    overflow: 'hidden',
+  },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    position: 'relative',
+    zIndex: 1,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+  badgeContainer: {
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    position: 'relative',
+    zIndex: 1,
+  },
+  participationBadge: {
+    width: 32,
+    height: 32,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

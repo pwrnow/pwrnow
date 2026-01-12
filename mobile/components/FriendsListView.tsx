@@ -9,6 +9,9 @@ import { Friend, FriendRequest, SearchedUser, FriendSuggestion } from '../types'
 import Avatar from './Avatar';
 import InviteButton from './InviteButton';
 
+// Height for floating glass tab bar + margin
+const TAB_BAR_HEIGHT = 96;
+
 // Updated interface to include friend suggestions
 export interface FriendsListViewProps {
   friends: Friend[];
@@ -422,8 +425,8 @@ export default function FriendsListView({
           </View>
         ) : null}
 
-        {/* Bottom spacing */}
-        <View className="h-8" />
+        {/* Bottom spacing for floating glass tab bar */}
+        <View style={{ height: TAB_BAR_HEIGHT + insets.bottom }} />
       </ScrollView>
 
       {/* Search Results Overlay */}

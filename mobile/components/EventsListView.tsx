@@ -7,6 +7,9 @@ import CategorySelector from './CategorySelector';
 import EmptyState from './EmptyState';
 import { Category, Event } from '../types';
 
+// Height for floating glass tab bar + margin
+const TAB_BAR_HEIGHT = 96;
+
 interface EventsListViewProps {
   events: Event[];
   filteredEvents: Event[];
@@ -87,6 +90,7 @@ export default function EventsListView({
         style={{ backgroundColor: isDark ? '#000000' : '#FFFFFF' }}
         contentContainerStyle={{
           backgroundColor: isDark ? '#000000' : '#FFFFFF',
+          paddingBottom: TAB_BAR_HEIGHT + insets.bottom, // Space for floating glass tab bar
         }}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}

@@ -1,4 +1,6 @@
-import { Text, TouchableOpacity, ScrollView, View, Animated } from 'react-native';
+import { Text, TouchableOpacity, ScrollView, View, Animated, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Category } from '../types';
 import { useAnalytics } from '../lib/analytics';
@@ -67,7 +69,7 @@ export default function CategorySelector({
   );
 }
 
-// Unified category button component
+// Unified category button component with glass effect
 function CategoryButton({
   category,
   isActive,
@@ -81,6 +83,7 @@ function CategoryButton({
   onPress: () => void;
   colors: any;
 }) {
+  const { isDark } = useThemeColors();
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -97,8 +100,25 @@ function CategoryButton({
     }
   }, [animatedValue, isHighlighted]);
 
-  // Create a fluid gradient animation when highlighted
-  const gradientColors = isHighlighted
+  // Glass colors based on state
+  const glassBg = isActive
+    ? isDark
+      ? 'rgba(32, 102, 223, 0.2)'
+      : 'rgba(32, 102, 223, 0.15)'
+    : isDark
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(0, 0, 0, 0.04)';
+
+  const glassBorder = isActive
+    ? isDark
+      ? 'rgba(32, 102, 223, 0.4)'
+      : 'rgba(32, 102, 223, 0.35)'
+    : isDark
+      ? 'rgba(255, 255, 255, 0.12)'
+      : 'rgba(0, 0, 0, 0.08)';
+
+  // Highlighted animation border color
+  const highlightedBorderColor = isHighlighted
     ? animatedValue.interpolate({
         inputRange: [0, 0.25, 0.5, 0.75, 1],
         outputRange: [
@@ -109,40 +129,60 @@ function CategoryButton({
           '#8b5cf6', // Purple
         ],
       })
-    : isActive
-      ? colors.primary
-      : colors.border;
+    : glassBorder;
 
   return (
-    <View style={{ marginRight: 8 }}>
+    <View style={categoryStyles.buttonWrapper}>
       <Animated.View
-        style={{
-          borderRadius: 20,
-          borderWidth: 2,
-          borderColor: gradientColors,
-        }}
+        style={[
+          categoryStyles.buttonContainer,
+          {
+            borderColor: highlightedBorderColor,
+            borderWidth: isHighlighted ? 2 : (isDark ? 0.5 : 1),
+          },
+        ]}
       >
+        {/* Blur background */}
+        <BlurView
+          intensity={isDark ? 15 : 25}
+          tint={isDark ? 'dark' : 'light'}
+          style={[StyleSheet.absoluteFill, categoryStyles.blur]}
+        />
+
+        {/* Glass tint */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            categoryStyles.blur,
+            { backgroundColor: glassBg },
+          ]}
+        />
+
+        {/* Top highlight */}
+        <LinearGradient
+          colors={
+            isDark
+              ? ['rgba(255, 255, 255, 0.08)', 'transparent']
+              : ['rgba(255, 255, 255, 0.6)', 'transparent']
+          }
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={[StyleSheet.absoluteFill, categoryStyles.blur]}
+        />
+
         <TouchableOpacity
           onPress={onPress}
-          activeOpacity={0.8}
-          style={{
-            backgroundColor: isActive
-              ? colors.primary + '15'
-              : colors.muted,
-            borderRadius: 18,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
+          activeOpacity={0.7}
+          style={categoryStyles.touchable}
         >
           <Text
-            style={{
-              color: isActive
-                ? colors.primary
-                : colors.foreground,
-            }}
-            className={`${
-              isActive ? 'font-semibold' : ''
-            } text-sm tracking-[0.2px]`}
+            style={[
+              categoryStyles.text,
+              {
+                color: isActive ? colors.primary : colors.foreground,
+                fontWeight: isActive ? '600' : '500',
+              },
+            ]}
           >
             {category.name}
           </Text>
@@ -151,3 +191,27 @@ function CategoryButton({
     </View>
   );
 }
+
+const categoryStyles = StyleSheet.create({
+  buttonWrapper: {
+    marginRight: 8,
+  },
+  buttonContainer: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  blur: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  touchable: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    position: 'relative',
+    zIndex: 1,
+  },
+  text: {
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+});

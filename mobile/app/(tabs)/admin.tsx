@@ -302,8 +302,8 @@ export default function AdminScreen() {
           )}
         </View>
 
-        {/* Bottom spacing */}
-        <View className="h-8" />
+        {/* Bottom spacing for floating glass tab bar */}
+        <View style={{ height: 96 + insets.bottom }} />
       </ScrollView>
 
       {/* Rejection Feedback Modal */}

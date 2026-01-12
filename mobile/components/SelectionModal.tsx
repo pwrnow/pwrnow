@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../hooks/useThemeColors';
+import GlassModal from './GlassModal';
 
 export interface SelectionOption {
   value: string;
@@ -28,8 +30,7 @@ export default function SelectionModal({
   selectedValue,
   onSelect,
 }: SelectionModalProps) {
-  const { colors } = useThemeColors();
-  const insets = useSafeAreaInsets();
+  const { colors, isDark } = useThemeColors();
 
   const handleSelect = async (value: string) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -38,98 +39,138 @@ export default function SelectionModal({
   };
 
   return (
-    <Modal
+    <GlassModal
       visible={visible}
-      transparent
-      animationType='fade'
-      onRequestClose={onClose}
+      onClose={onClose}
+      title={title}
+      variant="bottom"
     >
-      <Pressable
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          justifyContent: 'flex-end',
-        }}
-        onPress={onClose}
-      >
-        <Pressable
-          style={{
-            backgroundColor: colors.background,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            paddingTop: 20,
-            paddingBottom: insets.bottom + 20,
-            paddingHorizontal: 20,
-            maxHeight: '80%',
-          }}
-          onPress={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <View className='flex-row items-center justify-between mb-6'>
-            <Text
-              style={{ color: colors.foreground }}
-              className='font-semibold text-xl'
-            >
-              {title}
-            </Text>
-            <TouchableOpacity
-              onPress={onClose}
-              style={{ backgroundColor: colors.muted }}
-              className='w-8 h-8 rounded-full justify-center items-center'
-            >
-              <Feather name='x' size={20} color={colors.foreground} />
-            </TouchableOpacity>
-          </View>
+      {/* Options */}
+      <View style={styles.optionsContainer}>
+        {options.map((option) => {
+          const isSelected = selectedValue === option.value;
+          
+          const optionBg = isSelected
+            ? isDark
+              ? 'rgba(32, 102, 223, 0.15)'
+              : 'rgba(32, 102, 223, 0.1)'
+            : isDark
+              ? 'rgba(255, 255, 255, 0.06)'
+              : 'rgba(0, 0, 0, 0.03)';
 
-          {/* Options */}
-          <View className='gap-2'>
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                onPress={() => handleSelect(option.value)}
-                style={{
-                  backgroundColor:
-                    selectedValue === option.value
-                      ? colors.primary + '10'
-                      : colors.card,
-                  borderColor:
-                    selectedValue === option.value
-                      ? colors.primary
-                      : colors.border,
-                }}
-                className='p-4 rounded-[14px] border active:opacity-80'
-              >
-                <View className='flex-row items-center justify-between'>
-                  <View className='flex-1'>
+          const optionBorder = isSelected
+            ? isDark
+              ? 'rgba(32, 102, 223, 0.4)'
+              : 'rgba(32, 102, 223, 0.35)'
+            : isDark
+              ? 'rgba(255, 255, 255, 0.1)'
+              : 'rgba(0, 0, 0, 0.06)';
+
+          return (
+            <TouchableOpacity
+              key={option.value}
+              onPress={() => handleSelect(option.value)}
+              style={styles.optionButton}
+              activeOpacity={0.7}
+            >
+              {/* Blur background */}
+              <BlurView
+                intensity={isDark ? 20 : 30}
+                tint={isDark ? 'dark' : 'light'}
+                style={[StyleSheet.absoluteFill, { borderRadius: 16, overflow: 'hidden' }]}
+              />
+
+              {/* Background tint */}
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: optionBg, borderRadius: 16 },
+                ]}
+              />
+
+              {/* Highlight gradient */}
+              <LinearGradient
+                colors={
+                  isDark
+                    ? ['rgba(255, 255, 255, 0.06)', 'transparent']
+                    : ['rgba(255, 255, 255, 0.5)', 'transparent']
+                }
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 0.5 }}
+                style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+              />
+
+              {/* Border */}
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    borderRadius: 16,
+                    borderWidth: isDark ? 0.5 : 1,
+                    borderColor: optionBorder,
+                  },
+                ]}
+              />
+
+              {/* Content */}
+              <View style={styles.optionContent}>
+                <View style={styles.optionTextContainer}>
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      { color: isSelected ? colors.primary : colors.foreground },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  {option.description && (
                     <Text
-                      style={{
-                        color:
-                          selectedValue === option.value
-                            ? colors.primary
-                            : colors.foreground,
-                      }}
-                      className='font-semibold text-base'
+                      style={[styles.optionDescription, { color: colors.mutedForeground }]}
                     >
-                      {option.label}
+                      {option.description}
                     </Text>
-                    {option.description && (
-                      <Text
-                        style={{ color: colors.mutedForeground }}
-                        className='text-sm mt-1'
-                      >
-                        {option.description}
-                      </Text>
-                    )}
-                  </View>
-                  {selectedValue === option.value && (
-                    <Feather name='check' size={20} color={colors.primary} />
                   )}
                 </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
+                {isSelected && (
+                  <Feather name='check' size={20} color={colors.primary} />
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </GlassModal>
   );
 }
+
+const styles = StyleSheet.create({
+  optionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  optionButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    position: 'relative',
+    zIndex: 1,
+  },
+  optionTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  optionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  optionDescription: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+});

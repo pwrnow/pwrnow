@@ -28,6 +28,19 @@ type ThemeContextType = {
     mutedForeground: string;
     popover: string;
     popoverForeground: string;
+    // Liquid Glass design system colors
+    glass: {
+      background: string;
+      backgroundLight: string;
+      backgroundDark: string;
+      border: string;
+      borderLight: string;
+      highlight: string;
+      shadow: string;
+      tint: string;
+      overlay: string;
+      specular: string;
+    };
   };
 };
 
@@ -47,7 +60,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const colorScheme: ColorScheme = isDark ? 'dark' : 'light';
 
-  // Define color palettes
+  // Define color palettes with Liquid Glass design system
   const lightColors = {
     background: '#FFFFFF',
     foreground: '#000000',
@@ -66,6 +79,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     mutedForeground: '#64748B',
     popover: '#FFFFFF',
     popoverForeground: '#0F172A',
+    // Liquid Glass colors for light mode
+    glass: {
+      background: 'rgba(255, 255, 255, 0.75)',
+      backgroundLight: 'rgba(255, 255, 255, 0.6)',
+      backgroundDark: 'rgba(255, 255, 255, 0.85)',
+      border: 'rgba(0, 0, 0, 0.06)',
+      borderLight: 'rgba(255, 255, 255, 0.8)',
+      highlight: 'rgba(255, 255, 255, 0.95)',
+      shadow: 'rgba(0, 0, 0, 0.1)',
+      tint: 'rgba(255, 255, 255, 0.7)',
+      overlay: 'rgba(0, 0, 0, 0.3)',
+      specular: 'rgba(255, 255, 255, 0.9)',
+    },
   };
 
   const darkColors = {
@@ -86,6 +112,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     mutedForeground: '#94A3B8',
     popover: '#000000',
     popoverForeground: '#F8FAFC',
+    // Liquid Glass colors for dark mode
+    glass: {
+      background: 'rgba(20, 20, 20, 0.75)',
+      backgroundLight: 'rgba(30, 30, 30, 0.6)',
+      backgroundDark: 'rgba(10, 10, 10, 0.85)',
+      border: 'rgba(255, 255, 255, 0.12)',
+      borderLight: 'rgba(255, 255, 255, 0.08)',
+      highlight: 'rgba(255, 255, 255, 0.15)',
+      shadow: 'rgba(0, 0, 0, 0.5)',
+      tint: 'rgba(255, 255, 255, 0.05)',
+      overlay: 'rgba(0, 0, 0, 0.6)',
+      specular: 'rgba(255, 255, 255, 0.12)',
+    },
   };
 
   const colors = isDark ? darkColors : lightColors;
