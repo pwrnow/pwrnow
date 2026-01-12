@@ -26,22 +26,23 @@ class BaseAIService:
 
     PROVIDER_CONFIGS = {
         "openai": {
-            "model_name": "gpt-4o-mini",
+            "default_model": "gpt-4o-mini",
+            "fallback_models": [],
             "temperature": 0.3,
             "max_tokens": 4000,
+            "api_key_setting": "OPENAI_API_KEY",
         },
         "gemini": {
-            "model_name": "gemini-2.0-flash",
+            "default_model": "gemini-2.5-flash-lite",
+            "fallback_models": [
+                "gemini-2.5-flash",
+                "gemini-2.5-pro",
+            ],
             "temperature": 0.3,
             "max_tokens": 4000,
+            "api_key_setting": "GEMINI_API_KEY",
         },
     }
-
-    GEMINI_MODELS = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-    ]
 
     DEFAULT_PROVIDER = "openai"
 
@@ -54,33 +55,39 @@ class BaseAIService:
             )
 
         self.config = self.PROVIDER_CONFIGS[self.provider]
+        self.current_model = self.config["default_model"]
 
         self.callback_handler = CallbackHandler(client=posthog, privacy_mode=False)
 
         self._init_llm()
 
+    def _get_all_models(self) -> List[str]:
+        """Get all models for the current provider (default + fallbacks)."""
+        return [self.config["default_model"]] + self.config["fallback_models"]
+
     def _init_llm(self, model_name=None):
         """Initialize the base LLM."""
         try:
-            current_model = model_name or self.config["model_name"]
+            self.current_model = model_name or self.config["default_model"]
+            api_key = getattr(settings, self.config["api_key_setting"], None)
 
             if self.provider == "openai":
                 from langchain_openai import ChatOpenAI
 
                 self.llm = ChatOpenAI(
-                    model=current_model,
+                    model=self.current_model,
                     temperature=self.config["temperature"],
                     max_tokens=self.config["max_tokens"],
-                    openai_api_key=getattr(settings, "OPENAI_API_KEY", None),
+                    openai_api_key=api_key,
                 )
             elif self.provider == "gemini":
                 from langchain_google_genai import ChatGoogleGenerativeAI
 
                 self.llm = ChatGoogleGenerativeAI(
-                    model=current_model,
+                    model=self.current_model,
                     temperature=self.config["temperature"],
                     max_tokens=self.config["max_tokens"],
-                    google_api_key=getattr(settings, "GEMINI_API_KEY", None),
+                    google_api_key=api_key,
                 )
         except ImportError:
             msg = "Missing required packages. "
@@ -95,40 +102,40 @@ class BaseAIService:
             )
             raise
 
+    def get_model_used(self) -> str:
+        """Get the actual model that was used for the last invocation."""
+        return self.current_model
+
     def invoke_with_fallback(self, prompt, config=None):
-        """Invoke LLM with fallback to other models if using Gemini."""
-        if self.provider != "gemini":
+        """Invoke LLM with fallback to other models if provider has fallbacks configured."""
+        all_models = self._get_all_models()
+
+        # If no fallback models, just invoke directly
+        if len(all_models) == 1:
             return self.llm.invoke(prompt, config=config)
 
-        # For Gemini, try models in sequence
+        # Try models in sequence
         errors = []
 
-        # Ensure we start with the configured model, then try others
-        models_to_try = []
-        if self.config["model_name"] in self.GEMINI_MODELS:
-            models_to_try.append(self.config["model_name"])
-            models_to_try.extend(
-                [m for m in self.GEMINI_MODELS if m != self.config["model_name"]]
-            )
-        else:
-            models_to_try = self.GEMINI_MODELS
-
-        for model in models_to_try:
+        for model in all_models:
             try:
-                logger.info(f"Attempting invocation with Gemini model: {model}")
+                logger.info(
+                    f"Attempting invocation with {self.provider} model: {model}"
+                )
                 self._init_llm(model_name=model)
-                return self.llm.invoke(prompt, config=config)
+                response = self.llm.invoke(prompt, config=config)
+                logger.info(f"Successfully used model: {model}")
+                return response
             except Exception as e:
                 error_str = str(e)
-                logger.warning(f"Gemini model {model} failed: {error_str}")
+                logger.warning(f"Model {model} failed: {error_str}")
                 errors.append(f"{model}: {error_str}")
-
-                # If it's not a rate limit or availability error, maybe we shouldn't retry?
-                # But for now, let's assume we want to retry on most errors to be robust.
                 continue
 
         # If all failed
-        raise Exception(f"All Gemini models failed. Errors: {'; '.join(errors)}")
+        raise Exception(
+            f"All {self.provider} models failed. Errors: {'; '.join(errors)}"
+        )
 
     def _parse_json_response(self, text: str) -> Any:
         """Parse JSON from LLM response, handling markdown code blocks."""
@@ -265,13 +272,13 @@ JSON OUTPUT:"""
             provider_name=self.provider,
             input_text=raw_text,
             prompt_used=prompt,
-            model_used=self.config["model_name"],
+            model_used=self.config["default_model"],  # Will be updated after invocation
             status="processing",
             organization=organization,
             user=user,
             raw_llm_request={
                 "provider": self.provider,
-                "model": self.config["model_name"],
+                "requested_model": self.config["default_model"],
                 "temperature": self.config["temperature"],
                 "max_tokens": self.config["max_tokens"],
                 "prompt": prompt,
@@ -293,6 +300,9 @@ JSON OUTPUT:"""
                 # Re-raise after backoff
                 raise
 
+            # Get the actual model that was used (may differ if fallback was needed)
+            actual_model = self.get_model_used()
+
             response_text = (
                 response.content if hasattr(response, "content") else str(response)
             )
@@ -303,12 +313,15 @@ JSON OUTPUT:"""
                 "type": str(type(response)),
                 "response_metadata": getattr(response, "response_metadata", None),
                 "usage_metadata": getattr(response, "usage_metadata", None),
+                "actual_model": actual_model,
             }
 
-            logger.info(f"Schedule parsing raw response: {response_text[:200]}...")
+            logger.info(
+                f"Schedule parsing raw response (model: {actual_model}): {response_text[:200]}..."
+            )
 
             # Parse JSON
-            debug_info = {"parsing_attempts": []}
+            debug_info = {"parsing_attempts": [], "actual_model": actual_model}
 
             try:
                 parsed_json = self._parse_json_response(response_text)
@@ -335,8 +348,9 @@ JSON OUTPUT:"""
 
             processing_time = int((time.time() - start_time) * 1000)
 
-            # Update log with complete debug info
+            # Update log with complete debug info and actual model used
             log.status = "completed"
+            log.model_used = actual_model
             log.output_text = json.dumps(parsed_json)
             log.processing_time_ms = processing_time
             log.raw_llm_response = raw_response_data
@@ -344,13 +358,16 @@ JSON OUTPUT:"""
             log.debug_info = debug_info
             log.save()
 
-            logger.info(f"Schedule parsing successful: {len(parsed_json)} items")
+            logger.info(
+                f"Schedule parsing successful (model: {actual_model}): {len(parsed_json)} items"
+            )
 
             return {
                 "success": True,
                 "schedule_items": parsed_json,
                 "raw_response": response_text,
                 "processing_time_ms": processing_time,
+                "model_used": actual_model,
             }
 
         except Exception as e:
@@ -522,6 +539,10 @@ JSON OUTPUT:"""
                 # Re-raise after backoff
                 raise
 
+            # Get the actual model that was used
+            actual_model = self.get_model_used()
+            debug_info["actual_model"] = actual_model
+
             response_text = (
                 response.content if hasattr(response, "content") else str(response)
             )
@@ -533,9 +554,12 @@ JSON OUTPUT:"""
                 "response_metadata": getattr(response, "response_metadata", None),
                 "usage_metadata": getattr(response, "usage_metadata", None),
                 "additional_kwargs": getattr(response, "additional_kwargs", None),
+                "actual_model": actual_model,
             }
 
-            logger.info(f"Translation raw response: {response_text[:200]}...")
+            logger.info(
+                f"Translation raw response (model: {actual_model}): {response_text[:200]}..."
+            )
             logger.info(
                 f"Translation response metadata: {raw_response_data['response_metadata']}"
             )
@@ -573,7 +597,9 @@ JSON OUTPUT:"""
                 raise ValueError("Empty translated_text")
 
             processing_time = int((time.time() - start_time) * 1000)
-            logger.info(f"Translation SUCCESS: {translated_text[:100]}...")
+            logger.info(
+                f"Translation SUCCESS (model: {actual_model}): {translated_text[:100]}..."
+            )
 
             return {
                 "success": True,
@@ -585,6 +611,7 @@ JSON OUTPUT:"""
                 "raw_response_data": raw_response_data,
                 "parsed_output": result,
                 "debug_info": debug_info,
+                "model_used": actual_model,
             }
 
         except Exception as e:
@@ -674,12 +701,15 @@ JSON OUTPUT:"""
                 source_text, source_lang, target_lang, is_title
             )
 
-            # Log
+            # Log - use actual model from translation debug info
+            actual_model = translation.get("debug_info", {}).get(
+                "actual_model", self.get_model_used()
+            )
             AIProcessingLog.objects.create(
                 provider_name=self.provider,
                 input_text=source_text,
                 prompt_used=f"Translate {source_field} to {target_field}",
-                model_used=self.config["model_name"],
+                model_used=actual_model,
                 status="completed" if translation["success"] else "failed",
                 output_text=translation.get("translated_text", ""),
                 error_message=translation.get("error"),
@@ -691,7 +721,7 @@ JSON OUTPUT:"""
                     "target_lang": target_lang,
                     "is_title": is_title,
                     "provider": self.provider,
-                    "model": self.config["model_name"],
+                    "requested_model": self.config["default_model"],
                 },
                 raw_llm_response=translation.get("raw_response_data"),
                 parsed_output=translation.get("parsed_output"),
@@ -729,7 +759,14 @@ JSON OUTPUT:"""
 class EventExtractionService(BaseAIService):
     """Service for extracting event information from images using AI."""
 
-    def extract_event_info(self, image_file, organization=None, user=None, categories=None, organizations=None) -> Dict[str, Any]:
+    def extract_event_info(
+        self,
+        image_file,
+        organization=None,
+        user=None,
+        categories=None,
+        organizations=None,
+    ) -> Dict[str, Any]:
         """
         Extract event information from an image file.
 
@@ -846,14 +883,16 @@ class EventExtractionService(BaseAIService):
                 provider_name=self.provider,
                 input_text=f"Image upload: {file_name}",
                 prompt_used=prompt_text,
-                model_used=self.config["model_name"],
+                model_used=self.config[
+                    "default_model"
+                ],  # Will be updated after invocation
                 status="processing",
                 organization=organization,
                 user=user,
                 tokens_used=0,
                 raw_llm_request={
                     "provider": self.provider,
-                    "model": self.config["model_name"],
+                    "requested_model": self.config["default_model"],
                     "file_name": file_name,
                     "mime_type": mime_type,
                     "image_size": len(image_data),
@@ -869,6 +908,9 @@ class EventExtractionService(BaseAIService):
                 self._handle_rate_limit_error(llm_error)
                 raise
 
+            # Get the actual model that was used
+            actual_model = self.get_model_used()
+
             response_text = (
                 response.content if hasattr(response, "content") else str(response)
             )
@@ -879,12 +921,15 @@ class EventExtractionService(BaseAIService):
                 "type": str(type(response)),
                 "response_metadata": getattr(response, "response_metadata", None),
                 "usage_metadata": getattr(response, "usage_metadata", None),
+                "actual_model": actual_model,
             }
 
-            logger.info(f"Event extraction raw response: {response_text[:200]}...")
+            logger.info(
+                f"Event extraction raw response (model: {actual_model}): {response_text[:200]}..."
+            )
 
             # Parse JSON
-            debug_info = {"parsing_attempts": []}
+            debug_info = {"parsing_attempts": [], "actual_model": actual_model}
 
             try:
                 result = self._parse_json_response(response_text)
@@ -903,8 +948,9 @@ class EventExtractionService(BaseAIService):
 
             processing_time = int((time.time() - start_time) * 1000)
 
-            # Update log
+            # Update log with actual model used
             log.status = "completed"
+            log.model_used = actual_model
             log.output_text = json.dumps(result)
             log.processing_time_ms = processing_time
             log.raw_llm_response = raw_response_data
@@ -916,6 +962,7 @@ class EventExtractionService(BaseAIService):
                 "success": True,
                 "data": result,
                 "processing_time_ms": processing_time,
+                "model_used": actual_model,
             }
 
         except Exception as e:

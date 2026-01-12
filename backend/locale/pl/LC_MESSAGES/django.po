@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-25 18:11+0100\n"
+"POT-Creation-Date: 2025-12-16 20:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -115,7 +115,7 @@ msgstr ""
 msgid "Event slug is required."
 msgstr ""
 
-#: ai/views.py:59 ai/views.py:189 ai/views.py:241 core/views.py:774
+#: ai/views.py:59 ai/views.py:189 ai/views.py:241 core/views.py:1052
 msgid "Event not found."
 msgstr ""
 
@@ -127,305 +127,340 @@ msgstr ""
 msgid "Failed to parse schedule. Please try again or contact support."
 msgstr ""
 
-#: config/settings.py:191
+#: config/settings.py:192
 msgid "Polish"
 msgstr "Polski"
 
-#: config/settings.py:192
+#: config/settings.py:193
 msgid "English"
 msgstr "Angielski"
 
-#: core/admin.py:24
+#: core/admin.py:48
 msgid "has image"
 msgstr ""
 
-#: core/admin.py:29 core/admin.py:67
+#: core/admin.py:53 core/admin.py:91
 msgid "Yes"
 msgstr ""
 
-#: core/admin.py:30 core/admin.py:68
+#: core/admin.py:54 core/admin.py:92
 msgid "No"
 msgstr ""
 
-#: core/admin.py:41
+#: core/admin.py:65
 msgid "status"
 msgstr ""
 
-#: core/admin.py:46
+#: core/admin.py:70
 msgid "Past"
 msgstr ""
 
-#: core/admin.py:47
+#: core/admin.py:71
 msgid "Ongoing"
 msgstr ""
 
-#: core/admin.py:48
+#: core/admin.py:72
 msgid "Upcoming"
 msgstr ""
 
-#: core/admin.py:62
+#: core/admin.py:86
 msgid "aspect ratio"
 msgstr ""
 
-#: core/admin.py:149 core/models.py:139 feature_access/admin.py:89
+#: core/admin.py:192 core/models.py:154 feature_access/admin.py:89
 msgid "Organization"
 msgstr ""
 
-#: core/admin.py:152
+#: core/admin.py:193
 msgid "Code Details"
 msgstr ""
 
-#: core/admin.py:155
+#: core/admin.py:194
 msgid "Usage Information"
 msgstr ""
 
-#: core/admin.py:173
+#: core/admin.py:210
 msgid "URL Actions"
 msgstr ""
 
-#: core/admin.py:634
+#: core/admin.py:928
 msgid "Please select exactly one event for manual reminder."
 msgstr ""
 
-#: core/admin.py:644 core/admin.py:675
+#: core/admin.py:938 core/admin.py:975
 msgid "Only verified events can have reminders sent."
 msgstr ""
 
-#: core/admin.py:653
+#: core/admin.py:949
 msgid "Send manual reminder (with message selection)"
 msgstr ""
 
-#: core/admin.py:697
+#: core/admin.py:998
 msgid "Send Manual Reminder"
 msgstr ""
 
-#: core/models.py:140
+#: core/models.py:120
+msgid "Short display name (used in event headers when space is limited)"
+msgstr ""
+
+#: core/models.py:155
 msgid "Admin"
 msgstr ""
 
+#: core/models.py:400
+msgid "The event being co-hosted"
+msgstr ""
+
 #: core/models.py:406
+msgid "The co-hosting organization"
+msgstr ""
+
+#: core/models.py:412
+msgid "Event Co-Host"
+msgstr ""
+
+#: core/models.py:413
+msgid "Event Co-Hosts"
+msgstr ""
+
+#: core/models.py:428
+msgid "Co-host organization cannot be the same as the primary organization."
+msgstr ""
+
+#: core/models.py:471
 msgid "Optional text content"
 msgstr ""
 
-#: core/models.py:414
+#: core/models.py:479
 msgid "Timestamp of when the post was verified"
 msgstr ""
 
-#: core/models.py:435 core/serializers.py:453
+#: core/models.py:500 core/serializers.py:693
 msgid "Post must include text or at least one image."
 msgstr ""
 
-#: core/models.py:469
+#: core/models.py:531
 msgid "Image file"
 msgstr ""
 
-#: core/models.py:474
+#: core/models.py:536
 msgid "Detected aspect ratio of the post image (e.g., '16:9', '1:1')"
 msgstr ""
 
-#: core/models.py:606
+#: core/models.py:667
 msgid "QR Code Scan"
 msgstr ""
 
-#: core/models.py:858
+#: core/models.py:930 users/models.py:113
 msgid "Pending"
 msgstr ""
 
-#: core/models.py:859
+#: core/models.py:931
 msgid "Accepted"
 msgstr ""
 
-#: core/models.py:860
+#: core/models.py:932 users/models.py:115
 msgid "Rejected"
 msgstr ""
 
-#: core/serializers.py:56
+#: core/serializers.py:81
 msgid "Invalid authentication code"
 msgstr ""
 
-#: core/serializers.py:335 core/serializers.py:534
+#: core/serializers.py:529 core/serializers.py:788
 msgid "End time must be after start time."
 msgstr ""
 
-#: core/serializers.py:344
+#: core/serializers.py:541
 msgid "Publication date must be in the future (not today or earlier)."
 msgstr ""
 
-#: core/serializers.py:353
+#: core/serializers.py:554
 msgid "Publication date cannot be later than the event start date."
 msgstr ""
 
-#: core/serializers.py:366
+#: core/serializers.py:570
 msgid "Image is required for this category."
 msgstr ""
 
-#: core/serializers.py:373
+#: core/serializers.py:578
 msgid "Image size cannot exceed 5MB."
 msgstr ""
 
-#: core/serializers.py:380 core/serializers.py:459 core/serializers.py:560
-#: core/serializers.py:691 core/serializers.py:768
+#: core/serializers.py:601
+#, python-format
+msgid "Organization with ID %(id)s not found."
+msgstr ""
+
+#: core/serializers.py:609 core/serializers.py:700 core/serializers.py:817
+#: core/serializers.py:995 core/serializers.py:1088
 msgid "No request context found."
 msgstr ""
 
-#: core/serializers.py:387 core/serializers.py:464 core/serializers.py:565
-#: core/serializers.py:696 core/serializers.py:773 core/views.py:1297
-#: core/views.py:1403 core/views.py:1416 core/views.py:1433
+#: core/serializers.py:617 core/serializers.py:706 core/serializers.py:823
+#: core/serializers.py:1001 core/serializers.py:1094 core/views.py:1710
+#: core/views.py:1839 core/views.py:1857 core/views.py:1885
 msgid "No authenticated organization found."
 msgstr ""
 
-#: core/serializers.py:396
+#: core/serializers.py:627
 msgid "Invalid category slug."
 msgstr ""
 
-#: core/serializers.py:470 core/serializers.py:542 core/serializers.py:574
-#: core/serializers.py:659 core/serializers.py:705 core/serializers.py:752
-#: core/serializers.py:782
+#: core/serializers.py:712 core/serializers.py:798 core/serializers.py:833
+#: core/serializers.py:934 core/serializers.py:1011 core/serializers.py:1067
+#: core/serializers.py:1104
 msgid "Invalid event slug."
 msgstr ""
 
-#: core/serializers.py:474
+#: core/serializers.py:717
 msgid "You do not have permission to post to this event."
 msgstr ""
 
-#: core/serializers.py:549
+#: core/serializers.py:806
 msgid "Date must be within the event dates."
 msgstr ""
 
-#: core/serializers.py:577 core/serializers.py:708 core/serializers.py:785
+#: core/serializers.py:838 core/serializers.py:1016 core/serializers.py:1109
 msgid "You do not have permission to modify this event."
 msgstr ""
 
-#: core/serializers.py:663
+#: core/serializers.py:940
 msgid "Event already has a map."
 msgstr ""
 
-#: core/serializers.py:672
+#: core/serializers.py:951
 msgid "Location name is required."
 msgstr ""
 
-#: core/serializers.py:674
+#: core/serializers.py:957
 msgid "Latitude and longitude are required."
 msgstr ""
 
-#: core/serializers.py:680
+#: core/serializers.py:969
 msgid "Latitude must be between -90 and 90 degrees."
 msgstr ""
 
-#: core/serializers.py:682
+#: core/serializers.py:977
 msgid "Longitude must be between -180 and 180 degrees."
 msgstr ""
 
-#: core/serializers.py:684
+#: core/serializers.py:985
 msgid "Invalid latitude or longitude values."
 msgstr ""
 
-#: core/serializers.py:755
+#: core/serializers.py:1072
 msgid "Event does not have a map."
 msgstr ""
 
-#: core/serializers.py:758
+#: core/serializers.py:1077
 msgid "Event map is not active."
 msgstr ""
 
-#: core/serializers.py:852 core/views.py:1204
+#: core/serializers.py:1197 core/views.py:1599
 msgid "User not found."
 msgstr ""
 
-#: core/serializers.py:858
+#: core/serializers.py:1206
 msgid "You cannot send a friend request to yourself."
 msgstr ""
 
-#: core/serializers.py:883
+#: core/serializers.py:1238
 msgid "You are already friends with this user."
 msgstr ""
 
-#: core/serializers.py:895 core/serializers.py:926
+#: core/serializers.py:1256 core/serializers.py:1304
 msgid "You have already sent a friend request to this user."
 msgstr ""
 
-#: core/serializers.py:898
+#: core/serializers.py:1264
 msgid ""
 "This user has already sent you a friend request. Please accept it instead."
 msgstr ""
 
-#: core/views.py:126
+#: core/views.py:161
 msgid "Successfully logged out"
 msgstr ""
 
-#: core/views.py:140 core/views.py:160
+#: core/views.py:175 core/views.py:197 core/views.py:258
 msgid "No organization authenticated"
 msgstr ""
 
-#: core/views.py:170
+#: core/views.py:209 core/views.py:270
 msgid "Access denied"
 msgstr ""
 
-#: core/views.py:177
+#: core/views.py:217
 msgid "No image file provided"
 msgstr ""
 
-#: core/views.py:187
+#: core/views.py:229
 msgid "Image size cannot exceed 5MB"
 msgstr ""
 
-#: core/views.py:468
+#: core/views.py:591
+msgid ""
+"Only the admin organization can delete this event. Co-hosts cannot delete "
+"events."
+msgstr ""
+
+#: core/views.py:654
 msgid "Event not verified."
 msgstr ""
 
-#: core/views.py:491
+#: core/views.py:686
 msgid "Event is already verified."
 msgstr ""
 
-#: core/views.py:535 core/views.py:574
+#: core/views.py:744 core/views.py:802
 msgid "Authentication required."
 msgstr ""
 
-#: core/views.py:539
+#: core/views.py:753
 msgid "You do not have permission to delete this post."
 msgstr ""
 
-#: core/views.py:579
+#: core/views.py:814
 msgid "You do not have permission to delete this schedule item."
 msgstr ""
 
-#: core/views.py:701
+#: core/views.py:961
 msgid "Search query must be at least 3 characters long."
 msgstr ""
 
-#: core/views.py:877 core/views.py:941
+#: core/views.py:1185 core/views.py:1267
 msgid "Friend request not found or already processed."
 msgstr ""
 
-#: core/views.py:908
+#: core/views.py:1225
 msgid "Friend request accepted."
 msgstr ""
 
-#: core/views.py:953
+#: core/views.py:1283
 msgid "Friend request rejected."
 msgstr ""
 
-#: core/views.py:1217
+#: core/views.py:1614
 msgid "You are not friends with this user."
 msgstr ""
 
-#: core/views.py:1238
+#: core/views.py:1639
 msgid "Friend removed successfully."
 msgstr ""
 
-#: core/views.py:1316
+#: core/views.py:1736
 msgid "You do not have permission to modify this event map."
 msgstr ""
 
-#: core/views.py:1421
+#: core/views.py:1867
 msgid "You do not have permission to modify this event map location."
 msgstr ""
 
-#: core/views.py:1438
+#: core/views.py:1893
 msgid "You do not have permission to delete this event map location."
 msgstr ""
 
-#: feature_access/admin.py:22
+#: feature_access/admin.py:22 users/admin.py:259
 msgid "Status"
 msgstr ""
 
@@ -1071,32 +1106,130 @@ msgstr ""
 msgid "Back to Events"
 msgstr ""
 
-#: users/models.py:15
-msgid "email address"
-msgstr "adres e-mail"
+#: users/admin.py:175
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:21
+msgid "Rejection Feedback"
+msgstr ""
 
-#: users/models.py:19
-msgid "username"
+#: users/admin.py:176
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:26
+msgid "This message will be sent to the user as a notification."
+msgstr ""
+
+#: users/admin.py:209
+msgid "Request Details"
+msgstr ""
+
+#: users/admin.py:212 users/admin.py:230
+msgid "Image"
+msgstr ""
+
+#: users/admin.py:215
+msgid "Review"
+msgstr ""
+
+#: users/admin.py:218
+msgid "System"
+msgstr ""
+
+#: users/admin.py:240
+msgid "Image Preview"
+msgstr ""
+
+#: users/admin.py:250
+msgid "Username"
+msgstr ""
+
+#: users/admin.py:274
+msgid "Reviewed By"
+msgstr ""
+
+#: users/admin.py:305
+msgid "Approve selected requests"
+msgstr ""
+
+#: users/admin.py:345
+msgid "Profile image approved successfully."
+msgstr ""
+
+#: users/admin.py:365 users/views.py:344
+msgid "Profile Image Rejected"
+msgstr ""
+
+#: users/admin.py:375
+msgid "Profile image rejected and user notified."
 msgstr ""
 
 #: users/models.py:23
+msgid "email address"
+msgstr "adres e-mail"
+
+#: users/models.py:27
+msgid "username"
+msgstr ""
+
+#: users/models.py:31
 msgid "Username must be at least 3 characters long"
 msgstr ""
 
-#: users/models.py:26
+#: users/models.py:34
 msgid "Username can only contain letters, numbers, and underscores"
 msgstr ""
 
-#: users/models.py:29
+#: users/models.py:37
 msgid "Required. 3-16 characters. Letters, numbers, and underscores only."
 msgstr ""
 
-#: users/models.py:34
+#: users/models.py:42
 msgid "username set by user"
 msgstr ""
 
-#: users/models.py:36
+#: users/models.py:44
 msgid "Indicates if the user has manually set their username"
+msgstr ""
+
+#: users/models.py:52
+msgid "User profile image (approved)"
+msgstr ""
+
+#: users/models.py:114
+msgid "Approved"
+msgstr ""
+
+#: users/models.py:128
+msgid "Pending profile image awaiting approval"
+msgstr ""
+
+#: users/models.py:139
+msgid "Feedback provided when rejecting the image"
+msgstr ""
+
+#: users/models.py:152
+msgid "Staff member who reviewed this request"
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:7
+msgid "Review Actions"
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:12
+msgid "Approve"
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:25
+msgid "Enter reason for rejection (will be sent to user)..."
+msgstr ""
+
+#: users/templates/admin/users/profileimagechangerequest/change_form.html:28
+msgid "Reject"
+msgstr ""
+
+#: users/views.py:245
+msgid "No profile image to delete"
+msgstr ""
+
+#: users/views.py:281 users/views.py:326
+msgid "Request not found or already processed"
 msgstr ""
 
 #: utils/middleware.py:34

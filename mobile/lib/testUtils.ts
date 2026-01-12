@@ -1,7 +1,8 @@
 import { resetFirstLikeModalStatus } from './firstLikeStorage';
+import { resetProfilePictureFeatureModalStatus } from './profilePictureFeatureStorage';
 
 /**
- * Utility functions for testing the first like modal
+ * Utility functions for testing modals
  * These should only be used in development
  */
 export const testUtils = {
@@ -17,6 +18,20 @@ export const testUtils = {
       );
     } else {
       console.warn('resetFirstLikeModal can only be used in development mode');
+    }
+  },
+  /**
+   * Reset the profile picture feature modal status so it can be shown again
+   * Useful for testing the modal functionality
+   */
+  resetProfilePictureFeatureModal: async () => {
+    if (__DEV__) {
+      await resetProfilePictureFeatureModalStatus();
+      console.log(
+        'Profile picture feature modal status reset. The modal will show on the next app launch for authenticated users.'
+      );
+    } else {
+      console.warn('resetProfilePictureFeatureModal can only be used in development mode');
     }
   },
 };
