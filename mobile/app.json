@@ -30,7 +30,9 @@
         ],
         "CFBundleDevelopmentRegion": "pl",
         "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery, aby skanować kody QR wydarzeń.",
-        "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do biblioteki zdjęć, aby wybrać zdjęcie profilowe."
+        "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do biblioteki zdjęć, aby wybrać zdjęcie profilowe.",
+        "UIDesignRequiresCompatibility": true
+
       },
       "icon": {
         "light": "./assets/icon-light.png",
