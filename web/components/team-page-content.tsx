@@ -45,7 +45,7 @@ const teamMembers: TeamMember[] = [
         social: {
             linkedin: "https://www.linkedin.com/in/igor-lis/",
             github: "https://github.com/foxjustfox",
-            website: "https://igor.lis.rocks/about",
+            website: "https://igor.lis.rocks",
         },
     },
     {

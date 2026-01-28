@@ -9,3 +9,7 @@ old
 GEMINI.md
 
 mailu.env
+
+.DS_Store
+
+.deploy_images.sh

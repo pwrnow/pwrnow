@@ -1,4 +1,4 @@
-declare module '*.mdx' {
+declare module '*.md' {
   import type { ComponentProps, ComponentType, ReactElement } from 'react';
 
   export interface MDXProps {

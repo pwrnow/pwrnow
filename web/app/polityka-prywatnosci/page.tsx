@@ -1,6 +1,6 @@
 'use client';
 
-import PrivacyPolicy from '@/markdown/privacy-policy.mdx';
+import PrivacyPolicy from '@/markdown/privacy-policy.md';
 
 export default function PrivacyPolicyPage() {
   return (

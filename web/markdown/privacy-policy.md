@@ -1,8 +1,8 @@
 ### **POLITYKA PRYWATNOŚCI APLIKACJI PWr Now**
 
-**Ostatnia aktualizacja: 14 września 2025**
+**Ostatnia aktualizacja: 26 stycznia 2026**
 
-Niniejsza Polityka Prywatności dla aplikacji PWr Now ("**Aplikacja**", "**Usługi**"), administratorem danych osobowych jest właściciel Serwisu ("**Administrator**", "**my**", "**nas**" lub "**nasz**"), opisuje, jak i dlaczego możemy uzyskiwać dostęp, gromadzić, przechowywać, wykorzystywać i/lub udostępniać ("**przetwarzać**") Twoje dane osobowe, gdy korzystasz z naszych Usług.
+Niniejsza Polityka Prywatności dla aplikacji PWr Now ("**Aplikacja**", "**Usługi**"), administratorem danych osobowych jest **Igor Lis**, zamieszkały przy **ul. Sienkiewicza 97, 50-346 Wrocław** ("**Administrator**", "**my**", "**nas**" lub "**nasz**"), opisuje, jak i dlaczego możemy uzyskiwać dostęp, gromadzić, przechowywać, wykorzystywać i/lub udostępniać ("**przetwarzać**") Twoje dane osobowe, gdy korzystasz z naszych Usług.
 
 **Pytania lub wątpliwości?** Przeczytanie tej Polityki Prywatności pomoże Ci zrozumieć Twoje prawa i wybory dotyczące prywatności. Jesteśmy jako Administrator odpowiedzialni za podejmowanie decyzji o sposobie przetwarzania Twoich danych osobowych. Jeśli nie zgadzasz się z naszymi zasadami i praktykami, prosimy o niekorzystanie z naszych Usług.
 
