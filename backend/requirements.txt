@@ -19,7 +19,7 @@ gunicorn==23.0.0
 django-modeltranslation==0.19.16
 flower==2.0.1
 langchain==0.3.15
-langchain-openai==0.2.8
+langchain-openai==1.0.1
 langchain-google-genai==2.0.4
 google-generativeai==0.8.3
 pytest==8.4.1
