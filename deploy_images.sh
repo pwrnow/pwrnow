@@ -126,10 +126,7 @@ docker buildx build \
     ./backend
 
 echo -e "${GREEN}Backend image pushed successfully.${NC}"
-coolify_deploy "$COOLIFY_BACKEND_UUID" "backend"
-# coolify_deploy "$COOLIFY_WORKER_UUID" "worker"
-coolify_deploy "$COOLIFY_BEAT_UUID" "beat"
-coolify_deploy "$COOLIFY_FLOWER_UUID" "flower"
+
 
 # --- Build Frontend ---
 echo -e "\n${GREEN}=== Building Frontend Image ===${NC}"
@@ -142,7 +139,6 @@ echo -e "\n${GREEN}=== Building Frontend Image ===${NC}"
 #     ./web
 
 echo -e "${GREEN}Frontend image pushed successfully.${NC}"
-# coolify_deploy "$COOLIFY_FRONTEND_UUID" "frontend"
 
 # --- Build Nginx (Optional) ---
 # Uncomment if needed
@@ -153,7 +149,14 @@ echo -e "${GREEN}Frontend image pushed successfully.${NC}"
 #    --tag "$REGISTRY_URL/pwrnow-nginx:latest" \
 #    ./nginx
 
-# coolify_deploy "$COOLIFY_NGINX_UUID" "nginx"
 
 echo -e "\n${GREEN}=== All builds finished successfully! ===${NC}"
 echo "Images pushed and Coolify deploys triggered."
+
+# coolify_deploy "$COOLIFY_FRONTEND_UUID" "frontend"
+coolify_deploy "$COOLIFY_BACKEND_UUID" "backend"
+# coolify_deploy "$COOLIFY_WORKER_UUID" "worker"
+# coolify_deploy "$COOLIFY_BEAT_UUID" "beat"
+# coolify_deploy "$COOLIFY_FLOWER_UUID" "flower"
+
+# coolify_deploy "$COOLIFY_NGINX_UUID" "nginx"
