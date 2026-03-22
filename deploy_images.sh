@@ -115,15 +115,15 @@ fi
 # --- Build Backend ---
 echo -e "\n${GREEN}=== Building Backend Image ===${NC}"
 # Backend serves: backend, celeryworker, celerybeat
-docker buildx build \
-    --platform linux/amd64 \
-    --provenance=false \
-    --progress=plain \
-    --push \
-    --target prod \
-    --file ./backend/Dockerfile \
-    --tag "$REGISTRY_URL/pwrnow/backend:latest" \
-    ./backend
+# docker buildx build \
+#     --platform linux/amd64 \
+#     --provenance=false \
+#     --progress=plain \
+#     --push \
+#     --target prod \
+#     --file ./backend/Dockerfile \
+#     --tag "$REGISTRY_URL/pwrnow/backend:latest" \
+#     ./backend
 
 echo -e "${GREEN}Backend image pushed successfully.${NC}"
 
@@ -142,21 +142,21 @@ echo -e "${GREEN}Frontend image pushed successfully.${NC}"
 
 # --- Build Nginx (Optional) ---
 # Uncomment if needed
-# echo -e "\n${GREEN}=== Building Nginx Image ===${NC}"
-# docker buildx build \
-#    --platform linux/amd64 \
-#    --push \
-#    --tag "$REGISTRY_URL/pwrnow-nginx:latest" \
-#    ./nginx
+echo -e "\n${GREEN}=== Building Nginx Image ===${NC}"
+docker buildx build \
+   --platform linux/amd64 \
+   --push \
+   --tag "$REGISTRY_URL/pwrnow/nginx:latest" \
+   ./nginx
 
 
 echo -e "\n${GREEN}=== All builds finished successfully! ===${NC}"
 echo "Images pushed and Coolify deploys triggered."
 
 # coolify_deploy "$COOLIFY_FRONTEND_UUID" "frontend"
-coolify_deploy "$COOLIFY_BACKEND_UUID" "backend"
+# coolify_deploy "$COOLIFY_BACKEND_UUID" "backend"
 # coolify_deploy "$COOLIFY_WORKER_UUID" "worker"
 # coolify_deploy "$COOLIFY_BEAT_UUID" "beat"
 # coolify_deploy "$COOLIFY_FLOWER_UUID" "flower"
 
-# coolify_deploy "$COOLIFY_NGINX_UUID" "nginx"
+coolify_deploy "$COOLIFY_NGINX_UUID" "nginx"
