@@ -3,11 +3,11 @@
 # Exit on error
 set -e
 
-# Fix volume mount permissions (this is the key fix!)
+# Fix volume mount permissions (best-effort, may fail as non-root)
 echo "Fixing volume permissions..."
-sudo chown -R django:django /app/staticfiles /app/media 2>/dev/null || \
 chown -R django:django /app/staticfiles /app/media 2>/dev/null || \
-chmod -R 777 /app/staticfiles /app/media
+chmod -R 777 /app/staticfiles /app/media 2>/dev/null || \
+echo "Warning: Could not fix volume permissions (running as non-root). Ensure volumes are owned by uid $(id -u)."
 
 # Apply database migrations
 python manage.py migrate

@@ -4,7 +4,26 @@ import { detectLocaleFromHeaders } from './lib/locale-detection';
 import { i18nConfig } from './i18n/config';
 import { trackServerEvent } from './lib/posthog-server';
 
+const APP_STORE_PATHS = ['/apka', '/ios', '/android', '/mobile', '/download', '/pobierz'];
+const IOS_STORE_URL = 'https://apps.apple.com/pl/app/pwr-now/id6751172859';
+const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=pl.pwrnow.app';
+
 export function proxy(request: NextRequest) {
+  // Handle app store redirects
+  if (APP_STORE_PATHS.includes(request.nextUrl.pathname)) {
+    const userAgent = request.headers.get('user-agent') || '';
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+    const isAndroid = /Android/i.test(userAgent);
+
+    if (isIOS) {
+      return NextResponse.redirect(IOS_STORE_URL);
+    } else if (isAndroid) {
+      return NextResponse.redirect(ANDROID_STORE_URL);
+    } else {
+      return NextResponse.redirect(new URL('/aplikacja', request.url));
+    }
+  }
+
   // Handle /wlepa redirect
   if (request.nextUrl.pathname === '/wlepa') {
     console.log('🔗 User accessed /wlepa path');

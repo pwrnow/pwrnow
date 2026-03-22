@@ -44,31 +44,6 @@ const nextConfig: NextConfig = {
         source: '/ingest/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
-      // Serve /aplikacja under multiple URLs
-      {
-        source: '/ios',
-        destination: '/aplikacja',
-      },
-      {
-        source: '/android',
-        destination: '/aplikacja',
-      },
-      {
-        source: '/mobile',
-        destination: '/aplikacja',
-      },
-      {
-        source: '/apka',
-        destination: '/aplikacja',
-      },
-      {
-        source: '/download',
-        destination: '/aplikacja',
-      },
-      {
-        source: '/pobierz',
-        destination: '/aplikacja',
-      },
       // Serve dark icon as logo.png and logo
       {
         source: '/logo.png',
