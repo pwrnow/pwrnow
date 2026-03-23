@@ -121,6 +121,7 @@ jobs:
         needs.build-nginx.result  == 'success'
       )
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - name: Deploy backend + worker + beat + flower
         if: needs.build-backend.result == 'success'
