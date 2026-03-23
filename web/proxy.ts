@@ -4,62 +4,45 @@ import { detectLocaleFromHeaders } from './lib/locale-detection';
 import { i18nConfig } from './i18n/config';
 import { trackServerEvent } from './lib/posthog-server';
 
-const APP_STORE_PATHS = ['/apka', '/ios', '/android', '/mobile', '/download', '/pobierz'];
+const APP_STORE_PATHS = ['/apka', '/ios', '/android', '/mobile', '/download', '/pobierz', '/wlepa'];
 const IOS_STORE_URL = 'https://apps.apple.com/pl/app/pwr-now/id6751172859';
 const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=pl.pwrnow.app';
 
+function getAppStoreUrl(userAgent: string): string | null {
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return IOS_STORE_URL;
+  if (/Android/i.test(userAgent)) return ANDROID_STORE_URL;
+  return null;
+}
+
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const userAgent = request.headers.get('user-agent') || '';
+
   // Handle app store redirects
-  if (APP_STORE_PATHS.includes(request.nextUrl.pathname)) {
-    const userAgent = request.headers.get('user-agent') || '';
-    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-    const isAndroid = /Android/i.test(userAgent);
-
-    if (isIOS) {
-      return NextResponse.redirect(IOS_STORE_URL);
-    } else if (isAndroid) {
-      return NextResponse.redirect(ANDROID_STORE_URL);
-    } else {
-      return NextResponse.redirect(new URL('/aplikacja', request.url));
+  if (APP_STORE_PATHS.includes(pathname)) {
+    if (pathname === '/wlepa') {
+      const forwardedFor = request.headers.get('x-forwarded-for') ||
+                          request.headers.get('x-real-ip') ||
+                          'unknown';
+      const distinctId = `anonymous-${Buffer.from(forwardedFor + userAgent).toString('base64').slice(0, 16)}`;
+      const storeUrl = getAppStoreUrl(userAgent) ?? IOS_STORE_URL;
+      trackServerEvent(distinctId, 'wlepa_scanned', {
+        pathname,
+        user_agent: userAgent,
+        ip_address: forwardedFor,
+        timestamp: new Date().toISOString(),
+        redirect_target: storeUrl,
+      });
     }
-  }
 
-  // Handle /wlepa redirect
-  if (request.nextUrl.pathname === '/wlepa') {
-    console.log('🔗 User accessed /wlepa path');
-    
-    // Generate a unique identifier for the user (using IP + User-Agent hash for anonymity)
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-    const forwardedFor = request.headers.get('x-forwarded-for') ||
-                        request.headers.get('x-real-ip') ||
-                        'unknown';
-    const distinctId = `anonymous-${Buffer.from(forwardedFor + userAgent).toString('base64').slice(0, 16)}`;
-
-    console.log('📊 Tracking wlepa_scanned event for user:', distinctId, {
-      ip: forwardedFor,
-      userAgent: userAgent.substring(0, 50) + '...', // Truncate for readability
-      timestamp: new Date().toISOString()
-    });
-
-    // Track the click event
-    trackServerEvent(distinctId, 'wlepa_scanned', {
-      pathname: '/wlepa',
-      user_agent: userAgent,
-      ip_address: forwardedFor,
-      timestamp: new Date().toISOString(),
-      redirect_target: '/', // Will be updated when you change the redirect target
-    });
-
-    console.log('↩️ Redirecting user from /wlepa to home page');
-    
-    // Redirect to home page (change this URL when you want to redirect to app store)
-    const redirectUrl = new URL('/', request.url);
-    return NextResponse.redirect(redirectUrl);
+    const storeUrl = getAppStoreUrl(userAgent);
+    if (storeUrl) {
+      return NextResponse.redirect(storeUrl);
+    }
+    return NextResponse.redirect(new URL('/aplikacja', request.url));
   }
 
   // Skip middleware for static files and API routes
-  const { pathname } = request.nextUrl;
-
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
