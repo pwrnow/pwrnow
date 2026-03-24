@@ -8,7 +8,6 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#000000",
     "primaryColor": "#000000",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
@@ -49,7 +48,6 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR",
@@ -115,7 +113,9 @@
         }
       ],
       "expo-secure-store",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "@sentry/react-native",
+      "expo-web-browser"
     ],
     "scheme": "pl.pwrnow.app",
     "extra": {

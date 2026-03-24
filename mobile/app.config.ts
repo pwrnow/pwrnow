@@ -26,7 +26,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     userInterfaceStyle: "automatic",
     backgroundColor: "#000000",
     primaryColor: "#000000",
-    newArchEnabled: true,
     splash: {
         image: "./assets/adaptive-icon.png",
         resizeMode: "contain",
@@ -71,7 +70,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             backgroundColor: "#ffffff",
         },
         googleServicesFile: "./google-services.json",
-        edgeToEdgeEnabled: true,
         permissions: [
             "android.permission.READ_CALENDAR",
             "android.permission.WRITE_CALENDAR",
@@ -142,6 +140,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         ],
         "expo-secure-store",
         "expo-apple-authentication",
+        "@sentry/react-native",
+        "expo-web-browser",
     ],
     scheme: IS_DEV ? "pl.pwrnow.app.dev" : "pl.pwrnow.app",
     extra: {
