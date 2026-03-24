@@ -5,7 +5,15 @@ node_modules
 .dockerignore
 
 old
+archive
 
 GEMINI.md
 
 mailu.env
+
+.DS_Store
+
+.deploy_images.sh
+
+# Private keys
+*.p8

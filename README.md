@@ -215,7 +215,6 @@ pnpm dev      # or npm run dev, or yarn dev
 
 - Expo, React Native, TypeScript
 - Fonts and colors match the web app
-- Integrated with Sentry for error tracking and monitoring
 
 ### Local development:
 
@@ -226,23 +225,6 @@ pnpm start    # or npm run start
 ```
 
 - Scan the QR code with Expo Go app on your phone, or run on an emulator with `pnpm android` or `pnpm ios`
-
-### Environment Configuration
-
-The mobile app uses environment variables for configuration. Copy `.env.example` to `.env.local` and configure:
-
-```bash
-cd mobile
-cp .env.example .env.local
-```
-
-Then edit `.env.local` with your values:
-- `EXPO_PUBLIC_API_URL` - Backend API URL
-- `EXPO_PUBLIC_SENTRY_DSN` - Sentry error tracking DSN (optional but recommended)
-- `EXPO_PUBLIC_POSTHOG_API_KEY` - PostHog analytics key (optional)
-- Other OAuth and service keys
-
-See `mobile/SENTRY_SETUP.md` for detailed Sentry setup instructions.
 
 ### Testing Deep Linking
 

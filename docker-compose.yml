@@ -32,6 +32,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: dev
     container_name: pwrnow_backend
     env_file:
       - .env
@@ -43,14 +44,16 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      - redis
-      - postgres
-    command: ['/start.sh']
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   celeryworker:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: dev
     container_name: pwrnow_celeryworker
     env_file:
       - .env
@@ -61,13 +64,16 @@ services:
       - ./backend:/app
     command: watchfiles --filter python celery.__main__.main --args '-A config.celery_app worker -l INFO'
     depends_on:
-      - redis
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   celerybeat:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: dev
     container_name: pwrnow_celerybeat
     env_file:
       - .env
@@ -76,8 +82,10 @@ services:
       - REDIS_URL=redis://redis:6379/0
     command: watchfiles --filter python celery.__main__.main --args '-A config.celery_app beat -l INFO'
     depends_on:
-      - redis
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
 volumes:
   postgres_data:

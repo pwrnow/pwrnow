@@ -271,188 +271,174 @@ const MapScene: React.FC<{
   );
 });
 
-export const SimpleEventTabs: React.FC<Props> = ({
-  eventSlug,
-  posts,
-  isLoadingPosts,
-  postsError,
-  eventDays,
-  itemsByDay,
-  hasSchedule,
-  onMapPress,
-  onExternalLink,
-  onImagePress,
-  ctaAnimatedStyle,
-  isStaff,
-  onVerify,
-  isRecruitmentCategory,
-}) => {
-  const layout = useWindowDimensions();
-  const { colors } = useThemeColors();
-  const { tab } = useLocalSearchParams();
-  const { data: event } = useEventBySlug(eventSlug);
+export const SimpleEventTabs: React.FC<Props> = React.memo(
+  ({
+    eventSlug,
+    posts,
+    isLoadingPosts,
+    postsError,
+    eventDays,
+    itemsByDay,
+    hasSchedule,
+    onMapPress,
+    onExternalLink,
+    onImagePress,
+    ctaAnimatedStyle,
+    isStaff,
+    onVerify,
+    isRecruitmentCategory,
+  }) => {
+    const layout = useWindowDimensions();
+    const { colors } = useThemeColors();
+    const { tab } = useLocalSearchParams();
+    const { data: event } = useEventBySlug(eventSlug);
 
-  // Check if event has a map with active locations
-  const hasMap =
-    event?.event_map &&
-    event.event_map.is_active &&
-    event.event_map.locations?.some((loc) => loc.is_active);
+    // Check if event has a map with active locations
+    const hasMap =
+      event?.event_map &&
+      event.event_map.is_active &&
+      event.event_map.locations?.some((loc) => loc.is_active);
 
-  // For recruitment events, only show details tab
-  // For other events, show all tabs
-  const routes: Route[] = React.useMemo(() =>
-    isRecruitmentCategory
+    // For recruitment events, only show details tab
+    // For other events, show all tabs
+    const routes: Route[] = isRecruitmentCategory 
       ? [{ key: 'details', title: t('details'), icon: 'info' }]
       : [
-        { key: 'details', title: t('details'), icon: 'info' },
-        { key: 'posts', title: t('posts'), icon: 'message-circle' },
-        ...(hasSchedule
-          ? ([
-            { key: 'schedule', title: t('schedule'), icon: 'calendar' },
-          ] as Route[])
-          : ([] as Route[])),
-        ...(hasMap
-          ? ([{ key: 'map', title: t('map'), icon: 'map-pin' }] as Route[])
-          : ([] as Route[])),
-      ], [isRecruitmentCategory, hasSchedule, hasMap]);
+          { key: 'details', title: t('details'), icon: 'info' },
+          { key: 'posts', title: t('posts'), icon: 'message-circle' },
+          ...(hasSchedule
+            ? ([
+                { key: 'schedule', title: t('schedule'), icon: 'calendar' },
+              ] as Route[])
+            : ([] as Route[])),
+          ...(hasMap
+            ? ([{ key: 'map', title: t('map'), icon: 'map-pin' }] as Route[])
+            : ([] as Route[])),
+        ];
 
-  const [index, setIndex] = useState(() => {
-    // For recruitment events, always show details (index 0)
-    if (isRecruitmentCategory) return 0;
+    const [index, setIndex] = useState(() => {
+      // For recruitment events, always show details (index 0)
+      if (isRecruitmentCategory) return 0;
+      
+      // Initialize based on URL tab parameter and availability
+      if (tab === 'posts') return 1;
+      if (tab === 'schedule' && hasSchedule)
+        return routes.findIndex((r) => r.key === 'schedule');
+      if (tab === 'map' && hasMap)
+        return routes.findIndex((r) => r.key === 'map');
+      return 0;
+    });
 
-    // Initialize based on URL tab parameter and availability
-    if (tab === 'posts') return 1;
-    if (tab === 'schedule' && hasSchedule)
-      return routes.findIndex((r) => r.key === 'schedule');
-    if (tab === 'map' && hasMap)
-      return routes.findIndex((r) => r.key === 'map');
-    return 0;
-  });
+    // Sync index with URL tab parameter changes
+    useEffect(() => {
+      // For recruitment events, always stay on details tab
+      if (isRecruitmentCategory) {
+        setIndex(0);
+        return;
+      }
+      
+      if (tab === 'posts') setIndex(1);
+      else if (tab === 'schedule' && hasSchedule)
+        setIndex(routes.findIndex((r) => r.key === 'schedule'));
+      else if (tab === 'map' && hasMap)
+        setIndex(routes.findIndex((r) => r.key === 'map'));
+      else setIndex(0);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, hasSchedule, hasMap, isRecruitmentCategory]);
 
-  // Sync index with URL tab parameter changes
-  useEffect(() => {
-    // For recruitment events, always stay on details tab
-    if (isRecruitmentCategory) {
-      setIndex(0);
-      return;
-    }
+    // Create scene map
+    const renderScene = ({ route }: any) => {
+      switch (route.key as TabType) {
+        case 'details':
+          return (
+            <DetailsScene
+              eventSlug={eventSlug}
+              onMapPress={onMapPress}
+              onExternalLink={onExternalLink}
+              ctaAnimatedStyle={ctaAnimatedStyle}
+              isStaff={isStaff}
+              onVerify={onVerify}
+              isRecruitmentCategory={isRecruitmentCategory}
+            />
+          );
+        case 'posts':
+          return (
+            <PostsScene
+              eventSlug={eventSlug}
+              posts={posts}
+              isLoadingPosts={isLoadingPosts}
+              postsError={postsError}
+              onImagePress={onImagePress}
+            />
+          );
+        case 'schedule':
+          return (
+            <ScheduleScene eventDays={eventDays} itemsByDay={itemsByDay} />
+          );
+        case 'map':
+          return <MapScene eventSlug={eventSlug} />;
+        default:
+          return null;
+      }
+    };
 
-    if (tab === 'posts') setIndex(1);
-    else if (tab === 'schedule' && hasSchedule)
-      setIndex(routes.findIndex((r) => r.key === 'schedule'));
-    else if (tab === 'map' && hasMap)
-      setIndex(routes.findIndex((r) => r.key === 'map'));
-    else setIndex(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, hasSchedule, hasMap, isRecruitmentCategory]);
-
-  // Create scene map
-  const renderScene = ({ route }: any) => {
-    switch (route.key as TabType) {
-      case 'details':
-        return (
-          <DetailsScene
-            eventSlug={eventSlug}
-            onMapPress={onMapPress}
-            onExternalLink={onExternalLink}
-            ctaAnimatedStyle={ctaAnimatedStyle}
-            isStaff={isStaff}
-            onVerify={onVerify}
-            isRecruitmentCategory={isRecruitmentCategory}
-          />
-        );
-      case 'posts':
-        return (
-          <PostsScene
-            eventSlug={eventSlug}
-            posts={posts}
-            isLoadingPosts={isLoadingPosts}
-            postsError={postsError}
-            onImagePress={onImagePress}
-          />
-        );
-      case 'schedule':
-        return (
-          <ScheduleScene eventDays={eventDays} itemsByDay={itemsByDay} />
-        );
-      case 'map':
-        return <MapScene eventSlug={eventSlug} />;
-      default:
+    // Tab Bar Component - hide for recruitment events
+    const renderTabBar = (props: any) => {
+      if (isRecruitmentCategory) {
         return null;
-    }
-  };
-
-  // Tab Bar Component - custom implementation to avoid library state sync issues
-  const renderTabBar = (props: any) => {
-    if (isRecruitmentCategory) {
-      return null;
-    }
+      }
+      
+      return (
+        <TabBar
+          {...props}
+          indicatorStyle={{
+            backgroundColor: colors.primary,
+            height: 2,
+          }}
+          style={{
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            elevation: 0,
+            shadowOpacity: 0,
+          }}
+          tabStyle={{
+            flex: 1,
+            paddingVertical: 16,
+          }}
+          pressColor={colors.primary + '20'}
+          activeColor={colors.foreground}
+          inactiveColor={colors.mutedForeground}
+          onTabPress={() => {
+            Haptics.selectionAsync();
+          }}
+        />
+      );
+    };
 
     return (
-      <View
-        style={{
-          flexDirection: 'row',
-          backgroundColor: colors.background,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        }}
-      >
-        {routes.map((route, i) => {
-          const isActive = i === index;
-          return (
-            <TouchableOpacity
-              key={route.key}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setIndex(i);
-              }}
-              style={{
-                flex: 1,
-                paddingVertical: 16,
-                alignItems: 'center',
-                borderBottomWidth: 2,
-                borderBottomColor: isActive ? colors.primary : 'transparent',
-              }}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={{
-                  color: isActive ? colors.foreground : colors.mutedForeground,
-                  fontWeight: isActive ? '600' : '400',
-                  fontSize: 14,
-                }}
-              >
-                {route.title}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      <View className='flex-1'>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          renderTabBar={renderTabBar}
+          onIndexChange={(newIndex) => {
+            if (newIndex !== index) {
+              Haptics.selectionAsync();
+            }
+            setIndex(newIndex);
+          }}
+          initialLayout={{ width: layout.width }}
+          swipeEnabled={true}
+          animationEnabled={true}
+          lazy={false}
+          style={{
+            backgroundColor: colors.background,
+          }}
+        />
       </View>
     );
-  };
-
-  return (
-    <View className='flex-1'>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        renderTabBar={renderTabBar}
-        onIndexChange={(newIndex) => {
-          if (newIndex !== index) {
-            Haptics.selectionAsync();
-          }
-          setIndex(newIndex);
-        }}
-        initialLayout={{ width: layout.width }}
-        swipeEnabled={true}
-        animationEnabled={true}
-        lazy={false}
-        style={{
-          backgroundColor: colors.background,
-        }}
-      />
-    </View>
-  );
-};
+  }
+);
 
 export default SimpleEventTabs;

@@ -15,7 +15,7 @@ export function useImagePreloading() {
   // Preload images for a specific event (high priority)
   const preloadSingleEvent = useCallback(async (event: Event) => {
     try {
-      await imagePreloader.preloadSingleEventImages(event);
+      await imagePreloader.preloadEventImages(event);
     } catch (error) {
       console.warn('Failed to preload single event images:', error);
     }

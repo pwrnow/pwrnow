@@ -92,10 +92,7 @@ export class OfflineManager {
       console.log('Preloading event images...');
       try {
         await imagePreloader.preloadEventImages(events, 'high');
-
-        // Also preload upcoming events in background
-        imagePreloader.preloadUpcomingEvents(events);
-
+        
         // Get count of cached images
         const imageStats = imageCacheManager.getCacheStats();
         imagesCount = imageStats.count;
