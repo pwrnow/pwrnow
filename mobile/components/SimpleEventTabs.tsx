@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView } from 'react-native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { Feather } from '@expo/vector-icons';
@@ -301,7 +301,8 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
 
     // For recruitment events, only show details tab
     // For other events, show all tabs
-    const routes: Route[] = isRecruitmentCategory 
+    // Memoize routes to prevent TabView from resetting on every render
+    const routes: Route[] = useMemo(() => isRecruitmentCategory
       ? [{ key: 'details', title: t('details'), icon: 'info' }]
       : [
           { key: 'details', title: t('details'), icon: 'info' },
@@ -314,39 +315,34 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           ...(hasMap
             ? ([{ key: 'map', title: t('map'), icon: 'map-pin' }] as Route[])
             : ([] as Route[])),
-        ];
+        ], [isRecruitmentCategory, hasSchedule, hasMap]);
+
+    const getTargetIndex = (currentRoutes: Route[]) => {
+      if (isRecruitmentCategory) return 0;
+      if (tab === 'posts') return currentRoutes.findIndex((r) => r.key === 'posts');
+      if (tab === 'schedule' && hasSchedule)
+        return currentRoutes.findIndex((r) => r.key === 'schedule');
+      if (tab === 'map' && hasMap)
+        return currentRoutes.findIndex((r) => r.key === 'map');
+      return 0;
+    };
 
     const [index, setIndex] = useState(() => {
-      // For recruitment events, always show details (index 0)
-      if (isRecruitmentCategory) return 0;
-      
-      // Initialize based on URL tab parameter and availability
-      if (tab === 'posts') return 1;
-      if (tab === 'schedule' && hasSchedule)
-        return routes.findIndex((r) => r.key === 'schedule');
-      if (tab === 'map' && hasMap)
-        return routes.findIndex((r) => r.key === 'map');
-      return 0;
+      const target = getTargetIndex(routes);
+      return target >= 0 ? target : 0;
     });
 
-    // Sync index with URL tab parameter changes
-    useEffect(() => {
-      // For recruitment events, always stay on details tab
-      if (isRecruitmentCategory) {
-        setIndex(0);
-        return;
-      }
-      
-      if (tab === 'posts') setIndex(1);
-      else if (tab === 'schedule' && hasSchedule)
-        setIndex(routes.findIndex((r) => r.key === 'schedule'));
-      else if (tab === 'map' && hasMap)
-        setIndex(routes.findIndex((r) => r.key === 'map'));
-      else setIndex(0);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tab, hasSchedule, hasMap, isRecruitmentCategory]);
+    const handleIndexChange = (newIndex: number) => {
+      setIndex(newIndex);
+    };
 
-    // Create scene map
+    // Sync index when tab param or available routes change
+    useEffect(() => {
+      const target = getTargetIndex(routes);
+      if (target >= 0) setIndex(target);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, hasSchedule, hasMap, isRecruitmentCategory, routes.length]);
+
     const renderScene = ({ route }: any) => {
       switch (route.key as TabType) {
         case 'details':
@@ -382,12 +378,11 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
       }
     };
 
-    // Tab Bar Component - hide for recruitment events
     const renderTabBar = (props: any) => {
       if (isRecruitmentCategory) {
         return null;
       }
-      
+
       return (
         <TabBar
           {...props}
@@ -422,15 +417,10 @@ export const SimpleEventTabs: React.FC<Props> = React.memo(
           navigationState={{ index, routes }}
           renderScene={renderScene}
           renderTabBar={renderTabBar}
-          onIndexChange={(newIndex) => {
-            if (newIndex !== index) {
-              Haptics.selectionAsync();
-            }
-            setIndex(newIndex);
-          }}
+          onIndexChange={handleIndexChange}
           initialLayout={{ width: layout.width }}
           swipeEnabled={true}
-          animationEnabled={true}
+          animationEnabled={false}
           lazy={false}
           style={{
             backgroundColor: colors.background,

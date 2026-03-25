@@ -21,7 +21,7 @@ import { ThemeMode } from '../lib/settingsStorage';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system/next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsCard from '../components/SettingsCard';
 import Avatar from '../components/Avatar';
@@ -196,9 +196,10 @@ export default function ProfileScreen() {
     setIsUploadingImage(true);
     try {
       // Check file size before uploading
-      const fileInfo = await FileSystem.getInfoAsync(imageUri);
-      if (fileInfo.exists && fileInfo.size && fileInfo.size > MAX_IMAGE_SIZE_BYTES) {
-        const fileSizeMB = (fileInfo.size / (1024 * 1024)).toFixed(1);
+      const file = new File(imageUri);
+      const fileSize = file.exists ? file.size : 0;
+      if (fileSize && fileSize > MAX_IMAGE_SIZE_BYTES) {
+        const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           t('error'),
