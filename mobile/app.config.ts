@@ -140,7 +140,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         ],
         "expo-secure-store",
         "expo-apple-authentication",
-        "@sentry/react-native",
+        [
+            "@sentry/react-native",
+            {
+                organization: process.env.SENTRY_ORG ?? "",
+                project: process.env.SENTRY_PROJECT ?? "",
+                uploadNativeSymbols: !IS_DEV,
+            },
+        ],
         "expo-web-browser",
     ],
     scheme: IS_DEV ? "pl.pwrnow.app.dev" : "pl.pwrnow.app",
