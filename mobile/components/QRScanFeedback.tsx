@@ -5,7 +5,9 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -277,7 +279,10 @@ const QRScanFeedback: React.FC<QRScanFeedbackProps> = ({
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, containerStyle]}>
+    <Animated.View style={[styles.overlay, containerStyle, Platform.OS === 'ios' && { backgroundColor: 'transparent' }]}>
+      {Platform.OS === 'ios' && (
+        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+      )}
       <View style={styles.feedbackContainer}>
         <LinearGradient
           colors={

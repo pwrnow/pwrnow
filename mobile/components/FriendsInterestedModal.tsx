@@ -1,5 +1,6 @@
 import { Modal, View, Text, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { useThemeColors } from '../hooks/useThemeColors';
+import ModalOverlay from './ModalOverlay';
 import Avatar from './Avatar';
 import { t } from '../lib/i18n';
 import { FriendSummary } from './FriendsAttending';
@@ -26,12 +27,10 @@ export default function FriendsInterestedModal({
       animationType='fade'
       onRequestClose={onClose}
     >
-      <TouchableOpacity
-        activeOpacity={1}
+      <ModalOverlay
         onPress={onClose}
         style={{
           flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: 24,
@@ -121,7 +120,7 @@ export default function FriendsInterestedModal({
             </Text>
           </TouchableOpacity>
         </Pressable>
-      </TouchableOpacity>
+      </ModalOverlay>
     </Modal>
   );
 }

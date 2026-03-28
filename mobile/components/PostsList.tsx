@@ -391,7 +391,7 @@ const PostsList: React.FC<Props> = ({
           return (
             <Animated.View
               key={post.id}
-              ref={(ref) => {
+              ref={(ref: any) => {
                 postRefs.current[post.id] = ref;
               }}
               entering={FadeInDown.duration(200).delay(index * 50)}

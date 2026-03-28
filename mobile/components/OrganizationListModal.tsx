@@ -1,5 +1,6 @@
 import { Modal, View, Text, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { useThemeColors } from '../hooks/useThemeColors';
+import ModalOverlay from './ModalOverlay';
 import CachedImage from './CachedImage';
 import { t } from '../lib/i18n';
 import { Organization } from '../types';
@@ -33,12 +34,10 @@ export default function OrganizationListModal({
       animationType='fade'
       onRequestClose={onClose}
     >
-      <TouchableOpacity
-        activeOpacity={1}
+      <ModalOverlay
         onPress={onClose}
         style={{
           flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'center',
           alignItems: 'center',
           paddingHorizontal: 24,
@@ -146,7 +145,7 @@ export default function OrganizationListModal({
             </Text>
           </TouchableOpacity>
         </Pressable>
-      </TouchableOpacity>
+      </ModalOverlay>
     </Modal>
   );
 }

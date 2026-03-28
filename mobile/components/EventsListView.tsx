@@ -88,6 +88,7 @@ export default function EventsListView({
         contentContainerStyle={{
           backgroundColor: isDark ? '#000000' : '#FFFFFF',
         }}
+        contentInsetAdjustmentBehavior="automatic"
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
       >

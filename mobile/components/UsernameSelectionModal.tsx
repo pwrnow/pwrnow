@@ -13,6 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useAuth } from '../contexts/AuthContext';
+import ModalOverlay from './ModalOverlay';
 import { api } from '../lib/api';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
@@ -210,10 +211,10 @@ export default function UsernameSelectionModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View
+        <ModalOverlay
+          intensity={90}
           style={{
             flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             justifyContent: 'center',
             alignItems: 'center',
             padding: 24,
@@ -414,7 +415,7 @@ export default function UsernameSelectionModal({
               </Text>
             )}
           </View>
-        </View>
+        </ModalOverlay>
       </KeyboardAvoidingView>
     </Modal>
   );

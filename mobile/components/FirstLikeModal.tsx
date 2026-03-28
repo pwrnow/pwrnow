@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { t } from '../lib/i18n';
 import { useThemeColors } from '../hooks/useThemeColors';
+import ModalOverlay from './ModalOverlay';
 
 interface FirstLikeModalProps {
   visible: boolean;
@@ -233,7 +234,7 @@ export default function FirstLikeModal({
       animationType='none'
       onRequestClose={onClose}
     >
-      <View className='flex-1 bg-black/60 justify-center items-center px-6'>
+      <ModalOverlay style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
         <Animated.View
           style={[
             modalAnimatedStyle,
@@ -489,7 +490,7 @@ export default function FirstLikeModal({
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </View>
+      </ModalOverlay>
     </Modal>
   );
 }

@@ -1,4 +1,4 @@
-import { File, Directory, Paths } from 'expo-file-system/next';
+import { File, Directory, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

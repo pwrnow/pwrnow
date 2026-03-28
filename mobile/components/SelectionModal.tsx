@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../hooks/useThemeColors';
+import ModalOverlay from './ModalOverlay';
 
 export interface SelectionOption {
   value: string;
@@ -44,13 +45,9 @@ export default function SelectionModal({
       animationType='fade'
       onRequestClose={onClose}
     >
-      <Pressable
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          justifyContent: 'flex-end',
-        }}
+      <ModalOverlay
         onPress={onClose}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
       >
         <Pressable
           style={{
@@ -129,7 +126,7 @@ export default function SelectionModal({
             ))}
           </View>
         </Pressable>
-      </Pressable>
+      </ModalOverlay>
     </Modal>
   );
 }

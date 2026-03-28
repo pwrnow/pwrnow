@@ -139,8 +139,8 @@ function ThemedApp() {
       <StatusBar
         style={isDark ? 'light' : 'dark'}
         animated
-        translucent={false}
-        backgroundColor={colors.background}
+        translucent={Platform.OS === 'ios'}
+        backgroundColor={Platform.OS === 'ios' ? undefined : colors.background}
       />
       <RootNavigator />
       <ProfilePictureFeatureModal
@@ -165,8 +165,7 @@ function RootNavigator() {
         headerBackButtonDisplayMode: 'minimal',
         headerTitle: () => <Logo size='medium' />,
         headerTitleAlign: 'center',
-        headerTransparent: false,
-        headerShadowVisible: true,
+        headerShadowVisible: false,
         headerStyle: {
           backgroundColor: colors.background,
         },

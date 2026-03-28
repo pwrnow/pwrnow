@@ -21,6 +21,7 @@ import { adminApi } from '../../lib/api';
 import { ProfileImageChangeRequest } from '../../types';
 import Avatar from '../../components/Avatar';
 import * as Haptics from 'expo-haptics';
+import ModalOverlay from '../../components/ModalOverlay';
 
 export default function AdminScreen() {
   const { colors, isDark } = useTheme();
@@ -147,6 +148,7 @@ export default function AdminScreen() {
       <ScrollView
         className="flex-1 px-6"
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -313,10 +315,9 @@ export default function AdminScreen() {
         animationType="fade"
         onRequestClose={() => setRejectModalVisible(false)}
       >
-        <View
+        <ModalOverlay
           style={{
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.5)',
             justifyContent: 'center',
             alignItems: 'center',
             paddingHorizontal: 24,
@@ -387,7 +388,7 @@ export default function AdminScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </ModalOverlay>
       </Modal>
     </View>
   );

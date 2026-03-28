@@ -115,6 +115,7 @@ export default function FriendsListView({
       <ScrollView
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         refreshControl={refreshControl}
       >
         {/* Search Bar Section */}

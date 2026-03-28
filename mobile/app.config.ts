@@ -141,15 +141,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         "expo-secure-store",
         "expo-apple-authentication",
         ...(!IS_DEV
-            ? ([
+            ? [
                   [
                       "@sentry/react-native",
                       {
                           organization: process.env.SENTRY_ORG ?? "",
                           project: process.env.SENTRY_PROJECT ?? "",
                       },
-                  ],
-              ] as const)
+                  ] as [string, any],
+              ]
             : []),
         "expo-web-browser",
     ],

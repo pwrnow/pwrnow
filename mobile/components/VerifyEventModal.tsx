@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { t } from '../lib/i18n';
+import ModalOverlay from './ModalOverlay';
 
 interface VerifyEventModalProps {
   visible: boolean;
@@ -73,7 +74,7 @@ export default function VerifyEventModal({
       animationType='fade'
       onRequestClose={onClose}
     >
-      <View className='flex-1 bg-black/50 justify-center items-center px-6'>
+      <ModalOverlay style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
         <Animated.View
           entering={FadeInDown.duration(250)}
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -152,7 +153,7 @@ export default function VerifyEventModal({
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </View>
+      </ModalOverlay>
     </Modal>
   );
 }

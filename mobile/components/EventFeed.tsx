@@ -5,6 +5,7 @@ import {
   NativeSyntheticEvent,
   View,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Event } from '../types';
@@ -88,7 +89,8 @@ export default function EventFeed({
       onScroll={onScroll}
       scrollEventThrottle={16}
       scrollEnabled={scrollEnabled !== false}
-      contentContainerStyle={{ paddingBottom: 24 }}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 0 : 24 }}
       style={{ backgroundColor: colors.background }}
       refreshControl={undefined}
     />

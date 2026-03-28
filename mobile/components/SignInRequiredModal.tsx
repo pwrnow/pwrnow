@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { t } from '../lib/i18n';
 import { useThemeColors } from '../hooks/useThemeColors';
+import ModalOverlay from './ModalOverlay';
 
 interface SignInRequiredModalProps {
   visible: boolean;
@@ -25,7 +26,7 @@ export default function SignInRequiredModal({
       animationType='fade'
       onRequestClose={onClose}
     >
-      <View className='flex-1 bg-black/50 justify-center items-center px-6'>
+      <ModalOverlay style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
         <Animated.View
           entering={FadeInDown.duration(250)}
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -80,7 +81,7 @@ export default function SignInRequiredModal({
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </View>
+      </ModalOverlay>
     </Modal>
   );
 }

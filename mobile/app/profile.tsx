@@ -21,7 +21,7 @@ import { ThemeMode } from '../lib/settingsStorage';
 import { t } from '../lib/i18n';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import { File } from 'expo-file-system/next';
+import { File } from 'expo-file-system';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsCard from '../components/SettingsCard';
 import Avatar from '../components/Avatar';
