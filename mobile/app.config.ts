@@ -146,6 +146,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
                 organization: process.env.SENTRY_ORG ?? "",
                 project: process.env.SENTRY_PROJECT ?? "",
                 uploadNativeSymbols: !IS_DEV,
+                uploadSourceMaps: !IS_DEV,
             },
         ],
         "expo-web-browser",
