@@ -114,29 +114,29 @@ fi
 
 # --- Build Backend ---
 echo -e "\n${GREEN}=== Building Backend Image ===${NC}"
-# Backend serves: backend, celeryworker, celerybeat
-# docker buildx build \
-#     --platform linux/amd64 \
-#     --provenance=false \
-#     --progress=plain \
-#     --push \
-#     --target prod \
-#     --file ./backend/Dockerfile \
-#     --tag "$REGISTRY_URL/pwrnow/backend:latest" \
-#     ./backend
+Backend serves: backend, celeryworker, celerybeat
+docker buildx build \
+    --platform linux/amd64 \
+    --provenance=false \
+    --progress=plain \
+    --push \
+    --target prod \
+    --file ./backend/Dockerfile \
+    --tag "$REGISTRY_URL/pwrnow/backend:latest" \
+    ./backend
 
 echo -e "${GREEN}Backend image pushed successfully.${NC}"
 
 
 # --- Build Frontend ---
 echo -e "\n${GREEN}=== Building Frontend Image ===${NC}"
-# docker buildx build \
-#     --platform linux/amd64 \
-#     --provenance=false \
-#     --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
-#     --push \
-#     --tag "$REGISTRY_URL/pwrnow/web:latest" \
-#     ./web
+docker buildx build \
+    --platform linux/amd64 \
+    --provenance=false \
+    --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
+    --push \
+    --tag "$REGISTRY_URL/pwrnow/web:latest" \
+    ./web
 
 echo -e "${GREEN}Frontend image pushed successfully.${NC}"
 

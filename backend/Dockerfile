@@ -55,3 +55,4 @@ USER django
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD /start_files/start_${SERVICE}.sh
+
