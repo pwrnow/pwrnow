@@ -543,13 +543,7 @@ class EventViewSet(
                 f"Event created successfully: event_id={event.id} title={event.title} org_id={event.organization_id}"
             )
 
-            # Send Discord notification unless suppressed via settings
-            if not (
-                getattr(settings, "SUPPRESS_NOTIFICATIONS", False)
-                or getattr(settings, "SUPPRESS_DISCORD_NOTIFICATIONS", False)
-            ):
-                logger.debug(f"Sending Discord notification for event_id={event.id}")
-                send_discord_notification.delay(str(event.id))
+            # Discord notification is now handled by the post_save signal
 
             # Return the created event using the read serializer
             read_serializer = EventSerializer(event, context={"request": request})
