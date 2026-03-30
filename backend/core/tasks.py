@@ -159,11 +159,12 @@ def send_discord_notification(event_id):
                 "inline": False
             })
 
-        # Add admin panel URL for this specific event
+        # Add link to open in app (universal link) and admin panel
+        app_url = event.public_url
         admin_url = f"{settings.SITE_URL}/admin/core/event/{event.id}/change/" if hasattr(settings, 'SITE_URL') else f"http://localhost:8000/admin/core/event/{event.id}/change/"
         embed["fields"].append({
-            "name": "🔗 Panel administracyjny",
-            "value": f"[Kliknij tutaj]({admin_url})",
+            "name": "🔗 Linki",
+            "value": f"[📱 Otwórz w aplikacji (zweryfikuj)]({app_url})  •  [🖥️ Panel admina]({admin_url})",
             "inline": False
         })
 
