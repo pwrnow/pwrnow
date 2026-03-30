@@ -4,6 +4,7 @@ Django signals for translation and notification tasks.
 Triggers automatic translation tasks for events and notification tasks for posts.
 """
 
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -33,22 +34,23 @@ def event_post_save_handler(sender, instance, created, **kwargs):
     """
     print(f"🔍 Event post-save signal received for event {instance.id}")
 
-    # Only trigger translation task for newly created events
+    # Only trigger tasks for newly created events — use on_commit so the
+    # row is visible to Celery workers (Django admin wraps saves in a transaction).
     if created:
-        # Start translation task immediately in background
-        translate_event_content.delay(str(instance.id))
-        # Notify staff devices about new event
-        try:
-            send_new_event_notifications_to_staff.delay(str(instance.id))
-        except Exception as e:
-            print(
-                f"⚠️ Failed to enqueue staff new event notifications for {instance.id}: {e}"
-            )
-        # Send Discord webhook notification
-        try:
-            send_discord_notification.delay(str(instance.id))
-        except Exception as e:
-            print(f"⚠️ Failed to enqueue Discord notification for {instance.id}: {e}")
+        event_id = str(instance.id)
+
+        def _dispatch_created_tasks():
+            translate_event_content.delay(event_id)
+            try:
+                send_new_event_notifications_to_staff.delay(event_id)
+            except Exception as e:
+                print(f"⚠️ Failed to enqueue staff new event notifications for {event_id}: {e}")
+            try:
+                send_discord_notification.delay(event_id)
+            except Exception as e:
+                print(f"⚠️ Failed to enqueue Discord notification for {event_id}: {e}")
+
+        transaction.on_commit(_dispatch_created_tasks)
 
     # Trigger aspect ratio detection if event has an image and aspect_ratio is not set
     if instance.image and not instance.aspect_ratio:
