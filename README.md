@@ -293,3 +293,4 @@ For more information, see the [Expo documentation on over-the-air updates](https
 - Make sure all dependencies are installed for each part (backend, web, mobile)
 - For Docker Compose, ensure Docker is running and ports are not in use
 - For Next.js issues, see the troubleshooting section above
+
